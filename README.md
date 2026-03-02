@@ -112,6 +112,7 @@ python3 weather_page_static_render.py \
 ```
 
 - Default output path is `index.html` (good for GitHub Pages root publishing).
+- Static assets are committed in repo paths: `assets/css/weather_page.css` and `assets/js/weather_page.js`.
 
 ## GitHub Pages Automation
 
@@ -120,7 +121,7 @@ python3 weather_page_static_render.py \
   - manual (`workflow_dispatch`)
   - push to `main`
   - scheduled daily at **00:01 America/Los_Angeles**
-- The workflow runs `weather_page_static_render.py` and deploys `site/index.html` to GitHub Pages.
+- The workflow runs `weather_page_static_render.py`, copies `assets/css/weather_page.css` and `assets/js/weather_page.js`, then deploys `site/` to GitHub Pages.
 
 ## Legacy/Utility Scripts
 

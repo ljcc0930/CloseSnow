@@ -1,0 +1,285 @@
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: #1f2937;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 28px;
+    }
+    .report-date {
+      margin: -8px 0 12px;
+      font-size: 13px;
+      color: #475569;
+      font-weight: 600;
+    }
+    h2 {
+      margin: 24px 0 8px;
+      font-size: 20px;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      border-right: 1px solid #f3f4f6;
+      padding: clamp(6px, 1.1vw, 8px) clamp(8px, 1.3vw, 10px);
+      line-height: 1.2;
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    th {
+      background: #f3f4f6;
+      text-align: center;
+      font-weight: 700;
+    }
+    .plain-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .plain-table {
+      min-width: 1100px;
+    }
+    .plain-table .query-col {
+      text-align: left;
+      font-weight: 600;
+    }
+    .desktop-only {
+      display: block;
+    }
+    .mobile-only {
+      display: none;
+    }
+    .snowfall-split-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .snowfall-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --query-col-w: 220px;
+      --week-col-w: 110px;
+    }
+    .snowfall-left-table col.col-query {
+      width: var(--query-col-w);
+    }
+    .snowfall-left-table col.col-week {
+      width: var(--week-col-w);
+    }
+    .snowfall-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .snowfall-left-table, .snowfall-right-table {
+      table-layout: fixed;
+    }
+    .snowfall-left-table {
+      min-width: 0;
+      width: auto;
+    }
+    .snowfall-right-table {
+      min-width: 0;
+      width: auto;
+    }
+    .snowfall-right-table col.col-day {
+      width: 66px;
+    }
+    .snowfall-left-table thead tr:first-child th,
+    .snowfall-right-table thead tr:first-child th {
+      top: 0;
+      z-index: 5;
+    }
+    .snowfall-left-table thead tr:nth-child(2) th,
+    .snowfall-right-table thead tr:nth-child(2) th {
+      top: 32px;
+      z-index: 5;
+    }
+    .snowfall-left-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      max-width: var(--query-col-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .snowfall-left-table thead th,
+    .snowfall-right-table thead th {
+      position: sticky;
+      background: #e5e7eb;
+    }
+    .snowfall-left-table td,
+    .snowfall-right-table td {
+      background-clip: padding-box;
+    }
+    .rain-split-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .rain-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --rain-query-w: 220px;
+    }
+    .rain-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .rain-left-table, .rain-right-table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 0;
+    }
+    .rain-left-table col.col-query {
+      width: var(--rain-query-w);
+    }
+    .rain-right-table col.col-day {
+      width: 66px;
+    }
+    .rain-left-table thead tr:first-child th,
+    .rain-right-table thead tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .rain-left-table thead tr:nth-child(2) th,
+    .rain-right-table thead tr:nth-child(2) th {
+      position: sticky;
+      top: 32px;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .rain-left-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      max-width: var(--rain-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rain-left-table td, .rain-right-table td {
+      background-clip: padding-box;
+    }
+    .temperature-split-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .temperature-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --temp-query-w: 220px;
+    }
+    .temperature-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .temperature-left-table,
+    .temperature-right-table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 0;
+    }
+    .temperature-left-table col.col-query {
+      width: var(--temp-query-w);
+    }
+    .temperature-right-table col.col-temp {
+      width: 50px;
+    }
+    .temperature-left-table thead tr:first-child th,
+    .temperature-right-table thead tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .temperature-left-table thead tr:nth-child(2) th,
+    .temperature-right-table thead tr:nth-child(2) th {
+      position: sticky;
+      top: 32px;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .temperature-left-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      background: #fff;
+      max-width: var(--temp-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .temperature-left-table .query-top {
+      border-bottom: none;
+      background: #e5e7eb;
+    }
+    .temperature-left-table .query-sub {
+      color: transparent;
+      user-select: none;
+      background: #e5e7eb;
+    }
+    .temperature-left-table td,
+    .temperature-right-table td {
+      background-clip: padding-box;
+    }
+    body.mobile-simple .desktop-only {
+      display: none;
+    }
+    body.mobile-simple .mobile-only {
+      display: block;
+    }
+    body.mobile-simple main {
+      padding: 12px;
+    }
+    body.mobile-simple h1 {
+      font-size: 22px;
+    }
+    body.mobile-simple h2 {
+      font-size: 17px;
+    }
+    body.mobile-simple th,
+    body.mobile-simple td {
+      font-size: 11px;
+      padding: 5px 6px;
+    }
+    body.mobile-simple .plain-table {
+      min-width: 0;
+    }
+    body.mobile-simple .mobile-only thead th:not(:first-child) {
+      display: none;
+    }
+    body.mobile-simple .mobile-only thead th:first-child {
+      text-align: left;
+    }
+  

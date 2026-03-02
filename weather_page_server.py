@@ -15,12 +15,8 @@ from typing import List
 from urllib.parse import parse_qs, urlparse
 
 from ecmwf_unified_backend import run_pipeline
-from weather_html_renderer import build_html
-from weather_report_transform import (
-    reports_to_rain_rows,
-    reports_to_snow_rows,
-    reports_to_temp_rows,
-)
+from weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
+from weather_page_render_core import render_payload_html
 
 
 def make_handler(
@@ -42,6 +38,16 @@ def make_handler(
             resorts: List[str] = []
             resorts_file = "resorts.txt"
 
+            asset_name = parsed.path.lstrip("/")
+            if asset_name in ASSET_MIME_TYPES:
+                try:
+                    body = read_asset_bytes(asset_name)
+                except OSError:
+                    self._write(404, b"Not Found", "text/plain; charset=utf-8")
+                    return
+                self._write(200, body, ASSET_MIME_TYPES[asset_name])
+                return
+
             if "resort" in qs:
                 resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
                 resorts_file = ""
@@ -61,10 +67,7 @@ def make_handler(
                 self._write(200, body, "application/json; charset=utf-8")
                 return
 
-            snow_rows = reports_to_snow_rows(payload.get("reports", []))
-            rain_rows = reports_to_rain_rows(payload.get("reports", []))
-            temp_rows = reports_to_temp_rows(payload.get("reports", []))
-            html = build_html(snow_rows, rain_rows, temp_rows)
+            html = render_payload_html(payload)
             self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
 
     return Handler

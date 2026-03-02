@@ -10,12 +10,7 @@ from pathlib import Path
 from typing import List
 
 from ecmwf_unified_backend import run_pipeline
-from weather_html_renderer import build_html
-from weather_report_transform import (
-    reports_to_rain_rows,
-    reports_to_snow_rows,
-    reports_to_temp_rows,
-)
+from weather_page_render_core import render_payload_html
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,14 +51,9 @@ def main() -> int:
         write_outputs=False,
     )
 
-    reports = payload.get("reports", [])
-    snow_rows = reports_to_snow_rows(reports)
-    rain_rows = reports_to_rain_rows(reports)
-    temp_rows = reports_to_temp_rows(reports)
-
     out = Path(args.output_html)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_html(snow_rows, rain_rows, temp_rows), encoding="utf-8")
+    out.write_text(render_payload_html(payload), encoding="utf-8")
     print(f"Done: {out}")
     return 0
 
