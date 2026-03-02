@@ -38,8 +38,8 @@
     th, td {
       border-bottom: 1px solid #e5e7eb;
       border-right: 1px solid #f3f4f6;
-      padding: clamp(6px, 1.1vw, 8px) clamp(8px, 1.3vw, 10px);
-      line-height: 1.2;
+      padding: 7px 9px;
+      line-height: 14px;
       font-size: 12px;
       text-align: right;
       white-space: nowrap;
@@ -74,6 +74,7 @@
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
       overflow: hidden;
+      --snow-header-row1-h: 32px;
     }
     .snowfall-split-wrap.mobile-only {
       display: none;
@@ -120,7 +121,7 @@
     }
     .snowfall-left-table thead tr:nth-child(2) th,
     .snowfall-right-table thead tr:nth-child(2) th {
-      top: 32px;
+      top: var(--snow-header-row1-h);
       z-index: 5;
     }
     .snowfall-left-table .query-col {
@@ -146,6 +147,7 @@
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
       overflow: hidden;
+      --rain-header-row1-h: 32px;
     }
     .rain-left-wrap {
       flex: 0 0 auto;
@@ -179,7 +181,7 @@
     .rain-left-table thead tr:nth-child(2) th,
     .rain-right-table thead tr:nth-child(2) th {
       position: sticky;
-      top: 32px;
+      top: var(--rain-header-row1-h);
       z-index: 5;
       background: #e5e7eb;
     }
@@ -200,6 +202,7 @@
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
       overflow: hidden;
+      --temp-header-row1-h: 32px;
     }
     .temperature-left-wrap {
       flex: 0 0 auto;
@@ -234,7 +237,7 @@
     .temperature-left-table thead tr:nth-child(2) th,
     .temperature-right-table thead tr:nth-child(2) th {
       position: sticky;
-      top: 32px;
+      top: var(--temp-header-row1-h);
       z-index: 5;
       background: #e5e7eb;
     }
@@ -267,6 +270,13 @@
     }
     body.mobile-simple .snowfall-split-wrap.mobile-only {
       display: flex;
+    }
+    body.mobile-simple .snowfall-left-table th,
+    body.mobile-simple .snowfall-left-table td,
+    body.mobile-simple .snowfall-right-table th,
+    body.mobile-simple .snowfall-right-table td {
+      height: 30px;
+      box-sizing: border-box;
     }
     body.mobile-simple .plain-table {
       min-width: 0;

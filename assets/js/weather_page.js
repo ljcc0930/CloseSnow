@@ -2,21 +2,25 @@ const leftWrap = document.getElementById("snowfall-left-wrap");
 const rightWrap = document.getElementById("snowfall-right-wrap");
 const leftTable = leftWrap ? leftWrap.querySelector(".snowfall-left-table") : null;
 const rightTable = rightWrap ? rightWrap.querySelector(".snowfall-right-table") : null;
+const snowfallDesktopSplitWrap = leftWrap ? leftWrap.closest(".snowfall-split-wrap") : null;
 
 const leftWrapMobile = document.getElementById("snowfall-left-wrap-mobile");
 const rightWrapMobile = document.getElementById("snowfall-right-wrap-mobile");
 const leftTableMobile = leftWrapMobile ? leftWrapMobile.querySelector(".snowfall-left-table") : null;
 const rightTableMobile = rightWrapMobile ? rightWrapMobile.querySelector(".snowfall-right-table") : null;
+const snowfallMobileSplitWrap = leftWrapMobile ? leftWrapMobile.closest(".snowfall-split-wrap") : null;
 
 const tempLeftWrap = document.getElementById("temperature-left-wrap");
 const tempRightWrap = document.getElementById("temperature-right-wrap");
 const tempLeftTable = tempLeftWrap ? tempLeftWrap.querySelector(".temperature-left-table") : null;
 const tempRightTable = tempRightWrap ? tempRightWrap.querySelector(".temperature-right-table") : null;
+const tempSplitWrap = tempLeftWrap ? tempLeftWrap.closest(".temperature-split-wrap") : null;
 
 const rainLeftWrap = document.getElementById("rain-left-wrap");
 const rainRightWrap = document.getElementById("rain-right-wrap");
 const rainLeftTable = rainLeftWrap ? rainLeftWrap.querySelector(".rain-left-table") : null;
 const rainRightTable = rainRightWrap ? rainRightWrap.querySelector(".rain-right-table") : null;
+const rainSplitWrap = rainLeftWrap ? rainLeftWrap.closest(".rain-split-wrap") : null;
 
 const reportDateEl = document.getElementById("report-date");
 if (reportDateEl) {
@@ -60,6 +64,24 @@ const measureTextWidth = (text, font) => {
   return ctx.measureText(text || "").width;
 };
 
+const setFixedSnowMobileHeights = () => {
+  if (!leftTableMobile || !rightTableMobile) return;
+  const leftHeadRows = Array.from(leftTableMobile.tHead?.rows || []);
+  const rightHeadRows = Array.from(rightTableMobile.tHead?.rows || []);
+  const leftBodyRows = Array.from(leftTableMobile.tBodies[0]?.rows || []);
+  const rightBodyRows = Array.from(rightTableMobile.tBodies[0]?.rows || []);
+
+  const headRowHeights = [30, 30];
+  leftHeadRows.forEach((row, idx) => { row.style.height = `${headRowHeights[idx] || 30}px`; });
+  rightHeadRows.forEach((row, idx) => { row.style.height = `${headRowHeights[idx] || 30}px`; });
+  leftBodyRows.forEach((row) => { row.style.height = "30px"; });
+  rightBodyRows.forEach((row) => { row.style.height = "30px"; });
+
+  if (snowfallMobileSplitWrap) {
+    snowfallMobileSplitWrap.style.setProperty("--snow-header-row1-h", `${headRowHeights[0]}px`);
+  }
+};
+
 const syncTableRowHeights = (lt, rt) => {
   if (!lt || !rt) return;
   const lHeadRows = Array.from(lt.tHead?.rows || []);
@@ -68,7 +90,7 @@ const syncTableRowHeights = (lt, rt) => {
   for (let i = 0; i < hlen; i += 1) {
     lHeadRows[i].style.height = "";
     rHeadRows[i].style.height = "";
-    const h = Math.max(lHeadRows[i].getBoundingClientRect().height, rHeadRows[i].getBoundingClientRect().height);
+    const h = Math.max(lHeadRows[i].offsetHeight, rHeadRows[i].offsetHeight);
     lHeadRows[i].style.height = `${h}px`;
     rHeadRows[i].style.height = `${h}px`;
   }
@@ -78,9 +100,20 @@ const syncTableRowHeights = (lt, rt) => {
   for (let i = 0; i < len; i += 1) {
     lRows[i].style.height = "";
     rRows[i].style.height = "";
-    const h = Math.max(lRows[i].getBoundingClientRect().height, rRows[i].getBoundingClientRect().height);
+    const h = Math.max(lRows[i].offsetHeight, rRows[i].offsetHeight);
     lRows[i].style.height = `${h}px`;
     rRows[i].style.height = `${h}px`;
+  }
+};
+
+const syncStickySecondRowTop = (lt, rt, splitWrap, varName) => {
+  if (!lt || !rt || !splitWrap) return;
+  const leftFirstRow = lt.tHead?.rows?.[0];
+  const rightFirstRow = rt.tHead?.rows?.[0];
+  if (!leftFirstRow || !rightFirstRow) return;
+  const h = Math.max(leftFirstRow.offsetHeight, rightFirstRow.offsetHeight);
+  if (h > 0) {
+    splitWrap.style.setProperty(varName, `${h}px`);
   }
 };
 
@@ -290,6 +323,7 @@ const scheduleTempLayout = () => {
     autoSizeTempQuery();
     autoSizeTempColumns();
     syncTableRowHeights(tempLeftTable, tempRightTable);
+    syncStickySecondRowTop(tempLeftTable, tempRightTable, tempSplitWrap, "--temp-header-row1-h");
   });
 };
 
@@ -298,14 +332,16 @@ const applyLayout = () => {
   if (isCompactLayout()) {
     autoSizeSnowMobileQuery();
     autoSizeSnowMobileRightColumns();
-    syncTableRowHeights(leftTableMobile, rightTableMobile);
+    setFixedSnowMobileHeights();
   } else {
     autoSizeSnowDesktopLeftColumns();
     autoSizeSnowDesktopDayColumns();
     syncTableRowHeights(leftTable, rightTable);
+    syncStickySecondRowTop(leftTable, rightTable, snowfallDesktopSplitWrap, "--snow-header-row1-h");
   }
   autoSizeRainQuery();
   autoSizeRainColumns();
+  syncStickySecondRowTop(rainLeftTable, rainRightTable, rainSplitWrap, "--rain-header-row1-h");
   scheduleTempLayout();
 };
 
