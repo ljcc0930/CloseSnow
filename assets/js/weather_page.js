@@ -197,7 +197,7 @@ const autoSizeSnowMobileQuery = () => {
   const font = window.getComputedStyle(sampleCell).font;
 
   const queryValues = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
-  const queryHeader = header.textContent?.trim() || "resort";
+  const queryHeader = header.textContent?.trim() || "Resort";
   const queryMax = Math.max(
     measureTextWidth(queryHeader, font),
     ...queryValues.map((v) => measureTextWidth(v, font))

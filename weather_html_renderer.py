@@ -104,7 +104,7 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
         <div class="rain-left-wrap" id="rain-left-wrap">
           <table class="rain-left-table">
             <colgroup><col class="col-query"></colgroup>
-            <thead><tr><th class='query-col'>resort</th></tr></thead>
+            <thead><tr><th class='query-col'>Resort</th></tr></thead>
             <tbody>{left_tbody}</tbody>
           </table>
         </div>
@@ -172,7 +172,7 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
 
     left_group = (
         "<tr>"
-        "<th rowspan='2' class='query-col'>resort</th>"
+        "<th rowspan='2' class='query-col'>Resort</th>"
         f"<th colspan='{len(weekly_headers)}'>weekly</th>"
         "</tr>"
     )
@@ -190,7 +190,7 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
     desktop_right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
     desktop_right_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
 
-    mobile_left_head = "<tr><th rowspan='2' class='query-col'>resort</th></tr><tr></tr>"
+    mobile_left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     mobile_right_group = (
         f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
         f"<th colspan='{len(daily_headers)}'>daily</th></tr>"
@@ -271,7 +271,7 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
     min_by_day = {day_idx(h): h for h in min_headers}
     days = sorted(set(max_by_day.keys()) | set(min_by_day.keys()))
 
-    left_head = "<tr><th class='query-col query-top'>resort</th></tr><tr><th class='query-sub'>&nbsp;</th></tr>"
+    left_head = "<tr><th class='query-col query-top'>Resort</th></tr><tr><th class='query-sub'>&nbsp;</th></tr>"
     right_group = "<tr>" + "".join(f"<th colspan='2'>day {d}</th>" for d in days) + "</tr>"
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"
 
@@ -327,12 +327,12 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ski Weather Report</title>
+  <title>Ski Resorts Weather Forcast</title>
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
 <body>
   <main>
-    <h1>Ski Weather Report</h1>
+    <h1>Ski Resorts Weather Forcast</h1>
     <div class="report-date" id="report-date" data-generated-utc="{generated_utc_iso}">
       Generated At: loading...
     </div>
@@ -340,6 +340,9 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     {rain_table}
     {temp_table}
   </main>
+  <footer class="page-footer">
+    Author: Codex, vibed by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a>
+  </footer>
   <script src="assets/js/weather_page.js"></script>
 </body>
 </html>"""
