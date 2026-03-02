@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""
+Dynamic weather page server.
+
+Open the page, and it will run the unified pipeline immediately
+(cache hit => local read; miss => API call), then render the report.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any, Dict, List
+from urllib.parse import parse_qs, urlparse
+
+from ecmwf_unified_backend import run_pipeline
+from render_weather_web import build_html
+
+
+def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for r in reports:
+        row: Dict[str, str] = {
+            "query": str(r.get("query", "")),
+            "week1_total_cm": f"{float(r.get('week1_total_snowfall_cm', 0.0)):.2f}",
+            "week2_total_cm": f"{float(r.get('week2_total_snowfall_cm', 0.0)):.2f}",
+        }
+        daily = r.get("daily", [])
+        for i in range(14):
+            v = daily[i].get("snowfall_cm") if i < len(daily) else None
+            row[f"day_{i+1}_cm"] = "" if v is None else str(v)
+        rows.append(row)
+    return rows
+
+
+def reports_to_rain_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for r in reports:
+        row: Dict[str, str] = {"query": str(r.get("query", ""))}
+        daily = r.get("daily", [])
+        for i in range(14):
+            v = daily[i].get("rain_mm") if i < len(daily) else None
+            row[f"day_{i+1}_rain_mm"] = "" if v is None else str(v)
+        rows.append(row)
+    return rows
+
+
+def reports_to_temp_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for r in reports:
+        row: Dict[str, str] = {
+            "query": str(r.get("query", "")),
+            "matched_name": str(r.get("matched_name", "")),
+        }
+        daily = r.get("daily", [])
+        for i in range(14):
+            d = daily[i] if i < len(daily) else {}
+            max_v = d.get("temperature_max_c")
+            min_v = d.get("temperature_min_c")
+            row[f"day_{i+1}_max_c"] = "" if max_v is None else str(max_v)
+            row[f"day_{i+1}_min_c"] = "" if min_v is None else str(min_v)
+            row[f"day_{i+1}_above_0"] = "1" if (max_v is not None and float(max_v) > 0) else "0"
+        rows.append(row)
+    return rows
+
+
+def make_handler(
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+) -> type[BaseHTTPRequestHandler]:
+    class Handler(BaseHTTPRequestHandler):
+        def _write(self, code: int, body: bytes, content_type: str) -> None:
+            self.send_response(code)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self) -> None:  # noqa: N802
+            parsed = urlparse(self.path)
+            qs = parse_qs(parsed.query)
+            use_default = False
+            resorts: List[str] = []
+            resorts_file = "resorts.txt"
+
+            if "resort" in qs:
+                resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
+                use_default = False
+                resorts_file = ""
+
+            payload = run_pipeline(
+                resorts=resorts,
+                resorts_file=resorts_file,
+                use_default_resorts=use_default,
+                cache_file=cache_file,
+                geocode_cache_hours=geocode_cache_hours,
+                forecast_cache_hours=forecast_cache_hours,
+                write_outputs=False,
+            )
+
+            if parsed.path == "/api/data":
+                body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+                self._write(200, body, "application/json; charset=utf-8")
+                return
+
+            snow_rows = reports_to_snow_rows(payload.get("reports", []))
+            rain_rows = reports_to_rain_rows(payload.get("reports", []))
+            temp_rows = reports_to_temp_rows(payload.get("reports", []))
+            html = build_html(snow_rows, rain_rows, temp_rows)
+            self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
+
+    return Handler
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Serve dynamic ski weather page.")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=8010)
+    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
+    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
+    p.add_argument("--forecast-cache-hours", type=int, default=3)
+    return p.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    handler = make_handler(
+        cache_file=args.cache_file,
+        geocode_cache_hours=args.geocode_cache_hours,
+        forecast_cache_hours=args.forecast_cache_hours,
+    )
+    server = ThreadingHTTPServer((args.host, args.port), handler)
+    print(f"Serving dynamic page at http://{args.host}:{args.port}")
+    print("Open / for page, /api/data for raw JSON.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

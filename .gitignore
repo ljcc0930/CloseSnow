@@ -1,0 +1,39 @@
+# Python cache / bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime caches
+.cache/
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Generated data artifacts (from weather pipelines)
+*.json
+*.csv
+*.xlsx
+*.html
+
+# Large local temp files
+tmp_*.grib2
+tmp_*.idx
+*.grib
+*.grib2
+
+# Keep docs and source scripts tracked
+!README.md
+!*.py
