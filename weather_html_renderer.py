@@ -97,22 +97,10 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
     left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in left_rows)
     right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in right_rows)
     right_header = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
-    unified_header = "<tr><th class='query-col'>resort</th>" + "".join(
-        f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers
-    ) + "</tr>"
-    unified_rows = []
-    for row in data:
-        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
-        for h in daily_headers:
-            val = row.get(h, "")
-            style = rain_color(to_float(val))
-            cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
-
     return f"""
     <section>
       <h2>Rainfall (mm)</h2>
-      <div class="rain-split-wrap desktop-only">
+      <div class="rain-split-wrap">
         <div class="rain-left-wrap" id="rain-left-wrap">
           <table class="rain-left-table">
             <colgroup><col class="col-query"></colgroup>
@@ -130,12 +118,6 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
           </table>
         </div>
       </div>
-      <div class="table-wrap mobile-only rain-unified-wrap">
-        <table class="plain-table rain-unified-table">
-          <thead>{unified_header}</thead>
-          <tbody>{"".join(unified_rows)}</tbody>
-        </table>
-      </div>
     </section>
     """
 
@@ -147,27 +129,46 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
     weekly_headers = [h for h in headers if h.startswith("week")]
     daily_headers = [h for h in headers if h.startswith("day_")]
 
-    left_rows: List[List[str]] = []
-    right_rows: List[List[str]] = []
+    desktop_left_rows: List[List[str]] = []
+    desktop_right_rows: List[List[str]] = []
+    mobile_left_rows: List[str] = []
+    mobile_right_rows: List[str] = []
+
     for r in data:
-        left_cells = []
-        right_cells = []
+        d_left_cells = []
+        d_right_cells = []
+        m_left = f"<tr><td class='query-col'>{html.escape(r.get('query', ''))}</td></tr>"
+        m_right_cells = []
+
         for h in ["query"] + weekly_headers:
             val = r.get(h, "")
             style = ""
             if h.endswith("_cm") and h != "query":
                 style = snow_color(to_float(val))
             klass = "query-col" if h == "query" else ""
-            left_cells.append(f"<td class='{klass}' style='{style}'>{html.escape(val)}</td>")
+            d_left_cells.append(f"<td class='{klass}' style='{style}'>{html.escape(val)}</td>")
+
         for h in daily_headers:
             val = r.get(h, "")
             style = snow_color(to_float(val)) if h.endswith("_cm") else ""
-            right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-        left_rows.append(left_cells)
-        right_rows.append(right_cells)
+            d_right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
 
-    left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in left_rows)
-    right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in right_rows)
+        for h in weekly_headers:
+            val = r.get(h, "")
+            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
+            m_right_cells.append(f"<td class='week-col-cell' style='{style}'>{html.escape(val)}</td>")
+        for h in daily_headers:
+            val = r.get(h, "")
+            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
+            m_right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
+
+        desktop_left_rows.append(d_left_cells)
+        desktop_right_rows.append(d_right_cells)
+        mobile_left_rows.append(m_left)
+        mobile_right_rows.append("<tr>" + "".join(m_right_cells) + "</tr>")
+
+    desktop_left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in desktop_left_rows)
+    desktop_right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in desktop_right_rows)
 
     left_group = (
         "<tr>"
@@ -186,20 +187,20 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
 
     left_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in weekly_headers) + "</tr>"
 
-    right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
-    right_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
+    desktop_right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
+    desktop_right_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
 
-    unified_header = "<tr><th class='query-col'>resort</th>" + "".join(
-        f"<th>{html.escape(short_label(h))}</th>" for h in weekly_headers + daily_headers
-    ) + "</tr>"
-    unified_rows = []
-    for row in data:
-        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
-        for h in weekly_headers + daily_headers:
-            val = row.get(h, "")
-            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
-            cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
+    mobile_left_head = "<tr><th rowspan='2' class='query-col'>resort</th></tr><tr></tr>"
+    mobile_right_group = (
+        f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
+        f"<th colspan='{len(daily_headers)}'>daily</th></tr>"
+    )
+    mobile_right_detail = (
+        "<tr>"
+        + "".join(f"<th class='week-col-cell'>{html.escape(short_label(h))}</th>" for h in weekly_headers)
+        + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers)
+        + "</tr>"
+    )
 
     return f"""
     <section>
@@ -213,7 +214,7 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
               <col class='col-week'>
             </colgroup>
             <thead>{left_group}{left_detail}</thead>
-            <tbody>{left_tbody}</tbody>
+            <tbody>{desktop_left_tbody}</tbody>
           </table>
         </div>
         <div class="snowfall-right-wrap" id="snowfall-right-wrap">
@@ -221,16 +222,31 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
             <colgroup>
               {"".join("<col class='col-day'>" for _ in daily_headers)}
             </colgroup>
-            <thead>{right_group}{right_detail}</thead>
-            <tbody>{right_tbody}</tbody>
+            <thead>{desktop_right_group}{desktop_right_detail}</thead>
+            <tbody>{desktop_right_tbody}</tbody>
           </table>
         </div>
       </div>
-      <div class="table-wrap mobile-only snowfall-unified-wrap">
-        <table class="plain-table snowfall-unified-table">
-          <thead>{unified_header}</thead>
-          <tbody>{"".join(unified_rows)}</tbody>
-        </table>
+      <div class="snowfall-split-wrap mobile-only">
+        <div class="snowfall-left-wrap" id="snowfall-left-wrap-mobile">
+          <table class="snowfall-left-table">
+            <colgroup>
+              <col class='col-query'>
+            </colgroup>
+            <thead>{mobile_left_head}</thead>
+            <tbody>{"".join(mobile_left_rows)}</tbody>
+          </table>
+        </div>
+        <div class="snowfall-right-wrap" id="snowfall-right-wrap-mobile">
+          <table class="snowfall-right-table">
+            <colgroup>
+              {"".join("<col class='col-week-right'>" for _ in weekly_headers)}
+              {"".join("<col class='col-day'>" for _ in daily_headers)}
+            </colgroup>
+            <thead>{mobile_right_group}{mobile_right_detail}</thead>
+            <tbody>{"".join(mobile_right_rows)}</tbody>
+          </table>
+        </div>
       </div>
     </section>
     """
@@ -275,28 +291,10 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
             cells.append(f"<td style='{max_style}'>{html.escape(max_v)}</td>")
         right_rows.append("<tr>" + "".join(cells) + "</tr>")
 
-    unified_header_cells = ["<th class='query-col'>resort</th>"]
-    for d in days:
-        unified_header_cells.append(f"<th>day {d} min</th>")
-        unified_header_cells.append(f"<th>day {d} max</th>")
-    unified_rows = []
-    for row in data:
-        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
-        for d in days:
-            min_h = min_by_day.get(d)
-            max_h = max_by_day.get(d)
-            min_v = row.get(min_h, "") if min_h else ""
-            max_v = row.get(max_h, "") if max_h else ""
-            min_style = temp_color(to_float(min_v)) if min_h else ""
-            max_style = temp_color(to_float(max_v)) if max_h else ""
-            cells.append(f"<td style='{min_style}'>{html.escape(min_v)}</td>")
-            cells.append(f"<td style='{max_style}'>{html.escape(max_v)}</td>")
-        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
-
     return f"""
     <section>
       <h2>Temperature (°C)</h2>
-      <div class="temperature-split-wrap desktop-only">
+      <div class="temperature-split-wrap">
         <div class="temperature-left-wrap" id="temperature-left-wrap">
           <table class="temperature-left-table" id="temperature-left-table">
             <colgroup><col class="col-query"></colgroup>
@@ -313,12 +311,6 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
             <tbody>{"".join(right_rows)}</tbody>
           </table>
         </div>
-      </div>
-      <div class="table-wrap mobile-only temperature-unified-wrap">
-        <table class="plain-table temperature-unified-table">
-          <thead><tr>{"".join(unified_header_cells)}</tr></thead>
-          <tbody>{"".join(unified_rows)}</tbody>
-        </table>
       </div>
     </section>
     """

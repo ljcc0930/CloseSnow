@@ -75,6 +75,9 @@
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
       overflow: hidden;
     }
+    .snowfall-split-wrap.mobile-only {
+      display: none;
+    }
     .snowfall-left-wrap {
       flex: 0 0 auto;
       border-right: 3px solid #94a3b8;
@@ -103,6 +106,9 @@
     .snowfall-right-table {
       min-width: 0;
       width: auto;
+    }
+    .snowfall-right-table col.col-week-right {
+      width: 100px;
     }
     .snowfall-right-table col.col-day {
       width: 66px;
@@ -259,27 +265,10 @@
     body.mobile-simple .mobile-only {
       display: block;
     }
-    body.mobile-simple main {
-      padding: 12px;
-    }
-    body.mobile-simple h1 {
-      font-size: 22px;
-    }
-    body.mobile-simple h2 {
-      font-size: 17px;
-    }
-    body.mobile-simple th,
-    body.mobile-simple td {
-      font-size: 11px;
-      padding: 5px 6px;
+    body.mobile-simple .snowfall-split-wrap.mobile-only {
+      display: flex;
     }
     body.mobile-simple .plain-table {
       min-width: 0;
-    }
-    body.mobile-simple .mobile-only thead th:not(:first-child) {
-      display: none;
-    }
-    body.mobile-simple .mobile-only thead th:first-child {
-      text-align: left;
     }
   
