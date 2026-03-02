@@ -269,12 +269,9 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     snow_table = render_snowfall_table(snowfall)
     rain_table = render_rain_table(rain)
     temp_table = render_temperature_table(temp)
-    now_local = datetime.now().astimezone()
     now_utc = datetime.now(timezone.utc)
-    report_date = (
-        f"{now_local.strftime('%Y-%m-%d %H:%M:%S %Z (%z)')} "
-        f"| UTC {now_utc.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
+    generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    generated_utc_text = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -527,12 +524,37 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     .temperature-right-table td {{
       background-clip: padding-box;
     }}
+    @media (max-width: 768px) {{
+      main {{
+        padding: 12px;
+      }}
+      h1 {{
+        font-size: 22px;
+      }}
+      h2 {{
+        font-size: 17px;
+      }}
+      th, td {{
+        font-size: 11px;
+        padding: 5px 6px;
+      }}
+      .snowfall-left-table thead th,
+      .snowfall-right-table thead th,
+      .rain-left-table thead th,
+      .rain-right-table thead th,
+      .temperature-left-table thead th,
+      .temperature-right-table thead th {{
+        position: static;
+      }}
+    }}
   </style>
 </head>
 <body>
   <main>
     <h1>Ski Weather Report</h1>
-    <div class="report-date">Generated At: {report_date}</div>
+    <div class="report-date" id="report-date" data-generated-utc="{generated_utc_iso}">
+      Generated At (Local): loading... | UTC: {generated_utc_text}
+    </div>
     {snow_table}
     {rain_table}
     {temp_table}
@@ -550,6 +572,27 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     const rainRightWrap = document.getElementById("rain-right-wrap");
     const rainLeftTable = rainLeftWrap ? rainLeftWrap.querySelector(".rain-left-table") : null;
     const rainRightTable = rainRightWrap ? rainRightWrap.querySelector(".rain-right-table") : null;
+    const reportDateEl = document.getElementById("report-date");
+    if (reportDateEl) {{
+      const utcRaw = reportDateEl.getAttribute("data-generated-utc");
+      const utcDate = utcRaw ? new Date(utcRaw) : null;
+      if (utcDate && !Number.isNaN(utcDate.getTime())) {{
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
+        const localText = utcDate.toLocaleString(undefined, {{
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+          timeZoneName: "short",
+        }});
+        const utcText = utcDate.toISOString().replace("T", " ").replace(".000Z", " UTC").replace("Z", " UTC");
+        reportDateEl.textContent = `Generated At (Local): ${{localText}} (${{tz}}) | UTC: ${{utcText}}`;
+      }}
+    }}
+    const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
     const measureTextWidth = (text, font) => {{
       const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
       const ctx = canvas.getContext("2d");
@@ -581,8 +624,9 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         ...weekValues.map((v) => measureTextWidth(v, font))
       );
 
-      const queryWidth = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
-      const weekWidth = Math.max(90, Math.min(130, Math.ceil(weekMax + 24)));
+      const mobile = isMobile();
+      const queryWidth = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(queryMax + (mobile ? 18 : 28))));
+      const weekWidth = Math.max(mobile ? 64 : 90, Math.min(mobile ? 96 : 130, Math.ceil(weekMax + (mobile ? 14 : 24))));
 
       leftWrap.style.setProperty("--query-col-w", `${{queryWidth}}px`);
       leftWrap.style.setProperty("--week-col-w", `${{weekWidth}}px`);
@@ -593,7 +637,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       const dayCount = dayCols.length;
       if (!dayCount) return;
 
-      const minDayWidth = 66;
+      const minDayWidth = isMobile() ? 52 : 66;
       const wrapWidth = rightWrap.clientWidth;
       const minTotal = minDayWidth * dayCount;
 
@@ -627,7 +671,8 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         measureTextWidth(queryHeader, font),
         ...values.map((v) => measureTextWidth(v, font))
       );
-      const queryW = Math.max(150, Math.min(240, Math.ceil(maxW + 28)));
+      const mobile = isMobile();
+      const queryW = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(maxW + (mobile ? 18 : 28))));
       rainLeftWrap.style.setProperty("--rain-query-w", `${{queryW}}px`);
     }};
     const autoSizeRainColumns = () => {{
@@ -635,7 +680,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       const cols = Array.from(rainRightTable.querySelectorAll("col.col-day"));
       const count = cols.length;
       if (!count) return;
-      const minW = 66;
+      const minW = isMobile() ? 52 : 66;
       const wrapW = rainRightWrap.clientWidth;
       const minTotal = minW * count;
       if (wrapW >= minTotal) {{
@@ -663,7 +708,8 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         measureTextWidth(queryHeader, font),
         ...queryValues.map((v) => measureTextWidth(v, font))
       );
-      const queryW = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
+      const mobile = isMobile();
+      const queryW = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(queryMax + (mobile ? 18 : 28))));
       tempLeftWrap.style.setProperty("--temp-query-w", `${{queryW}}px`);
     }};
     const autoSizeTempColumns = () => {{
@@ -671,7 +717,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       const cols = Array.from(tempRightTable.querySelectorAll("col.col-temp"));
       const count = cols.length;
       if (!count) return;
-      const minW = 50;
+      const minW = isMobile() ? 42 : 50;
       const wrapW = tempRightWrap.clientWidth;
       const minTotal = minW * count;
       if (wrapW >= minTotal) {{
