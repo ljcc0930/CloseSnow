@@ -60,7 +60,6 @@ def temp_color(v: Optional[float]) -> str:
         return f"background:rgb({r},{g},{b});"
     # >10C: light red
     return "background:#FFD6D6;"
-    return ""
 
 
 def rain_color(v: Optional[float]) -> str:

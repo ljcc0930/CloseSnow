@@ -33,6 +33,8 @@ from typing import Any, Dict, List, Optional, Tuple
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+FORECAST_DAYS = 14
+DAYS_PER_WEEK = 7
 
 DEFAULT_RESORTS = [
     "steamboat, co",
@@ -202,7 +204,7 @@ def fetch_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int)
         {
             "latitude": location.latitude,
             "longitude": location.longitude,
-            "forecast_days": 14,
+            "forecast_days": FORECAST_DAYS,
             "timezone": "auto",
             "models": "ecmwf_ifs025",
             "daily": "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min",
@@ -252,10 +254,10 @@ def build_report(location: ResortLocation, forecast: Dict[str, Any]) -> Dict[str
             }
         )
 
-    snow_w1 = snowfall[0:7]
-    snow_w2 = snowfall[7:14]
-    rain_w1 = rain[0:7]
-    rain_w2 = rain[7:14]
+    snow_w1 = snowfall[0:DAYS_PER_WEEK]
+    snow_w2 = snowfall[DAYS_PER_WEEK:FORECAST_DAYS]
+    rain_w1 = rain[0:DAYS_PER_WEEK]
+    rain_w2 = rain[DAYS_PER_WEEK:FORECAST_DAYS]
 
     return {
         "query": location.query,
@@ -277,7 +279,7 @@ def build_report(location: ResortLocation, forecast: Dict[str, Any]) -> Dict[str
 
 
 def write_snow_csv(path: str, reports: List[Dict[str, Any]]) -> None:
-    fields = ["query", "week1_total_cm", "week2_total_cm"] + [f"day_{i}_cm" for i in range(1, 15)]
+    fields = ["query", "week1_total_cm", "week2_total_cm"] + [f"day_{i}_cm" for i in range(1, FORECAST_DAYS + 1)]
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
@@ -291,14 +293,14 @@ def write_snow_csv(path: str, reports: List[Dict[str, Any]]) -> None:
                 "week2_total_cm": f"{r['week2_total_snowfall_cm']:.2f}",
             }
             daily = r.get("daily", [])
-            for i in range(14):
+            for i in range(FORECAST_DAYS):
                 v = daily[i]["snowfall_cm"] if i < len(daily) else None
                 row[f"day_{i+1}_cm"] = v if v is not None else ""
             w.writerow(row)
 
 
 def write_rain_csv(path: str, reports: List[Dict[str, Any]]) -> None:
-    fields = ["query"] + [f"day_{i}_rain_mm" for i in range(1, 15)]
+    fields = ["query"] + [f"day_{i}_rain_mm" for i in range(1, FORECAST_DAYS + 1)]
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
@@ -308,16 +310,16 @@ def write_rain_csv(path: str, reports: List[Dict[str, Any]]) -> None:
         for r in reports:
             row: Dict[str, Any] = {"query": r["query"]}
             daily = r.get("daily", [])
-            for i in range(14):
+            for i in range(FORECAST_DAYS):
                 v = daily[i]["rain_mm"] if i < len(daily) else None
                 row[f"day_{i+1}_rain_mm"] = v if v is not None else ""
             w.writerow(row)
 
 
 def write_temp_csv(path: str, reports: List[Dict[str, Any]]) -> None:
-    max_cols = [f"day_{i}_max_c" for i in range(1, 15)]
-    min_cols = [f"day_{i}_min_c" for i in range(1, 15)]
-    flag_cols = [f"day_{i}_above_0" for i in range(1, 15)]
+    max_cols = [f"day_{i}_max_c" for i in range(1, FORECAST_DAYS + 1)]
+    min_cols = [f"day_{i}_min_c" for i in range(1, FORECAST_DAYS + 1)]
+    flag_cols = [f"day_{i}_above_0" for i in range(1, FORECAST_DAYS + 1)]
     fields = ["query", "matched_name"] + max_cols + min_cols + flag_cols
     parent = os.path.dirname(path)
     if parent:
@@ -328,7 +330,7 @@ def write_temp_csv(path: str, reports: List[Dict[str, Any]]) -> None:
         for r in reports:
             row: Dict[str, Any] = {"query": r["query"], "matched_name": r.get("matched_name", "")}
             daily = r.get("daily", [])
-            for i in range(14):
+            for i in range(FORECAST_DAYS):
                 day = daily[i] if i < len(daily) else {}
                 row[f"day_{i+1}_max_c"] = day.get("temperature_max_c", "")
                 row[f"day_{i+1}_min_c"] = day.get("temperature_min_c", "")
@@ -353,7 +355,7 @@ def parse_args() -> argparse.Namespace:
 
 def read_resorts(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        return [line.strip() for line in f if line.strip() and not line.lstrip().startswith("#")]
 
 
 def run_pipeline(
@@ -402,7 +404,7 @@ def run_pipeline(
     out = {
         "source": "Open-Meteo",
         "model": "ecmwf_ifs025",
-        "forecast_days": 14,
+        "forecast_days": FORECAST_DAYS,
         "units": {
             "snowfall_cm": "cm",
             "rain_mm": "mm",

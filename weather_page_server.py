@@ -17,6 +17,8 @@ from urllib.parse import parse_qs, urlparse
 from ecmwf_unified_backend import run_pipeline
 from render_weather_web import build_html
 
+FORECAST_DAYS = 14
+
 
 def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
@@ -27,7 +29,7 @@ def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
             "week2_total_cm": f"{float(r.get('week2_total_snowfall_cm', 0.0)):.2f}",
         }
         daily = r.get("daily", [])
-        for i in range(14):
+        for i in range(FORECAST_DAYS):
             v = daily[i].get("snowfall_cm") if i < len(daily) else None
             row[f"day_{i+1}_cm"] = "" if v is None else str(v)
         rows.append(row)
@@ -39,7 +41,7 @@ def reports_to_rain_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     for r in reports:
         row: Dict[str, str] = {"query": str(r.get("query", ""))}
         daily = r.get("daily", [])
-        for i in range(14):
+        for i in range(FORECAST_DAYS):
             v = daily[i].get("rain_mm") if i < len(daily) else None
             row[f"day_{i+1}_rain_mm"] = "" if v is None else str(v)
         rows.append(row)
@@ -54,7 +56,7 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
             "matched_name": str(r.get("matched_name", "")),
         }
         daily = r.get("daily", [])
-        for i in range(14):
+        for i in range(FORECAST_DAYS):
             d = daily[i] if i < len(daily) else {}
             max_v = d.get("temperature_max_c")
             min_v = d.get("temperature_min_c")
@@ -81,19 +83,17 @@ def make_handler(
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
-            use_default = False
             resorts: List[str] = []
             resorts_file = "resorts.txt"
 
             if "resort" in qs:
                 resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
-                use_default = False
                 resorts_file = ""
 
             payload = run_pipeline(
                 resorts=resorts,
                 resorts_file=resorts_file,
-                use_default_resorts=use_default,
+                use_default_resorts=False,
                 cache_file=cache_file,
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
