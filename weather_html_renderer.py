@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import html
-from datetime import date
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 
@@ -269,7 +269,12 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     snow_table = render_snowfall_table(snowfall)
     rain_table = render_rain_table(rain)
     temp_table = render_temperature_table(temp)
-    report_date = date.today().isoformat()
+    now_local = datetime.now().astimezone()
+    now_utc = datetime.now(timezone.utc)
+    report_date = (
+        f"{now_local.strftime('%Y-%m-%d %H:%M:%S %Z (%z)')} "
+        f"| UTC {now_utc.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -527,7 +532,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
 <body>
   <main>
     <h1>Ski Weather Report</h1>
-    <div class="report-date">Date: {report_date}</div>
+    <div class="report-date">Generated At: {report_date}</div>
     {snow_table}
     {rain_table}
     {temp_table}
