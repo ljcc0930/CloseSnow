@@ -265,7 +265,7 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
     min_by_day = {day_idx(h): h for h in min_headers}
     days = sorted(set(max_by_day.keys()) | set(min_by_day.keys()))
 
-    left_head = "<tr><th class='query-col query-top'>Resort</th></tr><tr><th class='query-sub'>&nbsp;</th></tr>"
+    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = "<tr>" + "".join(f"<th colspan='2'>day {d}</th>" for d in days) + "</tr>"
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"
 

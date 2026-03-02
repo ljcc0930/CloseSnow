@@ -264,15 +264,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .temperature-left-table .query-top {
-      border-bottom: none;
-      background: #e5e7eb;
-    }
-    .temperature-left-table .query-sub {
-      color: transparent;
-      user-select: none;
-      background: #e5e7eb;
-    }
     .temperature-left-table td,
     .temperature-right-table td {
       background-clip: padding-box;
