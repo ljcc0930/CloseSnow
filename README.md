@@ -96,11 +96,11 @@ python3 render_weather_web.py \
 
 These scripts are still available but are no longer the recommended primary path:
 
-- `ecmwf_ski_forecast.py`: snowfall only (Open-Meteo)
-- `ecmwf_rain_pipeline.py`: rainfall only (Open-Meteo)
-- `ecmwf_temperature_table.py`: temperature only (Open-Meteo)
-- `ecmwf_snowfall_opendata.py`: ECMWF Open Data GRIB snowfall flow
-- `colorize_weather_excel.py`: generate a colorized Excel workbook from snowfall/temperature CSV files
+- `legacy/ecmwf_ski_forecast.py`: snowfall only (Open-Meteo)
+- `legacy/ecmwf_rain_pipeline.py`: rainfall only (Open-Meteo)
+- `legacy/ecmwf_temperature_table.py`: temperature only (Open-Meteo)
+- `legacy/ecmwf_snowfall_opendata.py`: ECMWF Open Data GRIB snowfall flow
+- `legacy/colorize_weather_excel.py`: generate a colorized Excel workbook from snowfall/temperature CSV files
 
 ## Optional Dependencies
 
