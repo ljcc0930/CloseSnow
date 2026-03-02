@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+import json
+import os
+import time
+import urllib.parse
+from datetime import date
+from typing import Any, Dict, List, Optional, Tuple
+
+
+class JsonCache:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.data: Dict[str, Any] = {"version": 1, "entries": {}}
+        self.hits = 0
+        self.misses = 0
+        self._load()
+
+    def _load(self) -> None:
+        if not os.path.exists(self.path):
+            return
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                parsed = json.load(f)
+            if isinstance(parsed, dict) and isinstance(parsed.get("entries"), dict):
+                self.data = parsed
+        except Exception:
+            self.data = {"version": 1, "entries": {}}
+
+    def get(self, key: str, max_age_seconds: int) -> Optional[Any]:
+        item = self.data["entries"].get(key)
+        if not item:
+            self.misses += 1
+            return None
+        ts = item.get("ts")
+        if not isinstance(ts, (int, float)):
+            self.misses += 1
+            return None
+        if time.time() - ts > max_age_seconds:
+            self.misses += 1
+            return None
+        self.hits += 1
+        return item.get("value")
+
+    def set(self, key: str, value: Any) -> None:
+        self.data["entries"][key] = {"ts": time.time(), "value": value}
+
+    def save(self) -> None:
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, ensure_ascii=False)
+
+
+def dated_cache_path(path: str, d: Optional[date] = None) -> str:
+    if d is None:
+        d = date.today()
+    base, ext = os.path.splitext(path)
+    suffix = d.isoformat()
+    if ext:
+        return f"{base}_{suffix}{ext}"
+    return f"{path}_{suffix}"
+
+
+def canonical_query(params: Dict[str, Any]) -> str:
+    pairs: List[Tuple[str, str]] = []
+    for key in sorted(params.keys()):
+        value = params[key]
+        if isinstance(value, list):
+            for item in value:
+                pairs.append((key, str(item)))
+        else:
+            pairs.append((key, str(value)))
+    return urllib.parse.urlencode(pairs, doseq=True)
