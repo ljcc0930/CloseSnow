@@ -1,0 +1,10 @@
+# Main workflow (ecmwf_unified_backend.py, weather_page_server.py, render_weather_web.py)
+# uses Python standard library only.
+#
+# Dependencies below are required for legacy tools under ./legacy.
+
+openpyxl>=3.1
+numpy>=1.26
+xarray>=2024.1.0
+cfgrib>=0.9.14
+ecmwf-opendata>=0.3.20
