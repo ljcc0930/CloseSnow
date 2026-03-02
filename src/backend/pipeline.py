@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
@@ -9,6 +10,8 @@ from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAU
 from src.backend.open_meteo import fetch_forecast, geocode
 from src.backend.report_builder import build_report
 from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, write_unified_json
+
+logger = logging.getLogger(__name__)
 
 
 def read_resorts(path: str) -> List[str]:
@@ -83,6 +86,7 @@ def run_pipeline(
 
     seen = set()
     selected = [r for r in selected if not (r in seen or seen.add(r))]
+    logger.info("Pipeline start: resorts=%d", len(selected))
 
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
@@ -95,15 +99,26 @@ def run_pipeline(
 
     reports: List[Dict[str, Any]] = []
     failed: List[Dict[str, str]] = []
-    for resort in selected:
+    for idx, resort in enumerate(selected, start=1):
+        logger.info("Resort %d/%d: start %s", idx, len(selected), resort)
         try:
             loc = geocode(resort, cache=cache, ttl_seconds=geocode_ttl, coord_cache=coord_cache)
             if not loc:
+                logger.info("Resort %d/%d: geocode failed %s", idx, len(selected), resort)
                 failed.append({"query": resort, "reason": "No geocoding match"})
                 continue
             forecast = fetch_forecast(loc, cache=cache, ttl_seconds=forecast_ttl)
             reports.append(build_report(loc, forecast))
+            logger.info(
+                "Resort %d/%d: success %s (lat=%.4f, lon=%.4f)",
+                idx,
+                len(selected),
+                resort,
+                loc.latitude,
+                loc.longitude,
+            )
         except Exception as exc:  # noqa: BLE001
+            logger.info("Resort %d/%d: failed %s (%s)", idx, len(selected), resort, exc)
             failed.append({"query": resort, "reason": str(exc)})
 
     out = {
@@ -138,4 +153,11 @@ def run_pipeline(
         write_rain_csv(rain_csv, reports)
         write_temp_csv(temp_csv, reports)
 
+    logger.info(
+        "Pipeline done: success=%d failed=%d cache_hits=%d cache_misses=%d",
+        len(reports),
+        len(failed),
+        cache.hits,
+        cache.misses,
+    )
     return out

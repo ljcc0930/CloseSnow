@@ -11,13 +11,13 @@ def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     for report in reports:
         row: Dict[str, str] = {
             "query": str(report.get("query", "")),
-            "week1_total_cm": f"{float(report.get('week1_total_snowfall_cm', 0.0)):.2f}",
-            "week2_total_cm": f"{float(report.get('week2_total_snowfall_cm', 0.0)):.2f}",
+            "week1_total_cm": f"{float(report.get('week1_total_snowfall_cm', 0.0)):.1f}",
+            "week2_total_cm": f"{float(report.get('week2_total_snowfall_cm', 0.0)):.1f}",
         }
         daily = report.get("daily", [])
         for day_idx in range(FORECAST_DAYS):
             value = daily[day_idx].get("snowfall_cm") if day_idx < len(daily) else None
-            row[f"day_{day_idx+1}_cm"] = "" if value is None else str(value)
+            row[f"day_{day_idx+1}_cm"] = "" if value is None else f"{float(value):.1f}"
         rows.append(row)
     return rows
 

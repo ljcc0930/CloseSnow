@@ -6,6 +6,7 @@ Static weather HTML renderer using the same data-to-table logic as weather_page_
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 import sys
 from typing import List
@@ -43,6 +44,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     args = parse_args()
 
     resorts: List[str] = [r.strip() for r in args.resort if r.strip()]
