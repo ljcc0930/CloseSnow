@@ -1,0 +1,78 @@
+name: Build and Deploy Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    # Cover both PST (UTC-8) and PDT (UTC-7); runtime gate keeps only 00:01 America/Los_Angeles.
+    - cron: "1 7 * * *"
+    - cron: "1 8 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Schedule gate (00:01 America/Los_Angeles)
+        id: gate
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          now_local="$(TZ=America/Los_Angeles date +%H:%M)"
+          if [ "$now_local" = "00:01" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skip scheduled run at local time: $now_local"
+          fi
+
+      - name: Render static page
+        if: steps.gate.outputs.should_run == 'true'
+        run: |
+          mkdir -p site
+          python weather_page_static_render.py --output-html site/index.html
+
+      - name: Configure Pages
+        if: steps.gate.outputs.should_run == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        if: steps.gate.outputs.should_run == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

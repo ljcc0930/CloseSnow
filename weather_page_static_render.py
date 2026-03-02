@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--output-html", default="output/weather_report_static.html")
+    p.add_argument("--output-html", default="index.html")
     return p.parse_args()
 
 

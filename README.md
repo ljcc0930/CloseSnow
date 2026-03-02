@@ -99,7 +99,7 @@ python3 weather_page_static_render.py \
   --resorts-file resorts.txt \
   --forecast-cache-hours 3 \
   --geocode-cache-hours 720 \
-  --output-html output/weather_report_static.html
+  --output-html index.html
 ```
 
 Or pass resorts directly (repeatable):
@@ -108,10 +108,19 @@ Or pass resorts directly (repeatable):
 python3 weather_page_static_render.py \
   --resort "snowbasin, ut" \
   --resort "snowbird, ut" \
-  --output-html output/weather_report_static.html
+  --output-html index.html
 ```
 
-- Default output path is `output/weather_report_static.html` (folder auto-created).
+- Default output path is `index.html` (good for GitHub Pages root publishing).
+
+## GitHub Pages Automation
+
+- Workflow file: `.github/workflows/deploy-pages.yml`
+- Trigger:
+  - manual (`workflow_dispatch`)
+  - push to `main`
+  - scheduled daily at **00:01 America/Los_Angeles**
+- The workflow runs `weather_page_static_render.py` and deploys `site/index.html` to GitHub Pages.
 
 ## Legacy/Utility Scripts
 
