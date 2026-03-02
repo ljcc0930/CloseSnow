@@ -7,9 +7,11 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 FORECAST_DAYS = 14
 DAYS_PER_WEEK = 7
+API_RETRY_TIMES = 4
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
+COORDINATES_CACHE_FILE = ".cache/resort_coordinates.json"
 
 DEFAULT_RESORTS = [
     "steamboat, co",

@@ -15,7 +15,7 @@ env/
 .ruff_cache/
 
 # Local runtime caches
-.cache/
+.cache/*
 
 # OS / editor noise
 .DS_Store
@@ -27,6 +27,7 @@ env/
 *.csv
 *.xlsx
 *.html
+!.cache/resort_coordinates.json
 
 # Large local temp files
 tmp_*.grib2

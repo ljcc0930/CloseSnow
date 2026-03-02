@@ -53,6 +53,51 @@ class JsonCache:
             json.dump(self.data, f, ensure_ascii=False)
 
 
+class ResortCoordinateCache:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.data: Dict[str, Any] = {"version": 1, "entries": {}}
+        self._dirty = False
+        self._load()
+
+    @staticmethod
+    def _normalize_query(query: str) -> str:
+        return (query or "").strip().lower()
+
+    def _load(self) -> None:
+        if not os.path.exists(self.path):
+            return
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                parsed = json.load(f)
+            if isinstance(parsed, dict) and isinstance(parsed.get("entries"), dict):
+                self.data = parsed
+        except Exception:
+            self.data = {"version": 1, "entries": {}}
+
+    def get(self, query: str) -> Optional[Dict[str, Any]]:
+        key = self._normalize_query(query)
+        value = self.data["entries"].get(key)
+        if isinstance(value, dict):
+            return value
+        return None
+
+    def set(self, query: str, value: Dict[str, Any]) -> None:
+        key = self._normalize_query(query)
+        self.data["entries"][key] = value
+        self._dirty = True
+
+    def save(self) -> None:
+        if not self._dirty:
+            return
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, ensure_ascii=False)
+        self._dirty = False
+
+
 def dated_cache_path(path: str, d: Optional[date] = None) -> str:
     if d is None:
         d = date.today()

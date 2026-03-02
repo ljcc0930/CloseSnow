@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
+import os
 from typing import Any, Dict, List, Optional
 
-from src.backend.cache import JsonCache, dated_cache_path
-from src.backend.constants import DEFAULT_RESORTS, DEFAULT_RESORTS_FILE, FORECAST_DAYS
+from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
+from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE, FORECAST_DAYS
 from src.backend.open_meteo import fetch_forecast, geocode
 from src.backend.report_builder import build_report
 from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, write_unified_json
@@ -12,6 +14,50 @@ from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, 
 def read_resorts(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip() and not line.lstrip().startswith("#")]
+
+
+def seed_coordinate_cache_from_unified(cache: ResortCoordinateCache, path: str) -> None:
+    if not path or not os.path.exists(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except Exception:
+        return
+
+    reports = payload.get("reports")
+    if not isinstance(reports, list):
+        return
+
+    for item in reports:
+        if not isinstance(item, dict):
+            continue
+        query = item.get("query")
+        if not isinstance(query, str) or not query.strip():
+            continue
+        lat = item.get("input_latitude")
+        lon = item.get("input_longitude")
+        if lat is None or lon is None:
+            lat = item.get("latitude")
+            lon = item.get("longitude")
+        if lat is None or lon is None:
+            continue
+        try:
+            lat_v = float(lat)
+            lon_v = float(lon)
+        except (TypeError, ValueError):
+            continue
+
+        cache.set(
+            query,
+            {
+                "name": str(item.get("matched_name") or item.get("name") or query),
+                "latitude": lat_v,
+                "longitude": lon_v,
+                "country": item.get("country"),
+                "admin1": item.get("admin1"),
+            },
+        )
 
 
 def run_pipeline(
@@ -40,6 +86,10 @@ def run_pipeline(
 
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
+    coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
+    seed_coordinate_cache_from_unified(coord_cache, ".cache/resorts_weather_unified.json")
+    if output_json != ".cache/resorts_weather_unified.json":
+        seed_coordinate_cache_from_unified(coord_cache, output_json)
     geocode_ttl = geocode_cache_hours * 3600
     forecast_ttl = forecast_cache_hours * 3600
 
@@ -47,7 +97,7 @@ def run_pipeline(
     failed: List[Dict[str, str]] = []
     for resort in selected:
         try:
-            loc = geocode(resort, cache=cache, ttl_seconds=geocode_ttl)
+            loc = geocode(resort, cache=cache, ttl_seconds=geocode_ttl, coord_cache=coord_cache)
             if not loc:
                 failed.append({"query": resort, "reason": "No geocoding match"})
                 continue
@@ -81,6 +131,7 @@ def run_pipeline(
     }
 
     cache.save()
+    coord_cache.save()
     if write_outputs:
         write_unified_json(output_json, out)
         write_snow_csv(snow_csv, reports)
