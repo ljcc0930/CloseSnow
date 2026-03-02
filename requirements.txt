@@ -1,4 +1,6 @@
-# Main workflow (ecmwf_unified_backend.py, weather_page_server.py, render_weather_web.py)
+# Main workflow
+# (ecmwf_unified_backend.py, weather_page_server.py, weather_page_static_render.py,
+#  weather_report_transform.py, weather_html_renderer.py)
 # uses Python standard library only.
 #
 # Dependencies below are required for legacy tools under ./legacy.

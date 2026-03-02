@@ -11,60 +11,16 @@ from __future__ import annotations
 import argparse
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Dict, List
+from typing import List
 from urllib.parse import parse_qs, urlparse
 
 from ecmwf_unified_backend import run_pipeline
-from render_weather_web import build_html
-
-FORECAST_DAYS = 14
-
-
-def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-    for r in reports:
-        row: Dict[str, str] = {
-            "query": str(r.get("query", "")),
-            "week1_total_cm": f"{float(r.get('week1_total_snowfall_cm', 0.0)):.2f}",
-            "week2_total_cm": f"{float(r.get('week2_total_snowfall_cm', 0.0)):.2f}",
-        }
-        daily = r.get("daily", [])
-        for i in range(FORECAST_DAYS):
-            v = daily[i].get("snowfall_cm") if i < len(daily) else None
-            row[f"day_{i+1}_cm"] = "" if v is None else str(v)
-        rows.append(row)
-    return rows
-
-
-def reports_to_rain_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-    for r in reports:
-        row: Dict[str, str] = {"query": str(r.get("query", ""))}
-        daily = r.get("daily", [])
-        for i in range(FORECAST_DAYS):
-            v = daily[i].get("rain_mm") if i < len(daily) else None
-            row[f"day_{i+1}_rain_mm"] = "" if v is None else str(v)
-        rows.append(row)
-    return rows
-
-
-def reports_to_temp_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-    for r in reports:
-        row: Dict[str, str] = {
-            "query": str(r.get("query", "")),
-            "matched_name": str(r.get("matched_name", "")),
-        }
-        daily = r.get("daily", [])
-        for i in range(FORECAST_DAYS):
-            d = daily[i] if i < len(daily) else {}
-            max_v = d.get("temperature_max_c")
-            min_v = d.get("temperature_min_c")
-            row[f"day_{i+1}_max_c"] = "" if max_v is None else str(max_v)
-            row[f"day_{i+1}_min_c"] = "" if min_v is None else str(min_v)
-            row[f"day_{i+1}_above_0"] = "1" if (max_v is not None and float(max_v) > 0) else "0"
-        rows.append(row)
-    return rows
+from weather_html_renderer import build_html
+from weather_report_transform import (
+    reports_to_rain_rows,
+    reports_to_snow_rows,
+    reports_to_temp_rows,
+)
 
 
 def make_handler(

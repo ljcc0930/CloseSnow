@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
-import csv
 import html
 from datetime import date
-from pathlib import Path
 from typing import Dict, List, Optional
 
 
@@ -17,11 +14,6 @@ def to_float(value: str) -> Optional[float]:
         return float(v)
     except ValueError:
         return None
-
-
-def read_csv(path: Path) -> List[Dict[str, str]]:
-    with path.open("r", encoding="utf-8", newline="") as f:
-        return list(csv.DictReader(f))
 
 
 def snow_color(v: Optional[float]) -> str:
@@ -74,26 +66,6 @@ def rain_color(v: Optional[float]) -> str:
     g = round(255 + (239 - 255) * x)
     b = round(255 + (216 - 255) * x)
     return f"background:rgb({r},{g},{b});"
-
-
-def build_table(headers: List[str], rows: List[List[str]], title: str) -> str:
-    thead = "".join(f"<th>{html.escape(h)}</th>" for h in headers)
-    body_rows = []
-    for row in rows:
-        tds = "".join(row)
-        body_rows.append(f"<tr>{tds}</tr>")
-    tbody = "".join(body_rows)
-    return f"""
-    <section>
-      <h2>{html.escape(title)}</h2>
-      <div class="table-wrap">
-        <table class="plain-table">
-          <thead><tr>{thead}</tr></thead>
-          <tbody>{tbody}</tbody>
-        </table>
-      </div>
-    </section>
-    """
 
 
 def render_rain_table(data: List[Dict[str, str]]) -> str:
@@ -785,25 +757,3 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
   </script>
 </body>
 </html>"""
-
-
-def main() -> int:
-    p = argparse.ArgumentParser(description="Render snowfall/temperature CSV files to a web report.")
-    p.add_argument("--snowfall-csv", default=".cache/resorts_snowfall_daily.csv")
-    p.add_argument("--rain-csv", default=".cache/resorts_rainfall_daily.csv")
-    p.add_argument("--temperature-csv", default=".cache/resorts_temperature_daily.csv")
-    p.add_argument("--output-html", default="weather_report.html")
-    args = p.parse_args()
-
-    snow = read_csv(Path(args.snowfall_csv))
-    rain_path = Path(args.rain_csv)
-    rain = read_csv(rain_path) if rain_path.exists() else []
-    temp = read_csv(Path(args.temperature_csv))
-    out = Path(args.output_html)
-    out.write_text(build_html(snow, rain, temp), encoding="utf-8")
-    print(f"Done: {out}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

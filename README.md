@@ -7,16 +7,26 @@ The main workflow uses **Open-Meteo ECMWF IFS 0.25** and fetches 14-day snowfall
 
 - `ecmwf_unified_backend.py`: unified backend (primary entrypoint, recommended)
 - `weather_page_server.py`: dynamic web page (runs backend on each request, cache-aware)
-- `render_weather_web.py`: static page renderer (builds `weather_report.html` from CSV files)
+- `weather_page_static_render.py`: static page renderer (uses the same payload-to-HTML logic as dynamic server)
+- `weather_report_transform.py`: shared report-to-table transformation helpers
+- `weather_html_renderer.py`: shared HTML rendering helpers
 
 ## Quick Start
 
 1. Prepare Python (3.9+ recommended).
-2. Install dependencies as needed (main workflow uses only the standard library; optional tools are listed below).
+2. Install dependencies if you need legacy tools.
 3. Run the unified backend:
 
 ```bash
 python3 ecmwf_unified_backend.py
+```
+
+If you only use the core workflow, no third-party package install is required.
+
+If you also use scripts under `legacy/`:
+
+```bash
+pip install -r requirements.txt
 ```
 
 Default outputs:
@@ -82,15 +92,26 @@ python3 weather_page_server.py --host 127.0.0.1 --port 8010
 
 ## Static HTML Renderer
 
-Script: `render_weather_web.py`
+Script: `weather_page_static_render.py`
 
 ```bash
-python3 render_weather_web.py \
-  --snowfall-csv .cache/resorts_snowfall_daily.csv \
-  --rain-csv .cache/resorts_rainfall_daily.csv \
-  --temperature-csv .cache/resorts_temperature_daily.csv \
-  --output-html weather_report.html
+python3 weather_page_static_render.py \
+  --resorts-file resorts.txt \
+  --forecast-cache-hours 3 \
+  --geocode-cache-hours 720 \
+  --output-html output/weather_report_static.html
 ```
+
+Or pass resorts directly (repeatable):
+
+```bash
+python3 weather_page_static_render.py \
+  --resort "snowbasin, ut" \
+  --resort "snowbird, ut" \
+  --output-html output/weather_report_static.html
+```
+
+- Default output path is `output/weather_report_static.html` (folder auto-created).
 
 ## Legacy/Utility Scripts
 
@@ -113,7 +134,7 @@ Optional scripts require additional packages:
 Example:
 
 ```bash
-pip install openpyxl numpy xarray cfgrib ecmwf-opendata
+pip install -r requirements.txt
 ```
 
 ## License
