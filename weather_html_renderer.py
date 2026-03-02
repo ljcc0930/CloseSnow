@@ -327,6 +327,14 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-V9NBX3H6M9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+    gtag('config', 'G-V9NBX3H6M9');
+  </script>
   <title>Ski Resorts Weather Forcast</title>
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
