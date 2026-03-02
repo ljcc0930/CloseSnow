@@ -73,6 +73,8 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
     def short_label(name: str) -> str:
         if name.startswith("day_") and name.endswith("_rain_mm"):
             idx = name[len("day_"):].split("_", 1)[0]
+            if idx == "1":
+                return "today"
             return f"day {idx}"
         return name
 
@@ -178,6 +180,8 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
             return f"week {idx}"
         if name.startswith("day_") and name.endswith("_cm"):
             idx = name[len("day_"):].split("_", 1)[0]
+            if idx == "1":
+                return "today"
             return f"day {idx}"
         return name
 
@@ -266,7 +270,11 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
     days = sorted(set(max_by_day.keys()) | set(min_by_day.keys()))
 
     left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
-    right_group = "<tr>" + "".join(f"<th colspan='2'>day {d}</th>" for d in days) + "</tr>"
+    right_group = (
+        "<tr>"
+        + "".join(f"<th colspan='2'>{'today' if d == 1 else f'day {d}'}</th>" for d in days)
+        + "</tr>"
+    )
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"
 
     left_rows: List[str] = []
