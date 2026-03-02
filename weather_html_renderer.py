@@ -97,11 +97,22 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
     left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in left_rows)
     right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in right_rows)
     right_header = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
+    unified_header = "<tr><th class='query-col'>resort</th>" + "".join(
+        f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers
+    ) + "</tr>"
+    unified_rows = []
+    for row in data:
+        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
+        for h in daily_headers:
+            val = row.get(h, "")
+            style = rain_color(to_float(val))
+            cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
+        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
 
     return f"""
     <section>
       <h2>Rainfall (mm)</h2>
-      <div class="rain-split-wrap">
+      <div class="rain-split-wrap desktop-only">
         <div class="rain-left-wrap" id="rain-left-wrap">
           <table class="rain-left-table">
             <colgroup><col class="col-query"></colgroup>
@@ -118,6 +129,12 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
             <tbody>{right_tbody}</tbody>
           </table>
         </div>
+      </div>
+      <div class="table-wrap mobile-only rain-unified-wrap">
+        <table class="plain-table rain-unified-table">
+          <thead>{unified_header}</thead>
+          <tbody>{"".join(unified_rows)}</tbody>
+        </table>
       </div>
     </section>
     """
@@ -172,10 +189,22 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
     right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
     right_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
 
+    unified_header = "<tr><th class='query-col'>resort</th>" + "".join(
+        f"<th>{html.escape(short_label(h))}</th>" for h in weekly_headers + daily_headers
+    ) + "</tr>"
+    unified_rows = []
+    for row in data:
+        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
+        for h in weekly_headers + daily_headers:
+            val = row.get(h, "")
+            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
+            cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
+        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
+
     return f"""
     <section>
       <h2>Snowfall (cm)</h2>
-      <div class="snowfall-split-wrap">
+      <div class="snowfall-split-wrap desktop-only">
         <div class="snowfall-left-wrap" id="snowfall-left-wrap">
           <table class="snowfall-left-table">
             <colgroup>
@@ -196,6 +225,12 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
             <tbody>{right_tbody}</tbody>
           </table>
         </div>
+      </div>
+      <div class="table-wrap mobile-only snowfall-unified-wrap">
+        <table class="plain-table snowfall-unified-table">
+          <thead>{unified_header}</thead>
+          <tbody>{"".join(unified_rows)}</tbody>
+        </table>
       </div>
     </section>
     """
@@ -240,10 +275,28 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
             cells.append(f"<td style='{max_style}'>{html.escape(max_v)}</td>")
         right_rows.append("<tr>" + "".join(cells) + "</tr>")
 
+    unified_header_cells = ["<th class='query-col'>resort</th>"]
+    for d in days:
+        unified_header_cells.append(f"<th>day {d} min</th>")
+        unified_header_cells.append(f"<th>day {d} max</th>")
+    unified_rows = []
+    for row in data:
+        cells = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
+        for d in days:
+            min_h = min_by_day.get(d)
+            max_h = max_by_day.get(d)
+            min_v = row.get(min_h, "") if min_h else ""
+            max_v = row.get(max_h, "") if max_h else ""
+            min_style = temp_color(to_float(min_v)) if min_h else ""
+            max_style = temp_color(to_float(max_v)) if max_h else ""
+            cells.append(f"<td style='{min_style}'>{html.escape(min_v)}</td>")
+            cells.append(f"<td style='{max_style}'>{html.escape(max_v)}</td>")
+        unified_rows.append("<tr>" + "".join(cells) + "</tr>")
+
     return f"""
     <section>
       <h2>Temperature (°C)</h2>
-      <div class="temperature-split-wrap">
+      <div class="temperature-split-wrap desktop-only">
         <div class="temperature-left-wrap" id="temperature-left-wrap">
           <table class="temperature-left-table" id="temperature-left-table">
             <colgroup><col class="col-query"></colgroup>
@@ -260,6 +313,12 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
             <tbody>{"".join(right_rows)}</tbody>
           </table>
         </div>
+      </div>
+      <div class="table-wrap mobile-only temperature-unified-wrap">
+        <table class="plain-table temperature-unified-table">
+          <thead><tr>{"".join(unified_header_cells)}</tr></thead>
+          <tbody>{"".join(unified_rows)}</tbody>
+        </table>
       </div>
     </section>
     """
@@ -337,6 +396,16 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     }}
     .plain-table {{
       min-width: 1100px;
+    }}
+    .plain-table .query-col {{
+      text-align: left;
+      font-weight: 600;
+    }}
+    .desktop-only {{
+      display: block;
+    }}
+    .mobile-only {{
+      display: none;
     }}
     .snowfall-split-wrap {{
       display: flex;
@@ -524,28 +593,28 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     .temperature-right-table td {{
       background-clip: padding-box;
     }}
-    @media (max-width: 768px) {{
-      main {{
-        padding: 12px;
-      }}
-      h1 {{
-        font-size: 22px;
-      }}
-      h2 {{
-        font-size: 17px;
-      }}
-      th, td {{
-        font-size: 11px;
-        padding: 5px 6px;
-      }}
-      .snowfall-left-table thead th,
-      .snowfall-right-table thead th,
-      .rain-left-table thead th,
-      .rain-right-table thead th,
-      .temperature-left-table thead th,
-      .temperature-right-table thead th {{
-        position: static;
-      }}
+    body.mobile-simple .desktop-only {{
+      display: none;
+    }}
+    body.mobile-simple .mobile-only {{
+      display: block;
+    }}
+    body.mobile-simple main {{
+      padding: 12px;
+    }}
+    body.mobile-simple h1 {{
+      font-size: 22px;
+    }}
+    body.mobile-simple h2 {{
+      font-size: 17px;
+    }}
+    body.mobile-simple th,
+    body.mobile-simple td {{
+      font-size: 11px;
+      padding: 5px 6px;
+    }}
+    body.mobile-simple .plain-table {{
+      min-width: 0;
     }}
   </style>
 </head>
@@ -592,7 +661,24 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         reportDateEl.textContent = `Generated At (Local): ${{localText}} (${{tz}}) | UTC: ${{utcText}}`;
       }}
     }}
-    const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
+    const isCompactLayout = () => document.body.classList.contains("mobile-simple");
+    const computeVisibleRows = () => {{
+      if (!rightWrap || !rightTable) return 99;
+      const probeRow = rightTable.querySelector("tbody tr");
+      if (!probeRow) return 99;
+      const wrapRect = rightWrap.getBoundingClientRect();
+      const available = Math.max(0, window.innerHeight - wrapRect.top - 16);
+      const headerRows = Array.from(rightTable.querySelectorAll("thead tr"));
+      const headerH = headerRows.reduce((sum, row) => sum + row.getBoundingClientRect().height, 0);
+      const rowH = Math.max(1, probeRow.getBoundingClientRect().height);
+      return Math.floor((available - headerH) / rowH);
+    }};
+    const updateLayoutMode = () => {{
+      const hadMobile = isCompactLayout();
+      if (hadMobile) document.body.classList.remove("mobile-simple");
+      const rowsFit = computeVisibleRows();
+      document.body.classList.toggle("mobile-simple", rowsFit < 5);
+    }};
     const measureTextWidth = (text, font) => {{
       const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
       const ctx = canvas.getContext("2d");
@@ -600,6 +686,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       return ctx.measureText(text || "").width;
     }};
     const autoSizeLeftColumns = () => {{
+      if (isCompactLayout()) return;
       if (!leftWrap || !leftTable) return;
       const rows = Array.from(leftTable.querySelectorAll("tbody tr"));
       const headerCells = Array.from(leftTable.querySelectorAll("thead tr:last-child th"));
@@ -624,20 +711,20 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         ...weekValues.map((v) => measureTextWidth(v, font))
       );
 
-      const mobile = isMobile();
-      const queryWidth = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(queryMax + (mobile ? 18 : 28))));
-      const weekWidth = Math.max(mobile ? 64 : 90, Math.min(mobile ? 96 : 130, Math.ceil(weekMax + (mobile ? 14 : 24))));
+      const queryWidth = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
+      const weekWidth = Math.max(90, Math.min(130, Math.ceil(weekMax + 24)));
 
       leftWrap.style.setProperty("--query-col-w", `${{queryWidth}}px`);
       leftWrap.style.setProperty("--week-col-w", `${{weekWidth}}px`);
     }};
     const autoSizeDayColumns = () => {{
+      if (isCompactLayout()) return;
       if (!rightWrap || !rightTable) return;
       const dayCols = Array.from(rightTable.querySelectorAll("col.col-day"));
       const dayCount = dayCols.length;
       if (!dayCount) return;
 
-      const minDayWidth = isMobile() ? 52 : 66;
+      const minDayWidth = 66;
       const wrapWidth = rightWrap.clientWidth;
       const minTotal = minDayWidth * dayCount;
 
@@ -660,6 +747,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       rightTable.style.width = `${{minTotal}}px`;
     }};
     const autoSizeRainQuery = () => {{
+      if (isCompactLayout()) return;
       if (!rainLeftWrap || !rainLeftTable) return;
       const rows = Array.from(rainLeftTable.querySelectorAll("tbody tr"));
       const sampleCell = rainLeftTable.querySelector("tbody td") || rainLeftTable.querySelector("thead th");
@@ -671,16 +759,16 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         measureTextWidth(queryHeader, font),
         ...values.map((v) => measureTextWidth(v, font))
       );
-      const mobile = isMobile();
-      const queryW = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(maxW + (mobile ? 18 : 28))));
+      const queryW = Math.max(150, Math.min(240, Math.ceil(maxW + 28)));
       rainLeftWrap.style.setProperty("--rain-query-w", `${{queryW}}px`);
     }};
     const autoSizeRainColumns = () => {{
+      if (isCompactLayout()) return;
       if (!rainRightWrap || !rainRightTable) return;
       const cols = Array.from(rainRightTable.querySelectorAll("col.col-day"));
       const count = cols.length;
       if (!count) return;
-      const minW = isMobile() ? 52 : 66;
+      const minW = 66;
       const wrapW = rainRightWrap.clientWidth;
       const minTotal = minW * count;
       if (wrapW >= minTotal) {{
@@ -697,6 +785,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
       rainRightTable.style.width = `${{minTotal}}px`;
     }};
     const autoSizeTempQuery = () => {{
+      if (isCompactLayout()) return;
       if (!tempLeftWrap || !tempLeftTable) return;
       const rows = Array.from(tempLeftTable.querySelectorAll("tbody tr"));
       const sampleCell = tempLeftTable.querySelector("tbody td") || tempLeftTable.querySelector("thead th");
@@ -708,16 +797,16 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         measureTextWidth(queryHeader, font),
         ...queryValues.map((v) => measureTextWidth(v, font))
       );
-      const mobile = isMobile();
-      const queryW = Math.max(mobile ? 110 : 150, Math.min(mobile ? 180 : 240, Math.ceil(queryMax + (mobile ? 18 : 28))));
+      const queryW = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
       tempLeftWrap.style.setProperty("--temp-query-w", `${{queryW}}px`);
     }};
     const autoSizeTempColumns = () => {{
+      if (isCompactLayout()) return;
       if (!tempRightWrap || !tempRightTable) return;
       const cols = Array.from(tempRightTable.querySelectorAll("col.col-temp"));
       const count = cols.length;
       if (!count) return;
-      const minW = isMobile() ? 42 : 50;
+      const minW = 50;
       const wrapW = tempRightWrap.clientWidth;
       const minTotal = minW * count;
       if (wrapW >= minTotal) {{
@@ -759,6 +848,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     if (leftWrap && rightWrap) {{
       let syncing = false;
       const sync = (src, dst) => {{
+        if (isCompactLayout()) return;
         if (syncing) return;
         syncing = true;
         dst.scrollTop = src.scrollTop;
@@ -769,16 +859,19 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     }}
     if (rainLeftWrap && rainRightWrap) {{
       rainRightWrap.addEventListener("scroll", () => {{
+        if (isCompactLayout()) return;
         rainLeftWrap.scrollTop = rainRightWrap.scrollTop;
       }}, {{ passive: true }});
     }}
     if (tempLeftWrap && tempRightWrap) {{
       tempRightWrap.addEventListener("scroll", () => {{
+        if (isCompactLayout()) return;
         tempLeftWrap.scrollTop = tempRightWrap.scrollTop;
       }}, {{ passive: true }});
     }}
     let tempLayoutRaf = 0;
     const scheduleTempLayout = () => {{
+      if (isCompactLayout()) return;
       if (tempLayoutRaf) cancelAnimationFrame(tempLayoutRaf);
       tempLayoutRaf = requestAnimationFrame(() => {{
         autoSizeTempQuery();
@@ -786,20 +879,24 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         syncTableRowHeights(tempLeftTable, tempRightTable);
       }});
     }};
-    autoSizeLeftColumns();
-    autoSizeDayColumns();
-    autoSizeRainQuery();
-    autoSizeRainColumns();
-    scheduleTempLayout();
-    window.addEventListener("resize", () => {{
+    const applyDesktopLayout = () => {{
       autoSizeLeftColumns();
       autoSizeDayColumns();
       autoSizeRainQuery();
       autoSizeRainColumns();
       scheduleTempLayout();
+    }};
+    const refreshLayout = () => {{
+      updateLayoutMode();
+      if (isCompactLayout()) return;
+      applyDesktopLayout();
+    }};
+    refreshLayout();
+    window.addEventListener("resize", () => {{
+      refreshLayout();
     }}, {{ passive: true }});
     if (window.ResizeObserver && tempLeftWrap && tempRightWrap) {{
-      const ro = new ResizeObserver(() => scheduleTempLayout());
+      const ro = new ResizeObserver(() => refreshLayout());
       ro.observe(tempLeftWrap);
       ro.observe(tempRightWrap);
       if (tempLeftTable) ro.observe(tempLeftTable);
