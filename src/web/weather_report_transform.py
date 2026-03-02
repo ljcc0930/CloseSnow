@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-FORECAST_DAYS = 14
+from src.backend.constants import FORECAST_DAYS
 
 
 def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:

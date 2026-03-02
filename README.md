@@ -1,7 +1,7 @@
 # CloseSnow
 
 CloseSnow is a ski resort weather toolkit powered by Open-Meteo ECMWF IFS 0.25.
-Its core flow fetches 14-day forecast data per resort in one pipeline and outputs snowfall, rain, and temperature together.
+Its core flow fetches 15-day forecast data per resort in one pipeline and outputs snowfall, rain, and temperature together.
 
 ## Highlights
 
