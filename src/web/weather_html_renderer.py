@@ -349,7 +349,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     {temp_table}
   </main>
   <footer class="page-footer">
-    Author: Codex, vibed by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a>
+    Author: Codex, vibed by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a>. <a href="https://github.com/ljcc0930/CloseSnow/issues/new" target="_blank" rel="noopener noreferrer">feature requests</a> are welcome.
   </footer>
   <script src="assets/js/weather_page.js"></script>
 </body>
