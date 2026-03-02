@@ -616,6 +616,12 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     body.mobile-simple .plain-table {{
       min-width: 0;
     }}
+    body.mobile-simple .mobile-only thead th:not(:first-child) {{
+      display: none;
+    }}
+    body.mobile-simple .mobile-only thead th:first-child {{
+      text-align: left;
+    }}
   </style>
 </head>
 <body>
@@ -661,23 +667,17 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
         reportDateEl.textContent = `Generated At (Local): ${{localText}} (${{tz}}) | UTC: ${{utcText}}`;
       }}
     }}
+    const MIN_QUERY_COL_PX = 220;
+    const MIN_WEEK_COL_PX = 110;
+    const MIN_DAY_COL_PX = 66;
+    const MAIN_HORIZONTAL_PADDING_PX = 40; // main has 20px left + 20px right on desktop
+    const TABLE_BORDER_BUFFER_PX = 8; // borders/dividers/safety margin
+    const MIN_DESKTOP_SNOW_3DAY_PX =
+      MIN_QUERY_COL_PX + (MIN_WEEK_COL_PX * 2) + (MIN_DAY_COL_PX * 3) + MAIN_HORIZONTAL_PADDING_PX + TABLE_BORDER_BUFFER_PX;
     const isCompactLayout = () => document.body.classList.contains("mobile-simple");
-    const computeVisibleRows = () => {{
-      if (!rightWrap || !rightTable) return 99;
-      const probeRow = rightTable.querySelector("tbody tr");
-      if (!probeRow) return 99;
-      const wrapRect = rightWrap.getBoundingClientRect();
-      const available = Math.max(0, window.innerHeight - wrapRect.top - 16);
-      const headerRows = Array.from(rightTable.querySelectorAll("thead tr"));
-      const headerH = headerRows.reduce((sum, row) => sum + row.getBoundingClientRect().height, 0);
-      const rowH = Math.max(1, probeRow.getBoundingClientRect().height);
-      return Math.floor((available - headerH) / rowH);
-    }};
+    const shouldUseMobileSimple = () => window.innerWidth < MIN_DESKTOP_SNOW_3DAY_PX;
     const updateLayoutMode = () => {{
-      const hadMobile = isCompactLayout();
-      if (hadMobile) document.body.classList.remove("mobile-simple");
-      const rowsFit = computeVisibleRows();
-      document.body.classList.toggle("mobile-simple", rowsFit < 5);
+      document.body.classList.toggle("mobile-simple", shouldUseMobileSimple());
     }};
     const measureTextWidth = (text, font) => {{
       const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
