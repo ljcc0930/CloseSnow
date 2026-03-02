@@ -1,16 +1,18 @@
-steamboat, co
-winter park, co
-arapahoe basin, co
-copper mountain, co
-aspen snowmass, co
-snowbasin, ut
-snowbird, ut
-solitude, ut
-brighton, ut
-jackson hole, wy
-big sky, mt
-palisades tahoe, ca
-mammoth mountain, ca
-killington, vt
-sugarbush, vt
-stratton, vt
+Steamboat, CO
+Winter Park, CO
+Arapahoe Basin, CO
+Copper Mountain, CO
+Aspen Snowmass, CO
+Snowbasin, UT
+Snowbird, UT
+Solitude, UT
+Brighton, UT
+Jackson Hole, WY
+Big Sky, MT
+Palisades Tahoe, CA
+Mammoth Mountain, CA
+Killington, VT
+Sugarbush, VT
+Stratton, VT
+Mt Brighton, MI
+Boyne Mountain, MI
