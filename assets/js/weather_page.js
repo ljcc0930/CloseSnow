@@ -38,8 +38,7 @@ if (reportDateEl) {
       hour12: false,
       timeZoneName: "short",
     });
-    const utcText = utcDate.toISOString().replace("T", " ").replace(".000Z", " UTC").replace("Z", " UTC");
-    reportDateEl.textContent = `Generated At (Local): ${localText} (${tz}) | UTC: ${utcText}`;
+    reportDateEl.textContent = `Generated At: ${localText} (${tz})`;
   }
 }
 

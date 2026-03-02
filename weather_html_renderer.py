@@ -322,7 +322,6 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
     temp_table = render_temperature_table(temp)
     now_utc = datetime.now(timezone.utc)
     generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    generated_utc_text = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -335,7 +334,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
   <main>
     <h1>Ski Weather Report</h1>
     <div class="report-date" id="report-date" data-generated-utc="{generated_utc_iso}">
-      Generated At (Local): loading... | UTC: {generated_utc_text}
+      Generated At: loading...
     </div>
     {snow_table}
     {rain_table}
