@@ -152,7 +152,7 @@ python3 -m src.web.weather_page_static_render --output-html index.html
 - If no valid resort is provided:
   - unified backend falls back to built-in `DEFAULT_RESORTS`
 
-Current `resorts.txt` includes 18 resorts across CO/UT/WY/MT/CA/VT/MI.
+The current list includes ski resorts that ljcc prefers; since he only has an Ikon Pass, only Ikon Pass resorts are included.
 
 ## Cache Behavior
 
