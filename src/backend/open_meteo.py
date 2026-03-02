@@ -12,6 +12,7 @@ from src.backend.constants import (
     FORECAST_DAYS,
     FORECAST_URL,
     GEOCODING_URL,
+    HISTORY_DAYS,
     NOMINATIM_URL,
 )
 from src.backend.models import ResortLocation
@@ -248,5 +249,24 @@ def fetch_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int)
         },
         cache=cache,
         namespace="forecast_ecmwf_unified",
+        ttl_seconds=ttl_seconds,
+    )
+
+
+def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+    # Use forecast API convenience flag for recent history.
+    # API returns past days + today; report builder keeps only the first N completed days.
+    return fetch_json(
+        FORECAST_URL,
+        {
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "past_days": HISTORY_DAYS,
+            "forecast_days": 1,
+            "timezone": "auto",
+            "daily": "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min",
+        },
+        cache=cache,
+        namespace="history_ecmwf_unified",
         ttl_seconds=ttl_seconds,
     )

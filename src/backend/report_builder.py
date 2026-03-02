@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from src.backend.constants import DAYS_PER_WEEK, FORECAST_DAYS
+from src.backend.constants import DAYS_PER_WEEK, FORECAST_DAYS, HISTORY_DAYS
 from src.backend.models import ResortLocation
 
 
@@ -20,8 +20,7 @@ def safe_sum(values: List[Optional[float]]) -> float:
     return float(sum(value for value in values if value is not None))
 
 
-def build_report(location: ResortLocation, forecast: Dict[str, Any]) -> Dict[str, Any]:
-    daily = forecast.get("daily", {})
+def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
     dates = daily.get("time", [])
     snowfall = as_float_list(daily.get("snowfall_sum", []))
     rain = as_float_list(daily.get("rain_sum", []))
@@ -44,11 +43,20 @@ def build_report(location: ResortLocation, forecast: Dict[str, Any]) -> Dict[str
                 "above_0": 1 if (max_v is not None and max_v > 0) else 0,
             }
         )
+    return rows
 
-    snow_w1 = snowfall[0:DAYS_PER_WEEK]
-    snow_w2 = snowfall[DAYS_PER_WEEK:FORECAST_DAYS]
-    rain_w1 = rain[0:DAYS_PER_WEEK]
-    rain_w2 = rain[DAYS_PER_WEEK:FORECAST_DAYS]
+
+def build_report(location: ResortLocation, forecast: Dict[str, Any], history: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    daily = forecast.get("daily", {})
+    rows = build_daily_rows(daily)
+
+    snow_w1 = [row.get("snowfall_cm") for row in rows[0:DAYS_PER_WEEK]]
+    snow_w2 = [row.get("snowfall_cm") for row in rows[DAYS_PER_WEEK:FORECAST_DAYS]]
+    rain_w1 = [row.get("rain_mm") for row in rows[0:DAYS_PER_WEEK]]
+    rain_w2 = [row.get("rain_mm") for row in rows[DAYS_PER_WEEK:FORECAST_DAYS]]
+
+    history_daily = (history or {}).get("daily", {})
+    history_rows = build_daily_rows(history_daily)[:HISTORY_DAYS]
 
     return {
         "query": location.query,
@@ -65,5 +73,6 @@ def build_report(location: ResortLocation, forecast: Dict[str, Any]) -> Dict[str
         "week2_total_snowfall_cm": safe_sum(snow_w2),
         "week1_total_rain_mm": safe_sum(rain_w1),
         "week2_total_rain_mm": safe_sum(rain_w2),
+        "past_14d_daily": history_rows,
         "daily": rows,
     }

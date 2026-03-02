@@ -6,6 +6,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 ## Highlights
 
 - Unified backend: one pipeline produces JSON + 3 CSV files
+- Backend JSON now includes `past_14d_daily` per resort (last 14 completed days, via Forecast API `past_days`)
 - Unified CLI: one entrypoint for static rendering and dynamic server
 - Dynamic page: runs pipeline on request (cache hit reads local data)
 - Static page: generates `index.html` for GitHub Pages

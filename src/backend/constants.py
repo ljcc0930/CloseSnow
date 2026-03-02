@@ -7,6 +7,7 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 FORECAST_DAYS = 15
 DAYS_PER_WEEK = 7
+HISTORY_DAYS = 14
 API_RETRY_TIMES = 4
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

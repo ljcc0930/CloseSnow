@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE, FORECAST_DAYS
-from src.backend.open_meteo import fetch_forecast, geocode
+from src.backend.open_meteo import fetch_forecast, fetch_history, geocode
 from src.backend.report_builder import build_report
 from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, write_unified_json
 
@@ -108,7 +108,12 @@ def run_pipeline(
                 failed.append({"query": resort, "reason": "No geocoding match"})
                 continue
             forecast = fetch_forecast(loc, cache=cache, ttl_seconds=forecast_ttl)
-            reports.append(build_report(loc, forecast))
+            history: Optional[Dict[str, Any]] = None
+            try:
+                history = fetch_history(loc, cache=cache, ttl_seconds=forecast_ttl)
+            except Exception as exc:  # noqa: BLE001
+                logger.info("Resort %d/%d: history fetch failed %s (%s)", idx, len(selected), resort, exc)
+            reports.append(build_report(loc, forecast, history=history))
             logger.info(
                 "Resort %d/%d: success %s (lat=%.4f, lon=%.4f)",
                 idx,
