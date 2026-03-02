@@ -27,6 +27,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -35,6 +36,8 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 FORECAST_DAYS = 14
 DAYS_PER_WEEK = 7
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
 
 DEFAULT_RESORTS = [
     "steamboat, co",
@@ -341,7 +344,11 @@ def write_temp_csv(path: str, reports: List[Dict[str, Any]]) -> None:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Unified ECMWF backend pipeline for ski weather.")
     p.add_argument("--resort", action="append", default=[], help="Resort name (repeatable).")
-    p.add_argument("--resorts-file", default="resorts.txt", help="Text file with one resort per line.")
+    p.add_argument(
+        "--resorts-file",
+        default=DEFAULT_RESORTS_FILE,
+        help="Text file with one resort per line.",
+    )
     p.add_argument("--use-default-resorts", action="store_true", help="Use built-in resort list.")
     p.add_argument("--output-json", default=".cache/resorts_weather_unified.json")
     p.add_argument("--snow-csv", default=".cache/resorts_snowfall_daily.csv")
@@ -360,7 +367,7 @@ def read_resorts(path: str) -> List[str]:
 
 def run_pipeline(
     resorts: Optional[List[str]] = None,
-    resorts_file: str = "resorts.txt",
+    resorts_file: str = DEFAULT_RESORTS_FILE,
     use_default_resorts: bool = False,
     output_json: str = ".cache/resorts_weather_unified.json",
     snow_csv: str = ".cache/resorts_snowfall_daily.csv",

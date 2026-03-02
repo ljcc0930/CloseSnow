@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from weather_html_renderer import build_html
-from weather_report_transform import (
+from src.web.weather_html_renderer import build_html
+from src.web.weather_report_transform import (
     reports_to_rain_rows,
     reports_to_snow_rows,
     reports_to_temp_rows,

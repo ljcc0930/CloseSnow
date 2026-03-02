@@ -1,151 +1,220 @@
 # CloseSnow
 
-A ski resort weather toolkit powered by ECMWF data.
-The main workflow uses **Open-Meteo ECMWF IFS 0.25** and fetches 14-day snowfall, rainfall, and temperature data in a single forecast request per resort.
+CloseSnow is a ski resort weather toolkit powered by Open-Meteo ECMWF IFS 0.25.
+Its core flow fetches 14-day forecast data per resort in one pipeline and outputs snowfall, rain, and temperature together.
 
-## Core Workflow
+## Highlights
 
-- `ecmwf_unified_backend.py`: unified backend (primary entrypoint, recommended)
-- `weather_page_server.py`: dynamic web page (runs backend on each request, cache-aware)
-- `weather_page_static_render.py`: static page renderer (uses the same payload-to-HTML logic as dynamic server)
-- `weather_report_transform.py`: shared report-to-table transformation helpers
-- `weather_html_renderer.py`: shared HTML rendering helpers
+- Unified backend: one pipeline produces JSON + 3 CSV files
+- Unified CLI: one entrypoint for static rendering and dynamic server
+- Dynamic page: runs pipeline on request (cache hit reads local data)
+- Static page: generates `index.html` for GitHub Pages
+- Dual geocoding path: Open-Meteo first, Nominatim fallback
+- Date-partitioned cache files: `*_YYYY-MM-DD.json`
+- Google tag is embedded in page HTML: `G-V9NBX3H6M9`
 
-## Quick Start
+## Repository Layout
 
-1. Prepare Python (3.9+ recommended).
-2. Install dependencies if you need legacy tools.
-3. Run the unified backend:
-
-```bash
-python3 ecmwf_unified_backend.py
+```text
+.
+├── src
+│   ├── cli.py
+│   ├── backend
+│   │   └── ecmwf_unified_backend.py
+│   └── web
+│       ├── weather_page_server.py
+│       ├── weather_page_static_render.py
+│       ├── weather_page_render_core.py
+│       ├── weather_html_renderer.py
+│       ├── weather_report_transform.py
+│       └── weather_page_assets.py
+├── assets
+│   ├── css/weather_page.css
+│   └── js/weather_page.js
+├── resorts.txt
+├── legacy
+│   ├── ecmwf_ski_forecast.py
+│   ├── ecmwf_rain_pipeline.py
+│   ├── ecmwf_temperature_table.py
+│   ├── ecmwf_snowfall_opendata.py
+│   └── colorize_weather_excel.py
+└── .github/workflows/deploy-pages.yml
 ```
 
-If you only use the core workflow, no third-party package install is required.
+## Requirements
 
-If you also use scripts under `legacy/`:
+- Python 3.9+
+- Main flow (`src/`) uses Python standard library only
+- `legacy/` scripts require extra packages (see `requirements.txt`)
+
+## Quick Start (Recommended: Unified CLI)
+
+### 1) Render static HTML
 
 ```bash
-pip install -r requirements.txt
+python3 -m src.cli static --output-html index.html
 ```
 
-Default outputs:
-- `.cache/resorts_weather_unified.json`
-- `.cache/resorts_snowfall_daily.csv`
-- `.cache/resorts_rainfall_daily.csv`
-- `.cache/resorts_temperature_daily.csv`
-
-## Resorts Input
-
-- By default, resorts are read from `resorts.txt` (one resort per line, `#` comments supported).
-- You can also provide:
-  - `--resort "snowbasin, ut"` (repeatable)
-  - `--resorts-file path/to/file.txt`
-  - `--use-default-resorts` (use built-in script defaults)
-
-## Unified Backend
-
-Script: `ecmwf_unified_backend.py`
+### 2) Run dynamic server
 
 ```bash
-python3 ecmwf_unified_backend.py \
+python3 -m src.cli serve --host 127.0.0.1 --port 8010
+```
+
+Open:
+
+- Page: `http://127.0.0.1:8010/`
+- Raw JSON: `http://127.0.0.1:8010/api/data`
+
+## CLI Commands
+
+### `static`
+
+```bash
+python3 -m src.cli static \
+  [--resort "snowbasin, ut"] \
+  [--resorts-file resorts.txt] \
+  [--cache-file .cache/open_meteo_cache.json] \
+  [--geocode-cache-hours 720] \
+  [--forecast-cache-hours 3] \
+  [--output-html index.html]
+```
+
+Notes:
+
+- `--resort` is repeatable; if provided, `--resorts-file` is ignored
+- This command only writes HTML (no unified JSON/CSV outputs)
+
+### `serve`
+
+```bash
+python3 -m src.cli serve \
+  [--host 127.0.0.1] \
+  [--port 8010] \
+  [--cache-file .cache/open_meteo_cache.json] \
+  [--geocode-cache-hours 720] \
+  [--forecast-cache-hours 3]
+```
+
+Notes:
+
+- Each request runs pipeline with `write_outputs=False`
+- You can override resorts by query params:
+
+```text
+/?resort=snowbasin,%20ut&resort=snowbird,%20ut
+```
+
+## Run Modules Directly
+
+If you do not want to use the unified CLI, you can run modules directly.
+
+### Unified backend (writes JSON/CSV)
+
+```bash
+python3 -m src.backend.ecmwf_unified_backend \
   --resorts-file resorts.txt \
   --forecast-cache-hours 3 \
   --geocode-cache-hours 720
 ```
 
-Import usage:
+Default outputs:
+
+- `.cache/resorts_weather_unified.json`
+- `.cache/resorts_snowfall_daily.csv`
+- `.cache/resorts_rainfall_daily.csv`
+- `.cache/resorts_temperature_daily.csv`
+
+### Dynamic server
+
+```bash
+python3 -m src.web.weather_page_server --host 127.0.0.1 --port 8010
+```
+
+### Static renderer
+
+```bash
+python3 -m src.web.weather_page_static_render --output-html index.html
+```
+
+## Resort Input Rules
+
+- Default input file is repository root `resorts.txt`
+- File format: one resort per line; `#` comments are supported
+- Backend deduplicates resorts while preserving order
+- If no valid resort is provided:
+  - unified backend falls back to built-in `DEFAULT_RESORTS`
+
+Current `resorts.txt` includes 18 resorts across CO/UT/WY/MT/CA/VT/MI.
+
+## Cache Behavior
+
+- Default cache base name: `.cache/open_meteo_cache.json`
+- Actual cache file is date-suffixed: `.cache/open_meteo_cache_YYYY-MM-DD.json`
+- Default TTL:
+  - geocode: 30 days (720 hours)
+  - forecast: 3 hours
+
+## Python API Example
 
 ```python
-from ecmwf_unified_backend import run_pipeline
+from src.backend.ecmwf_unified_backend import run_pipeline
 
 result = run_pipeline(
     resorts=["snowbasin, ut", "snowbird, ut"],
     use_default_resorts=False,
     write_outputs=False,
 )
+
 print(result["resorts_count"], result["failed_count"])
 ```
 
-## Cache Behavior
-
-- Cache-first: cache hit reads local data; cache miss triggers an API call.
-- Cache files are date-partitioned automatically:
-  - Base name: `.cache/open_meteo_cache.json`
-  - Actual file: `.cache/open_meteo_cache_YYYY-MM-DD.json`
-- Default TTL:
-  - geocode: 30 days
-  - forecast: 3 hours
-
-## Dynamic Web Server
-
-Script: `weather_page_server.py`
-
-```bash
-python3 weather_page_server.py --host 127.0.0.1 --port 8010
-```
-
-- Page: `http://127.0.0.1:8010/`
-- Raw JSON: `http://127.0.0.1:8010/api/data`
-- You can pass resorts via query params (repeatable):
-  - `/?resort=snowbasin,%20ut&resort=snowbird,%20ut`
-
-## Static HTML Renderer
-
-Script: `weather_page_static_render.py`
-
-```bash
-python3 weather_page_static_render.py \
-  --resorts-file resorts.txt \
-  --forecast-cache-hours 3 \
-  --geocode-cache-hours 720 \
-  --output-html index.html
-```
-
-Or pass resorts directly (repeatable):
-
-```bash
-python3 weather_page_static_render.py \
-  --resort "snowbasin, ut" \
-  --resort "snowbird, ut" \
-  --output-html index.html
-```
-
-- Default output path is `index.html` (good for GitHub Pages root publishing).
-- Static assets are committed in repo paths: `assets/css/weather_page.css` and `assets/js/weather_page.js`.
-
 ## GitHub Pages Automation
 
-- Workflow file: `.github/workflows/deploy-pages.yml`
-- Trigger:
-  - manual (`workflow_dispatch`)
-  - push to `main`
-  - scheduled daily at **00:01 America/Los_Angeles**
-- The workflow runs `weather_page_static_render.py`, copies `assets/css/weather_page.css` and `assets/js/weather_page.js`, then deploys `site/` to GitHub Pages.
+Workflow file: `.github/workflows/deploy-pages.yml`
 
-## Legacy/Utility Scripts
+Triggers:
 
-These scripts are still available but are no longer the recommended primary path:
+- `workflow_dispatch`
+- push to `main`
+- schedule (daily at local `America/Los_Angeles` 00:01 with PST/PDT dual cron)
+
+Build steps:
+
+- Run `python -m src.web.weather_page_static_render --output-html site/index.html`
+- Copy `assets/css/weather_page.css` and `assets/js/weather_page.js` into `site/`
+- Deploy `site/` to GitHub Pages
+
+## Legacy Scripts
+
+The following scripts are kept for historical/specialized workflows:
 
 - `legacy/ecmwf_ski_forecast.py`: snowfall only (Open-Meteo)
 - `legacy/ecmwf_rain_pipeline.py`: rainfall only (Open-Meteo)
 - `legacy/ecmwf_temperature_table.py`: temperature only (Open-Meteo)
-- `legacy/ecmwf_snowfall_opendata.py`: ECMWF Open Data GRIB snowfall flow
-- `legacy/colorize_weather_excel.py`: generate a colorized Excel workbook from snowfall/temperature CSV files
+- `legacy/ecmwf_snowfall_opendata.py`: ECMWF Open Data + GRIB flow
+- `legacy/colorize_weather_excel.py`: colorize snowfall/temperature CSV and export XLSX
 
-## Optional Dependencies
+Examples:
 
-The main workflow (unified backend + dynamic server + HTML renderer) uses only Python standard libraries.
-Optional scripts require additional packages:
+```bash
+python3 legacy/ecmwf_ski_forecast.py --resorts-file resorts.txt
+python3 legacy/ecmwf_rain_pipeline.py --resorts-file resorts.txt
+python3 legacy/ecmwf_temperature_table.py --resorts-file resorts.txt
+python3 legacy/ecmwf_snowfall_opendata.py --resort "snowbird, ut"
+python3 legacy/colorize_weather_excel.py \
+  --snowfall-csv .cache/resorts_snowfall_daily.csv \
+  --temperature-csv .cache/resorts_temperature_daily.csv \
+  --output-xlsx .cache/resorts_colored.xlsx
+```
 
-- `openpyxl` (Excel colorization)
-- `numpy` `xarray` `cfgrib` `ecmwf-opendata` (Open Data GRIB flow)
-
-Example:
+## Optional Dependencies (Legacy Only)
 
 ```bash
 pip install -r requirements.txt
 ```
+
+`requirements.txt` includes: `openpyxl`, `numpy`, `xarray`, `cfgrib`, `ecmwf-opendata`.
 
 ## License
 

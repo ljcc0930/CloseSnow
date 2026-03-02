@@ -7,10 +7,17 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 from typing import List
 
-from ecmwf_unified_backend import run_pipeline
-from weather_page_render_core import render_payload_html
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from src.backend.ecmwf_unified_backend import run_pipeline
+from src.web.weather_page_render_core import render_payload_html
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--resorts-file",
-        default="resorts.txt",
+        default=DEFAULT_RESORTS_FILE,
         help="Input resorts file when --resort is not provided.",
     )
     p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")

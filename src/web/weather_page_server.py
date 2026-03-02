@@ -11,12 +11,20 @@ from __future__ import annotations
 import argparse
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+import sys
 from typing import List
 from urllib.parse import parse_qs, urlparse
 
-from ecmwf_unified_backend import run_pipeline
-from weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
-from weather_page_render_core import render_payload_html
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from src.backend.ecmwf_unified_backend import run_pipeline
+from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
+from src.web.weather_page_render_core import render_payload_html
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
 
 
 def make_handler(
@@ -36,7 +44,7 @@ def make_handler(
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
             resorts: List[str] = []
-            resorts_file = "resorts.txt"
+            resorts_file = DEFAULT_RESORTS_FILE
 
             asset_name = parsed.path.lstrip("/")
             if asset_name in ASSET_MIME_TYPES:

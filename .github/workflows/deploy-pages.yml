@@ -53,7 +53,7 @@ jobs:
         if: steps.gate.outputs.should_run == 'true'
         run: |
           mkdir -p site/assets/css site/assets/js
-          python weather_page_static_render.py --output-html site/index.html
+          python -m src.web.weather_page_static_render --output-html site/index.html
           cp assets/css/weather_page.css site/assets/css/weather_page.css
           cp assets/js/weather_page.js site/assets/js/weather_page.js
 
