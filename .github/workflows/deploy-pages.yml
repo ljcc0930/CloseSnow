@@ -6,9 +6,8 @@ on:
     branches:
       - main
   schedule:
-    # Cover both PST (UTC-8) and PDT (UTC-7); runtime gate keeps only 00:01 America/Los_Angeles.
-    - cron: "1 7 * * *"
-    - cron: "1 8 * * *"
+    # Trigger at minute 1 every hour.
+    - cron: "1 * * * *"
 
 permissions:
   contents: read
@@ -33,7 +32,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Schedule gate (00:01 America/Los_Angeles)
+      - name: Schedule gate (PT 21:01-00:01)
         id: gate
         shell: bash
         run: |
@@ -41,12 +40,12 @@ jobs:
             echo "should_run=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          now_local="$(TZ=America/Los_Angeles date +%H:%M)"
-          if [ "$now_local" = "00:01" ]; then
+          pt_hour="$(TZ=America/Los_Angeles date +%H)"
+          if [ "$pt_hour" = "21" ] || [ "$pt_hour" = "22" ] || [ "$pt_hour" = "23" ] || [ "$pt_hour" = "00" ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "Skip scheduled run at local time: $now_local"
+            echo "Skip scheduled run outside PT window: ${pt_hour}:01"
           fi
 
       - name: Render static page
