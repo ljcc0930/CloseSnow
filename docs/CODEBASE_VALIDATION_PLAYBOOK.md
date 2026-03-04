@@ -75,6 +75,22 @@ Pass criteria:
 1. All tests pass.
 2. No flaky network dependency (suite should be deterministic).
 
+Layered checks (recommended after refactor changes):
+
+```bash
+python3 -m pytest tests/backend -q
+python3 -m pytest tests/frontend -q
+python3 -m pytest tests/integration -q
+python3 -m pytest tests/smoke -q
+python3 -m pytest -m smoke -q
+python3 -m pytest -m integration -q
+```
+
+Pass criteria:
+
+1. Backend and frontend suites pass independently.
+2. Smoke and integration marker suites pass.
+
 ### 3.4 Layer boundary checks (v2 refactor)
 
 Hard boundary (must always pass):
@@ -264,13 +280,14 @@ Before push:
 
 1. `python3 -m compileall src` passes.
 2. `python3 -m pytest -q` passes.
-3. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8` passes.
-4. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
-5. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
-6. Dynamic server probes (`/` and `/api/data`) pass.
-7. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.
-8. `git status --short` contains only intended files.
-9. README/workflow updated if command or behavior changed.
+3. `python3 -m pytest -m smoke -q` and `python3 -m pytest -m integration -q` pass.
+4. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8` passes.
+5. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
+6. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
+7. Dynamic server probes (`/` and `/api/data`) pass.
+8. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.
+9. `git status --short` contains only intended files.
+10. README/workflow updated if command or behavior changed.
 
 ---
 

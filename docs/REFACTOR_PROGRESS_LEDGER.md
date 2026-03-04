@@ -12,11 +12,13 @@ Always read in this order before continuing:
 
 ## Current Objective
 
-Implement the `Frontend -> Communication Contract -> Backend` architecture incrementally,
+Implement the v3 decoupling objective:
+
+`Frontend -> Communication -> Backend`
+
 while keeping existing CLI/server/static behavior runnable at every step.
 
-Status: completed in code and validation on 2026-03-03 (local run).
-Status update: v2 boundary refactor completed on 2026-03-03/04 local session.
+Status: v2 refactor completed; v3 planning + test-layout groundwork started.
 
 ---
 
@@ -34,6 +36,50 @@ Status update: v2 boundary refactor completed on 2026-03-03/04 local session.
 ---
 
 ## Completed Milestones
+
+## 2026-03-03/04 (v3 planning reset + test suite restructuring)
+
+### Scope
+- Rewrite next refactor target around frontend/backend simplification and full dynamic decoupling.
+- Restructure tests by responsibility and add explicit smoke/integration coverage.
+
+### Changes
+- Rewrote planning doc:
+  - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md` now tracks v3 objective:
+    - frontend modularization and HTML/static extraction plan
+    - backend simplification boundaries
+    - decoupled dynamic communication layer design
+- Restructured tests:
+  - added folders:
+    - `tests/backend/`
+    - `tests/frontend/`
+    - `tests/integration/`
+    - `tests/smoke/`
+  - split mixed test responsibilities (backend vs frontend static-site tests)
+  - added smoke tests:
+    - static split pipeline smoke
+    - dynamic server smoke
+  - added integration test:
+    - gateway -> renderer path (`file` and `api`)
+  - added marker config:
+    - `pytest.ini` with `smoke` and `integration`
+- Updated docs:
+  - `README.md` testing layout/commands
+  - `docs/CODEBASE_VALIDATION_PLAYBOOK.md` layered test commands and marker checks
+
+### Validation
+- `python3 -m compileall src`
+- `python3 -m pytest -q` (`91 passed`)
+- `python3 -m pytest tests/backend -q` (`34 passed`)
+- `python3 -m pytest tests/frontend -q` (`14 passed`)
+- `python3 -m pytest tests/integration -q` (`41 passed`)
+- `python3 -m pytest tests/smoke -q` (`2 passed`)
+- `python3 -m pytest -m smoke -q` (`2 passed, 89 deselected`)
+- `python3 -m pytest -m integration -q` (`2 passed, 89 deselected`)
+
+### Outcome
+- Codebase now has test structure aligned with v3 refactor execution needs.
+- v3 architecture execution remains the next implementation slice.
 
 ## 2026-03-03/04 (v2 boundary hardening)
 

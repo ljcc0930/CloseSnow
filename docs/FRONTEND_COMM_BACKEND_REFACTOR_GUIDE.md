@@ -1,307 +1,379 @@
-# CloseSnow Refactor Guide (v2)
+# CloseSnow Refactor Guide (v3)
 
-This document is the source of truth for refactoring CloseSnow into a strict layered architecture:
+This document defines the next refactor target after v2 boundary hardening.
 
-`Frontend -> Communication -> Contract -> Backend`
+Target theme:
 
-This v2 edition focuses on the remaining boundary issues found in code audit, not the already-completed basics.
+`Frontend -> Communication -> Backend`
 
-Status update (2026-03-04 local):
+Core intent:
 
-1. Phase 1-3 goals are implemented in code.
-2. Phase 4 remains optional product evolution, not a blocking refactor item.
+1. Simplify the current frontend/backend implementation.
+2. Increase code reuse through modularization.
+3. Make dynamic runtime fully decoupled so frontend/backend can run in parallel, including on different servers.
 
----
+Status (local 2026-03-03):
 
-## 1) Goals
-
-The refactor is successful only if:
-
-1. Backend contains data fetching/computation/export logic only.
-2. Web/frontend contains rendering and page assembly only.
-3. Communication layer is the single runtime entry for payload loading (file or API).
-4. Shared runtime configuration is not owned by backend.
-5. Static and dynamic modes stay behavior-compatible.
+1. Codebase audit completed.
+2. Test layout groundwork completed (`tests/backend`, `tests/frontend`, `tests/integration`, `tests/smoke`).
+3. Architectural refactor described below is the next execution target.
 
 ---
 
-## 2) Current Status Snapshot
+## 1) Current Audit Summary (Codebase-Wide)
 
-## 2.1 Completed already
+## 1.1 Frontend (Python render path) hotspots
 
-1. Contract module exists (`src/contract/*`) and is validated.
-2. Static/dynamic render path is shared (`render_payload_html`).
-3. Backend no longer imports web modules directly.
-4. CLI supports split pipeline (`fetch`, `render`) and wrapper (`static`).
-5. Pytest suite exists and is stable.
+### A) Repeated section shell + toggle markup
 
-## 2.2 Remaining boundary debt (must fix)
+Files:
 
-### A) Shared config extraction
+1. `src/web/weather_table_renderer.py`
 
-Status:
+Findings:
 
-1. Completed in current code: `DEFAULT_RESORTS_FILE` moved to `src/shared/config.py`.
-2. Web/CLI now import shared config, not backend constants.
+1. Snow/rain/temp sections each hand-build similar section header + toggle HTML.
+2. Empty-state rendering is repeated and not centralized.
+3. Desktop/mobile fallback logic is reusable but wrapped in per-table duplication.
 
-Follow-up:
+### B) Desktop/mobile renderer duplication
 
-1. Keep new cross-layer defaults in `src/shared/config.py` by convention.
+Files:
 
-### B) Communication abstraction is not the default runtime path
+1. `src/web/desktop/snowfall_renderer.py`
+2. `src/web/desktop/rainfall_renderer.py`
+3. `src/web/mobile/snowfall_renderer.py`
+4. `src/web/mobile/rainfall_renderer.py`
 
-Current:
+Findings:
 
-1. `src/web/data_sources/gateway.py` defines the canonical `load_payload(...)` API.
-2. `cli render/static` use `load_payload(...)` via gateway.
-3. Server page/API path fetches backend payload and renders directly (intended for SSR mode).
+1. Snow/rain desktop renderer structure is almost identical.
+2. Snow/rain mobile renderer structure is almost identical.
+3. Header label generation (`week/day/today`) is duplicated.
 
-Impact:
+### C) Transform layer repetition
 
-1. Runtime payload loading is centralized for file/API source paths.
-2. Optional future client-side online bootstrap should also call gateway for consistency.
+Files:
 
-### C) Backend compute and export are still bundled in one orchestration function
+1. `src/web/weather_report_transform.py`
 
-Current:
+Findings:
 
-1. `run_pipeline(...)` now delegates compute to `compute_pipeline_payload(...)`.
-2. Artifact writing is delegated to `src/backend/export/payload_exporter.py`.
-3. Compute helpers still live in `src/backend/pipeline.py` (not yet moved to dedicated `compute/` package).
+1. `reports_to_snow_rows` and `reports_to_rain_rows` follow the same shape with different field mappings.
+2. Formatting logic is mixed with field extraction; hard to reuse across metrics.
 
-Impact:
+### D) Static shell content embedded in Python f-string
 
-1. Main coupling is reduced, but module-level separation is still transitional.
-2. A future `backend/compute/*` extraction can further reduce file-level complexity.
+Files:
 
----
+1. `src/web/weather_html_renderer.py`
 
-## 3) Target Architecture (v2)
+Findings:
 
-## 3.1 Layer responsibilities
+1. Page shell, head tags, powered-by, footer text are static but rebuilt by Python each render.
+2. This mixes content/template concerns with dynamic table insertion.
 
-### Frontend/Web layer (`src/web`)
+## 1.2 Frontend (JS runtime) hotspots
 
-Responsibilities:
+Files:
 
-1. Transform contract payload into render rows.
-2. Render HTML and serve page/assets.
-3. Assemble static site artifacts from validated payload.
+1. `assets/js/weather_page.js`
 
-Must not:
+Findings:
 
-1. Own weather provider logic.
-2. Own backend default path config.
+1. Snow/rain/temp sizing logic is repeated with similar algorithms.
+2. Mobile/desktop sizing and sticky sync logic can be generic controllers.
+3. Unit-toggle state logic is good but tied to page-specific DOM globals.
 
-### Communication layer (`src/web/data_sources` + loader gateway)
+## 1.3 Backend hotspots
 
-Responsibilities:
+Files:
 
-1. Load payload from file/API through one interface.
-2. Validate contract before returning payload.
-3. Normalize source selection logic.
+1. `src/backend/pipeline.py`
+2. `src/backend/pipelines/live_pipeline.py`
+3. `src/backend/pipelines/static_pipeline.py`
+4. `src/backend/services/weather_service.py`
 
-Must not:
+Findings:
 
-1. Fetch provider data from Open-Meteo.
-2. Render HTML.
+1. `pipeline.py` is still a large mixed-orchestration module.
+2. `compute_pipeline_payload` carries legacy output-path argument for cache seeding side effects.
+3. live/static service wrappers are thin pass-through layers with overlapping responsibility.
 
-### Contract layer (`src/contract`)
+## 1.4 Dynamic runtime coupling
 
-Responsibilities:
+Files:
 
-1. Schema version and payload shape.
-2. Validation and contract invariants.
+1. `src/web/weather_page_server.py`
 
-### Backend layer (`src/backend`)
+Findings:
 
-Responsibilities:
-
-1. Provider I/O, retry, cache, concurrency.
-2. Compute canonical payload.
-3. Export payload/report files through dedicated exporter boundary.
-
-Must not:
-
-1. Import web rendering modules.
-2. Own cross-layer runtime config.
-
-### Shared config layer (new)
-
-Proposed path:
-
-- `src/shared/config.py`
-
-Responsibilities:
-
-1. Project-wide defaults used by backend/web/cli.
-2. No business logic.
+1. A single server both fetches backend payload and renders frontend HTML in request path.
+2. Frontend cannot start independently from backend availability.
+3. Different-server deployment is not first-class yet.
 
 ---
 
-## 4) Proposed Directory Shape (v2)
+## 2) v3 Refactor Goals
+
+Refactor is done only if all are true:
+
+1. Frontend rendering code is modularized by reusable table/section primitives (no snow/rain duplication blocks).
+2. Static page shell is moved out of Python string concatenation into template/static HTML assets.
+3. Backend orchestration is split into smaller modules with clear input/output boundaries.
+4. Dynamic mode uses a communication layer contract so frontend/backend can be started independently.
+5. Cross-server mode is supported through configurable API endpoint (no direct backend import required in frontend runtime).
+6. Test suite is separated by responsibility and includes explicit smoke + integration coverage.
+
+---
+
+## 3) Frontend Modularization Plan
+
+## 3.1 What should be modularized
+
+### A) Section composer
+
+Proposed:
+
+1. Add a reusable `render_metric_section(...)` helper for:
+   - title
+   - unit toggle labels
+   - target kind (`snow`/`rain`/`temp`)
+   - empty state
+   - layout body HTML
+
+Expected impact:
+
+1. Remove repeated section shell code in `weather_table_renderer.py`.
+
+### B) Metric registry
+
+Proposed:
+
+1. Define a metric config map (snow/rain/temp):
+   - field suffix patterns
+   - weekly/daily header rules
+   - desktop renderer
+   - mobile renderer (optional fallback)
+   - unit labels
+
+Expected impact:
+
+1. `render_rain_table`, `render_snowfall_table`, `render_temperature_table` can become one generic table render entry.
+
+### C) Shared desktop/mobile table primitives
+
+Proposed:
+
+1. Extract common split-table generation helpers:
+   - left/right colgroup creation
+   - head group rows (`weekly`, `daily`, `today/dayN`)
+   - row-to-cell mapping callback
+
+Expected impact:
+
+1. Snow/rain renderer pair becomes thin config wrappers instead of duplicated HTML builders.
+
+### D) Transform normalization
+
+Proposed:
+
+1. Introduce a generic row-builder utility for metric-based extraction.
+2. Keep temperature special-case logic but reuse common day loop and formatting.
+
+Expected impact:
+
+1. Less duplicated loops and fewer field-name hardcodes.
+
+## 3.2 What can move directly into HTML/static assets
+
+These are static page concerns and should not live in Python:
+
+1. `<head>` shell structure and static script/style references.
+2. `<h1>`, powered-by line, footer wording, and static external links.
+3. Optional fixed section containers with placeholders where JS or Python injects table body.
+
+Resulting Python simplification:
+
+1. Python only fills dynamic slots (generated time + table HTML fragments), not full document scaffolding.
+
+---
+
+## 4) Backend Simplification Plan
+
+## 4.1 Internal module split
+
+Proposed structure:
 
 ```text
-src/
-  shared/
-    config.py
-
-  contract/
-    weather_payload_v1.py
-    validators.py
-
-  backend/
-    pipeline.py                 # transitional wrapper
-    compute/
-      weather_compute.py        # pure compute payload
-    export/
-      payload_exporter.py       # JSON/CSV writes
-    services/
-      weather_service.py
-    pipelines/
-      live_pipeline.py
-      static_pipeline.py        # fetch-only orchestration
-
-  web/
-    data_sources/
-      api_source.py
-      static_json_source.py
-      gateway.py                # recommended unified load entry
-    pipelines/
-      static_site.py
-    weather_page_server.py
-    weather_page_static_render.py
+src/backend/
+  pipeline.py                  # compatibility wrapper only
+  compute/
+    resort_selection.py
+    coordinator.py
+    payload_builder.py
+  io/
+    cache_seed.py
+  export/
+    payload_exporter.py
 ```
 
-Notes:
+Rules:
 
-1. `backend/pipeline.py` can remain as compatibility wrapper during migration.
-2. Do not remove existing entrypoints until parity validation passes.
+1. `compute/*` returns contract payload only, no file writes.
+2. Export remains in `export/*`.
+3. Compatibility API (`run_pipeline`) can delegate to new modules until cleanup is complete.
+
+## 4.2 Request config normalization
+
+Proposed:
+
+1. Introduce one request object/dataclass for runtime options:
+   - resorts/resorts_file
+   - cache config
+   - worker count
+2. Use one object across CLI/service/pipeline instead of repeated kwargs fan-out.
+
+Expected impact:
+
+1. Fewer parameter mismatches and easier test setup.
 
 ---
 
-## 5) Refactor Plan (Execution Order)
+## 5) Communication Layer for Fully Decoupled Dynamic Pipeline
 
-## Phase 1: Extract shared config
+## 5.1 Target runtime topology
+
+### Backend data service
+
+Responsibilities:
+
+1. Produce contract payload.
+2. Expose data endpoints (`/api/data`, `/api/health`).
+3. Optionally refresh payload every 60 minutes (or on demand).
+
+### Frontend web service
+
+Responsibilities:
+
+1. Serve HTML/CSS/JS only.
+2. Load payload from communication layer (`file` or remote `http`) at runtime.
+3. Render data client-side or through a frontend-only render adapter.
+
+### Communication adapters
+
+Responsibilities:
+
+1. `FilePayloadClient`: reads local JSON artifact.
+2. `HttpPayloadClient`: fetches remote JSON API.
+3. Both must validate `weather_payload_v1` before use.
+
+## 5.2 Startup model
+
+Required capabilities:
+
+1. Frontend and backend can boot independently and in parallel.
+2. Frontend can point to backend via config:
+   - env var (for example `CLOSESNOW_DATA_URL`)
+   - CLI arg override
+3. Backend can run on another host with CORS enabled.
+
+## 5.3 Compatibility constraints
+
+1. Keep existing `/api/data` contract shape unchanged.
+2. Keep static flow (`fetch` + `render`) working while decoupled mode is introduced.
+3. Keep current SSR path temporarily as fallback until parity is proven.
+
+---
+
+## 6) Test Strategy (Implemented Base + Next Steps)
+
+## 6.1 Current folder split (implemented)
+
+```text
+tests/
+  backend/
+  frontend/
+  integration/
+  smoke/
+  conftest.py
+```
+
+## 6.2 Current coverage intent
+
+1. `tests/backend`: cache/open-meteo/pipeline/services/writers unit focus.
+2. `tests/frontend`: renderer/styles/assets/static-site rendering focus.
+3. `tests/integration`: CLI entrypoints, data-source gateway, server integration.
+4. `tests/smoke`: fast end-to-end sanity checks for split static and dynamic server flows.
+
+## 6.3 Required commands
+
+1. `python3 -m pytest tests/backend -q`
+2. `python3 -m pytest tests/frontend -q`
+3. `python3 -m pytest tests/integration -q`
+4. `python3 -m pytest tests/smoke -q`
+5. `python3 -m pytest -m smoke -q`
+6. `python3 -m pytest -m integration -q`
+
+---
+
+## 7) Execution Plan (Next Refactor Sprint)
+
+## Phase A: Frontend section/table deduplication
 
 Tasks:
 
-1. Create `src/shared/config.py`.
-2. Move `DEFAULT_RESORTS_FILE` (and future cross-layer constants) to shared.
-3. Update imports in:
-   - `src/cli.py`
-   - `src/web/weather_page_server.py`
-   - `src/web/weather_page_static_render.py`
-4. Keep backend constants for backend-only values (API URLs, model defaults, etc.).
+1. Add metric registry + reusable section renderer.
+2. Collapse duplicated snow/rain renderers onto shared primitives.
 
 Exit criteria:
 
-1. No web/cli import of `src.backend.constants` for cross-layer defaults.
-2. Runtime behavior unchanged.
+1. No repeated section-shell blocks in `weather_table_renderer.py`.
+2. Snow/rain desktop/mobile renderers share common helper paths.
 
-## Phase 2: Make communication layer the default path
+## Phase B: Template shell extraction
 
 Tasks:
 
-1. Add communication gateway (for example `src/web/data_sources/gateway.py`) with a single `load_payload(...)`.
-2. Route `cli render` through gateway instead of calling file loader directly.
-3. Route any future online bootstrap payload loading through same gateway.
-4. Keep current server behavior, but avoid introducing parallel loaders outside gateway.
+1. Move static page shell into template/static asset.
+2. Keep Python focused on dynamic content insertion.
 
 Exit criteria:
 
-1. One canonical payload loading path for file/API.
-2. Contract validation always occurs in communication layer.
+1. `weather_html_renderer.py` no longer contains full-document static literals.
 
-## Phase 3: Split backend compute from export
+## Phase C: Dynamic communication decoupling
 
 Tasks:
 
-1. Introduce compute function that only returns payload.
-2. Move JSON/CSV output operations to exporter module.
-3. Keep `run_pipeline(...)` as transitional orchestrator, internally delegating compute+export.
-4. Ensure service layer uses compute-only path by default.
+1. Introduce frontend-only server mode (no backend imports).
+2. Introduce backend data-service mode.
+3. Wire communication adapter selection by config.
 
 Exit criteria:
 
-1. Compute path testable without filesystem writes.
-2. Export path testable independently.
+1. Frontend and backend start independently.
+2. Frontend can consume payload from remote backend URL.
 
-## Phase 4 (optional): Online shell + client fetch mode
+## Phase D: Cleanup + compatibility hardening
 
 Tasks:
 
-1. Keep `/api/data` as contract endpoint.
-2. Optionally serve shell page that loads payload client-side through communication gateway.
-3. Preserve current SSR-style mode as fallback until parity confirmed.
+1. Keep `serve` compatibility command while adding decoupled modes.
+2. Remove transitional dead code once parity tests pass.
 
 Exit criteria:
 
-1. Online mode and static mode use the same contract and frontend transform logic.
+1. Legacy behavior unchanged for existing CLI users.
+2. New decoupled mode validated by smoke + integration tests.
 
 ---
 
-## 6) Validation Requirements
+## 8) Definition of Done (v3)
 
-Run all before push:
-
-1. `python3 -m compileall src`
-2. `python3 -m pytest -q`
-3. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8`
-4. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html`
-5. `python3 -m src.cli static --output-html index.html --max-workers 8`
-6. `python3 -m src.cli serve --host 127.0.0.1 --port 8010 --max-workers 8` and smoke:
-   - `GET /api/data`
-   - `GET /`
-
-Layer boundary checks:
-
-1. `rg -n "from src\\.web|import src\\.web" src/backend -S` should return empty.
-2. `rg -n "from src\\.backend\\.constants" src/web src/cli.py -S` should only include backend-owned concerns (or become empty after Phase 1).
-
----
-
-## 7) Backward Compatibility Rules
-
-During migration:
-
-1. Keep CLI names: `fetch`, `render`, `static`, `serve`.
-2. Keep endpoint paths: `/` and `/api/data`.
-3. Keep contract schema version stable unless explicit migration is introduced.
-4. Keep GitHub Pages workflow path compatible with `fetch + render`.
-
----
-
-## 8) Definition of Done (v2)
-
-Refactor is complete when all are true:
-
-1. Web/CLI no longer depend on backend constants for shared config.
-2. Communication gateway is the single runtime payload loading entry.
-3. Backend compute and export are separated internally.
-4. No backend module imports web modules.
-5. Docs, tests, and workflow reflect the final architecture.
-
----
-
-## 9) Recovery Checklist
-
-If resuming after context loss:
-
-1. Read this file first.
-2. Run:
-   - `git status --short`
-   - `python3 -m pytest -q`
-3. Identify unfinished phase from section 5.
-4. Implement one phase at a time.
-5. Re-run section 6 validations before commit.
-
----
-
-## 10) Change Log (This Doc)
-
-1. v1 documented contract-first refactor baseline.
-2. v2 rewrites plan around remaining boundary debt:
-   - shared config extraction
-   - communication gateway unification
-   - backend compute/export separation
+1. Frontend rendering duplication reduced to config-driven modules.
+2. Static shell content moved out of Python full-document f-strings.
+3. Backend orchestration split into compute/io/export boundaries.
+4. Dynamic runtime supports parallel FE/BE startup and cross-server deployment.
+5. Tests are responsibility-split and include smoke/integration gates.
+6. README and validation docs match the new architecture and commands.

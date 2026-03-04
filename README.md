@@ -67,12 +67,10 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 ├── resorts.txt
 ├── tests
 │   ├── conftest.py
-│   ├── test_cli.py
-│   ├── test_contract_validators.py
-│   ├── test_data_sources.py
-│   ├── test_backend_pipeline.py
-│   ├── test_backend_open_meteo.py
-│   └── ...
+│   ├── backend
+│   ├── frontend
+│   ├── integration
+│   └── smoke
 ├── legacy
 │   ├── ecmwf_ski_forecast.py
 │   ├── ecmwf_rain_pipeline.py
@@ -97,10 +95,26 @@ Run full automated tests:
 python3 -m pytest -q
 ```
 
+Run by layer:
+
+```bash
+python3 -m pytest tests/backend -q
+python3 -m pytest tests/frontend -q
+python3 -m pytest tests/integration -q
+python3 -m pytest tests/smoke -q
+```
+
+Run marker-based suites:
+
+```bash
+python3 -m pytest -m smoke -q
+python3 -m pytest -m integration -q
+```
+
 Run a focused test file:
 
 ```bash
-python3 -m pytest tests/test_cli.py -q
+python3 -m pytest tests/integration/test_cli.py -q
 ```
 
 Notes:
