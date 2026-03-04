@@ -21,6 +21,8 @@ from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.resort_catalog import load_resort_catalog, search_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
 
+_SUPPORTED_PASS_TYPES = {"epic", "ikon"}
+
 
 def _append_common_headers(handler: BaseHTTPRequestHandler, allow_origin: str) -> None:
     handler.send_header("Access-Control-Allow-Origin", allow_origin)
@@ -41,6 +43,18 @@ def _split_query_values(values: List[str]) -> List[str]:
 
 def _to_bool_flag(raw: str) -> bool:
     return (raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _supported_catalog(catalog: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    out: List[Dict[str, object]] = []
+    for item in catalog:
+        raw_pass_types = item.get("pass_types")
+        if not isinstance(raw_pass_types, list):
+            continue
+        pass_types = {str(v).strip().lower() for v in raw_pass_types if str(v).strip()}
+        if pass_types.intersection(_SUPPORTED_PASS_TYPES):
+            out.append(item)
+    return out
 
 
 def _available_filters(catalog: List[Dict[str, object]]) -> Dict[str, Dict[str, int]]:
@@ -129,7 +143,7 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
         "include_all": include_all,
     }
 
-    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
     available = _available_filters(catalog)
     has_filters = bool(pass_types or region or country or search_text or include_all)
     if not has_filters:
@@ -180,7 +194,7 @@ def _hourly_payload_for_resort(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
 ) -> Dict[str, object] | None:
-    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
     item = next((r for r in catalog if str(r.get("resort_id", "")) == resort_id), None)
     if item is None:
         return None
@@ -314,7 +328,7 @@ def make_handler(
             if parsed.path == "/api/resorts":
                 search_text = (qs.get("search", [""])[0] or "").strip()
                 try:
-                    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+                    catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
                 except Exception as exc:
                     self._write_json(500, {"error": f"Failed to load resort catalog: {exc}"})
                     return

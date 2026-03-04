@@ -33,6 +33,7 @@ from src.backend.weather_data_server import (
     _default_applied_filters,
     _empty_payload,
     _hourly_payload_for_resort,
+    _supported_catalog,
     select_resorts_from_query,
 )
 from src.shared.config import DEFAULT_RESORTS_FILE
@@ -154,7 +155,7 @@ def make_handler(
             )
             if "available_filters" not in payload:
                 try:
-                    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+                    catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
                     payload["available_filters"] = _available_filters(catalog)
                 except Exception:
                     payload["available_filters"] = {"pass_type": {}, "region": {}, "country": {}}

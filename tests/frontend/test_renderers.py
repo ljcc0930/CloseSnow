@@ -240,6 +240,11 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
+    assert 'name="filter-pass-type" value="ikon"' in html
+    assert 'name="filter-pass-type" value="epic"' in html
+    assert 'name="filter-pass-type" value="indy"' not in html
+    assert "Include all Epic + Ikon resorts (slower)" in html
+    assert "ljcc preferred resorts" in html
     assert '<option value="state" selected>State (A-Z)</option>' in html
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html

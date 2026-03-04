@@ -42,6 +42,15 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
                 "region": "east",
                 "pass_types": ["epic"],
             },
+            {
+                "resort_id": "powder-ridge-mn",
+                "query": "Powder Ridge, MN",
+                "name": "Powder Ridge",
+                "state": "MN",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["indy"],
+            },
         ],
     )
     handler = make_handler(
@@ -57,6 +66,8 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
         resorts = json.loads(urllib.request.urlopen(f"{base}/api/resorts?search=ikon", timeout=3).read().decode("utf-8"))
         assert payload["schema_version"] == valid_payload["schema_version"]
         assert payload["available_filters"]["pass_type"]["ikon"] == 1
+        assert payload["available_filters"]["pass_type"]["epic"] == 1
+        assert "indy" not in payload["available_filters"]["pass_type"]
         assert payload["applied_filters"]["pass_type"] == []
         assert payload["applied_filters"]["include_all"] is False
         assert health["ok"] is True
@@ -97,6 +108,15 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
                 "country": "US",
                 "region": "east",
                 "pass_types": ["epic"],
+            },
+            {
+                "resort_id": "powder-ridge-mn",
+                "query": "Powder Ridge, MN",
+                "name": "Powder Ridge",
+                "state": "MN",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["indy"],
             },
         ],
     )
@@ -155,6 +175,15 @@ def test_backend_data_server_data_include_all(monkeypatch, valid_payload):
                 "region": "east",
                 "pass_types": ["epic"],
             },
+            {
+                "resort_id": "powder-ridge-mn",
+                "query": "Powder Ridge, MN",
+                "name": "Powder Ridge",
+                "state": "MN",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["indy"],
+            },
         ],
     )
 
@@ -168,6 +197,7 @@ def test_backend_data_server_data_include_all(monkeypatch, valid_payload):
     try:
         payload = json.loads(urllib.request.urlopen(f"{base}/api/data?include_all=1", timeout=3).read().decode("utf-8"))
         assert captured["resorts"] == ["Snowbird, UT", "Mt Brighton, MI"]
+        assert "Powder Ridge, MN" not in captured["resorts"]
         assert captured["resorts_file"] == ""
         assert payload["applied_filters"]["include_all"] is True
     finally:
