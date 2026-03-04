@@ -18,6 +18,9 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 .
 ├── src
 │   ├── cli.py
+│   ├── contract
+│   │   ├── weather_payload_v1.py
+│   │   └── validators.py
 │   ├── backend
 │   │   ├── constants.py
 │   │   ├── models.py
@@ -26,7 +29,12 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── report_builder.py
 │   │   ├── writers.py
 │   │   ├── pipeline.py
-│   │   └── ecmwf_unified_backend.py
+│   │   ├── ecmwf_unified_backend.py
+│   │   ├── services
+│   │   │   └── weather_service.py
+│   │   └── pipelines
+│   │       ├── live_pipeline.py
+│   │       └── static_pipeline.py
 │   └── web
 │       ├── weather_page_server.py
 │       ├── weather_page_static_render.py
@@ -36,6 +44,10 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       ├── weather_page_assets.py
 │       ├── weather_table_renderer.py
 │       ├── weather_table_styles.py
+│       ├── data_sources
+│       │   ├── static_json_source.py
+│       │   ├── api_source.py
+│       │   └── source_selector.py
 │       ├── desktop
 │       │   ├── snowfall_renderer.py
 │       │   ├── rainfall_renderer.py
@@ -64,13 +76,20 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 
 ## Quick Start (Recommended: Unified CLI)
 
-### 1) Render static HTML
+### 1) One-shot static render (fetch + render)
 
 ```bash
 python3 -m src.cli static --output-html index.html
 ```
 
-### 2) Run dynamic server
+### 2) Split static pipeline (optional: fetch then render)
+
+```bash
+python3 -m src.cli fetch --output-json site/data.json
+python3 -m src.cli render --input-json site/data.json --output-html site/index.html
+```
+
+### 3) Run dynamic server
 
 ```bash
 python3 -m src.cli serve --host 127.0.0.1 --port 8010
@@ -83,6 +102,37 @@ Open:
 
 ## CLI Commands
 
+### `fetch`
+
+```bash
+python3 -m src.cli fetch \
+  [--resort "snowbasin, ut"] \
+  [--resorts-file resorts.txt] \
+  [--cache-file .cache/open_meteo_cache.json] \
+  [--geocode-cache-hours 720] \
+  [--forecast-cache-hours 3] \
+  [--max-workers 8] \
+  [--output-json site/data.json]
+```
+
+Notes:
+
+- Writes one validated contract payload JSON artifact.
+- No HTML/CSV output in this command.
+
+### `render`
+
+```bash
+python3 -m src.cli render \
+  [--input-json site/data.json] \
+  [--output-html index.html]
+```
+
+Notes:
+
+- Reads payload JSON from disk, validates schema, then renders HTML.
+- Useful when backend fetch and frontend render are run as separate stages.
+
 ### `static`
 
 ```bash
@@ -93,13 +143,18 @@ python3 -m src.cli static \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
   [--max-workers 8] \
+  [--output-json .cache/static_payload.json] \
+  [--skip-fetch] \
+  [--skip-render] \
   [--output-html index.html]
 ```
 
 Notes:
 
-- `--resort` is repeatable; if provided, `--resorts-file` is ignored
-- This command only writes HTML (no unified JSON/CSV outputs)
+- `--resort` is repeatable; if provided, `--resorts-file` is ignored.
+- Default behavior is fetch + render in one command.
+- `--skip-fetch` reuses `--output-json`; `--skip-render` only refreshes payload.
+- Still no CSV output in this command.
 
 ### `serve`
 
@@ -115,7 +170,7 @@ python3 -m src.cli serve \
 
 Notes:
 
-- Each request runs pipeline with `write_outputs=False`
+- Each request fetches payload via live backend pipeline and returns contract JSON at `/api/data`.
 - You can override resorts by query params:
 
 ```text
@@ -125,6 +180,12 @@ Notes:
 ## Run Modules Directly
 
 If you do not want to use the unified CLI, you can run modules directly.
+
+## Architecture (Refactor State)
+
+- Backend produces a single payload contract (`weather_payload_v1`).
+- Communication layer validates and loads payload from file or API (`src/web/data_sources`).
+- Frontend renderer consumes contract payload only (`render_payload_html` path shared by static/dynamic).
 
 ## Frontend Rendering Structure
 
@@ -197,12 +258,12 @@ The current list includes ski resorts that ljcc prefers; since he only has an Ik
 ## Python API Example
 
 ```python
-from src.backend.ecmwf_unified_backend import run_pipeline
+from src.backend.pipelines.live_pipeline import run_live_payload
 
-result = run_pipeline(
+result = run_live_payload(
     resorts=["snowbasin, ut", "snowbird, ut"],
-    use_default_resorts=False,
-    write_outputs=False,
+    resorts_file="",
+    max_workers=8,
 )
 
 print(result["resorts_count"], result["failed_count"])
@@ -220,7 +281,8 @@ Triggers:
 
 Build steps:
 
-- Run `python -m src.cli static --output-html site/index.html --max-workers 8`
+- Run `python -m src.cli fetch --output-json site/data.json --max-workers 8`
+- Run `python -m src.cli render --input-json site/data.json --output-html site/index.html`
 - Copy `assets/css/weather_page.css` and `assets/js/weather_page.js` into `site/`
 - Deploy `site/` to GitHub Pages
 

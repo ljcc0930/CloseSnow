@@ -5,37 +5,59 @@ import argparse
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 import sys
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.backend.ecmwf_unified_backend import DEFAULT_RESORTS_FILE, run_pipeline
-from src.web.weather_page_render_core import render_payload_html
+from src.backend.constants import DEFAULT_RESORTS_FILE
+from src.backend.pipelines.static_pipeline import fetch_static_payload, render_html, write_payload_json
+from src.web.data_sources import load_static_payload
 from src.web.weather_page_server import make_handler
+
+
+def _add_fetch_options(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--resort",
+        action="append",
+        default=[],
+        help="Resort query (repeatable). If set, resorts file is ignored.",
+    )
+    p.add_argument(
+        "--resorts-file",
+        default=DEFAULT_RESORTS_FILE,
+        help="Input resorts file when --resort is not provided.",
+    )
+    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
+    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
+    p.add_argument("--forecast-cache-hours", type=int, default=3)
+    p.add_argument("--max-workers", type=int, default=8)
+
+
+def _resolve_resorts(args: argparse.Namespace) -> Tuple[List[str], str]:
+    resorts = [r.strip() for r in args.resort if r.strip()]
+    resorts_file = "" if resorts else args.resorts_file
+    return resorts, resorts_file
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="CloseSnow unified CLI.")
     sub = p.add_subparsers(dest="command", required=True)
 
-    p_static = sub.add_parser("static", help="Render static HTML.")
-    p_static.add_argument(
-        "--resort",
-        action="append",
-        default=[],
-        help="Resort query (repeatable). If set, resorts file is ignored.",
-    )
-    p_static.add_argument(
-        "--resorts-file",
-        default=DEFAULT_RESORTS_FILE,
-        help="Input resorts file when --resort is not provided.",
-    )
-    p_static.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p_static.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p_static.add_argument("--forecast-cache-hours", type=int, default=3)
-    p_static.add_argument("--max-workers", type=int, default=8)
+    p_fetch = sub.add_parser("fetch", help="Fetch payload and write JSON artifact.")
+    _add_fetch_options(p_fetch)
+    p_fetch.add_argument("--output-json", default="site/data.json")
+
+    p_render = sub.add_parser("render", help="Render HTML from payload JSON artifact.")
+    p_render.add_argument("--input-json", default="site/data.json")
+    p_render.add_argument("--output-html", default="index.html")
+
+    p_static = sub.add_parser("static", help="Run fetch + render in one command.")
+    _add_fetch_options(p_static)
+    p_static.add_argument("--output-json", default=".cache/static_payload.json")
     p_static.add_argument("--output-html", default="index.html")
+    p_static.add_argument("--skip-fetch", action="store_true")
+    p_static.add_argument("--skip-render", action="store_true")
 
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
     p_serve.add_argument("--host", default="127.0.0.1")
@@ -48,24 +70,44 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def run_static(args: argparse.Namespace) -> int:
-    resorts: List[str] = [r.strip() for r in args.resort if r.strip()]
-    resorts_file = "" if resorts else args.resorts_file
-    payload = run_pipeline(
+def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
+    resorts, resorts_file = _resolve_resorts(args)
+    return fetch_static_payload(
         resorts=resorts,
         resorts_file=resorts_file,
-        use_default_resorts=False,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
-        write_outputs=False,
     )
 
-    out = Path(args.output_html)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render_payload_html(payload), encoding="utf-8")
+
+def run_fetch(args: argparse.Namespace) -> int:
+    payload = _fetch_payload(args)
+    out = write_payload_json(args.output_json, payload)
     print(f"Done: {out}")
+    return 0
+
+
+def run_render(args: argparse.Namespace) -> int:
+    payload = load_static_payload(args.input_json)
+    out = render_html(args.output_html, payload)
+    print(f"Done: {out}")
+    return 0
+
+
+def run_static(args: argparse.Namespace) -> int:
+    payload: Dict[str, Any] | None = None
+    if not args.skip_fetch:
+        payload = _fetch_payload(args)
+        write_payload_json(args.output_json, payload)
+        print(f"Done: {args.output_json}")
+
+    if not args.skip_render:
+        if payload is None:
+            payload = load_static_payload(args.output_json)
+        out = render_html(args.output_html, payload)
+        print(f"Done: {out}")
     return 0
 
 
@@ -90,6 +132,10 @@ def run_server(args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.command == "fetch":
+        return run_fetch(args)
+    if args.command == "render":
+        return run_render(args)
     if args.command == "static":
         return run_static(args)
     if args.command == "serve":

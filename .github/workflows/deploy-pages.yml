@@ -30,10 +30,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Render static page
+      - name: Build static site (fetch + render)
         run: |
           mkdir -p site/assets/css site/assets/js
-          python -m src.cli static --output-html site/index.html --max-workers 8
+          python -m src.cli fetch --output-json site/data.json --max-workers 8
+          python -m src.cli render --input-json site/data.json --output-html site/index.html
           cp assets/css/weather_page.css site/assets/css/weather_page.css
           cp assets/js/weather_page.js site/assets/js/weather_page.js
 

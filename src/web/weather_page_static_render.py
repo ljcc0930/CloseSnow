@@ -14,11 +14,8 @@ from typing import List
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.ecmwf_unified_backend import run_pipeline
-from src.web.weather_page_render_core import render_payload_html
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
+from src.backend.constants import DEFAULT_RESORTS_FILE
+from src.backend.pipelines.static_pipeline import fetch_static_payload, render_html
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,20 +48,16 @@ def main() -> int:
     resorts: List[str] = [r.strip() for r in args.resort if r.strip()]
     resorts_file = "" if resorts else args.resorts_file
 
-    payload = run_pipeline(
+    payload = fetch_static_payload(
         resorts=resorts,
         resorts_file=resorts_file,
-        use_default_resorts=False,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
-        write_outputs=False,
     )
 
-    out = Path(args.output_html)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render_payload_html(payload), encoding="utf-8")
+    out = render_html(args.output_html, payload)
     print(f"Done: {out}")
     return 0
 

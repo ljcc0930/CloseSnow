@@ -19,12 +19,10 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.ecmwf_unified_backend import run_pipeline
+from src.backend.constants import DEFAULT_RESORTS_FILE
+from src.backend.pipelines.live_pipeline import run_live_payload
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_RESORTS_FILE = str(REPO_ROOT / "resorts.txt")
 
 
 def make_handler(
@@ -61,15 +59,13 @@ def make_handler(
                 resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
                 resorts_file = ""
 
-            payload = run_pipeline(
+            payload = run_live_payload(
                 resorts=resorts,
                 resorts_file=resorts_file,
-                use_default_resorts=False,
                 cache_file=cache_file,
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
                 max_workers=max_workers,
-                write_outputs=False,
             )
 
             if parsed.path == "/api/data":

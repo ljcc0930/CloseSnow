@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAU
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
 from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, write_unified_json
+from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +201,8 @@ def run_pipeline(
     failed: List[Dict[str, str]] = async_result["failed"]
 
     out = {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": "Open-Meteo",
         "model": "ecmwf_ifs025",
         "forecast_days": FORECAST_DAYS,
@@ -221,6 +225,7 @@ def run_pipeline(
         "failed": failed,
         "reports": reports,
     }
+    validate_weather_payload_v1(out)
 
     cache.save()
     coord_cache.save()
