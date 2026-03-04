@@ -103,6 +103,19 @@ def _patch_pipeline_primitives(monkeypatch, tmp_path):
 def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     seed_calls = _patch_pipeline_primitives(monkeypatch, tmp_path)
     captured = {}
+    monkeypatch.setattr(
+        "src.backend.pipeline.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "a-id",
+                "query": "A",
+                "region": "west",
+                "country": "US",
+                "pass_types": ["ikon"],
+                "state": "UT",
+            }
+        ],
+    )
 
     async def fake_run_pipeline_async(**kwargs):  # noqa: ANN001
         captured["selected"] = deepcopy(kwargs["selected"])
@@ -132,6 +145,10 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["failed_count"] == 1
     assert out["cache"]["file"].endswith("dated_cache.json")
     assert validate_calls["payload"]["schema_version"] == pipeline.SCHEMA_VERSION
+    assert out["reports"][0]["resort_id"] == "a-id"
+    assert out["reports"][0]["pass_types"] == ["ikon"]
+    assert out["reports"][0]["region"] == "west"
+    assert out["reports"][0]["country_code"] == "US"
     assert ".cache/resorts_weather_unified.json" in seed_calls
 
 

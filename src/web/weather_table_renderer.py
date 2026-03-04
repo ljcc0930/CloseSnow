@@ -26,6 +26,13 @@ except ModuleNotFoundError:
 LayoutRenderer = Callable[[List[Dict[str, str]], List[str], List[str]], str]
 
 
+def _filter_attrs(row: Dict[str, str]) -> str:
+    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
+    region = html.escape(row.get("filter_region", ""), quote=True)
+    country = html.escape(row.get("filter_country", ""), quote=True)
+    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
 @dataclass(frozen=True)
 class MetricViewConfig:
     title: str
@@ -176,13 +183,14 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
 
     body_rows: List[str] = []
     for row in data:
+        attrs = _filter_attrs(row)
         cells: List[str] = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
         for header in day_headers:
             code = row.get(header, "").strip()
             emoji = emoji_for_weather_code(code if code else None)
             title = f"WMO code: {code}" if code else "WMO code: unknown"
             cells.append(f"<td title='{html.escape(title)}'>{emoji}</td>")
-        body_rows.append("<tr>" + "".join(cells) + "</tr>")
+        body_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
     return (
         "<section>"

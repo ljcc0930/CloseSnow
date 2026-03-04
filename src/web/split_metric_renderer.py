@@ -51,6 +51,13 @@ def _style_for_value(header: str, value: str, suffix: str, color_fn: ColorFn) ->
     return ""
 
 
+def _filter_attrs(row: Dict[str, str]) -> str:
+    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
+    region = html.escape(row.get("filter_region", ""), quote=True)
+    country = html.escape(row.get("filter_country", ""), quote=True)
+    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
 def render_desktop_split_metric_layout(
     data: List[Dict[str, str]],
     weekly_headers: List[str],
@@ -62,8 +69,8 @@ def render_desktop_split_metric_layout(
     daily_suffix: str,
     color_fn: ColorFn,
 ) -> str:
-    left_rows: List[List[str]] = []
-    right_rows: List[List[str]] = []
+    left_rows: List[tuple[str, List[str]]] = []
+    right_rows: List[tuple[str, List[str]]] = []
     for row in data:
         left_cells: List[str] = []
         right_cells: List[str] = []
@@ -79,11 +86,12 @@ def render_desktop_split_metric_layout(
             style = _style_for_value(header, val, daily_suffix, color_fn)
             right_cells.append(render_measure_cell(val, kind=kind, style=style))
 
-        left_rows.append(left_cells)
-        right_rows.append(right_cells)
+        attrs = _filter_attrs(row)
+        left_rows.append((attrs, left_cells))
+        right_rows.append((attrs, right_cells))
 
-    left_tbody = "".join(f"<tr>{''.join(cells)}</tr>" for cells in left_rows)
-    right_tbody = "".join(f"<tr>{''.join(cells)}</tr>" for cells in right_rows)
+    left_tbody = "".join(f"<tr{attrs}>{''.join(cells)}</tr>" for attrs, cells in left_rows)
+    right_tbody = "".join(f"<tr{attrs}>{''.join(cells)}</tr>" for attrs, cells in right_rows)
     sample_row = data[0] if data else None
     left_group = (
         "<tr>"
@@ -145,7 +153,8 @@ def render_mobile_split_metric_layout(
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        left_rows.append(f"<tr><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
+        attrs = _filter_attrs(row)
+        left_rows.append(f"<tr{attrs}><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
         right_cells: List[str] = []
 
         for header in weekly_headers:
@@ -157,7 +166,7 @@ def render_mobile_split_metric_layout(
             style = _style_for_value(header, val, daily_suffix, color_fn)
             right_cells.append(render_measure_cell(val, kind=kind, style=style))
 
-        right_rows.append("<tr>" + "".join(right_cells) + "</tr>")
+        right_rows.append("<tr" + attrs + ">" + "".join(right_cells) + "</tr>")
 
     left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     sample_row = data[0] if data else None

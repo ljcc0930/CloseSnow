@@ -37,6 +37,15 @@ const rainMobileSplitWrap = rainLeftWrapMobile ? rainLeftWrapMobile.closest(".ra
 const reportDateEl = document.getElementById("report-date");
 const resortSearchInput = document.getElementById("resort-search-input");
 const resortSearchClear = document.getElementById("resort-search-clear");
+const filterOpenBtn = document.getElementById("filter-open-btn");
+const filterModal = document.getElementById("filter-modal");
+const filterApplyBtn = document.getElementById("filter-apply-btn");
+const filterResetBtn = document.getElementById("filter-reset-btn");
+const filterCloseBtn = document.getElementById("filter-close-btn");
+const filterSummary = document.getElementById("filter-summary");
+const filterRegionSelect = document.getElementById("filter-region-select");
+const filterCountrySelect = document.getElementById("filter-country-select");
+const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
 if (reportDateEl) {
   const utcRaw = reportDateEl.getAttribute("data-generated-utc");
   const utcDate = utcRaw ? new Date(utcRaw) : null;
@@ -445,13 +454,55 @@ const autoSizeSunColumns = () => {
 
 const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
 
+const filterState = {
+  passTypes: new Set(),
+  region: "",
+  country: "",
+};
+
+const _rowPassTypeSet = (row) => {
+  const raw = row?.dataset?.passTypes || "";
+  return new Set(
+    raw
+      .split(",")
+      .map((v) => _normalizeSearch(v))
+      .filter((v) => v)
+  );
+};
+
+const rowMatchesFilters = (row, keyword) => {
+  const query = _normalizeSearch(row?.cells?.[0]?.textContent || "");
+  if (keyword && !query.includes(keyword)) return false;
+
+  if (filterState.passTypes.size > 0) {
+    const rowPassTypes = _rowPassTypeSet(row);
+    let anyPassTypeMatch = false;
+    for (const passType of filterState.passTypes) {
+      if (rowPassTypes.has(passType)) {
+        anyPassTypeMatch = true;
+        break;
+      }
+    }
+    if (!anyPassTypeMatch) return false;
+  }
+
+  if (filterState.region) {
+    const rowRegion = _normalizeSearch(row?.dataset?.region || "");
+    if (rowRegion !== filterState.region) return false;
+  }
+  if (filterState.country) {
+    const rowCountry = (row?.dataset?.country || "").trim().toUpperCase();
+    if (rowCountry !== filterState.country) return false;
+  }
+  return true;
+};
+
 const filterPairedTables = (left, right, keyword) => {
   if (!left || !right) return;
   const leftRows = Array.from(left.tBodies[0]?.rows || []);
   const rightRows = Array.from(right.tBodies[0]?.rows || []);
   leftRows.forEach((row, idx) => {
-    const query = _normalizeSearch(row.cells[0]?.textContent);
-    const visible = !keyword || query.includes(keyword);
+    const visible = rowMatchesFilters(row, keyword);
     row.style.display = visible ? "" : "none";
     if (rightRows[idx]) rightRows[idx].style.display = visible ? "" : "none";
   });
@@ -460,9 +511,17 @@ const filterPairedTables = (left, right, keyword) => {
 const filterPlainWeatherTable = (keyword) => {
   const rows = Array.from(document.querySelectorAll(".weather-code-table tbody tr"));
   rows.forEach((row) => {
-    const query = _normalizeSearch(row.cells[0]?.textContent);
-    row.style.display = !keyword || query.includes(keyword) ? "" : "none";
+    row.style.display = rowMatchesFilters(row, keyword) ? "" : "none";
   });
+};
+
+const syncFilterSummary = () => {
+  if (!filterSummary) return;
+  const parts = [];
+  if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
+  if (filterState.region) parts.push(`region: ${filterState.region}`);
+  if (filterState.country) parts.push(`country: ${filterState.country}`);
+  filterSummary.textContent = parts.length > 0 ? parts.join(" | ") : "All resorts";
 };
 
 const applyResortSearchFilter = () => {
@@ -474,7 +533,37 @@ const applyResortSearchFilter = () => {
   filterPairedTables(tempLeftTable, tempRightTable, keyword);
   filterPairedTables(sunLeftTable, sunRightTable, keyword);
   filterPlainWeatherTable(keyword);
+  syncFilterSummary();
   applyLayout();
+};
+
+const openFilterModal = () => {
+  if (!filterModal) return;
+  filterModal.hidden = false;
+};
+
+const closeFilterModal = () => {
+  if (!filterModal) return;
+  filterModal.hidden = true;
+};
+
+const applyFilterStateFromControls = () => {
+  filterState.passTypes = new Set(
+    filterPassTypeInputs
+      .filter((el) => el.checked)
+      .map((el) => _normalizeSearch(el.value))
+      .filter((v) => v)
+  );
+  filterState.region = _normalizeSearch(filterRegionSelect?.value || "");
+  filterState.country = (filterCountrySelect?.value || "").trim().toUpperCase();
+};
+
+const resetFilterControls = () => {
+  filterPassTypeInputs.forEach((el) => {
+    el.checked = false;
+  });
+  if (filterRegionSelect) filterRegionSelect.value = "";
+  if (filterCountrySelect) filterCountrySelect.value = "";
 };
 
 attachVerticalSync(leftWrap, rightWrap);
@@ -634,6 +723,34 @@ if (resortSearchClear && resortSearchInput) {
     resortSearchInput.focus();
   });
 }
+if (filterOpenBtn) {
+  filterOpenBtn.addEventListener("click", openFilterModal);
+}
+if (filterCloseBtn) {
+  filterCloseBtn.addEventListener("click", closeFilterModal);
+}
+if (filterApplyBtn) {
+  filterApplyBtn.addEventListener("click", () => {
+    applyFilterStateFromControls();
+    closeFilterModal();
+    applyResortSearchFilter();
+  });
+}
+if (filterResetBtn) {
+  filterResetBtn.addEventListener("click", () => {
+    resetFilterControls();
+    applyFilterStateFromControls();
+    closeFilterModal();
+    applyResortSearchFilter();
+  });
+}
+if (filterModal) {
+  filterModal.addEventListener("click", (event) => {
+    if (event.target === filterModal) closeFilterModal();
+  });
+}
+applyFilterStateFromControls();
+applyResortSearchFilter();
 requestAnimationFrame(() => {
   document.body.classList.remove("units-pending");
 });

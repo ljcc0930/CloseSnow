@@ -7,6 +7,13 @@ from typing import Dict, List
 from src.web.weather_table_styles import render_measure_cell, temp_color, to_float
 
 
+def _filter_attrs(row: Dict[str, str]) -> str:
+    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
+    region = html.escape(row.get("filter_region", ""), quote=True)
+    country = html.escape(row.get("filter_country", ""), quote=True)
+    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
 def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
     headers = [h for h in data[0].keys() if h != "matched_name"]
     max_headers = [h for h in headers if h.startswith("day_") and h.endswith("_max_c")]
@@ -44,7 +51,8 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        left_rows.append(f"<tr><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
+        attrs = _filter_attrs(row)
+        left_rows.append(f"<tr{attrs}><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
         cells: List[str] = []
         for day in days:
             min_h = min_by_day.get(day)
@@ -55,7 +63,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
             max_style = temp_color(to_float(max_v)) if max_h else ""
             cells.append(render_measure_cell(min_v, kind="temp", style=min_style))
             cells.append(render_measure_cell(max_v, kind="temp", style=max_style))
-        right_rows.append("<tr>" + "".join(cells) + "</tr>")
+        right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
     return f"""
       <div class="temperature-split-wrap">

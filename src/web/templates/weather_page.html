@@ -23,10 +23,48 @@
       </div>
       <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
     </div>
-    <div class="resort-search">
-      <label for="resort-search-input">Search Resorts</label>
-      <input id="resort-search-input" type="search" placeholder="Name, state, or pass type" autocomplete="off" />
-      <button id="resort-search-clear" type="button">Clear</button>
+    <div class="resort-controls">
+      <div class="resort-search">
+        <label for="resort-search-input">Search Resorts</label>
+        <input id="resort-search-input" type="search" placeholder="Name, state, or pass type" autocomplete="off" />
+        <button id="resort-search-clear" type="button">Clear</button>
+      </div>
+      <div class="resort-filter-bar">
+        <button id="filter-open-btn" type="button">Filters</button>
+        <span id="filter-summary" class="filter-summary">All resorts</span>
+      </div>
+    </div>
+    <div id="filter-modal" class="filter-modal" hidden>
+      <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+        <h3 id="filter-title">Resort Filters</h3>
+        <div class="filter-group">
+          <div class="filter-group-title">Pass Type</div>
+          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon</label>
+          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic</label>
+          <label><input type="checkbox" name="filter-pass-type" value="indy" /> Indy</label>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Region</div>
+          <select id="filter-region-select">
+            <option value="">All</option>
+            <option value="west">West</option>
+            <option value="east">East</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Country</div>
+          <select id="filter-country-select">
+            <option value="">All</option>
+            <option value="US">US</option>
+            <option value="CA">CA</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button id="filter-apply-btn" type="button">Apply</button>
+          <button id="filter-reset-btn" type="button">Reset</button>
+          <button id="filter-close-btn" type="button">Close</button>
+        </div>
+      </div>
     </div>
     {{snow_table}}
     {{rain_table}}

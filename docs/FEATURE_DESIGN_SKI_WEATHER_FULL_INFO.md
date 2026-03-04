@@ -25,6 +25,16 @@ Current payload and page:
 - Main page renders 3 sections only: snowfall, rainfall, temperature.
 - Daily column labels are generic (`today`, `day 2`, ...), not concrete dates.
 
+## 2.1 Implementation Status (Local)
+
+- F1 `weather_code` emoji section: implemented
+- F2 `sunrise/sunset`: implemented
+- F7 concrete date labels in list headers: implemented
+- F5 resort YAML metadata + search baseline: implemented
+- F4 filter modal + backend filter query support: in progress
+- F6 include all Ikon/Epic/Indy resorts: pending
+- F3 per-resort hourly standalone page: pending
+
 ## 3. Cross-Feature Architecture Decisions
 
 Before implementing all 7 features, use these shared rules:

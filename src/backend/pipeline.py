@@ -9,7 +9,7 @@ from src.backend.compute import build_payload_metadata, run_pipeline_async as _r
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import seed_coordinate_cache_from_unified
-from src.backend.resort_catalog import read_resort_queries
+from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,42 @@ logger = logging.getLogger(__name__)
 
 def read_resorts(path: str) -> List[str]:
     return read_resort_queries(path)
+
+
+def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
+    out: Dict[str, Dict[str, Any]] = {}
+    for path in paths:
+        if not path:
+            continue
+        try:
+            entries = load_resort_catalog(path)
+        except Exception:
+            continue
+        for item in entries:
+            query = str(item.get("query", "")).strip()
+            if query and query not in out:
+                out[query] = item
+    return out
+
+
+def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadata_by_query: Dict[str, Dict[str, Any]]) -> None:
+    for report in reports:
+        query = str(report.get("query", "")).strip()
+        if not query:
+            continue
+        meta = metadata_by_query.get(query)
+        if not meta:
+            continue
+        report["resort_id"] = str(meta.get("resort_id", "")).strip()
+        report["pass_types"] = list(meta.get("pass_types") or [])
+        report["region"] = str(meta.get("region", "")).strip().lower()
+        country_code = str(meta.get("country", "")).strip().upper()
+        if country_code:
+            report["country_code"] = country_code
+        if not report.get("country"):
+            report["country"] = country_code
+        if not report.get("admin1"):
+            report["admin1"] = str(meta.get("state", "")).strip()
 
 
 def compute_pipeline_payload(
@@ -59,6 +95,8 @@ def compute_pipeline_payload(
     )
     reports: List[Dict[str, Any]] = async_result["reports"]
     failed: List[Dict[str, str]] = async_result["failed"]
+    catalog_index = _catalog_metadata_by_query([resorts_file, DEFAULT_RESORTS_FILE])
+    _enrich_reports_with_catalog_metadata(reports, catalog_index)
 
     out = build_payload_metadata(
         cache_path=cache_path,

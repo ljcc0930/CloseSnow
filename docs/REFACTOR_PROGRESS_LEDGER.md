@@ -586,3 +586,48 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Implement F4: filter modal with pass type / east-west / country backed by catalog metadata.
+
+## 2026-03-04 05:05 (local)
+
+### Scope
+- Implement F4 resort filter capability with backend filter query support and frontend filter modal.
+
+### Changes
+- Files:
+  - `src/backend/weather_data_server.py`
+  - `src/backend/pipeline.py`
+  - `src/web/weather_report_transform.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `src/web/weather_table_renderer.py`
+  - `src/web/templates/weather_page.html`
+  - `assets/js/weather_page.js`
+  - `assets/css/weather_page.css`
+  - `tests/integration/test_backend_data_server.py`
+  - `tests/backend/test_pipeline.py`
+  - `tests/frontend/test_styles_and_transform.py`
+  - `tests/frontend/test_renderers.py`
+  - `docs/FEATURE_DESIGN_SKI_WEATHER_FULL_INFO.md`
+- Behavior impact:
+  - `/api/data` supports filters: `pass_type`, `region`, `country`, `search`.
+  - `/api/data` response now includes `available_filters` and `applied_filters` metadata.
+  - Reports are enriched with catalog metadata (`resort_id`, `pass_types`, `region`, `country_code`).
+  - Frontend rows carry filter data attributes and a filter modal can filter by pass type / east-west / country.
+
+### Validation
+- Commands:
+  - `pytest -q tests/backend/test_pipeline.py tests/integration/test_backend_data_server.py tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py`
+  - `pytest -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "filter-open-btn|filter-modal|data-pass-types|data-region|data-country='US'" index.html`
+- Results:
+  - Targeted suites passed (`23 passed`).
+  - Full suite passed (`121 passed`).
+  - Static HTML includes filter modal controls and row metadata attributes used by client filtering.
+
+### Risks / Notes
+- Frontend filter modal currently applies client-side row filtering (static-friendly); URL sync for filters is not added yet.
+
+### Next Slice
+- Implement F6 by extending resort catalog coverage toward full Ikon/Epic/Indy set.

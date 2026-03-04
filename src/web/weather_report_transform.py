@@ -12,6 +12,23 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _filter_meta(report: Dict[str, Any]) -> Dict[str, str]:
+    raw_pass_types = report.get("pass_types")
+    if isinstance(raw_pass_types, list):
+        pass_types = ",".join(str(v).strip().lower() for v in raw_pass_types if str(v).strip())
+    elif isinstance(raw_pass_types, str):
+        pass_types = ",".join(v.strip().lower() for v in raw_pass_types.split(",") if v.strip())
+    else:
+        pass_types = ""
+    country = str(report.get("country_code") or report.get("country", "")).strip().upper()
+    region = str(report.get("region", "")).strip().lower()
+    return {
+        "filter_pass_types": pass_types,
+        "filter_country": country,
+        "filter_region": region,
+    }
+
+
 _WEEKDAY_ABBR = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -48,7 +65,7 @@ def _reports_to_metric_rows(
 ) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {"query": str(report.get("query", ""))}
+        row: Dict[str, str] = {"query": str(report.get("query", "")), **_filter_meta(report)}
         for out_key, report_key in weekly_mapping.items():
             row[out_key] = f"{_as_float(report.get(report_key, 0.0)):.1f}"
 
@@ -99,6 +116,7 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
         row: Dict[str, str] = {
             "query": str(report.get("query", "")),
             "matched_name": str(report.get("matched_name", "")),
+            **_filter_meta(report),
         }
         daily = report.get("daily", [])
         for day_idx in range(display_days):
@@ -116,7 +134,7 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
 def reports_to_weather_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {"query": str(report.get("query", ""))}
+        row: Dict[str, str] = {"query": str(report.get("query", "")), **_filter_meta(report)}
         daily = report.get("daily", [])
         for day_idx in range(display_days):
             day = daily[day_idx] if day_idx < len(daily) else {}
@@ -133,6 +151,7 @@ def reports_to_sun_rows(reports: List[Dict[str, Any]], display_days: int = 14) -
         row: Dict[str, str] = {
             "query": str(report.get("query", "")),
             "matched_name": str(report.get("matched_name", "")),
+            **_filter_meta(report),
         }
         daily = report.get("daily", [])
         for day_idx in range(display_days):

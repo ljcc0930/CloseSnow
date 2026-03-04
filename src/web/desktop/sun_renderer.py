@@ -5,6 +5,13 @@ import html
 from typing import Dict, List
 
 
+def _filter_attrs(row: Dict[str, str]) -> str:
+    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
+    region = html.escape(row.get("filter_region", ""), quote=True)
+    country = html.escape(row.get("filter_country", ""), quote=True)
+    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
 def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
     headers = [h for h in data[0].keys() if h != "matched_name"]
     sunrise_headers = [h for h in headers if h.startswith("day_") and h.endswith("_sunrise")]
@@ -38,7 +45,8 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        left_rows.append(f"<tr><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
+        attrs = _filter_attrs(row)
+        left_rows.append(f"<tr{attrs}><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
         cells: List[str] = []
         for day in days:
             sunrise_h = sunrise_by_day.get(day)
@@ -47,7 +55,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
             sunset_v = row.get(sunset_h, "") if sunset_h else ""
             cells.append(f"<td>{html.escape(sunrise_v)}</td>")
             cells.append(f"<td>{html.escape(sunset_v)}</td>")
-        right_rows.append("<tr>" + "".join(cells) + "</tr>")
+        right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
     return f"""
       <div class="sun-split-wrap">
