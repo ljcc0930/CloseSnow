@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
@@ -9,6 +10,7 @@ from src.web.desktop.precipitation_renderer import (
     render_snowfall_desktop_layout,
 )
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
+from src.web.weather_code_emoji import emoji_for_weather_code
 
 try:
     from src.web.mobile.precipitation_renderer import render_rainfall_mobile_layout
@@ -135,3 +137,49 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
 
 def render_temperature_table(data: List[Dict[str, str]]) -> str:
     return _render_metric_section(data, _TEMPERATURE_VIEW)
+
+
+def render_weather_table(data: List[Dict[str, str]]) -> str:
+    if not data:
+        return "<section><h2>Weather</h2><p>No data</p></section>"
+
+    first = data[0]
+    day_headers = [h for h in first.keys() if h.startswith("day_") and h.endswith("_weather_code")]
+
+    def day_idx(header: str) -> int:
+        try:
+            return int(header.split("_")[1])
+        except (TypeError, ValueError, IndexError):
+            return 0
+
+    day_headers.sort(key=day_idx)
+
+    head_cells: List[str] = ["<th class='query-col'>Resort</th>"]
+    for header in day_headers:
+        idx = day_idx(header)
+        label = first.get(f"label_day_{idx}", "").strip()
+        if not label:
+            label = "today" if idx == 1 else f"day {idx}"
+        head_cells.append(f"<th>{html.escape(label)}</th>")
+
+    body_rows: List[str] = []
+    for row in data:
+        cells: List[str] = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
+        for header in day_headers:
+            code = row.get(header, "").strip()
+            emoji = emoji_for_weather_code(code if code else None)
+            title = f"WMO code: {code}" if code else "WMO code: unknown"
+            cells.append(f"<td title='{html.escape(title)}'>{emoji}</td>")
+        body_rows.append("<tr>" + "".join(cells) + "</tr>")
+
+    return (
+        "<section>"
+        "<h2>Weather</h2>"
+        "<div class='table-wrap'>"
+        "<table class='plain-table weather-code-table'>"
+        f"<thead><tr>{''.join(head_cells)}</tr></thead>"
+        f"<tbody>{''.join(body_rows)}</tbody>"
+        "</table>"
+        "</div>"
+        "</section>"
+    )

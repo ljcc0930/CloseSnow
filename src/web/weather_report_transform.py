@@ -98,3 +98,17 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
             row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
+
+
+def reports_to_weather_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for report in reports:
+        row: Dict[str, str] = {"query": str(report.get("query", ""))}
+        daily = report.get("daily", [])
+        for day_idx in range(display_days):
+            day = daily[day_idx] if day_idx < len(daily) else {}
+            code = day.get("weather_code")
+            row[f"day_{day_idx+1}_weather_code"] = "" if code is None else str(code)
+            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+        rows.append(row)
+    return rows

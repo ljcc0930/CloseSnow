@@ -8,6 +8,7 @@ from src.web.weather_report_transform import (
     reports_to_rain_rows,
     reports_to_snow_rows,
     reports_to_temp_rows,
+    reports_to_weather_rows,
 )
 
 
@@ -19,5 +20,6 @@ def render_payload_html(payload: Dict[str, Any]) -> str:
         display_days = max(0, forecast_days - 1)
     snow_rows = reports_to_snow_rows(reports, display_days=display_days)
     rain_rows = reports_to_rain_rows(reports, display_days=display_days)
+    weather_rows = reports_to_weather_rows(reports, display_days=display_days)
     temp_rows = reports_to_temp_rows(reports, display_days=display_days)
-    return build_html(snow_rows, rain_rows, temp_rows)
+    return build_html(snow_rows, rain_rows, weather_rows, temp_rows)

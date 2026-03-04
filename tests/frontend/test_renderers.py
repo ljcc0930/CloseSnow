@@ -18,6 +18,7 @@ from src.web.weather_table_renderer import (
     render_rain_table,
     render_snowfall_table,
     render_temperature_table,
+    render_weather_table,
 )
 
 
@@ -55,6 +56,18 @@ def _temp_row():
         "day_2_min_c": "-2",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+    }
+
+
+def _weather_row():
+    return {
+        "query": "Snowbird <UT>",
+        "day_1_weather_code": "0",
+        "day_2_weather_code": "61",
+        "day_3_weather_code": "",
+        "label_day_1": "03-04 Wed",
+        "label_day_2": "03-05 Thu",
+        "label_day_3": "03-06 Fri",
     }
 
 
@@ -123,21 +136,28 @@ def test_render_desktop_and_mobile_fallback():
 def test_table_renderer_sections_and_empty_states():
     assert "No data" in render_snowfall_table([])
     assert "No data" in render_rain_table([])
+    assert "No data" in render_weather_table([])
     assert "No data" in render_temperature_table([])
 
     snow = render_snowfall_table([_snow_row()])
     rain = render_rain_table([_rain_row()])
+    weather = render_weather_table([_weather_row()])
     temp = render_temperature_table([_temp_row()])
     assert "data-target-kind=\"snow\"" in snow
     assert "data-target-kind=\"rain\"" in rain
     assert "data-target-kind=\"temp\"" in temp
+    assert "<h2>Weather</h2>" in weather
+    assert "03-04 Wed" in weather
+    assert "☀️" in weather
+    assert "🌧️" in weather
+    assert "❓" in weather
     assert "cm" in snow and "in" in snow
     assert "mm" in rain and "in" in rain
     assert "°C" in temp and "°F" in temp
 
 
 def test_build_html_contains_meta_sections():
-    html = build_html([_snow_row()], [_rain_row()], [_temp_row()])
+    html = build_html([_snow_row()], [_rain_row()], [_weather_row()], [_temp_row()])
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
     assert "Powered by" in html
@@ -162,15 +182,21 @@ def test_render_payload_html_wires_transform_and_builder(monkeypatch):
         calls["temp_days"] = display_days
         return ["temp"]
 
+    def fake_weather(reports, display_days=14):  # noqa: ANN001
+        calls["weather_days"] = display_days
+        return ["weather"]
+
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", fake_snow)
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", fake_rain)
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_weather_rows", fake_weather)
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", fake_temp)
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
-        lambda snow, rain, temp: f"html:{snow}:{rain}:{temp}",
+        lambda snow, rain, weather, temp: f"html:{snow}:{rain}:{weather}:{temp}",
     )
     out = render_payload_html({"reports": [{"query": "A"}], "forecast_days": 16})
-    assert out == "html:['snow']:['rain']:['temp']"
+    assert out == "html:['snow']:['rain']:['weather']:['temp']"
     assert calls["snow_days"] == 15
     assert calls["rain_days"] == 15
+    assert calls["weather_days"] == 15
     assert calls["temp_days"] == 15

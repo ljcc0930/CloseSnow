@@ -16,6 +16,16 @@ def as_float_list(values: List[Any]) -> List[Optional[float]]:
     return out
 
 
+def as_int_list(values: List[Any]) -> List[Optional[int]]:
+    out: List[Optional[int]] = []
+    for value in values:
+        try:
+            out.append(int(value))
+        except Exception:
+            out.append(None)
+    return out
+
+
 def safe_sum(values: List[Optional[float]]) -> float:
     return float(sum(value for value in values if value is not None))
 
@@ -27,9 +37,10 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
     precipitation = as_float_list(daily.get("precipitation_sum", []))
     tmax = as_float_list(daily.get("temperature_2m_max", []))
     tmin = as_float_list(daily.get("temperature_2m_min", []))
+    weather_code = as_int_list(daily.get("weather_code", []))
 
     rows: List[Dict[str, Any]] = []
-    n = max(len(dates), len(snowfall), len(rain), len(precipitation), len(tmax), len(tmin))
+    n = max(len(dates), len(snowfall), len(rain), len(precipitation), len(tmax), len(tmin), len(weather_code))
     for idx in range(n):
         max_v = tmax[idx] if idx < len(tmax) else None
         rows.append(
@@ -40,6 +51,7 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "precipitation_mm": precipitation[idx] if idx < len(precipitation) else None,
                 "temperature_max_c": max_v,
                 "temperature_min_c": tmin[idx] if idx < len(tmin) else None,
+                "weather_code": weather_code[idx] if idx < len(weather_code) else None,
                 "above_0": 1 if (max_v is not None and max_v > 0) else 0,
             }
         )

@@ -453,3 +453,43 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Implement F1: add `weather_code` backend field and emoji rendering section with tests and static verification.
+
+## 2026-03-04 03:48 (local)
+
+### Scope
+- Implement F1 weather_code end-to-end: backend payload inclusion plus frontend emoji weather section.
+
+### Changes
+- Files:
+  - `src/backend/open_meteo.py`
+  - `src/backend/report_builder.py`
+  - `src/web/weather_code_emoji.py`
+  - `src/web/weather_report_transform.py`
+  - `src/web/weather_table_renderer.py`
+  - `src/web/weather_html_renderer.py`
+  - `src/web/weather_page_render_core.py`
+  - `src/web/templates/weather_page.html`
+  - `tests/frontend/test_renderers.py`
+- Behavior impact:
+  - Forecast/history daily requests now include `weather_code`.
+  - Each `daily` item in report includes `weather_code` (`int | null`).
+  - Main page now renders a dedicated `Weather` section with emoji per day and WMO-code tooltip.
+
+### Validation
+- Commands:
+- `pytest -q tests/backend tests/frontend`
+  - `pytest -q`
+  - `python3 -m src.cli fetch --output-json /tmp/closesnow_f1_data.json`
+  - `jq '.reports[0].daily[0] | {date, weather_code}' /tmp/closesnow_f1_data.json`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "<h2>Weather</h2>|☀️|🌧️|❄️|⛈️|❓|WMO code" index.html`
+- Results:
+  - Targeted suites and full suite passed (`113 passed`).
+  - API payload sample contains `weather_code` with numeric value.
+  - Static HTML includes Weather section, emoji rendering, and WMO tooltip text.
+
+### Risks / Notes
+- Weather emoji mapping is intentionally coarse-grained by WMO category; unknown codes fallback to `❓`.
+
+### Next Slice
+- Implement F2 sunrise/sunset daily fields and a dedicated sunrise/sunset section in frontend.
