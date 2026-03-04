@@ -27,6 +27,7 @@ def test_to_float_and_color_functions():
     assert rain_color(None) == ""
     assert rain_color(0) == "background:#FFFFFF;"
     assert "background:rgb(" in rain_color(1.5)
+    assert rain_color(7.6) == "background:#CFEFD8;"
     assert rain_color(20) == "background:#CFEFD8;"
 
 

@@ -54,9 +54,9 @@ def rain_color(v: Optional[float]) -> str:
         return ""
     if v <= 0:
         return "background:#FFFFFF;"
-    if v >= 10:
+    if v >= 7.6:
         return "background:#CFEFD8;"
-    x = v / 10.0
+    x = v / 7.6
     r = round(255 + (207 - 255) * x)
     g = round(255 + (239 - 255) * x)
     b = round(255 + (216 - 255) * x)
