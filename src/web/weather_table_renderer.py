@@ -2,65 +2,11 @@
 from __future__ import annotations
 
 import html
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-
-def to_float(value: str) -> Optional[float]:
-    v = (value or "").strip()
-    if v == "":
-        return None
-    try:
-        return float(v)
-    except ValueError:
-        return None
-
-
-def snow_color(v: Optional[float]) -> str:
-    if v is None:
-        return ""
-    if v > 15:
-        return "background:#FFE7CC;"
-    x = min(max(v, 0.0), 15.0) / 15.0
-    r = round(255 + (207 - 255) * x)
-    g = round(255 + (232 - 255) * x)
-    b = round(255 + (255 - 255) * x)
-    return f"background:rgb({r},{g},{b});"
-
-
-def temp_color(v: Optional[float]) -> str:
-    if v is None:
-        return ""
-    if v < -10:
-        return "background:#CFE8FF;"
-    if v < 0:
-        x = (v + 10.0) / 10.0
-        r = round(207 + (255 - 207) * x)
-        g = round(232 + (255 - 232) * x)
-        b = round(255 + (255 - 255) * x)
-        return f"background:rgb({r},{g},{b});"
-    if v <= 10:
-        if v <= 0:
-            return "background:#FFFFFF;"
-        x = v / 10.0
-        r = round(255 + (255 - 255) * x)
-        g = round(255 + (214 - 255) * x)
-        b = round(255 + (214 - 255) * x)
-        return f"background:rgb({r},{g},{b});"
-    return "background:#FFD6D6;"
-
-
-def rain_color(v: Optional[float]) -> str:
-    if v is None:
-        return ""
-    if v <= 0:
-        return "background:#FFFFFF;"
-    if v >= 10:
-        return "background:#CFEFD8;"
-    x = v / 10.0
-    r = round(255 + (207 - 255) * x)
-    g = round(255 + (239 - 255) * x)
-    b = round(255 + (216 - 255) * x)
-    return f"background:rgb({r},{g},{b});"
+from src.web.snowfall_desktop_renderer import render_snowfall_desktop_layout
+from src.web.snowfall_mobile_renderer import render_snowfall_mobile_layout
+from src.web.weather_table_styles import rain_color, temp_color, to_float
 
 
 def render_rain_table(data: List[Dict[str, str]]) -> str:
@@ -125,127 +71,14 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
     headers = [h for h in data[0].keys() if h != "matched_name"]
     weekly_headers = [h for h in headers if h.startswith("week")]
     daily_headers = [h for h in headers if h.startswith("day_")]
-
-    desktop_left_rows: List[List[str]] = []
-    desktop_right_rows: List[List[str]] = []
-    mobile_left_rows: List[str] = []
-    mobile_right_rows: List[str] = []
-
-    for r in data:
-        d_left_cells = []
-        d_right_cells = []
-        m_left = f"<tr><td class='query-col'>{html.escape(r.get('query', ''))}</td></tr>"
-        m_right_cells = []
-
-        for h in ["query"] + weekly_headers:
-            val = r.get(h, "")
-            style = ""
-            if h.endswith("_cm") and h != "query":
-                style = snow_color(to_float(val))
-            klass = "query-col" if h == "query" else ""
-            d_left_cells.append(f"<td class='{klass}' style='{style}'>{html.escape(val)}</td>")
-
-        for h in daily_headers:
-            val = r.get(h, "")
-            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
-            d_right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-
-        for h in weekly_headers:
-            val = r.get(h, "")
-            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
-            m_right_cells.append(f"<td class='week-col-cell' style='{style}'>{html.escape(val)}</td>")
-        for h in daily_headers:
-            val = r.get(h, "")
-            style = snow_color(to_float(val)) if h.endswith("_cm") else ""
-            m_right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-
-        desktop_left_rows.append(d_left_cells)
-        desktop_right_rows.append(d_right_cells)
-        mobile_left_rows.append(m_left)
-        mobile_right_rows.append("<tr>" + "".join(m_right_cells) + "</tr>")
-
-    desktop_left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in desktop_left_rows)
-    desktop_right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in desktop_right_rows)
-
-    left_group = (
-        "<tr>"
-        "<th rowspan='2' class='query-col'>Resort</th>"
-        f"<th colspan='{len(weekly_headers)}'>weekly</th>"
-        "</tr>"
-    )
-
-    def short_label(name: str) -> str:
-        if name.startswith("week") and name.endswith("_total_cm"):
-            idx = name[len("week"):].split("_", 1)[0]
-            return f"week {idx}"
-        if name.startswith("day_") and name.endswith("_cm"):
-            idx = name[len("day_"):].split("_", 1)[0]
-            if idx == "1":
-                return "today"
-            return f"day {idx}"
-        return name
-
-    left_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in weekly_headers) + "</tr>"
-    desktop_right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
-    desktop_right_detail = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
-    mobile_left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
-    mobile_right_group = (
-        f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
-        f"<th colspan='{len(daily_headers)}'>daily</th></tr>"
-    )
-    mobile_right_detail = (
-        "<tr>"
-        + "".join(f"<th class='week-col-cell'>{html.escape(short_label(h))}</th>" for h in weekly_headers)
-        + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers)
-        + "</tr>"
-    )
+    desktop_layout = render_snowfall_desktop_layout(data, weekly_headers, daily_headers)
+    mobile_layout = render_snowfall_mobile_layout(data, weekly_headers, daily_headers)
 
     return f"""
     <section>
       <h2>Snowfall (cm)</h2>
-      <div class="snowfall-split-wrap desktop-only">
-        <div class="snowfall-left-wrap" id="snowfall-left-wrap">
-          <table class="snowfall-left-table">
-            <colgroup>
-              <col class='col-query'>
-              <col class='col-week'>
-              <col class='col-week'>
-            </colgroup>
-            <thead>{left_group}{left_detail}</thead>
-            <tbody>{desktop_left_tbody}</tbody>
-          </table>
-        </div>
-        <div class="snowfall-right-wrap" id="snowfall-right-wrap">
-          <table class="snowfall-right-table">
-            <colgroup>
-              {"".join("<col class='col-day'>" for _ in daily_headers)}
-            </colgroup>
-            <thead>{desktop_right_group}{desktop_right_detail}</thead>
-            <tbody>{desktop_right_tbody}</tbody>
-          </table>
-        </div>
-      </div>
-      <div class="snowfall-split-wrap mobile-only">
-        <div class="snowfall-left-wrap" id="snowfall-left-wrap-mobile">
-          <table class="snowfall-left-table">
-            <colgroup>
-              <col class='col-query'>
-            </colgroup>
-            <thead>{mobile_left_head}</thead>
-            <tbody>{"".join(mobile_left_rows)}</tbody>
-          </table>
-        </div>
-        <div class="snowfall-right-wrap" id="snowfall-right-wrap-mobile">
-          <table class="snowfall-right-table">
-            <colgroup>
-              {"".join("<col class='col-week-right'>" for _ in weekly_headers)}
-              {"".join("<col class='col-day'>" for _ in daily_headers)}
-            </colgroup>
-            <thead>{mobile_right_group}{mobile_right_detail}</thead>
-            <tbody>{"".join(mobile_right_rows)}</tbody>
-          </table>
-        </div>
-      </div>
+      {desktop_layout}
+      {mobile_layout}
     </section>
     """
 
