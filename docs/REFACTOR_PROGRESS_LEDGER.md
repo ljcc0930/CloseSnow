@@ -28,10 +28,36 @@ Status: completed in code and validation on 2026-03-03 (local run).
 5. Two planning docs already exist:
    - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
    - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+6. Automated pytest suite exists under `tests/` and is runnable via `python3 -m pytest -q`.
 
 ---
 
 ## Completed Milestones
+
+## 2026-03-03 (automated pytest coverage expansion)
+
+### Scope
+- Add broad regression suite for refactored architecture and runtime entrypoints.
+
+### Changes
+- Added `tests/` suite covering:
+  - contract validators
+  - file/api data sources
+  - CLI command branches
+  - backend cache/open-meteo/pipeline/service/writer modules
+  - web table/style/renderer/html/assets/server paths
+  - compatibility entrypoints
+- Updated docs to include automated test workflow:
+  - `README.md`
+  - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+  - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+
+### Validation
+- `python3 -m pytest -q`
+
+### Outcome
+- Automated regression baseline established (`86 passed` in local run).
 
 ## 2026-03-03 (contract + communication + split static pipeline)
 
@@ -123,7 +149,7 @@ Current status: this theme has been implemented for the existing HTML rendering 
 
 ## Next Slices (Post-Refactor, Optional)
 
-1. Add automated tests for `validate_weather_payload_v1` and `src.cli fetch/render/static`.
+1. Add `pytest-cov` and establish a minimum coverage gate in CI.
 2. Add typed adapters for report row shape if frontend contract granularity increases.
 3. Consider client-side online mode (`index.html` loads `/api/data`) as a separate evolution, not part of this completed slice.
 

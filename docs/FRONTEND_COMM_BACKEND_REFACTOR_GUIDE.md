@@ -298,18 +298,20 @@ Exit criteria:
 ## 9.1 Fast checks per change
 
 1. `python3 -m compileall src`
-2. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8`
-3. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html`
-4. `python3 -m src.cli static --output-html index.html --max-workers 8`
-5. `python3 -m src.cli serve --max-workers 8` manual smoke test
+2. `python3 -m pytest -q`
+3. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8`
+4. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html`
+5. `python3 -m src.cli static --output-html index.html --max-workers 8`
+6. `python3 -m src.cli serve --max-workers 8` manual smoke test
 
 ## 9.2 Contract checks
 
 1. Validate every generated payload with validator.
-2. Add test fixtures for:
+2. Keep test fixtures for:
    - normal success
    - partial failures
    - missing optional history
+3. Ensure `tests/test_contract_validators.py` and source loader tests stay green.
 
 ## 9.3 UI checks
 

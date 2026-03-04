@@ -59,6 +59,14 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   ├── css/weather_page.css
 │   └── js/weather_page.js
 ├── resorts.txt
+├── tests
+│   ├── conftest.py
+│   ├── test_cli.py
+│   ├── test_contract_validators.py
+│   ├── test_data_sources.py
+│   ├── test_backend_pipeline.py
+│   ├── test_backend_open_meteo.py
+│   └── ...
 ├── legacy
 │   ├── ecmwf_ski_forecast.py
 │   ├── ecmwf_rain_pipeline.py
@@ -73,6 +81,26 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 - Python 3.9+
 - Main flow (`src/`) uses Python standard library only
 - `legacy/` scripts require extra packages (see `requirements.txt`)
+- Test workflow uses `pytest`
+
+## Testing
+
+Run full automated tests:
+
+```bash
+python3 -m pytest -q
+```
+
+Run a focused test file:
+
+```bash
+python3 -m pytest tests/test_cli.py -q
+```
+
+Notes:
+
+- Test suite is network-independent (API calls are mocked).
+- Tests cover contract validation, CLI dispatch/branches, backend pipeline orchestration, cache/retry behavior, and web renderer/server paths.
 
 ## Quick Start (Recommended: Unified CLI)
 

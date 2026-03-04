@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+import argparse
+
+from src.backend import ecmwf_unified_backend
+from src.web import weather_page_static_render
+
+
+def test_backend_entrypoint_main(monkeypatch, capsys):
+    args = argparse.Namespace(
+        resort=["A"],
+        resorts_file="resorts.txt",
+        use_default_resorts=False,
+        output_json="o.json",
+        snow_csv="s.csv",
+        rain_csv="r.csv",
+        temp_csv="t.csv",
+        cache_file=".cache/a.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+    )
+    monkeypatch.setattr("src.backend.ecmwf_unified_backend.parse_args", lambda: args)
+    monkeypatch.setattr(
+        "src.backend.ecmwf_unified_backend.run_pipeline",
+        lambda **kwargs: {"cache": {"hits": 1, "misses": 2, "file": ".cache/x.json"}, "failed": []},
+    )
+    rc = ecmwf_unified_backend.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Done. JSON: o.json" in out
+
+
+def test_static_render_entrypoint_main(monkeypatch, capsys):
+    args = argparse.Namespace(
+        resort=["A", " "],
+        resorts_file="resorts.txt",
+        cache_file=".cache/a.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+        output_html="index.html",
+    )
+    captured = {}
+
+    def fake_fetch_static_payload(**kwargs):  # noqa: ANN001
+        captured["kwargs"] = kwargs
+        return {"reports": []}
+
+    monkeypatch.setattr("src.web.weather_page_static_render.parse_args", lambda: args)
+    monkeypatch.setattr("src.web.weather_page_static_render.fetch_static_payload", fake_fetch_static_payload)
+    monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
+    rc = weather_page_static_render.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert captured["kwargs"]["resorts"] == ["A"]
+    assert captured["kwargs"]["resorts_file"] == ""
+    assert "Done: index.html" in out
+

@@ -11,10 +11,11 @@ Use this checklist every time before pushing.
 A change is considered "runnable" only if all of these are true:
 
 1. Python modules compile.
-2. Static pipeline succeeds in both split mode (`fetch` + `render`) and wrapper mode (`static`).
-3. Dynamic server boots and serves both HTML and JSON endpoints.
-4. Core frontend assets are reachable.
-5. No obvious runtime errors appear in the smoke flow.
+2. Automated regression tests pass (`pytest`).
+3. Static pipeline succeeds in both split mode (`fetch` + `render`) and wrapper mode (`static`).
+4. Dynamic server boots and serves both HTML and JSON endpoints.
+5. Core frontend assets are reachable.
+6. No obvious runtime errors appear in the smoke flow.
 
 ---
 
@@ -61,6 +62,17 @@ Pass criteria:
 
 1. Command exits with code 0.
 2. No syntax/indent/import errors.
+
+### 3.3 Automated regression tests
+
+```bash
+python3 -m pytest -q
+```
+
+Pass criteria:
+
+1. All tests pass.
+2. No flaky network dependency (suite should be deterministic).
 
 ---
 
@@ -238,19 +250,18 @@ Pass criteria:
 Before push:
 
 1. `python3 -m compileall src` passes.
-2. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8` passes.
-3. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
-4. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
-5. Dynamic server probes (`/` and `/api/data`) pass.
-6. `git status --short` contains only intended files.
-7. README/workflow updated if command or behavior changed.
+2. `python3 -m pytest -q` passes.
+3. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8` passes.
+4. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
+5. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
+6. Dynamic server probes (`/` and `/api/data`) pass.
+7. `git status --short` contains only intended files.
+8. README/workflow updated if command or behavior changed.
 
 ---
 
 ## 11) Known limitations of this playbook
 
-1. No automated pytest suite is defined here.
-2. External API availability/rate limits can affect runtime behavior.
-3. Validation is smoke-level, not full correctness proof.
-
-If stronger guarantees are needed, add dedicated contract tests and integration tests.
+1. `pytest-cov`/coverage percentage gates are not yet configured.
+2. External API availability/rate limits can still affect live smoke checks.
+3. Validation remains mostly unit/smoke-level, not a full correctness proof.

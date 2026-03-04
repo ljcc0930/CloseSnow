@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import re
+
+from src.web.desktop.rainfall_renderer import render_rainfall_desktop_layout
+from src.web.desktop.snowfall_renderer import render_snowfall_desktop_layout
+from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
+from src.web.mobile.rainfall_renderer import render_rainfall_mobile_layout
+from src.web.mobile.snowfall_renderer import render_snowfall_mobile_layout
+from src.web.weather_html_renderer import build_html
+from src.web.weather_page_render_core import render_payload_html
+from src.web.weather_table_renderer import (
+    _render_desktop_and_mobile,
+    render_rain_table,
+    render_snowfall_table,
+    render_temperature_table,
+)
+
+
+def _snow_row():
+    return {
+        "query": "Snowbird <UT>",
+        "week1_total_cm": "12.3",
+        "week2_total_cm": "4.5",
+        "day_1_cm": "1.0",
+        "day_2_cm": "2.0",
+    }
+
+
+def _rain_row():
+    return {
+        "query": "Snowbird <UT>",
+        "week1_total_rain_mm": "2.2",
+        "week2_total_rain_mm": "1.1",
+        "day_1_rain_mm": "0.0",
+        "day_2_rain_mm": "0.5",
+    }
+
+
+def _temp_row():
+    return {
+        "query": "Snowbird <UT>",
+        "matched_name": "Snowbird",
+        "day_2_max_c": "2",
+        "day_1_max_c": "-1",
+        "day_1_min_c": "-5",
+        "day_2_min_c": "-2",
+    }
+
+
+def test_snowfall_desktop_mobile_renderers():
+    data = [_snow_row()]
+    weekly = ["week1_total_cm", "week2_total_cm"]
+    daily = ["day_1_cm", "day_2_cm"]
+    desktop = render_snowfall_desktop_layout(data, weekly, daily)
+    mobile = render_snowfall_mobile_layout(data, weekly, daily)
+    assert "snowfall-split-wrap desktop-only" in desktop
+    assert "snowfall-split-wrap mobile-only" in mobile
+    assert "Snowbird &lt;UT&gt;" in desktop
+    assert "week 1" in desktop
+    assert "today" in mobile
+
+
+def test_rainfall_desktop_mobile_renderers():
+    data = [_rain_row()]
+    weekly = ["week1_total_rain_mm", "week2_total_rain_mm"]
+    daily = ["day_1_rain_mm", "day_2_rain_mm"]
+    desktop = render_rainfall_desktop_layout(data, weekly, daily)
+    mobile = render_rainfall_mobile_layout(data, weekly, daily)
+    assert "rain-split-wrap desktop-only" in desktop
+    assert "rain-split-wrap mobile-only" in mobile
+    assert "Snowbird &lt;UT&gt;" in desktop
+    assert "week 2" in desktop
+    assert "today" in mobile
+
+
+def test_temperature_desktop_renderer():
+    html = render_temperature_desktop_layout([_temp_row()])
+    assert "temperature-split-wrap" in html
+    assert "today" in html
+    assert "day 2" in html
+    assert "Snowbird &lt;UT&gt;" in html
+
+
+def test_render_desktop_and_mobile_fallback():
+    out = _render_desktop_and_mobile(
+        data=[{"query": "A"}],
+        weekly_headers=["week1"],
+        daily_headers=["day_1"],
+        desktop_renderer=lambda d, w, day: "desktop",
+        mobile_renderer=None,
+    )
+    assert out == "desktop"
+
+
+def test_table_renderer_sections_and_empty_states():
+    assert "No data" in render_snowfall_table([])
+    assert "No data" in render_rain_table([])
+    assert "No data" in render_temperature_table([])
+
+    snow = render_snowfall_table([_snow_row()])
+    rain = render_rain_table([_rain_row()])
+    temp = render_temperature_table([_temp_row()])
+    assert "data-target-kind=\"snow\"" in snow
+    assert "data-target-kind=\"rain\"" in rain
+    assert "data-target-kind=\"temp\"" in temp
+    assert "cm" in snow and "in" in snow
+    assert "mm" in rain and "in" in rain
+    assert "°C" in temp and "°F" in temp
+
+
+def test_build_html_contains_meta_sections():
+    html = build_html([_snow_row()], [_rain_row()], [_temp_row()])
+    assert "<!doctype html>" in html
+    assert "Ski Resorts Weather Forcast" in html
+    assert "Powered by" in html
+    assert "https://open-meteo.com/en/docs/ecmwf-api" in html
+    assert "Feature requests" in html
+    assert 'data-generated-utc="' in html
+    assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
+
+
+def test_render_payload_html_wires_transform_and_builder(monkeypatch):
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", lambda reports: ["snow"])
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", lambda reports: ["rain"])
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", lambda reports: ["temp"])
+    monkeypatch.setattr(
+        "src.web.weather_page_render_core.build_html",
+        lambda snow, rain, temp: f"html:{snow}:{rain}:{temp}",
+    )
+    out = render_payload_html({"reports": [{"query": "A"}]})
+    assert out == "html:['snow']:['rain']:['temp']"
+
