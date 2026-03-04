@@ -32,20 +32,13 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
 
 def test_run_live_payload_calls_build_weather_payload(monkeypatch):
     monkeypatch.setattr(
-        "src.backend.pipelines.live_pipeline.build_weather_payload_for_options",
-        lambda options: {"called": {"options": options}},
-    )
-    out = run_live_payload(resorts=["A"], resorts_file="x")
-    options = out["called"]["options"]
-    assert options.resorts == ["A"]
-    assert options.resorts_file == "x"
-
-
-def test_fetch_static_payload_delegates_to_live_pipeline(monkeypatch):
-    monkeypatch.setattr(
-        "src.backend.pipelines.static_pipeline.run_live_payload",
+        "src.backend.pipelines.live_pipeline.build_weather_payload",
         lambda **kwargs: {"called": kwargs},
     )
-    out = fetch_static_payload(resorts=["A"], resorts_file="r.txt")
+    out = run_live_payload(resorts=["A"], resorts_file="x")
     assert out["called"]["resorts"] == ["A"]
-    assert out["called"]["resorts_file"] == "r.txt"
+    assert out["called"]["resorts_file"] == "x"
+
+
+def test_fetch_static_payload_aliases_live_pipeline():
+    assert fetch_static_payload is run_live_payload

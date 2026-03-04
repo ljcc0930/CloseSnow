@@ -5,6 +5,7 @@ import json
 import pytest
 
 from src.contract.validators import ContractValidationError
+from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
 from src.web.data_sources.gateway import build_payload_client, load_payload
 from src.web.data_sources.static_json_source import load_static_payload
@@ -93,6 +94,70 @@ def test_load_payload_gateway_file(monkeypatch):
     assert payload["source"] == "/tmp/a.json"
 
 
+def test_load_payload_gateway_local(monkeypatch):
+    class DummyClient:
+        def __init__(self, resorts, cache_file, geocode_cache_hours, forecast_cache_hours, max_workers):  # noqa: ANN001
+            self.resorts = resorts
+            self.cache_file = cache_file
+            self.geocode_cache_hours = geocode_cache_hours
+            self.forecast_cache_hours = forecast_cache_hours
+            self.max_workers = max_workers
+
+        def load(self):
+            return {
+                "mode": "local",
+                "resorts": self.resorts,
+                "cache_file": self.cache_file,
+                "workers": self.max_workers,
+            }
+
+    monkeypatch.setattr("src.web.data_sources.gateway.LocalPayloadClient", DummyClient)
+    payload = load_payload(
+        "local",
+        "",
+        resorts=["A", "B"],
+        cache_file=".cache/x.json",
+        geocode_cache_hours=100,
+        forecast_cache_hours=2,
+        max_workers=4,
+    )
+    assert payload["mode"] == "local"
+    assert payload["resorts"] == ["A", "B"]
+    assert payload["cache_file"] == ".cache/x.json"
+    assert payload["workers"] == 4
+
+
+def test_load_payload_gateway_local_uses_live_pipeline(monkeypatch):
+    captured = {}
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {"ok": True}
+
+    monkeypatch.setattr("src.backend.pipelines.live_pipeline.run_live_payload", fake_run_live_payload)
+
+    load_payload(
+        "local",
+        "",
+        resorts=["A", " ", "B"],
+        cache_file=".cache/live.json",
+        geocode_cache_hours=111,
+        forecast_cache_hours=5,
+        max_workers=9,
+    )
+    assert captured["resorts"] == ["A", "B"]
+    assert captured["resorts_file"] == ""
+    assert captured["cache_file"] == ".cache/live.json"
+    assert captured["geocode_cache_hours"] == 111
+    assert captured["forecast_cache_hours"] == 5
+    assert captured["max_workers"] == 9
+
+    captured.clear()
+    load_payload("local", "", resorts=[], cache_file=".cache/live.json")
+    assert captured["resorts"] == []
+    assert captured["resorts_file"] == DEFAULT_RESORTS_FILE
+
+
 def test_load_payload_gateway_rejects_unknown_mode():
     with pytest.raises(ValueError, match="Unsupported data source mode"):
         load_payload("unknown", "x")
@@ -115,5 +180,7 @@ def test_gateway_routes_to_api_with_timeout(monkeypatch):
 def test_build_payload_client_types():
     api_client = build_payload_client("api", "https://a", timeout=9)
     file_client = build_payload_client("file", "/tmp/a.json")
+    local_client = build_payload_client("local", "", resorts=["A"])
     assert type(api_client).__name__ == "HttpPayloadClient"
     assert type(file_client).__name__ == "FilePayloadClient"
+    assert type(local_client).__name__ == "LocalPayloadClient"

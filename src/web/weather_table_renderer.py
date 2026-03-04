@@ -4,17 +4,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
-from src.web.desktop.rainfall_renderer import render_rainfall_desktop_layout
-from src.web.desktop.snowfall_renderer import render_snowfall_desktop_layout
+from src.web.desktop.precipitation_renderer import (
+    render_rainfall_desktop_layout,
+    render_snowfall_desktop_layout,
+)
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
 
 try:
-    from src.web.mobile.rainfall_renderer import render_rainfall_mobile_layout
+    from src.web.mobile.precipitation_renderer import render_rainfall_mobile_layout
 except ModuleNotFoundError:
     render_rainfall_mobile_layout = None
 
 try:
-    from src.web.mobile.snowfall_renderer import render_snowfall_mobile_layout
+    from src.web.mobile.precipitation_renderer import render_snowfall_mobile_layout
 except ModuleNotFoundError:
     render_snowfall_mobile_layout = None
 

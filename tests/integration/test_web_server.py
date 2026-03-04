@@ -33,7 +33,7 @@ def test_server_api_root_and_asset(monkeypatch):
         "failed": [],
         "reports": [{"query": "A", "daily": []}],
     }
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", lambda **kwargs: sample_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: sample_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: b"body{}")
 
@@ -62,7 +62,7 @@ def test_server_api_root_and_asset(monkeypatch):
 
 
 def test_server_asset_not_found(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: (_ for _ in ()).throw(OSError("x")))
 
     handler = make_handler(
@@ -85,7 +85,7 @@ def test_server_asset_not_found(monkeypatch):
 def test_server_query_resort_pass_through(monkeypatch):
     captured = {}
 
-    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+    def fake_load_payload(**kwargs):  # noqa: ANN001
         captured.update(kwargs)
         return {
             "schema_version": "weather_payload_v1",
@@ -101,7 +101,7 @@ def test_server_query_resort_pass_through(monkeypatch):
             "reports": [],
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
 
     handler = make_handler(
@@ -113,8 +113,9 @@ def test_server_query_resort_pass_through(monkeypatch):
     server, thread, base = _serve_once(handler)
     try:
         urllib.request.urlopen(f"{base}/api/data?resort=A&resort=B", timeout=3).read()
+        assert captured["mode"] == "local"
         assert captured["resorts"] == ["A", "B"]
-        assert captured["resorts_file"] == ""
+        assert captured["source"] == ""
     finally:
         server.shutdown()
         server.server_close()
@@ -124,10 +125,11 @@ def test_server_query_resort_pass_through(monkeypatch):
 def test_server_api_mode_loads_remote_payload(monkeypatch):
     calls = {}
 
-    def fake_load_payload(mode, source, timeout=20):  # noqa: ANN001
+    def fake_load_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
         calls["mode"] = mode
         calls["source"] = source
         calls["timeout"] = timeout
+        calls["kwargs"] = kwargs
         return {
             "schema_version": "weather_payload_v1",
             "generated_at_utc": "2026-03-03T23:00:00Z",
@@ -161,6 +163,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
         assert "resort=A" in calls["source"]
         assert "resort=B" in calls["source"]
         assert calls["timeout"] == 11
+        assert calls["kwargs"]["resorts"] == ["A", "B"]
     finally:
         server.shutdown()
         server.server_close()
@@ -168,7 +171,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
 
 
 def test_server_health_endpoint(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
     handler = make_handler(
         cache_file=".cache/x.json",
         geocode_cache_hours=720,

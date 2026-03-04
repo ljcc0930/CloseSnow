@@ -3,7 +3,7 @@
 Dynamic weather page server.
 
 Modes:
-1. local (default): calls backend pipeline directly per request.
+1. local (default): resolves payload through communication local adapter.
 2. api: fetches contract payload from remote API endpoint.
 3. file: loads payload contract from local JSON artifact.
 """
@@ -21,17 +21,9 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
-
-
-def run_live_payload(**kwargs: Any) -> Dict[str, Any]:
-    # Lazy import keeps the web layer startup independent in api/file modes.
-    from src.backend.pipelines.live_pipeline import run_live_payload as _run_live_payload
-
-    return _run_live_payload(**kwargs)
 
 
 def _append_resort_query(base_url: str, resorts: List[str]) -> str:
@@ -68,20 +60,19 @@ def make_handler(
 
         def _load_request_payload(self, qs: Dict[str, List[str]]) -> Dict[str, Any]:
             resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
-            if data_mode == "local":
-                resorts_file = "" if resorts else DEFAULT_RESORTS_FILE
-                return run_live_payload(
-                    resorts=resorts,
-                    resorts_file=resorts_file,
-                    cache_file=cache_file,
-                    geocode_cache_hours=geocode_cache_hours,
-                    forecast_cache_hours=forecast_cache_hours,
-                    max_workers=max_workers,
-                )
+            source = data_source
             if data_mode == "api":
                 source = _append_resort_query(data_source, resorts)
-                return load_payload(mode="api", source=source, timeout=data_timeout)
-            return load_payload(mode="file", source=data_source, timeout=data_timeout)
+            return load_payload(
+                mode=data_mode,
+                source=source,
+                timeout=data_timeout,
+                resorts=resorts,
+                cache_file=cache_file,
+                geocode_cache_hours=geocode_cache_hours,
+                forecast_cache_hours=forecast_cache_hours,
+                max_workers=max_workers,
+            )
 
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)

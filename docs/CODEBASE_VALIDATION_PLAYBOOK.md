@@ -91,7 +91,7 @@ Pass criteria:
 1. Backend and frontend suites pass independently.
 2. Smoke and integration marker suites pass.
 
-### 3.4 Layer boundary checks (v2 refactor)
+### 3.4 Layer boundary checks (v4 refactor)
 
 Hard boundary (must always pass):
 
@@ -102,6 +102,28 @@ rg -n "from src\\.web|import src\\.web" src/backend -S
 Pass criteria:
 
 1. No matches.
+
+Web-side boundary sanity:
+
+```bash
+rg -n "from src\\.backend\\.open_meteo|from src\\.backend\\.pipeline\\b|from src\\.backend\\.cache" src/web -S
+```
+
+Pass criteria:
+
+1. No matches.
+2. Allowed backend coupling in web should flow through communication adapters, not render handlers.
+
+Local adapter containment check:
+
+```bash
+rg -n "from src\\.backend\\.pipelines\\.live_pipeline" src/web -S
+```
+
+Pass criteria:
+
+1. Exactly one match in `src/web/data_sources/local_source.py`.
+2. No direct backend pipeline imports in `weather_page_server.py`.
 
 ---
 
@@ -327,3 +349,41 @@ Before push:
 2. External API availability/rate limits can still affect live smoke checks.
 3. Validation remains mostly unit/smoke-level, not a full correctness proof.
 4. Layer-boundary checks are static-text heuristics; they do not replace design review.
+
+---
+
+## 12) Refactor Hygiene Checks
+
+When doing structure-level refactor, run these extra checks:
+
+1. Wrapper minimization check:
+
+```bash
+rg -n "return run_live_payload\\(|return build_weather_payload\\(" src/backend -S
+```
+
+Goal:
+
+1. Keep wrappers as aliases/tiny delegators only.
+2. Avoid copying orchestration logic across multiple files.
+
+2. Duplicate split-render logic check:
+
+```bash
+rg -n "weekly\\'>|daily\\'>|col-week-right|snowfall-left-wrap-mobile|rain-left-wrap-mobile" src/web/desktop src/web/mobile -S
+```
+
+Goal:
+
+1. Confirm shared split-render primitives remain centralized in `src/web/split_metric_renderer.py`.
+2. Desktop/mobile modules should stay thin and configuration-focused.
+
+3. Decoupled runtime smoke:
+
+```bash
+python3 -m pytest tests/smoke/test_decoupled_pipeline_smoke.py -q
+```
+
+Goal:
+
+1. Ensure frontend/backend can still run independently via communication layer.

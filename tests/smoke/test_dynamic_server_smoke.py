@@ -20,7 +20,7 @@ def _start_server(handler_cls):
 
 @pytest.mark.smoke
 def test_dynamic_server_smoke(monkeypatch, valid_payload):
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", lambda **kwargs: valid_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: valid_payload)
 
     handler = make_handler(
         cache_file=".cache/open_meteo_cache.json",

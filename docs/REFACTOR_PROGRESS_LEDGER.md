@@ -12,13 +12,13 @@ Always read in this order before continuing:
 
 ## Current Objective
 
-Implement the v3 decoupling objective:
+Implement the v4 classification/simplification objective:
 
 `Frontend -> Communication -> Backend`
 
 while keeping existing CLI/server/static behavior runnable at every step.
 
-Status: v3 refactor implemented in code and validated on 2026-03-04 local.
+Status: v4 classification+merge pass implemented and validated on 2026-03-04 local.
 
 ---
 
@@ -27,7 +27,7 @@ Status: v3 refactor implemented in code and validated on 2026-03-04 local.
 1. Backend fetch pipeline supports concurrent resort processing with `--max-workers`.
 2. Cache read/write paths are lock-protected for concurrent access.
 3. Frontend has per-table unit toggles (`cm/in`, `mm/in`, `C/F`) with persisted browser preference.
-4. Desktop/mobile renderer split exists for snowfall and rainfall.
+4. Desktop/mobile renderer split exists with merged precipitation wrappers by platform.
 5. Two planning docs already exist:
    - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
    - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
@@ -36,6 +36,78 @@ Status: v3 refactor implemented in code and validated on 2026-03-04 local.
 ---
 
 ## Completed Milestones
+
+## 2026-03-04 00:55 (v4 classification + merge pass)
+
+### Scope
+- Tighten file classification and merge redundant frontend/backend wrapper layers while preserving runtime behavior.
+
+### Changes
+- Files:
+  - `src/web/desktop/precipitation_renderer.py` (new)
+  - `src/web/mobile/precipitation_renderer.py` (new)
+  - `src/web/weather_table_renderer.py`
+  - `src/web/weather_page_server.py`
+  - `src/web/data_sources/clients.py`
+  - `src/web/data_sources/gateway.py`
+  - `src/web/data_sources/local_source.py` (new)
+  - `src/web/data_sources/__init__.py`
+  - removed:
+    - `src/web/desktop/snowfall_renderer.py`
+    - `src/web/desktop/rainfall_renderer.py`
+    - `src/web/mobile/snowfall_renderer.py`
+    - `src/web/mobile/rainfall_renderer.py`
+  - `src/backend/services/weather_service.py`
+  - `src/backend/services/__init__.py`
+  - removed:
+    - `src/backend/services/request_options.py`
+  - `src/cli.py`
+  - `src/backend/pipelines/live_pipeline.py`
+  - `src/backend/pipelines/static_pipeline.py`
+  - tests:
+    - `tests/frontend/test_renderers.py`
+    - `tests/integration/test_web_server.py`
+    - `tests/integration/test_data_sources.py`
+    - `tests/smoke/test_dynamic_server_smoke.py`
+  - docs:
+    - `README.md`
+    - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
+    - `docs/FRONTEND_BACKEND_FLOW_ARCHITECTURE.md`
+    - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+- Behavior impact:
+  - Snow/rain desktop+mobile renderer wrappers were merged by platform into precipitation modules.
+  - Dynamic server now resolves all `local/api/file` data modes through communication layer adapters.
+  - Backend weather service removed pass-through request-option wrapper layer and keeps one normalized entry.
+  - Static pipeline compatibility alias remains, while duplicated logic was reduced.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/backend -q`
+  - `python3 -m pytest tests/frontend -q`
+  - `python3 -m pytest tests/integration -q`
+  - `python3 -m pytest tests/smoke -q`
+  - `python3 -m pytest -q`
+  - `rg -n "from src\\.web|import src\\.web" src/backend -S`
+  - `rg -n "from src\\.backend\\.open_meteo|from src\\.backend\\.pipeline\\b|from src\\.backend\\.cache" src/web -S`
+  - `rg -n "from src\\.backend\\.pipelines\\.live_pipeline" src/web -S`
+- Results:
+  - compileall: pass
+  - backend tests: `39 passed`
+  - frontend tests: `14 passed`
+  - integration tests: `55 passed`
+  - smoke tests: `3 passed`
+  - full suite: `111 passed`
+  - boundary checks:
+    - backend -> web import: no matches
+    - web direct backend low-level import check: no matches
+    - backend live pipeline import in web: one expected match in `src/web/data_sources/local_source.py`
+
+### Risks / Notes
+- `src/web/weather_page_static_render.py` still imports backend pipeline for compatibility static entrypoint (intentional compatibility path).
+
+### Next Slice
+- Optional: extract reusable JS table sync/toggle controller to reduce duplication in `assets/js/weather_page.js`.
 
 ## 2026-03-04 (v3 implementation: frontend/backend simplification + dynamic decoupling)
 

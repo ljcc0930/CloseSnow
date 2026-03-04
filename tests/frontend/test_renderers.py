@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import re
 
-from src.web.desktop.rainfall_renderer import render_rainfall_desktop_layout
-from src.web.desktop.snowfall_renderer import render_snowfall_desktop_layout
+from src.web.desktop.precipitation_renderer import (
+    render_rainfall_desktop_layout,
+    render_snowfall_desktop_layout,
+)
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
-from src.web.mobile.rainfall_renderer import render_rainfall_mobile_layout
-from src.web.mobile.snowfall_renderer import render_snowfall_mobile_layout
+from src.web.mobile.precipitation_renderer import (
+    render_rainfall_mobile_layout,
+    render_snowfall_mobile_layout,
+)
 from src.web.weather_html_renderer import build_html
 from src.web.weather_page_render_core import render_payload_html
 from src.web.weather_table_renderer import (

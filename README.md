@@ -42,7 +42,6 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── io
 │   │   │   └── cache_seed.py
 │   │   ├── services
-│   │   │   ├── request_options.py
 │   │   │   └── weather_service.py
 │   │   └── pipelines
 │   │       ├── live_pipeline.py
@@ -63,16 +62,15 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       │   ├── static_json_source.py
 │       │   ├── api_source.py
 │       │   ├── clients.py
+│       │   ├── local_source.py
 │       │   └── gateway.py
 │       ├── pipelines
 │       │   └── static_site.py
 │       ├── desktop
-│       │   ├── snowfall_renderer.py
-│       │   ├── rainfall_renderer.py
+│       │   ├── precipitation_renderer.py
 │       │   └── temperature_renderer.py
 │       └── mobile
-│           ├── snowfall_renderer.py
-│           └── rainfall_renderer.py
+│           └── precipitation_renderer.py
 ├── assets
 │   ├── css/weather_page.css
 │   └── js/weather_page.js
@@ -309,13 +307,17 @@ If you do not want to use the unified CLI, you can run modules directly.
 ## Architecture (Refactor State)
 
 - Backend produces a single payload contract (`weather_payload_v1`).
-- Communication layer validates and loads payload from file/API through client adapters (`src/web/data_sources/clients.py`, `src/web/data_sources/gateway.py`).
+- Communication layer validates and loads payload via client adapters (`src/web/data_sources/clients.py`, `src/web/data_sources/gateway.py`) for `file`/`api`, and bridges compatibility `local` mode through `src/web/data_sources/local_source.py`.
 - Shared cross-layer runtime defaults are in `src/shared/config.py` (not backend-owned).
 - Frontend renderer consumes contract payload only (`render_payload_html` path shared by static/dynamic).
 - Frontend HTML shell is template-based (`src/web/templates/weather_page.html`) and Python only injects dynamic fragments.
 - Static site assembly (`write_payload_json` / `render_html`) is in web layer (`src/web/pipelines/static_site.py`), not backend.
 - Backend orchestration separates resort selection + metadata build (`src/backend/compute/*`) from main orchestration and export (`src/backend/export/payload_exporter.py`).
 - Dynamic runtime supports both coupled mode (`serve`) and decoupled mode (`serve-data` + `serve-web`).
+
+Detailed flow/ownership guide:
+
+- `docs/FRONTEND_BACKEND_FLOW_ARCHITECTURE.md`
 
 ## Frontend Rendering Structure
 
@@ -324,7 +326,9 @@ If you do not want to use the unified CLI, you can run modules directly.
 - Renderers are separated by platform folders:
   - Desktop: `src/web/desktop/`
   - Mobile: `src/web/mobile/`
-- Snowfall and rainfall both have desktop + mobile renderers.
+- Snowfall/rainfall are consolidated in platform-level precipitation renderers:
+  - `src/web/desktop/precipitation_renderer.py`
+  - `src/web/mobile/precipitation_renderer.py`
 - Temperature currently has desktop renderer only:
   - `src/web/desktop/temperature_renderer.py`
 - If a mobile renderer is missing, rendering automatically falls back to desktop.

@@ -105,6 +105,24 @@ def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
 
+def _serve_http_server(
+    host: str,
+    port: int,
+    handler: type,
+    lines: List[str],
+) -> int:
+    server = ThreadingHTTPServer((host, port), handler)
+    for line in lines:
+        print(line)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
 def run_fetch(args: argparse.Namespace) -> int:
     payload = _fetch_payload(args)
     out = write_payload_json(args.output_json, payload)
@@ -144,16 +162,15 @@ def run_server(args: argparse.Namespace) -> int:
         data_source="",
         data_timeout=20,
     )
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"Serving dynamic page at http://{args.host}:{args.port}")
-    print("Open / for page, /api/data for raw JSON, /api/health for health check.")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
-    return 0
+    return _serve_http_server(
+        args.host,
+        args.port,
+        handler,
+        [
+            f"Serving dynamic page at http://{args.host}:{args.port}",
+            "Open / for page, /api/data for raw JSON, /api/health for health check.",
+        ],
+    )
 
 
 def run_data_server(args: argparse.Namespace) -> int:
@@ -164,16 +181,15 @@ def run_data_server(args: argparse.Namespace) -> int:
         max_workers=args.max_workers,
         allow_origin=args.allow_origin,
     )
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"Serving backend data API at http://{args.host}:{args.port}")
-    print("Open /api/data for payload, /api/health for health check.")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
-    return 0
+    return _serve_http_server(
+        args.host,
+        args.port,
+        handler,
+        [
+            f"Serving backend data API at http://{args.host}:{args.port}",
+            "Open /api/data for payload, /api/health for health check.",
+        ],
+    )
 
 
 def run_web_server(args: argparse.Namespace) -> int:
@@ -189,19 +205,14 @@ def run_web_server(args: argparse.Namespace) -> int:
         data_source=data_source,
         data_timeout=args.data_timeout,
     )
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"Serving frontend web at http://{args.host}:{args.port}")
-    print(f"Data mode: {args.data_mode}")
+    lines = [
+        f"Serving frontend web at http://{args.host}:{args.port}",
+        f"Data mode: {args.data_mode}",
+    ]
     if args.data_mode in {"api", "file"}:
-        print(f"Data source: {data_source}")
-    print("Open / for page, /api/data for raw JSON, /api/health for health check.")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
-    return 0
+        lines.append(f"Data source: {data_source}")
+    lines.append("Open / for page, /api/data for raw JSON, /api/health for health check.")
+    return _serve_http_server(args.host, args.port, handler, lines)
 
 
 def main() -> int:

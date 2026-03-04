@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from src.backend.services.request_options import WeatherRequestOptions
-from src.backend.services.weather_service import build_weather_payload_for_options
+from src.backend.services.weather_service import build_weather_payload
 
 
 def run_live_payload(
@@ -14,12 +13,11 @@ def run_live_payload(
     forecast_cache_hours: int = 3,
     max_workers: int = 8,
 ) -> Dict[str, Any]:
-    options = WeatherRequestOptions.from_inputs(
-        resorts=list(resorts or []),
+    return build_weather_payload(
+        resorts=resorts,
         resorts_file=resorts_file,
         cache_file=cache_file,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
     )
-    return build_weather_payload_for_options(options)
