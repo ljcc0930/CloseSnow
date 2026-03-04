@@ -1149,6 +1149,11 @@ if (filterModal) {
     if (event.target === filterModal) closeFilterModal();
   });
 }
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!filterModal || filterModal.hidden) return;
+  closeFilterModal();
+});
 applyLayout();
 applyFilterStateFromControls();
 applyResortSearchFilter();

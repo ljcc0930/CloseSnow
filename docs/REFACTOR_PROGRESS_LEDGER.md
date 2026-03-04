@@ -940,3 +940,27 @@ Copy this template for each new work session:
 
 ### Next Slice
 - If desired, add secondary state-region grouping labels (e.g., by country + state) for international expansion.
+
+## 2026-03-04 06:36 (local)
+
+### Scope
+- Add keyboard accessibility for filter modal close action via `Esc`.
+
+### Changes
+- Files:
+  - `assets/js/weather_page.js`
+- Behavior impact:
+  - When filter modal is open, pressing `Escape` now closes it.
+  - No effect when modal is already hidden.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py`
+- Results:
+  - Frontend targeted suites passed (`15 passed`).
+
+### Risks / Notes
+- None.
+
+### Next Slice
+- If needed, add focus trapping and focus-return behavior for fully keyboard-friendly modal navigation.
