@@ -63,25 +63,31 @@ Status: v3 refactor implemented in code and validated on 2026-03-04 local.
 - Backend compute modularization:
   - added `src/backend/compute/resort_selection.py`
   - added `src/backend/compute/payload_metadata.py`
+  - added `src/backend/io/cache_seed.py`
+  - added `src/backend/services/request_options.py`
   - `src/backend/pipeline.py` delegates resort selection + payload metadata build to compute modules.
+- Frontend split-layout dedup:
+  - added `src/web/split_metric_renderer.py`
+  - snowfall/rainfall desktop+mobile modules now use shared split primitives.
 - Tests:
   - added backend compute tests
   - added backend data server integration tests
   - expanded CLI/web/gateway integration tests for new modes/commands
+  - added backend io cache-seed tests
 
 ### Validation
 - `python3 -m compileall src`
-- `python3 -m pytest tests/backend -q` (`37 passed`)
+- `python3 -m pytest tests/backend -q` (`39 passed`)
 - `python3 -m pytest tests/frontend -q` (`14 passed`)
-- `python3 -m pytest tests/integration -q` (`52 passed`)
+- `python3 -m pytest tests/integration -q` (`53 passed`)
 - `python3 -m pytest tests/smoke -q` (`3 passed`)
-- `python3 -m pytest -q` (`106 passed`)
+- `python3 -m pytest -q` (`109 passed`)
 
 ### Outcome
 - v3 Definition of Done met for current scope:
   1. Frontend rendering is configuration-driven and less duplicated.
   2. HTML shell is template-based instead of Python full-document literal.
-  3. Backend has dedicated compute submodules for reusable orchestration pieces.
+  3. Backend has dedicated compute/io/request-option submodules for reusable orchestration pieces.
   4. Dynamic pipeline supports independent FE/BE startup and cross-server communication.
   5. Compatibility mode (`serve`) remains available.
 

@@ -18,8 +18,10 @@ Status (local 2026-03-04):
 2. Test layout groundwork completed (`tests/backend`, `tests/frontend`, `tests/integration`, `tests/smoke`).
 3. v3 implementation landed in code:
    - frontend section rendering is config-driven (`weather_table_renderer.py`)
+   - snowfall/rainfall desktop+mobile layouts share split primitives (`split_metric_renderer.py`)
    - page shell moved to template (`src/web/templates/weather_page.html`)
-   - backend compute split started (`src/backend/compute/*`)
+   - backend compute + io split landed (`src/backend/compute/*`, `src/backend/io/*`)
+   - backend request options normalized (`src/backend/services/request_options.py`)
    - dynamic decoupling implemented (`serve-data` + `serve-web`)
 
 ---
@@ -215,8 +217,12 @@ src/backend/
   compute/
     resort_selection.py
     payload_metadata.py
+  io/
+    cache_seed.py
   export/
     payload_exporter.py
+  services/
+    request_options.py
 ```
 
 Rules:
@@ -326,6 +332,7 @@ Result:
 
 1. Added metric view config and reusable section composition in `src/web/weather_table_renderer.py`.
 2. Removed repeated snow/rain/temp section shell assembly logic.
+3. Extracted shared snowfall/rainfall split table primitives into `src/web/split_metric_renderer.py`.
 
 ## Phase B: Template shell extraction
 
@@ -355,6 +362,7 @@ Result:
 
 1. `serve` remains as compatibility one-process mode.
 2. Decoupled mode covered by integration/smoke tests.
+3. `serve-web` supports env-based remote API default (`CLOSESNOW_DATA_URL`) for cross-server deployment.
 
 ---
 

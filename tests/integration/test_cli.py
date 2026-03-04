@@ -24,6 +24,13 @@ def test_build_parser_has_all_commands():
     assert args.command == "serve-web"
 
 
+def test_serve_web_parser_uses_env_default(monkeypatch):
+    monkeypatch.setenv("CLOSESNOW_DATA_URL", "https://example.test/api/data")
+    parser = cli.build_parser()
+    args = parser.parse_args(["serve-web"])
+    assert args.data_source == "https://example.test/api/data"
+
+
 def test_resolve_resorts_prefers_cli_resorts():
     args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.txt")
     resorts, resorts_file = cli._resolve_resorts(args)

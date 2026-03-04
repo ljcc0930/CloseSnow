@@ -39,12 +39,16 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── weather_data_server.py
 │   │   ├── export
 │   │   │   └── payload_exporter.py
+│   │   ├── io
+│   │   │   └── cache_seed.py
 │   │   ├── services
+│   │   │   ├── request_options.py
 │   │   │   └── weather_service.py
 │   │   └── pipelines
 │   │       ├── live_pipeline.py
 │   │       └── static_pipeline.py
 │   └── web
+│       ├── split_metric_renderer.py
 │       ├── weather_page_server.py
 │       ├── weather_page_static_render.py
 │       ├── weather_page_render_core.py
@@ -292,6 +296,7 @@ Notes:
   - `api`: remote backend API (supports different host/server)
   - `file`: pre-fetched JSON artifact
   - `local`: fallback to in-process backend fetch
+- `--data-source` default can be overridden by env var `CLOSESNOW_DATA_URL`
 - Endpoints:
   - `/` (rendered page)
   - `/api/data` (resolved payload in current mode)
@@ -315,6 +320,7 @@ If you do not want to use the unified CLI, you can run modules directly.
 ## Frontend Rendering Structure
 
 - `src/web/weather_table_renderer.py` is the table composition entrypoint.
+- `src/web/split_metric_renderer.py` provides shared split-table primitives used by snowfall/rainfall desktop/mobile renderers.
 - Renderers are separated by platform folders:
   - Desktop: `src/web/desktop/`
   - Mobile: `src/web/mobile/`

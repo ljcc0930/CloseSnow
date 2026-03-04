@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.compute import build_payload_metadata, select_resorts
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
+from src.backend.io import seed_coordinate_cache_from_unified
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
@@ -20,50 +19,6 @@ logger = logging.getLogger(__name__)
 def read_resorts(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip() and not line.lstrip().startswith("#")]
-
-
-def seed_coordinate_cache_from_unified(cache: ResortCoordinateCache, path: str) -> None:
-    if not path or not os.path.exists(path):
-        return
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-    except Exception:
-        return
-
-    reports = payload.get("reports")
-    if not isinstance(reports, list):
-        return
-
-    for item in reports:
-        if not isinstance(item, dict):
-            continue
-        query = item.get("query")
-        if not isinstance(query, str) or not query.strip():
-            continue
-        lat = item.get("input_latitude")
-        lon = item.get("input_longitude")
-        if lat is None or lon is None:
-            lat = item.get("latitude")
-            lon = item.get("longitude")
-        if lat is None or lon is None:
-            continue
-        try:
-            lat_v = float(lat)
-            lon_v = float(lon)
-        except (TypeError, ValueError):
-            continue
-
-        cache.set(
-            query,
-            {
-                "name": str(item.get("matched_name") or item.get("name") or query),
-                "latitude": lat_v,
-                "longitude": lon_v,
-                "country": item.get("country"),
-                "admin1": item.get("admin1"),
-            },
-        )
 
 
 async def _build_resort_report(

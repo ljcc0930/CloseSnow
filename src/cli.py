@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from http.server import ThreadingHTTPServer
+import os
 from pathlib import Path
 import sys
 from typing import Any, Dict, List, Tuple
@@ -10,7 +11,7 @@ from typing import Any, Dict, List, Tuple
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.shared.config import DEFAULT_RESORTS_FILE
+from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
 from src.web.pipelines import render_html, write_payload_json
 from src.web.weather_page_server import make_handler
@@ -82,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve_web.add_argument("--host", default="127.0.0.1")
     p_serve_web.add_argument("--port", type=int, default=8010)
     p_serve_web.add_argument("--data-mode", choices=["local", "api", "file"], default="api")
-    p_serve_web.add_argument("--data-source", default="http://127.0.0.1:8020/api/data")
+    p_serve_web.add_argument("--data-source", default=os.getenv(DATA_API_URL_ENV, DEFAULT_DATA_API_URL))
     p_serve_web.add_argument("--data-timeout", type=int, default=20)
     p_serve_web.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p_serve_web.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
