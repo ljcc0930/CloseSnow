@@ -47,8 +47,8 @@ def test_report_transforms():
             "week1_total_rain_mm": 2.2,
             "week2_total_rain_mm": 1.1,
             "daily": [
-                {"snowfall_cm": 1.0, "rain_mm": 0.0, "temperature_max_c": -1, "temperature_min_c": -5},
-                {"snowfall_cm": None, "rain_mm": 0.5, "temperature_max_c": 2, "temperature_min_c": -2},
+                {"date": "2026-03-04", "snowfall_cm": 1.0, "rain_mm": 0.0, "temperature_max_c": -1, "temperature_min_c": -5},
+                {"date": "2026-03-05", "snowfall_cm": None, "rain_mm": 0.5, "temperature_max_c": 2, "temperature_min_c": -2},
             ],
         }
     ]
@@ -60,12 +60,22 @@ def test_report_transforms():
     assert snow_rows[0]["week1_total_cm"] == "12.3"
     assert snow_rows[0]["day_1_cm"] == "1.0"
     assert snow_rows[0]["day_2_cm"] == ""
+    assert snow_rows[0]["label_day_1"] == "03-04 Wed"
+    assert snow_rows[0]["label_day_2"] == "03-05 Thu"
 
     assert rain_rows[0]["week1_total_rain_mm"] == "2.2"
     assert rain_rows[0]["day_1_rain_mm"] == "0.0"
     assert rain_rows[0]["day_2_rain_mm"] == "0.5"
+    assert rain_rows[0]["label_day_1"] == "03-04 Wed"
 
     assert temp_rows[0]["matched_name"] == "Snowbird"
     assert temp_rows[0]["day_1_max_c"] == "-1"
     assert temp_rows[0]["day_2_above_0"] == "1"
+    assert temp_rows[0]["label_day_2"] == "03-05 Thu"
 
+
+def test_report_transforms_date_label_fallback_when_date_missing():
+    reports = [{"query": "A", "daily": [{"snowfall_cm": 1.0}, {"snowfall_cm": 2.0}]}]
+    snow_rows = reports_to_snow_rows(reports, display_days=2)
+    assert snow_rows[0]["label_day_1"] == ""
+    assert snow_rows[0]["label_day_2"] == ""

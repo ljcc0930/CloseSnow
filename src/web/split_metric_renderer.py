@@ -21,6 +21,30 @@ def short_label(name: str, weekly_suffix: str, daily_suffix: str) -> str:
     return name
 
 
+def _day_index_from_header(name: str, daily_suffix: str) -> Optional[int]:
+    if not (name.startswith("day_") and name.endswith(daily_suffix)):
+        return None
+    try:
+        return int(name[len("day_"):].split("_", 1)[0])
+    except (TypeError, ValueError):
+        return None
+
+
+def _daily_header_label(
+    header: str,
+    *,
+    daily_suffix: str,
+    sample_row: Optional[Dict[str, str]],
+    weekly_suffix: str,
+) -> str:
+    day_idx = _day_index_from_header(header, daily_suffix)
+    if day_idx is not None and sample_row:
+        label = sample_row.get(f"label_day_{day_idx}", "").strip()
+        if label:
+            return label
+    return short_label(header, weekly_suffix, daily_suffix)
+
+
 def _style_for_value(header: str, value: str, suffix: str, color_fn: ColorFn) -> str:
     if header.endswith(suffix):
         return color_fn(to_float(value))
@@ -60,6 +84,7 @@ def render_desktop_split_metric_layout(
 
     left_tbody = "".join(f"<tr>{''.join(cells)}</tr>" for cells in left_rows)
     right_tbody = "".join(f"<tr>{''.join(cells)}</tr>" for cells in right_rows)
+    sample_row = data[0] if data else None
     left_group = (
         "<tr>"
         "<th rowspan='2' class='query-col'>Resort</th>"
@@ -74,7 +99,10 @@ def render_desktop_split_metric_layout(
     right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
     right_detail = (
         "<tr>"
-        + "".join(f"<th>{html.escape(short_label(h, weekly_suffix, daily_suffix))}</th>" for h in daily_headers)
+        + "".join(
+            f"<th>{html.escape(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
+            for h in daily_headers
+        )
         + "</tr>"
     )
 
@@ -132,6 +160,7 @@ def render_mobile_split_metric_layout(
         right_rows.append("<tr>" + "".join(right_cells) + "</tr>")
 
     left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    sample_row = data[0] if data else None
     right_group = (
         f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
         f"<th colspan='{len(daily_headers)}'>daily</th></tr>"
@@ -142,7 +171,10 @@ def render_mobile_split_metric_layout(
             f"<th class='week-col-cell'>{html.escape(short_label(h, weekly_suffix, daily_suffix))}</th>"
             for h in weekly_headers
         )
-        + "".join(f"<th>{html.escape(short_label(h, weekly_suffix, daily_suffix))}</th>" for h in daily_headers)
+        + "".join(
+            f"<th>{html.escape(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
+            for h in daily_headers
+        )
         + "</tr>"
     )
 

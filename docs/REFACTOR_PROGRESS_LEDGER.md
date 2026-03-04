@@ -419,3 +419,37 @@ Copy this template for each new work session:
 ### Next Slice
 - [single next action]
 ```
+
+## 2026-03-04 01:44 (local)
+
+### Scope
+- Implement F7: replace generic day headers with concrete date labels across snowfall/rainfall/temperature tables.
+
+### Changes
+- Files:
+  - src/web/weather_report_transform.py
+  - src/web/split_metric_renderer.py
+  - src/web/desktop/temperature_renderer.py
+  - tests/frontend/test_renderers.py
+  - tests/frontend/test_styles_and_transform.py
+- Behavior impact:
+  - Transform layer now derives `label_day_N` from `daily[].date` in format `MM-DD Ddd`.
+  - Snowfall/rainfall desktop+mobile headers now show concrete dates when available, with fallback to `today/day N`.
+  - Temperature desktop headers now show concrete dates when available, with fallback to `today/day N`.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py`
+  - `pytest -q tests/frontend`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "03-" index.html | head -n 20`
+- Results:
+  - All targeted frontend tests passed (`12 passed`).
+  - Full frontend test suite passed (`16 passed`).
+  - Static render succeeded and output includes concrete date headers such as `03-04 Wed`.
+
+### Risks / Notes
+- `label_day_N` keys are currently generated per-row; renderer uses first-row labels for headers by design.
+
+### Next Slice
+- Implement F1: add `weather_code` backend field and emoji rendering section with tests and static verification.

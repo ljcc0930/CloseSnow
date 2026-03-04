@@ -28,6 +28,8 @@ def _snow_row():
         "week2_total_cm": "4.5",
         "day_1_cm": "1.0",
         "day_2_cm": "2.0",
+        "label_day_1": "03-04 Wed",
+        "label_day_2": "03-05 Thu",
     }
 
 
@@ -38,6 +40,8 @@ def _rain_row():
         "week2_total_rain_mm": "1.1",
         "day_1_rain_mm": "0.0",
         "day_2_rain_mm": "0.5",
+        "label_day_1": "03-04 Wed",
+        "label_day_2": "03-05 Thu",
     }
 
 
@@ -49,6 +53,8 @@ def _temp_row():
         "day_1_max_c": "-1",
         "day_1_min_c": "-5",
         "day_2_min_c": "-2",
+        "label_day_1": "03-04 Wed",
+        "label_day_2": "03-05 Thu",
     }
 
 
@@ -62,7 +68,8 @@ def test_snowfall_desktop_mobile_renderers():
     assert "snowfall-split-wrap mobile-only" in mobile
     assert "Snowbird &lt;UT&gt;" in desktop
     assert "week 1" in desktop
-    assert "today" in mobile
+    assert "03-04 Wed" in desktop
+    assert "03-04 Wed" in mobile
 
 
 def test_rainfall_desktop_mobile_renderers():
@@ -75,15 +82,31 @@ def test_rainfall_desktop_mobile_renderers():
     assert "rain-split-wrap mobile-only" in mobile
     assert "Snowbird &lt;UT&gt;" in desktop
     assert "week 2" in desktop
-    assert "today" in mobile
+    assert "03-05 Thu" in desktop
+    assert "03-04 Wed" in mobile
 
 
 def test_temperature_desktop_renderer():
     html = render_temperature_desktop_layout([_temp_row()])
     assert "temperature-split-wrap" in html
-    assert "today" in html
-    assert "day 2" in html
+    assert "03-04 Wed" in html
+    assert "03-05 Thu" in html
     assert "Snowbird &lt;UT&gt;" in html
+
+
+def test_renderers_fallback_to_generic_day_labels_when_dates_missing():
+    snow = render_snowfall_desktop_layout(
+        [{"query": "A", "week1_total_cm": "1.0", "week2_total_cm": "2.0", "day_1_cm": "0.1", "day_2_cm": "0.2"}],
+        ["week1_total_cm", "week2_total_cm"],
+        ["day_1_cm", "day_2_cm"],
+    )
+    temp = render_temperature_desktop_layout(
+        [{"query": "A", "day_1_min_c": "-1", "day_1_max_c": "0", "day_2_min_c": "-2", "day_2_max_c": "1"}]
+    )
+    assert "today" in snow
+    assert "day 2" in snow
+    assert "today" in temp
+    assert "day 2" in temp
 
 
 def test_render_desktop_and_mobile_fallback():

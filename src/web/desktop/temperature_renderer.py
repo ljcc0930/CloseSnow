@@ -23,11 +23,20 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
     max_by_day = {day_idx(h): h for h in max_headers}
     min_by_day = {day_idx(h): h for h in min_headers}
     days = sorted(set(max_by_day.keys()) | set(min_by_day.keys()))
+    sample_row = data[0] if data else {}
+
+    def day_label(day: int) -> str:
+        label = sample_row.get(f"label_day_{day}", "").strip() if sample_row else ""
+        if label:
+            return label
+        if day == 1:
+            return "today"
+        return f"day {day}"
 
     left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = (
         "<tr>"
-        + "".join(f"<th colspan='2'>{'today' if d == 1 else f'day {d}'}</th>" for d in days)
+        + "".join(f"<th colspan='2'>{day_label(d)}</th>" for d in days)
         + "</tr>"
     )
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"

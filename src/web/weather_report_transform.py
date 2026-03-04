@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List
 
 
@@ -9,6 +10,19 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+_WEEKDAY_ABBR = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _day_label_from_date(raw_date: Any) -> str:
+    if not isinstance(raw_date, str) or not raw_date:
+        return ""
+    try:
+        parsed = datetime.strptime(raw_date, "%Y-%m-%d").date()
+    except ValueError:
+        return ""
+    return f"{parsed.strftime('%m-%d')} {_WEEKDAY_ABBR[parsed.weekday()]}"
 
 
 def _reports_to_metric_rows(
@@ -27,11 +41,13 @@ def _reports_to_metric_rows(
 
         daily = report.get("daily", [])
         for day_idx in range(display_days):
-            value = daily[day_idx].get(daily_source_key) if day_idx < len(daily) else None
+            day = daily[day_idx] if day_idx < len(daily) else {}
+            value = day.get(daily_source_key)
             if value is None:
                 row[f"day_{day_idx+1}_{daily_output_suffix}"] = ""
             else:
                 row[f"day_{day_idx+1}_{daily_output_suffix}"] = format(_as_float(value), daily_format)
+            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
 
@@ -79,5 +95,6 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
             row[f"day_{day_idx+1}_max_c"] = "" if max_value is None else str(max_value)
             row[f"day_{day_idx+1}_min_c"] = "" if min_value is None else str(min_value)
             row[f"day_{day_idx+1}_above_0"] = "1" if (max_value is not None and float(max_value) > 0) else "0"
+            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
