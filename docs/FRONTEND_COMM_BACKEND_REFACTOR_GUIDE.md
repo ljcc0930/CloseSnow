@@ -282,7 +282,7 @@ Required capabilities:
 1. Frontend and backend can boot independently and in parallel.
 2. Frontend can point to backend via config:
    - CLI arg override (`--data-source`)
-   - env var support can be added later if needed
+   - env var default (`CLOSESNOW_DATA_URL`)
 3. Backend can run on another host with CORS enabled.
 
 ## 5.3 Compatibility constraints

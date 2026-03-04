@@ -133,7 +133,7 @@ Status: v3 refactor implemented in code and validated on 2026-03-04 local.
 
 ### Outcome
 - Codebase now has test structure aligned with v3 refactor execution needs.
-- v3 architecture execution remains the next implementation slice.
+- At that time, v3 architecture execution was the next implementation slice (completed in the 2026-03-04 implementation milestone above).
 
 ## 2026-03-03/04 (v2 boundary hardening)
 
