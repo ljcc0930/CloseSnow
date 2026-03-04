@@ -5,15 +5,11 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 
 ## Highlights
 
-- Unified backend: one pipeline produces JSON + 3 CSV files
-- Backend JSON now includes `past_14d_daily` per resort (last 14 completed days, via Forecast API `past_days`)
-- Unified CLI: one entrypoint for static rendering and dynamic server
-- Dynamic page: runs pipeline on request (cache hit reads local data)
-- Static page: generates `index.html` for GitHub Pages
-- Dual geocoding path: Open-Meteo first, Nominatim fallback
-- Date-partitioned cache files: `*_YYYY-MM-DD.json`
-- Google tag is embedded in page HTML: `G-V9NBX3H6M9`
-- Per-table unit toggles: Metric/Imperial for snowfall, rainfall, and temperature; each toggle is persisted in browser localStorage
+- Generate 15-day ski weather reports for multiple resorts in one run (snowfall, rainfall, temperature).
+- Export results as unified JSON plus daily CSV tables for downstream use.
+- Serve the report as either dynamic web page (`/` + `/api/data`) or pre-rendered static HTML (`index.html`).
+- Support desktop/mobile table layouts with synced scrolling for large forecast grids.
+- Provide per-table Metric/Imperial switching (snow/rain/temp) with saved browser preference.
 
 ## Repository Layout
 
@@ -146,6 +142,7 @@ If you do not want to use the unified CLI, you can run modules directly.
 - Unit conversion switch is also in browser JS:
   - each table has its own Metric/Imperial toggle
   - displayed values are converted client-side from metric source values
+  - saved unit modes are restored before page reveal to avoid loading flicker
 
 ### Unified backend (writes JSON/CSV)
 
