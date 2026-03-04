@@ -1011,3 +1011,27 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optionally support multi-keyword AND search tokenization for stricter matching.
+
+## 2026-03-04 07:00 (local)
+
+### Scope
+- Center-align snowfall table date header row text for better visual consistency.
+
+### Changes
+- Files:
+  - `assets/css/weather_page.css`
+- Behavior impact:
+  - Snowfall second header row (`label_day_*` date row) now renders with centered text.
+  - Weekly/group header behavior unchanged.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py`
+- Results:
+  - Frontend targeted suites passed (`15 passed`).
+
+### Risks / Notes
+- None.
+
+### Next Slice
+- Optional: apply same explicit date-row alignment rule to rain/weather/sun for full cross-table consistency.

@@ -435,6 +435,7 @@
     .snowfall-right-table thead tr:nth-child(2) th {
       top: var(--snow-header-row1-h);
       z-index: 5;
+      text-align: center;
     }
     .snowfall-left-table .query-col {
       text-align: left;
