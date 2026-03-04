@@ -313,6 +313,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert "Hourly Forecast" in page
         assert "snowbird-ut" in page
         assert "../assets/js/resort_hourly.js" in page
+        assert 'id="hourly-charts"' in page
 
         prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")
         assert "Hourly Forecast" in prefixed_page

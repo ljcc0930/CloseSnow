@@ -1035,3 +1035,66 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional: apply same explicit date-row alignment rule to rain/weather/sun for full cross-table consistency.
+
+## 2026-03-04 07:12 (local)
+
+### Scope
+- Add detailed feature design doc for resort hourly page line-chart visualization.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_RESORT_HOURLY_LINE_CHARTS.md`
+- Behavior impact:
+  - No runtime code change.
+  - Defines product/UX/technical requirements and acceptance criteria for rendering one line chart per hourly metric.
+
+### Validation
+- Commands:
+  - `sed -n '1,240p' docs/FEATURE_DESIGN_RESORT_HOURLY_LINE_CHARTS.md`
+- Results:
+  - New feature doc is present and complete with scope, requirements, compatibility rules, and test plan.
+
+### Risks / Notes
+- This is a specification-only change; implementation still pending.
+
+### Next Slice
+- Implement chart renderer and integrate with existing static/dynamic hourly data flow.
+
+## 2026-03-04 07:30 (local)
+
+### Scope
+- Implement resort hourly page line-chart visualization (one line chart per hourly metric), while retaining tabular detail view.
+
+### Changes
+- Files:
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/css/resort_hourly.css`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_web_server.py`
+- Behavior impact:
+  - Added chart section to hourly page with 7 metric cards:
+    - snowfall, rain, precipitation_probability, snow_depth, wind_speed_10m, wind_direction_10m, visibility.
+  - Added SVG line-chart renderer with:
+    - dynamic/static data-source compatibility
+    - tooltip per point (`time + value + unit`)
+    - null-safe gaps and empty-state fallback
+    - metric-specific Y rules (`precipitation_probability: 0~100`, `wind_direction_10m: 0~360`)
+  - Existing hourly table remains unchanged and still renders alongside charts.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py tests/integration/test_cli.py tests/integration/test_entrypoints.py`
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py`
+  - `python3 -m src.cli static --skip-fetch --output-json .cache/static_payload.json --output-html index.html`
+  - `rg -n "id=\"hourly-charts\"|chart-card|renderHourlyCharts|hourly-chart-error" resort/snowbird-ut/index.html assets/js/resort_hourly.js assets/css/resort_hourly.css`
+- Results:
+  - Targeted hourly/frontend/integration suites passed (`33 passed` + `13 passed`).
+  - Static build succeeded and generated hourly pages containing chart container and chart logic assets.
+
+### Risks / Notes
+- SVG-based charts are intentionally lightweight; very long future horizons may require virtualized/decimated rendering if scope expands beyond current 120h window.
+
+### Next Slice
+- Optional: add chart legend toggle and synchronized crosshair across all metric cards.

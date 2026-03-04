@@ -38,6 +38,7 @@ def test_render_hourly_pages(tmp_path):
     assert "../../assets/css/resort_hourly.css" in html
     assert 'window.CLOSESNOW_HOURLY_CONTEXT = {' in html
     assert '"resortId": "snowbird-ut"' in html
+    assert 'id="hourly-charts"' in html
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
