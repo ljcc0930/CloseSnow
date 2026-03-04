@@ -22,6 +22,12 @@ const sunLeftTable = sunLeftWrap ? sunLeftWrap.querySelector(".sun-left-table") 
 const sunRightTable = sunRightWrap ? sunRightWrap.querySelector(".sun-right-table") : null;
 const sunSplitWrap = sunLeftWrap ? sunLeftWrap.closest(".sun-split-wrap") : null;
 
+const weatherLeftWrap = document.getElementById("weather-left-wrap");
+const weatherRightWrap = document.getElementById("weather-right-wrap");
+const weatherLeftTable = weatherLeftWrap ? weatherLeftWrap.querySelector(".weather-left-table") : null;
+const weatherRightTable = weatherRightWrap ? weatherRightWrap.querySelector(".weather-right-table") : null;
+const weatherSplitWrap = weatherLeftWrap ? weatherLeftWrap.closest(".weather-split-wrap") : null;
+
 const rainLeftWrap = document.getElementById("rain-left-wrap");
 const rainRightWrap = document.getElementById("rain-right-wrap");
 const rainLeftTable = rainLeftWrap ? rainLeftWrap.querySelector(".rain-left-table") : null;
@@ -464,13 +470,51 @@ const autoSizeSunColumns = () => {
   sunRightTable.style.width = `${minTotal}px`;
 };
 
+const autoSizeWeatherQuery = () => {
+  if (!weatherLeftWrap || !weatherLeftTable) return;
+  const rows = Array.from(weatherLeftTable.querySelectorAll("tbody tr"));
+  const sampleCell = weatherLeftTable.querySelector("tbody td") || weatherLeftTable.querySelector("thead th");
+  if (!sampleCell) return;
+  const font = window.getComputedStyle(sampleCell).font;
+  const queryHeader = weatherLeftTable.querySelector("thead .query-col")?.textContent?.trim() || "query";
+  const queryValues = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
+  const queryMax = Math.max(
+    measureTextWidth(queryHeader, font),
+    ...queryValues.map((v) => measureTextWidth(v, font))
+  );
+  const queryW = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
+  weatherLeftWrap.style.setProperty("--weather-query-w", `${queryW}px`);
+};
+
+const autoSizeWeatherColumns = () => {
+  if (!weatherRightWrap || !weatherRightTable) return;
+  const cols = Array.from(weatherRightTable.querySelectorAll("col.col-weather"));
+  const count = cols.length;
+  if (!count) return;
+  const minW = 68;
+  const wrapW = weatherRightWrap.clientWidth;
+  const minTotal = minW * count;
+  if (wrapW >= minTotal) {
+    const base = Math.floor(wrapW / count);
+    const rem = wrapW - (base * count);
+    cols.forEach((col, idx) => {
+      const w = base + (idx < rem ? 1 : 0);
+      col.style.width = `${w}px`;
+    });
+    weatherRightTable.style.width = `${wrapW}px`;
+    return;
+  }
+  cols.forEach((col) => { col.style.width = `${minW}px`; });
+  weatherRightTable.style.width = `${minTotal}px`;
+};
+
 const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
 const _isTruthyParam = (raw) => ["1", "true", "yes", "on"].includes(_normalizeSearch(raw));
 
 const _primaryResortRows = () => {
   const pairedRows = Array.from(leftTable?.tBodies?.[0]?.rows || []);
   if (pairedRows.length > 0) return pairedRows;
-  return Array.from(document.querySelectorAll(".weather-code-table tbody tr"));
+  return Array.from(weatherLeftTable?.tBodies?.[0]?.rows || []);
 };
 
 const deriveAvailableFiltersFromRows = () => {
@@ -639,13 +683,6 @@ const filterPairedTables = (left, right, keyword) => {
   });
 };
 
-const filterPlainWeatherTable = (keyword) => {
-  const rows = Array.from(document.querySelectorAll(".weather-code-table tbody tr"));
-  rows.forEach((row) => {
-    row.style.display = rowMatchesFilters(row, keyword) ? "" : "none";
-  });
-};
-
 const syncFilterSummary = () => {
   if (!filterSummary) return;
   const rows = _primaryResortRows();
@@ -668,7 +705,7 @@ const applyResortSearchFilter = () => {
   filterPairedTables(rainLeftTableMobile, rainRightTableMobile, keyword);
   filterPairedTables(tempLeftTable, tempRightTable, keyword);
   filterPairedTables(sunLeftTable, sunRightTable, keyword);
-  filterPlainWeatherTable(keyword);
+  filterPairedTables(weatherLeftTable, weatherRightTable, keyword);
   syncFilterSummary();
   applyLayout();
 };
@@ -780,6 +817,7 @@ attachVerticalSync(rainLeftWrap, rainRightWrap);
 attachVerticalSync(rainLeftWrapMobile, rainRightWrapMobile);
 attachVerticalSync(tempLeftWrap, tempRightWrap);
 attachVerticalSync(sunLeftWrap, sunRightWrap);
+attachVerticalSync(weatherLeftWrap, weatherRightWrap);
 
 let tempLayoutRaf = 0;
 const scheduleTempLayout = () => {
@@ -800,6 +838,17 @@ const scheduleSunLayout = () => {
     autoSizeSunColumns();
     syncTableRowHeights(sunLeftTable, sunRightTable);
     syncStickySecondRowTop(sunLeftTable, sunRightTable, sunSplitWrap, "--sun-header-row1-h");
+  });
+};
+
+let weatherLayoutRaf = 0;
+const scheduleWeatherLayout = () => {
+  if (weatherLayoutRaf) cancelAnimationFrame(weatherLayoutRaf);
+  weatherLayoutRaf = requestAnimationFrame(() => {
+    autoSizeWeatherQuery();
+    autoSizeWeatherColumns();
+    syncTableRowHeights(weatherLeftTable, weatherRightTable);
+    syncStickySecondRowTop(weatherLeftTable, weatherRightTable, weatherSplitWrap, "--weather-header-row1-h");
   });
 };
 
@@ -825,6 +874,7 @@ const applyLayout = () => {
   }
   scheduleTempLayout();
   scheduleSunLayout();
+  scheduleWeatherLayout();
 };
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
@@ -991,4 +1041,6 @@ if (window.ResizeObserver) {
   if (tempRightWrap) ro.observe(tempRightWrap);
   if (sunLeftWrap) ro.observe(sunLeftWrap);
   if (sunRightWrap) ro.observe(sunRightWrap);
+  if (weatherLeftWrap) ro.observe(weatherLeftWrap);
+  if (weatherRightWrap) ro.observe(weatherRightWrap);
 }

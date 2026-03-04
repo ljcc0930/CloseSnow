@@ -182,33 +182,51 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
 
     day_headers.sort(key=day_idx)
 
-    head_cells: List[str] = ["<th class='query-col'>Resort</th>"]
+    day_head_cells: List[str] = []
     for header in day_headers:
         idx = day_idx(header)
         label = first.get(f"label_day_{idx}", "").strip()
         if not label:
             label = "today" if idx == 1 else f"day {idx}"
-        head_cells.append(f"<th>{html.escape(label)}</th>")
+        day_head_cells.append(f"<th>{html.escape(label)}</th>")
 
-    body_rows: List[str] = []
+    left_rows: List[str] = []
+    right_rows: List[str] = []
     for row in data:
         attrs = _filter_attrs(row)
-        cells: List[str] = [_query_cell_html(row)]
+        left_rows.append(f"<tr{attrs}>{_query_cell_html(row)}</tr>")
+        cells: List[str] = []
         for header in day_headers:
             code = row.get(header, "").strip()
             emoji = emoji_for_weather_code(code if code else None)
             title = f"WMO code: {code}" if code else "WMO code: unknown"
-            cells.append(f"<td title='{html.escape(title)}'>{emoji}</td>")
-        body_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
+            cells.append(f"<td class='weather-emoji-cell' title='{html.escape(title)}'>{emoji}</td>")
+        right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
+
+    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    right_group = f"<tr><th colspan='{len(day_headers)}'>daily</th></tr>"
+    right_detail = f"<tr>{''.join(day_head_cells)}</tr>"
 
     return (
         "<section>"
         "<h2>Weather</h2>"
-        "<div class='table-wrap'>"
-        "<table class='plain-table weather-code-table'>"
-        f"<thead><tr>{''.join(head_cells)}</tr></thead>"
-        f"<tbody>{''.join(body_rows)}</tbody>"
+        "<div class='weather-split-wrap'>"
+        "<div class='weather-left-wrap' id='weather-left-wrap'>"
+        "<table class='weather-left-table' id='weather-left-table'>"
+        "<colgroup><col class='col-query'></colgroup>"
+        f"<thead>{left_head}</thead>"
+        f"<tbody>{''.join(left_rows)}</tbody>"
         "</table>"
+        "</div>"
+        "<div class='weather-right-wrap' id='weather-right-wrap'>"
+        "<table class='weather-right-table' id='weather-right-table'>"
+        "<colgroup>"
+        + "".join("<col class='col-weather'>" for _ in day_headers)
+        + "</colgroup>"
+        f"<thead>{right_group}{right_detail}</thead>"
+        f"<tbody>{''.join(right_rows)}</tbody>"
+        "</table>"
+        "</div>"
         "</div>"
         "</section>"
     )

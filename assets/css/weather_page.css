@@ -302,16 +302,6 @@
       text-align: left;
       font-weight: 600;
     }
-    .weather-code-table .query-col {
-      position: sticky;
-      left: 0;
-      background: #fff;
-      z-index: 3;
-    }
-    .weather-code-table thead .query-col {
-      background: #e5e7eb;
-      z-index: 4;
-    }
     .query-col .resort-link {
       color: #0f766e;
       text-decoration: none;
@@ -325,6 +315,69 @@
     }
     .mobile-only {
       display: none;
+    }
+    .weather-split-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+      --weather-header-row1-h: 32px;
+    }
+    .weather-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --weather-query-w: 220px;
+    }
+    .weather-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .weather-left-table,
+    .weather-right-table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 0;
+    }
+    .weather-left-table col.col-query {
+      width: var(--weather-query-w);
+    }
+    .weather-right-table col.col-weather {
+      width: 68px;
+    }
+    .weather-left-table thead tr:first-child th,
+    .weather-right-table thead tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .weather-left-table thead tr:nth-child(2) th,
+    .weather-right-table thead tr:nth-child(2) th {
+      position: sticky;
+      top: var(--weather-header-row1-h);
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .weather-left-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      background: #fff;
+      max-width: var(--weather-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .weather-left-table td,
+    .weather-right-table td {
+      background-clip: padding-box;
+    }
+    .weather-right-table td.weather-emoji-cell {
+      text-align: center;
+      font-size: 18px;
+      line-height: 1;
     }
     .snowfall-split-wrap {
       display: flex;
