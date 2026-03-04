@@ -37,6 +37,7 @@ def _snow_row():
         "filter_country": "US",
         "filter_state": "UT",
         "resort_id": "snowbird-ut",
+        "ljcc_favorite": "1",
     }
 
 
@@ -49,6 +50,7 @@ def _rain_row():
         "day_2_rain_mm": "0.5",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "ljcc_favorite": "1",
     }
 
 
@@ -62,6 +64,7 @@ def _temp_row():
         "day_2_min_c": "-2",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "ljcc_favorite": "1",
     }
 
 
@@ -74,6 +77,7 @@ def _weather_row():
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
         "label_day_3": "03-06 Fri",
+        "ljcc_favorite": "1",
     }
 
 
@@ -87,6 +91,7 @@ def _sun_row():
         "day_2_sunset": "18:23",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "ljcc_favorite": "1",
     }
 
 
@@ -183,6 +188,11 @@ def test_table_renderer_sections_and_empty_states():
     assert "data-target-kind=\"snow\"" in snow
     assert "data-target-kind=\"rain\"" in rain
     assert "data-target-kind=\"temp\"" in temp
+    assert "ljcc喜欢" in snow
+    assert "ljcc喜欢" in rain
+    assert "ljcc喜欢" in weather
+    assert "ljcc喜欢" in sun
+    assert "ljcc喜欢" in temp
     assert "<h2>Weather</h2>" in weather
     assert "weather-split-wrap" in weather
     assert "<h2>Sunrise / Sunset</h2>" in sun

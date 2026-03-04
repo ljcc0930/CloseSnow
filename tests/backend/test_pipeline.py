@@ -113,6 +113,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
                 "country": "US",
                 "pass_types": ["ikon"],
                 "state": "UT",
+                "default_enabled": True,
             }
         ],
     )
@@ -149,6 +150,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["pass_types"] == ["ikon"]
     assert out["reports"][0]["region"] == "west"
     assert out["reports"][0]["country_code"] == "US"
+    assert out["reports"][0]["ljcc_favorite"] is True
     assert ".cache/resorts_weather_unified.json" in seed_calls
 
 
