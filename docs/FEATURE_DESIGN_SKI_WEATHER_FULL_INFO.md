@@ -93,13 +93,44 @@ Changes:
    - unknown -> `❓`
 3. Add tooltip/title with original code for debugging.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- `tests/backend/test_report_builder.py`: weather_code parsing and null handling.
+Automated checks:
+1. Add/update tests:
+- `tests/backend/test_report_builder.py` (weather_code parse + null handling)
+- `tests/frontend/test_renderers.py` (emoji mapping + fallback `❓`)
+2. Run:
 
-Frontend:
-- `tests/frontend/test_renderers.py`: emoji mapping and fallback rendering.
+```bash
+pytest -q tests/backend/test_report_builder.py tests/frontend/test_renderers.py
+```
+
+API and contract checks:
+
+```bash
+python3 -m src.cli fetch --output-json site/data.json
+jq '.reports[0].daily[0] | {date, weather_code}' site/data.json
+```
+
+Expected:
+- each `daily` item contains `weather_code`
+- value type is number or `null`
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "☀️|⛅|☁️|🌧️|❄️|⛈️|❓" index.html
+```
+
+Expected:
+- emoji appears in rendered weather cells
+- unknown/unsupported code renders as `❓`
+
+Pass criteria:
+- automated tests pass
+- payload includes `weather_code`
+- static HTML includes emoji rendering
 
 ---
 
@@ -137,13 +168,44 @@ Changes:
    - right: each day has 2 sub-columns (`sunrise`, `sunset`)
 3. Unit toggle not required for this section.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- sunrise/sunset formatting test (ISO -> HH:MM).
+Automated checks:
+1. Add/update tests:
+- `tests/backend/test_report_builder.py` (sunrise/sunset parse and `HH:MM` formatting)
+- `tests/frontend/test_renderers.py` (sunrise/sunset table shape, 2 columns per day)
+2. Run:
 
-Frontend:
-- table structure test (2 columns per day).
+```bash
+pytest -q tests/backend/test_report_builder.py tests/frontend/test_renderers.py
+```
+
+API and contract checks:
+
+```bash
+python3 -m src.cli fetch --output-json site/data.json
+jq '.reports[0].daily[0] | {date, sunrise_local_hhmm, sunset_local_hhmm}' site/data.json
+```
+
+Expected:
+- `sunrise_local_hhmm` and `sunset_local_hhmm` exist
+- values are `HH:MM` string or `null`
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "Sunrise|Sunset|sunrise|sunset" index.html
+```
+
+Expected:
+- sunrise/sunset section exists
+- each day shows two sub-columns (`sunrise`, `sunset`)
+
+Pass criteria:
+- automated tests pass
+- payload includes sunrise/sunset fields
+- static HTML shows sunrise/sunset table
 
 ---
 
@@ -202,15 +264,54 @@ Changes:
    - date and local timezone clearly shown
 4. Main list page links each resort row to its hourly page.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- endpoint contract test (`tests/integration/test_backend_data_server.py` extension).
-- invalid `resort_id` -> 404/400 behavior.
+Automated checks:
+1. Add/update tests:
+- `tests/integration/test_backend_data_server.py` (`/api/resort-hourly` contract + invalid `resort_id`)
+- `tests/integration/test_web_server.py` (`/resort/<id>` route rendering)
+- `tests/frontend/test_renderers.py` or dedicated hourly renderer tests
+2. Run:
 
-Frontend:
-- route test for `/resort/<id>`.
-- smoke test that hourly page renders with API response.
+```bash
+pytest -q tests/integration/test_backend_data_server.py tests/integration/test_web_server.py tests/frontend/test_renderers.py
+```
+
+API checks:
+1. Start backend API:
+
+```bash
+python3 -m src.cli serve-data --host 127.0.0.1 --port 8020
+```
+
+2. In another terminal:
+
+```bash
+curl -s "http://127.0.0.1:8020/api/resort-hourly?resort_id=steamboat-co&hours=72" | jq '{resort_id, timezone, model, hourly_keys:(.hourly|keys)}'
+curl -s "http://127.0.0.1:8020/api/resort-hourly?resort_id=invalid-id&hours=72" | jq '.'
+```
+
+Expected:
+- valid request contains all required keys:
+  - `snowfall`, `rain`, `precipitation_probability`, `snow_depth`, `wind_speed_10m`, `wind_direction_10m`, `visibility`
+- invalid resort id returns clear 4xx error payload
+
+Static and route checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "/resort/" index.html
+```
+
+Expected:
+- main list has links to `/resort/<id>`
+- static build remains successful
+
+Pass criteria:
+- automated tests pass
+- hourly endpoint contract is stable
+- UI route and metric rendering are correct
+- null-safe behavior verified by automated tests and API checks
 
 ---
 
@@ -252,14 +353,51 @@ Changes:
    - static mode fallback: client-side filtering from already loaded payload
 4. Show active filter chips and clear-all action.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- query parsing tests for multi-value filters.
+Automated checks:
+1. Add/update tests:
+- `tests/integration/test_backend_data_server.py` (multi-value filter query parsing)
+- `tests/integration/test_web_server.py` (query passthrough and payload filtering)
+- `tests/frontend/test_renderers.py` (filter modal presence/state markers)
+2. Run:
 
-Frontend:
-- modal open/close behavior.
-- URL query synchronization and rerender behavior.
+```bash
+pytest -q tests/integration/test_backend_data_server.py tests/integration/test_web_server.py tests/frontend/test_renderers.py
+```
+
+API checks:
+1. Start dynamic server:
+
+```bash
+python3 -m src.cli serve --host 127.0.0.1 --port 8010 --max-workers 8
+```
+
+2. In another terminal:
+
+```bash
+curl -s "http://127.0.0.1:8010/api/data?pass_type=ikon&region=west&country=US" | jq '{resorts_count, applied_filters, available_filters}'
+```
+
+Expected:
+- `applied_filters` matches request
+- result set is filtered (resort count decreases or changes accordingly)
+- `available_filters` is present for UI population
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "Filters|filter-modal|pass_type|region|country" index.html
+```
+
+Expected:
+- filter entry point and modal markup are present in static HTML
+
+Pass criteria:
+- automated tests pass
+- API filter behavior is correct
+- static HTML includes filter UI
 
 ---
 
@@ -307,13 +445,54 @@ Changes:
 3. Add resort badges in list:
    - pass tags, region, country.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- YAML parsing, schema validation, search matching tests.
+Automated checks:
+1. Add/update tests:
+- `tests/backend/test_pipeline.py` and/or new `tests/backend/test_resort_catalog.py` (YAML parse + schema validation)
+- search matching tests (name/alias/id)
+- frontend search behavior tests in `tests/frontend/test_renderers.py` (or new UI test file)
+2. Run:
 
-Frontend:
-- search filtering tests and alias matching behavior.
+```bash
+pytest -q tests/backend/test_pipeline.py tests/backend/test_compute_modules.py tests/frontend/test_renderers.py
+```
+
+Data source checks:
+
+```bash
+python3 -m src.cli fetch --resorts-file data/resorts.yml --output-json site/data.json
+jq '{resorts_count, failed_count}' site/data.json
+```
+
+Expected:
+- YAML file loads successfully via pipeline
+- fetch succeeds with stable `resorts_count` and low/expected `failed_count`
+
+Search checks:
+1. If backend search endpoint/query is added:
+
+```bash
+curl -s "http://127.0.0.1:8010/api/data?search=snowbird" | jq '{resorts_count}'
+```
+
+2. If search is frontend-only:
+- verify client-side filtering against loaded payload (same search term gives matching rows)
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "search|resort-search|pass|region|country" index.html
+```
+
+Expected:
+- search input and metadata badges exist in static HTML
+
+Pass criteria:
+- automated tests pass
+- YAML pipeline works
+- search works for name/alias/id
 
 ---
 
@@ -350,13 +529,72 @@ Changes:
 3. Keep default initial view manageable:
    - e.g. show favorite resorts first, then expand.
 
-### Testing
+### Validation (Executable)
 
-Backend:
-- catalog integrity tests.
+Automated checks:
+1. Add/update tests:
+- catalog integrity tests (`duplicate ids`, `missing required fields`, `invalid pass_types`)
+- large-catalog loading tests in backend pipeline
+2. Run:
 
-Frontend:
-- performance smoke with large list.
+```bash
+pytest -q tests/backend/test_pipeline.py tests/backend/test_compute_modules.py tests/backend/test_service_pipelines.py
+```
+
+Catalog validation checks:
+
+```bash
+python3 scripts/sync_resorts_catalog.py --validate-only
+python3 -m src.cli fetch --resorts-file data/resorts.yml --output-json site/data.json
+jq '{resorts_count, failed_count}' site/data.json
+```
+
+Expected:
+- validation script returns success
+- `resorts_count` includes full Ikon + Epic + Indy coverage
+- `failed_count` is within expected threshold
+
+Pass coverage audit:
+
+```bash
+python3 - <<'PY'
+import yaml, collections
+from pathlib import Path
+catalog = yaml.safe_load(Path("data/resorts.yml").read_text(encoding="utf-8"))
+counter = collections.Counter()
+for r in catalog.get("resorts", []):
+    for p in r.get("pass_types", []):
+        counter[p] += 1
+print(counter)
+assert counter["ikon"] > 0 and counter["epic"] > 0 and counter["indy"] > 0
+PY
+```
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "ikon|epic|indy" index.html
+```
+
+Expected:
+- pass-related UI/filter labels remain visible after scale-up
+
+Performance smoke checks:
+
+```bash
+pytest -q tests/smoke/test_dynamic_server_smoke.py tests/smoke/test_static_pipeline_smoke.py
+```
+
+Expected:
+- smoke tests pass on expanded catalog
+- interaction-related rendering paths stay stable under larger payloads
+
+Pass criteria:
+- catalog integrity tests pass
+- full pass coverage verified
+- static render succeeds
+- smoke tests pass under larger dataset
 
 ---
 
@@ -386,11 +624,43 @@ Changes:
    - if date unavailable, keep old labels.
 3. Apply to snowfall/rainfall/temperature (and sunrise/weather_code sections after they are added).
 
-### Testing
+### Validation (Executable)
 
-Frontend:
-- header label test with concrete date formatting.
-- fallback test for missing date.
+Automated checks:
+1. Add/update tests:
+- `tests/frontend/test_renderers.py` (date header format `MM-DD Ddd`)
+- fallback test when date missing (`today/day N` fallback)
+2. Run:
+
+```bash
+pytest -q tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py
+```
+
+Data checks:
+
+```bash
+python3 -m src.cli fetch --output-json site/data.json
+jq '.reports[0].daily[0:3] | map(.date)' site/data.json
+```
+
+Expected:
+- daily dates exist and are valid source for header labels
+
+Static render checks:
+
+```bash
+python3 -m src.cli static --output-html index.html
+rg -n "[0-9]{2}-[0-9]{2} (Mon|Tue|Wed|Thu|Fri|Sat|Sun)" index.html
+```
+
+Expected:
+- concrete date labels appear in rendered table headers
+- generic-only labels (`today`, `day 2`, ...) are not the primary header mode when date is available
+
+Pass criteria:
+- frontend tests pass
+- static HTML contains concrete dates
+- fallback behavior verified by tests
 
 ---
 
@@ -434,3 +704,16 @@ Milestone C (scale + deep drilldown):
 6. Resort catalog is YAML-based with searchable metadata.
 7. Ikon/Epic/Indy catalog coverage is complete and validated.
 8. `/resort/<id>` hourly page works with required hourly metrics.
+
+## 8. Per-Feature Completion Gate (Mandatory)
+
+For each feature (F1-F7), mark as complete only when all checks pass:
+
+1. Code implemented (backend + frontend as scoped).
+2. Feature-specific automated tests pass.
+3. API/contract command checks pass.
+4. Static render regenerated (`python3 -m src.cli static --output-html index.html`).
+5. Static HTML contains expected feature output.
+6. Progress entry appended to `docs/REFACTOR_PROGRESS_LEDGER.md` (scope/files/validation/results/next slice).
+7. Changes committed locally with a clear message.
+8. Do not push in this pipeline unless explicitly requested in a separate step.
