@@ -227,7 +227,7 @@ def test_build_html_contains_meta_sections():
         [_sun_row()],
         [_temp_row()],
         available_filters={"pass_type": {"ikon": 1}},
-        applied_filters={"pass_type": ["ikon"], "include_all": False},
+        applied_filters={"pass_type": ["ikon"], "include_default": True, "search_all": True, "include_all": False},
     )
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
@@ -245,6 +245,8 @@ def test_build_html_contains_meta_sections():
     assert 'name="filter-pass-type" value="indy"' not in html
     assert "Default resorts only" in html
     assert 'id="filter-include-all" checked' in html
+    assert "Search all resorts" in html
+    assert 'id="filter-search-all" checked' in html
     assert "Default resorts" in html
     assert '<option value="state" selected>State (A-Z)</option>' in html
     assert '<option value="default">Default</option>' not in html

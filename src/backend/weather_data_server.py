@@ -124,6 +124,7 @@ def _default_applied_filters() -> Dict[str, object]:
         "region": "",
         "country": "",
         "search": "",
+        "search_all": True,
         "include_default": True,
         "include_all": False,
     }
@@ -135,6 +136,8 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
     region = (qs.get("region", [""])[0] or "").strip().lower()
     country = (qs.get("country", [""])[0] or "").strip().upper()
     search_text = (qs.get("search", [""])[0] or "").strip()
+    has_search_all = "search_all" in qs
+    search_all = _to_bool_flag((qs.get("search_all", [""])[0] or "")) if has_search_all else True
     has_include_default = "include_default" in qs
     include_default = _to_bool_flag((qs.get("include_default", [""])[0] or "")) if has_include_default else False
     include_all = _to_bool_flag((qs.get("include_all", [""])[0] or ""))
@@ -143,20 +146,27 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
         "region": region,
         "country": country,
         "search": search_text,
+        "search_all": search_all,
         "include_default": include_default,
         "include_all": include_all,
     }
 
     catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
     available = _available_filters(catalog)
-    has_filters = bool(pass_types or region or country or search_text or include_all or has_include_default)
+    has_filters = bool(
+        pass_types or region or country or search_text or include_all or has_include_default or has_search_all
+    )
     if not has_filters:
+        applied["search_all"] = True
         applied["include_default"] = not bool(resorts)
         applied["include_all"] = False
         resorts_file = "" if resorts else DEFAULT_RESORTS_FILE
         return resorts, resorts_file, applied, available, False
 
-    if include_default:
+    if search_text and search_all:
+        # Search-all mode ignores pass/region/country/default scope and searches full supported catalog.
+        filtered_catalog = search_resort_catalog(catalog, search_text)
+    elif include_default:
         default_catalog = [item for item in catalog if bool(item.get("default_enabled", False))]
         filtered_catalog = _apply_catalog_filters(
             default_catalog,
@@ -366,6 +376,7 @@ def make_handler(
                             "pass_type": pass_types,
                             "region": region,
                             "country": country,
+                            "search_all": True,
                             "include_default": False,
                             "include_all": False,
                         },

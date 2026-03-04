@@ -115,7 +115,7 @@ def make_handler(
             resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
             has_server_side_filters = any(
                 qs.get(key)
-                for key in ("pass_type", "region", "country", "search", "include_all", "include_default")
+                for key in ("pass_type", "region", "country", "search", "include_all", "include_default", "search_all")
             )
 
             if data_mode == "local" and has_server_side_filters:

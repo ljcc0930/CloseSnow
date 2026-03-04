@@ -161,7 +161,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
     server, thread, base = _serve_once(handler)
     try:
         urllib.request.urlopen(
-            f"{base}/api/data?resort=A&resort=B&pass_type=ikon&region=west&country=US&search=snow&include_all=1",
+            f"{base}/api/data?resort=A&resort=B&pass_type=ikon&region=west&country=US&search=snow&include_all=1&search_all=0",
             timeout=3,
         ).read()
         assert calls["mode"] == "api"
@@ -172,6 +172,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
         assert "country=US" in calls["source"]
         assert "search=snow" in calls["source"]
         assert "include_all=1" in calls["source"]
+        assert "search_all=0" in calls["source"]
         assert calls["timeout"] == 11
         assert calls["kwargs"]["resorts"] == ["A", "B"]
     finally:

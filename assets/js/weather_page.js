@@ -53,6 +53,7 @@ const filterRegionSelect = document.getElementById("filter-region-select");
 const filterCountrySelect = document.getElementById("filter-country-select");
 const filterSortSelect = document.getElementById("filter-sort-select");
 const filterIncludeAllInput = document.getElementById("filter-include-all");
+const filterSearchAllInput = document.getElementById("filter-search-all");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
 const filterMetaRaw = window.CLOSESNOW_FILTER_META;
 const filterMeta =
@@ -752,6 +753,7 @@ const filterState = {
   country: "",
   sortBy: "state",
   includeDefault: true,
+  searchAll: true,
 };
 
 const _rowPassTypeSet = (row) => {
@@ -779,6 +781,10 @@ const rowMatchesFilters = (row, keyword) => {
   if (keyword) {
     const searchable = _rowSearchText(row);
     if (!searchable.includes(keyword)) return false;
+  }
+  if (keyword && filterState.searchAll) {
+    // Search-all mode ignores other filter controls while a keyword is present.
+    return true;
   }
 
   if (filterState.passTypes.size > 0) {
@@ -821,12 +827,19 @@ const syncFilterSummary = () => {
   const visible = rows.filter((row) => row.style.display !== "none").length;
   const total = rows.length;
   const scope = total > 0 ? (visible === total ? `${visible}` : `${visible}/${total}`) : "0";
+  const keyword = _normalizeSearch(resortSearchInput?.value || "");
+  const searchAllActive = Boolean(keyword) && filterState.searchAll;
   const parts = [];
-  if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
-  if (filterState.region) parts.push(`region: ${filterState.region}`);
-  if (filterState.country) parts.push(`country: ${filterState.country}`);
-  if (filterState.sortBy !== "state") parts.push(`sort: ${filterState.sortBy}`);
-  if (filterState.includeDefault && parts.length > 0) parts.push("scope: default");
+  if (!searchAllActive) {
+    if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
+    if (filterState.region) parts.push(`region: ${filterState.region}`);
+    if (filterState.country) parts.push(`country: ${filterState.country}`);
+    if (filterState.sortBy !== "state") parts.push(`sort: ${filterState.sortBy}`);
+    if (filterState.includeDefault && parts.length > 0) parts.push("scope: default");
+    if (!filterState.searchAll) parts.push("search: filtered");
+  } else {
+    parts.push("search: all resorts");
+  }
   if (parts.length > 0) {
     filterSummary.textContent = `${parts.join(" | ")} | visible: ${scope}`;
     return;
@@ -871,6 +884,7 @@ const applyFilterStateFromControls = () => {
   filterState.country = (filterCountrySelect?.value || "").trim().toUpperCase();
   filterState.sortBy = normalizeSortBy(filterSortSelect?.value || "state");
   filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
+  filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
 };
 
 const applyControlsFromQueryOrMeta = () => {
@@ -883,6 +897,8 @@ const applyControlsFromQueryOrMeta = () => {
   const urlSearch = params.get("search");
   const hasUrlIncludeDefault = params.has("include_default");
   const urlIncludeDefault = _isTruthyParam(params.get("include_default") || "");
+  const hasUrlSearchAll = params.has("search_all");
+  const urlSearchAll = _isTruthyParam(params.get("search_all") || "");
   const hasUrlIncludeAll = params.has("include_all");
   const urlIncludeAll = _isTruthyParam(params.get("include_all") || "");
 
@@ -891,6 +907,8 @@ const applyControlsFromQueryOrMeta = () => {
   const metaCountry = String(filterMetaApplied.country || "").trim().toUpperCase();
   const metaSortBy = normalizeSortBy(filterMetaApplied.sort_by || "");
   const metaSearch = String(filterMetaApplied.search || "");
+  const hasMetaSearchAll = Object.prototype.hasOwnProperty.call(filterMetaApplied, "search_all");
+  const metaSearchAll = Boolean(filterMetaApplied.search_all);
   const hasMetaIncludeDefault = Object.prototype.hasOwnProperty.call(filterMetaApplied, "include_default");
   const metaIncludeDefault = Boolean(filterMetaApplied.include_default);
   const metaIncludeAll = Boolean(filterMetaApplied.include_all);
@@ -900,6 +918,7 @@ const applyControlsFromQueryOrMeta = () => {
   const country = urlCountry || metaCountry;
   const sortBy = hasUrlSortBy ? urlSortBy : metaSortBy;
   const search = urlSearch !== null ? urlSearch : metaSearch;
+  const searchAll = hasUrlSearchAll ? urlSearchAll : (hasMetaSearchAll ? metaSearchAll : true);
   const includeDefault = hasUrlIncludeDefault
     ? urlIncludeDefault
     : (hasUrlIncludeAll ? !urlIncludeAll : (hasMetaIncludeDefault ? metaIncludeDefault : !metaIncludeAll));
@@ -920,6 +939,9 @@ const applyControlsFromQueryOrMeta = () => {
   }
   if (filterIncludeAllInput) {
     filterIncludeAllInput.checked = includeDefault;
+  }
+  if (filterSearchAllInput) {
+    filterSearchAllInput.checked = searchAll;
   }
   if (resortSearchInput && search) {
     resortSearchInput.value = search;
@@ -942,6 +964,7 @@ const buildFilterQueryParams = () => {
   if (filterState.country) params.set("country", filterState.country);
   if (filterState.sortBy !== "state") params.set("sort_by", filterState.sortBy);
   params.set("include_default", filterState.includeDefault ? "1" : "0");
+  params.set("search_all", filterState.searchAll ? "1" : "0");
   const keyword = (resortSearchInput?.value || "").trim();
   if (keyword) params.set("search", keyword);
   return params;
@@ -966,6 +989,7 @@ const resetFilterControls = () => {
   if (filterCountrySelect) filterCountrySelect.value = "";
   if (filterSortSelect) filterSortSelect.value = "state";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
+  if (filterSearchAllInput) filterSearchAllInput.checked = true;
 };
 
 attachVerticalSync(leftWrap, rightWrap);

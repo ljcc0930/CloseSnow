@@ -69,6 +69,7 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
         assert payload["available_filters"]["pass_type"]["epic"] == 1
         assert "indy" not in payload["available_filters"]["pass_type"]
         assert payload["applied_filters"]["pass_type"] == []
+        assert payload["applied_filters"]["search_all"] is True
         assert payload["applied_filters"]["include_all"] is False
         assert health["ok"] is True
         assert health["service"] == "closesnow-backend-data"
@@ -139,6 +140,7 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
         assert payload["applied_filters"]["pass_type"] == ["epic"]
         assert payload["applied_filters"]["region"] == "east"
         assert payload["applied_filters"]["country"] == "US"
+        assert payload["applied_filters"]["search_all"] is True
         assert payload["applied_filters"]["include_all"] is False
     finally:
         server.shutdown()
@@ -252,7 +254,79 @@ def test_backend_data_server_data_include_default(monkeypatch, valid_payload):
         assert captured["resorts"] == ["Snowbird, UT"]
         assert captured["resorts_file"] == ""
         assert payload["applied_filters"]["include_default"] is True
+        assert payload["applied_filters"]["search_all"] is True
         assert payload["applied_filters"]["include_all"] is False
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_backend_data_server_search_all_ignores_filters(monkeypatch, valid_payload):
+    calls = []
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        calls.append(kwargs)
+        return valid_payload
+
+    monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr(
+        "src.backend.weather_data_server.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "name": "Snowbird",
+                "state": "UT",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+                "default_enabled": True,
+            },
+            {
+                "resort_id": "mt-brighton-mi",
+                "query": "Mt Brighton, MI",
+                "name": "Mt Brighton",
+                "state": "MI",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["epic"],
+                "default_enabled": False,
+            },
+        ],
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        payload = json.loads(
+            urllib.request.urlopen(
+                f"{base}/api/data?include_default=1&pass_type=ikon&region=west&country=US&search=brighton&search_all=1",
+                timeout=3,
+            )
+            .read()
+            .decode("utf-8")
+        )
+        assert calls[-1]["resorts"] == ["Mt Brighton, MI"]
+        assert payload["applied_filters"]["include_default"] is True
+        assert payload["applied_filters"]["search_all"] is True
+
+        payload_default_scope = json.loads(
+            urllib.request.urlopen(
+                f"{base}/api/data?include_default=1&pass_type=ikon&region=west&country=US&search=brighton&search_all=0",
+                timeout=3,
+            )
+            .read()
+            .decode("utf-8")
+        )
+        assert payload_default_scope["resorts_count"] == 0
+        assert payload_default_scope["applied_filters"]["search_all"] is False
+        assert len(calls) == 1
     finally:
         server.shutdown()
         server.server_close()
