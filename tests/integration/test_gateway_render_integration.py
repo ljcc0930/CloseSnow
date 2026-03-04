@@ -45,7 +45,7 @@ def test_api_gateway_to_renderer_integration(valid_payload):
         payload = load_payload(mode="api", source=f"http://{host}:{port}/api/data", timeout=3)
         html = render_payload_html(payload)
         assert payload["schema_version"] == valid_payload["schema_version"]
-        assert "Ski Resorts Weather Forcast" in html
+        assert "Ski Resorts Weather Forecast" in html
     finally:
         server.shutdown()
         server.server_close()

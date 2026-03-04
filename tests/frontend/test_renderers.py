@@ -116,7 +116,7 @@ def test_table_renderer_sections_and_empty_states():
 def test_build_html_contains_meta_sections():
     html = build_html([_snow_row()], [_rain_row()], [_temp_row()])
     assert "<!doctype html>" in html
-    assert "Ski Resorts Weather Forcast" in html
+    assert "Ski Resorts Weather Forecast" in html
     assert "Powered by" in html
     assert "https://open-meteo.com/en/docs/ecmwf-api" in html
     assert "Feature requests" in html
