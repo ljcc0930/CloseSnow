@@ -8,6 +8,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 - Generate 15-day ski weather reports for multiple resorts in one run (snowfall, rainfall, temperature).
 - Export results as unified JSON plus daily CSV tables for downstream use.
 - Serve the report as either dynamic web page (`/` + `/api/data`) or pre-rendered static HTML (`index.html`).
+- Support decoupled dynamic deployment: backend data API (`serve-data`) and frontend web server (`serve-web`) can run independently.
 - Support desktop/mobile table layouts with synced scrolling for large forecast grids.
 - Provide per-table unit switching (snow: `cm/in`, rain: `mm/in`, temperature: `°C/°F`) with saved browser preference.
 - Fetch resort data concurrently with configurable worker count (`--max-workers`).
@@ -24,6 +25,9 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── weather_payload_v1.py
 │   │   └── validators.py
 │   ├── backend
+│   │   ├── compute
+│   │   │   ├── payload_metadata.py
+│   │   │   └── resort_selection.py
 │   │   ├── constants.py
 │   │   ├── models.py
 │   │   ├── cache.py
@@ -32,6 +36,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── writers.py
 │   │   ├── pipeline.py
 │   │   ├── ecmwf_unified_backend.py
+│   │   ├── weather_data_server.py
 │   │   ├── export
 │   │   │   └── payload_exporter.py
 │   │   ├── services
@@ -48,9 +53,12 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       ├── weather_page_assets.py
 │       ├── weather_table_renderer.py
 │       ├── weather_table_styles.py
+│       ├── templates
+│       │   └── weather_page.html
 │       ├── data_sources
 │       │   ├── static_json_source.py
 │       │   ├── api_source.py
+│       │   ├── clients.py
 │       │   └── gateway.py
 │       ├── pipelines
 │       │   └── static_site.py
@@ -148,6 +156,26 @@ Open:
 - Page: `http://127.0.0.1:8010/`
 - Raw JSON: `http://127.0.0.1:8010/api/data`
 
+### 4) Run decoupled dynamic pipeline (recommended for multi-service deploy)
+
+Terminal A (backend data API):
+
+```bash
+python3 -m src.cli serve-data --host 127.0.0.1 --port 8020
+```
+
+Terminal B (frontend web service):
+
+```bash
+python3 -m src.cli serve-web --host 127.0.0.1 --port 8010 --data-mode api --data-source http://127.0.0.1:8020/api/data
+```
+
+Open:
+
+- Page: `http://127.0.0.1:8010/`
+- Frontend health: `http://127.0.0.1:8010/api/health`
+- Backend health: `http://127.0.0.1:8020/api/health`
+
 ## CLI Commands
 
 ### `fetch`
@@ -218,12 +246,56 @@ python3 -m src.cli serve \
 
 Notes:
 
+- Compatibility mode: one process does both page serving and local backend fetching.
 - Each request fetches payload via live backend pipeline and returns contract JSON at `/api/data`.
 - You can override resorts by query params:
 
 ```text
 /?resort=snowbasin,%20ut&resort=snowbird,%20ut
 ```
+
+### `serve-data`
+
+```bash
+python3 -m src.cli serve-data \
+  [--host 127.0.0.1] \
+  [--port 8020] \
+  [--cache-file .cache/open_meteo_cache.json] \
+  [--geocode-cache-hours 720] \
+  [--forecast-cache-hours 3] \
+  [--max-workers 8] \
+  [--allow-origin *]
+```
+
+Notes:
+
+- Runs backend data API only.
+- Endpoints:
+  - `/api/data` (contract payload)
+  - `/api/health` (health check)
+
+### `serve-web`
+
+```bash
+python3 -m src.cli serve-web \
+  [--host 127.0.0.1] \
+  [--port 8010] \
+  [--data-mode api|file|local] \
+  [--data-source http://127.0.0.1:8020/api/data] \
+  [--data-timeout 20]
+```
+
+Notes:
+
+- Runs frontend web server only.
+- Data source can be:
+  - `api`: remote backend API (supports different host/server)
+  - `file`: pre-fetched JSON artifact
+  - `local`: fallback to in-process backend fetch
+- Endpoints:
+  - `/` (rendered page)
+  - `/api/data` (resolved payload in current mode)
+  - `/api/health` (health check)
 
 ## Run Modules Directly
 
@@ -232,11 +304,13 @@ If you do not want to use the unified CLI, you can run modules directly.
 ## Architecture (Refactor State)
 
 - Backend produces a single payload contract (`weather_payload_v1`).
-- Communication layer validates and loads payload from file or API (`src/web/data_sources/gateway.py`, `load_payload`).
+- Communication layer validates and loads payload from file/API through client adapters (`src/web/data_sources/clients.py`, `src/web/data_sources/gateway.py`).
 - Shared cross-layer runtime defaults are in `src/shared/config.py` (not backend-owned).
 - Frontend renderer consumes contract payload only (`render_payload_html` path shared by static/dynamic).
+- Frontend HTML shell is template-based (`src/web/templates/weather_page.html`) and Python only injects dynamic fragments.
 - Static site assembly (`write_payload_json` / `render_html`) is in web layer (`src/web/pipelines/static_site.py`), not backend.
-- Backend orchestration separates payload compute (`compute_pipeline_payload`) from artifact export (`src/backend/export/payload_exporter.py`).
+- Backend orchestration separates resort selection + metadata build (`src/backend/compute/*`) from main orchestration and export (`src/backend/export/payload_exporter.py`).
+- Dynamic runtime supports both coupled mode (`serve`) and decoupled mode (`serve-data` + `serve-web`).
 
 ## Frontend Rendering Structure
 
@@ -280,6 +354,12 @@ Default outputs:
 
 ```bash
 python3 -m src.web.weather_page_server --host 127.0.0.1 --port 8010 --max-workers 8
+```
+
+### Backend data server
+
+```bash
+python3 -m src.backend.weather_data_server --host 127.0.0.1 --port 8020 --max-workers 8
 ```
 
 ### Static renderer

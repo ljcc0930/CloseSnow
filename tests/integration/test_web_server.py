@@ -119,3 +119,80 @@ def test_server_query_resort_pass_through(monkeypatch):
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
+
+
+def test_server_api_mode_loads_remote_payload(monkeypatch):
+    calls = {}
+
+    def fake_load_payload(mode, source, timeout=20):  # noqa: ANN001
+        calls["mode"] = mode
+        calls["source"] = source
+        calls["timeout"] = timeout
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        }
+
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+        data_mode="api",
+        data_source="http://127.0.0.1:8020/api/data",
+        data_timeout=11,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        urllib.request.urlopen(f"{base}/api/data?resort=A&resort=B", timeout=3).read()
+        assert calls["mode"] == "api"
+        assert "resort=A" in calls["source"]
+        assert "resort=B" in calls["source"]
+        assert calls["timeout"] == 11
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_server_health_endpoint(monkeypatch):
+    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", lambda **kwargs: {"reports": []})
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        health = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=3).read().decode("utf-8"))
+        assert health["ok"] is True
+        assert health["mode"] == "local"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_server_requires_data_source_for_api_mode():
+    with pytest.raises(ValueError, match="--data-source is required"):
+        make_handler(
+            cache_file=".cache/x.json",
+            geocode_cache_hours=720,
+            forecast_cache_hours=3,
+            max_workers=2,
+            data_mode="api",
+            data_source="",
+        )

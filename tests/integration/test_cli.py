@@ -18,6 +18,10 @@ def test_build_parser_has_all_commands():
     assert args.command == "static"
     args = parser.parse_args(["serve"])
     assert args.command == "serve"
+    args = parser.parse_args(["serve-data"])
+    assert args.command == "serve-data"
+    args = parser.parse_args(["serve-web"])
+    assert args.command == "serve-web"
 
 
 def test_resolve_resorts_prefers_cli_resorts():
@@ -146,6 +150,77 @@ def test_run_server_boot_path(monkeypatch, capsys):
     assert "Serving dynamic page" in out
 
 
+def test_run_data_server_boot_path(monkeypatch, capsys):
+    calls = {"closed": False, "served": False}
+
+    class DummyServer:
+        def __init__(self, addr, handler):  # noqa: ANN001
+            assert addr == ("127.0.0.1", 8020)
+            assert handler == "handler"
+
+        def serve_forever(self):
+            calls["served"] = True
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            calls["closed"] = True
+
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8020,
+        cache_file=".cache/a.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+        allow_origin="*",
+    )
+    monkeypatch.setattr("src.cli.make_data_handler", lambda **kwargs: "handler")
+    monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
+    rc = cli.run_data_server(args)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert calls["served"] is True
+    assert calls["closed"] is True
+    assert "Serving backend data API" in out
+
+
+def test_run_web_server_boot_path(monkeypatch, capsys):
+    calls = {"closed": False, "served": False}
+
+    class DummyServer:
+        def __init__(self, addr, handler):  # noqa: ANN001
+            assert addr == ("127.0.0.1", 8010)
+            assert handler == "handler"
+
+        def serve_forever(self):
+            calls["served"] = True
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            calls["closed"] = True
+
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8010,
+        data_mode="api",
+        data_source="http://127.0.0.1:8020/api/data",
+        data_timeout=11,
+        cache_file=".cache/a.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+    )
+    monkeypatch.setattr("src.cli.make_handler", lambda **kwargs: "handler")
+    monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
+    rc = cli.run_web_server(args)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert calls["served"] is True
+    assert calls["closed"] is True
+    assert "Serving frontend web" in out
+    assert "Data mode: api" in out
+
+
 def test_main_dispatches_fetch(monkeypatch):
     monkeypatch.setattr(
         "src.cli.build_parser",
@@ -153,6 +228,24 @@ def test_main_dispatches_fetch(monkeypatch):
     )
     monkeypatch.setattr("src.cli.run_fetch", lambda args: 7)
     assert cli.main() == 7
+
+
+def test_main_dispatches_serve_data(monkeypatch):
+    monkeypatch.setattr(
+        "src.cli.build_parser",
+        lambda: type("P", (), {"parse_args": staticmethod(lambda: argparse.Namespace(command="serve-data"))})(),
+    )
+    monkeypatch.setattr("src.cli.run_data_server", lambda args: 9)
+    assert cli.main() == 9
+
+
+def test_main_dispatches_serve_web(monkeypatch):
+    monkeypatch.setattr(
+        "src.cli.build_parser",
+        lambda: type("P", (), {"parse_args": staticmethod(lambda: argparse.Namespace(command="serve-web"))})(),
+    )
+    monkeypatch.setattr("src.cli.run_web_server", lambda args: 10)
+    assert cli.main() == 10
 
 
 def test_main_raises_for_unknown_command(monkeypatch):

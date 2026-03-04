@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
 import json
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
-from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE, FORECAST_DAYS
+from src.backend.compute import build_payload_metadata, select_resorts
+from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
@@ -162,16 +162,13 @@ def compute_pipeline_payload(
     forecast_cache_hours: int = 3,
     max_workers: int = 8,
 ) -> Dict[str, Any]:
-    selected: List[str] = [r.strip() for r in (resorts or []) if r and r.strip()]
-    if resorts_file:
-        selected.extend(read_resorts(resorts_file))
-    if use_default_resorts:
-        selected.extend(DEFAULT_RESORTS)
-    if not selected:
-        selected = list(DEFAULT_RESORTS)
-
-    seen = set()
-    selected = [r for r in selected if not (r in seen or seen.add(r))]
+    selected = select_resorts(
+        resorts=list(resorts or []),
+        resorts_file=resorts_file,
+        use_default_resorts=use_default_resorts,
+        default_resorts=list(DEFAULT_RESORTS),
+        read_resorts_fn=read_resorts,
+    )
     logger.info("Pipeline start: resorts=%d", len(selected))
 
     cache_path = dated_cache_path(cache_file)
@@ -196,31 +193,15 @@ def compute_pipeline_payload(
     reports: List[Dict[str, Any]] = async_result["reports"]
     failed: List[Dict[str, str]] = async_result["failed"]
 
-    out = {
-        "schema_version": SCHEMA_VERSION,
-        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
-        "source": "Open-Meteo",
-        "model": "ecmwf_ifs025",
-        "forecast_days": FORECAST_DAYS,
-        "units": {
-            "snowfall_cm": "cm",
-            "rain_mm": "mm",
-            "precipitation_mm": "mm",
-            "temperature_max_c": "celsius",
-            "temperature_min_c": "celsius",
-        },
-        "cache": {
-            "file": cache_path,
-            "hits": cache.hits,
-            "misses": cache.misses,
-            "geocode_cache_hours": geocode_cache_hours,
-            "forecast_cache_hours": forecast_cache_hours,
-        },
-        "resorts_count": len(reports),
-        "failed_count": len(failed),
-        "failed": failed,
-        "reports": reports,
-    }
+    out = build_payload_metadata(
+        cache_path=cache_path,
+        cache_hits=cache.hits,
+        cache_misses=cache.misses,
+        geocode_cache_hours=geocode_cache_hours,
+        forecast_cache_hours=forecast_cache_hours,
+        reports=reports,
+        failed=failed,
+    )
     validate_weather_payload_v1(out)
 
     cache.save()

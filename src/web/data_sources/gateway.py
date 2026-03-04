@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.web.data_sources.api_source import load_api_payload
-from src.web.data_sources.static_json_source import load_static_payload
+from src.web.data_sources.clients import FilePayloadClient, HttpPayloadClient, PayloadClient
+
+
+def build_payload_client(mode: str, source: str, timeout: int = 20) -> PayloadClient:
+    if mode == "api":
+        return HttpPayloadClient(url=source, timeout=timeout)
+    if mode == "file":
+        return FilePayloadClient(path=source)
+    raise ValueError(f"Unsupported data source mode: {mode}")
 
 
 def load_payload(mode: str, source: str, timeout: int = 20) -> Dict[str, Any]:
-    if mode == "api":
-        return load_api_payload(source, timeout=timeout)
-    if mode == "file":
-        return load_static_payload(source)
-    raise ValueError(f"Unsupported data source mode: {mode}")
-
+    return build_payload_client(mode=mode, source=source, timeout=timeout).load()

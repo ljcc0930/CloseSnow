@@ -3,36 +3,65 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-def reports_to_snow_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _reports_to_metric_rows(
+    reports: List[Dict[str, Any]],
+    display_days: int,
+    weekly_mapping: Dict[str, str],
+    daily_source_key: str,
+    daily_output_suffix: str,
+    daily_format: str,
+) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {
-            "query": str(report.get("query", "")),
-            "week1_total_cm": f"{float(report.get('week1_total_snowfall_cm', 0.0)):.1f}",
-            "week2_total_cm": f"{float(report.get('week2_total_snowfall_cm', 0.0)):.1f}",
-        }
+        row: Dict[str, str] = {"query": str(report.get("query", ""))}
+        for out_key, report_key in weekly_mapping.items():
+            row[out_key] = f"{_as_float(report.get(report_key, 0.0)):.1f}"
+
         daily = report.get("daily", [])
         for day_idx in range(display_days):
-            value = daily[day_idx].get("snowfall_cm") if day_idx < len(daily) else None
-            row[f"day_{day_idx+1}_cm"] = "" if value is None else f"{float(value):.1f}"
+            value = daily[day_idx].get(daily_source_key) if day_idx < len(daily) else None
+            if value is None:
+                row[f"day_{day_idx+1}_{daily_output_suffix}"] = ""
+            else:
+                row[f"day_{day_idx+1}_{daily_output_suffix}"] = format(_as_float(value), daily_format)
         rows.append(row)
     return rows
+
+
+def reports_to_snow_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
+    return _reports_to_metric_rows(
+        reports=reports,
+        display_days=display_days,
+        weekly_mapping={
+            "week1_total_cm": "week1_total_snowfall_cm",
+            "week2_total_cm": "week2_total_snowfall_cm",
+        },
+        daily_source_key="snowfall_cm",
+        daily_output_suffix="cm",
+        daily_format=".1f",
+    )
 
 
 def reports_to_rain_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-    for report in reports:
-        row: Dict[str, str] = {
-            "query": str(report.get("query", "")),
-            "week1_total_rain_mm": f"{float(report.get('week1_total_rain_mm', 0.0)):.1f}",
-            "week2_total_rain_mm": f"{float(report.get('week2_total_rain_mm', 0.0)):.1f}",
-        }
-        daily = report.get("daily", [])
-        for day_idx in range(display_days):
-            value = daily[day_idx].get("rain_mm") if day_idx < len(daily) else None
-            row[f"day_{day_idx+1}_rain_mm"] = "" if value is None else str(value)
-        rows.append(row)
-    return rows
+    return _reports_to_metric_rows(
+        reports=reports,
+        display_days=display_days,
+        weekly_mapping={
+            "week1_total_rain_mm": "week1_total_rain_mm",
+            "week2_total_rain_mm": "week2_total_rain_mm",
+        },
+        daily_source_key="rain_mm",
+        daily_output_suffix="rain_mm",
+        daily_format=".1f",
+    )
 
 
 def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:

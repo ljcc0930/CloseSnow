@@ -1,6 +1,6 @@
 # CloseSnow Refactor Guide (v3)
 
-This document defines the next refactor target after v2 boundary hardening.
+This document records the v3 refactor target and implementation status after v2 boundary hardening.
 
 Target theme:
 
@@ -12,11 +12,15 @@ Core intent:
 2. Increase code reuse through modularization.
 3. Make dynamic runtime fully decoupled so frontend/backend can run in parallel, including on different servers.
 
-Status (local 2026-03-03):
+Status (local 2026-03-04):
 
 1. Codebase audit completed.
 2. Test layout groundwork completed (`tests/backend`, `tests/frontend`, `tests/integration`, `tests/smoke`).
-3. Architectural refactor described below is the next execution target.
+3. v3 implementation landed in code:
+   - frontend section rendering is config-driven (`weather_table_renderer.py`)
+   - page shell moved to template (`src/web/templates/weather_page.html`)
+   - backend compute split started (`src/backend/compute/*`)
+   - dynamic decoupling implemented (`serve-data` + `serve-web`)
 
 ---
 
@@ -203,17 +207,14 @@ Resulting Python simplification:
 
 ## 4.1 Internal module split
 
-Proposed structure:
+Implemented structure:
 
 ```text
 src/backend/
   pipeline.py                  # compatibility wrapper only
   compute/
     resort_selection.py
-    coordinator.py
-    payload_builder.py
-  io/
-    cache_seed.py
+    payload_metadata.py
   export/
     payload_exporter.py
 ```
@@ -274,8 +275,8 @@ Required capabilities:
 
 1. Frontend and backend can boot independently and in parallel.
 2. Frontend can point to backend via config:
-   - env var (for example `CLOSESNOW_DATA_URL`)
-   - CLI arg override
+   - CLI arg override (`--data-source`)
+   - env var support can be added later if needed
 3. Backend can run on another host with CORS enabled.
 
 ## 5.3 Compatibility constraints
@@ -317,55 +318,43 @@ tests/
 
 ---
 
-## 7) Execution Plan (Next Refactor Sprint)
+## 7) Implementation Status (Completed in v3)
 
 ## Phase A: Frontend section/table deduplication
 
-Tasks:
+Result:
 
-1. Add metric registry + reusable section renderer.
-2. Collapse duplicated snow/rain renderers onto shared primitives.
-
-Exit criteria:
-
-1. No repeated section-shell blocks in `weather_table_renderer.py`.
-2. Snow/rain desktop/mobile renderers share common helper paths.
+1. Added metric view config and reusable section composition in `src/web/weather_table_renderer.py`.
+2. Removed repeated snow/rain/temp section shell assembly logic.
 
 ## Phase B: Template shell extraction
 
-Tasks:
+Result:
 
-1. Move static page shell into template/static asset.
-2. Keep Python focused on dynamic content insertion.
-
-Exit criteria:
-
-1. `weather_html_renderer.py` no longer contains full-document static literals.
+1. Static page shell moved to `src/web/templates/weather_page.html`.
+2. `src/web/weather_html_renderer.py` now injects only dynamic fragments.
 
 ## Phase C: Dynamic communication decoupling
 
-Tasks:
+Result:
 
-1. Introduce frontend-only server mode (no backend imports).
-2. Introduce backend data-service mode.
-3. Wire communication adapter selection by config.
-
-Exit criteria:
-
-1. Frontend and backend start independently.
-2. Frontend can consume payload from remote backend URL.
+1. Added backend API-only service:
+   - `src/backend/weather_data_server.py`
+2. Enhanced frontend page server with source modes:
+   - `local`, `api`, `file`
+3. Added communication adapters:
+   - `FilePayloadClient`
+   - `HttpPayloadClient`
+4. Added CLI commands for independent startup:
+   - `serve-data`
+   - `serve-web`
 
 ## Phase D: Cleanup + compatibility hardening
 
-Tasks:
+Result:
 
-1. Keep `serve` compatibility command while adding decoupled modes.
-2. Remove transitional dead code once parity tests pass.
-
-Exit criteria:
-
-1. Legacy behavior unchanged for existing CLI users.
-2. New decoupled mode validated by smoke + integration tests.
+1. `serve` remains as compatibility one-process mode.
+2. Decoupled mode covered by integration/smoke tests.
 
 ---
 

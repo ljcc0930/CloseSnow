@@ -216,6 +216,35 @@ Pass criteria:
 1. HTTP 200 for both.
 2. Correct content type is present.
 
+### 5.5 Decoupled dynamic validation (`serve-data` + `serve-web`)
+
+Start backend data API in terminal A:
+
+```bash
+python3 -m src.cli serve-data --host 127.0.0.1 --port 8020 --max-workers 8
+```
+
+Start frontend web server in terminal B:
+
+```bash
+python3 -m src.cli serve-web --host 127.0.0.1 --port 8010 --data-mode api --data-source http://127.0.0.1:8020/api/data
+```
+
+Probe endpoints:
+
+```bash
+curl -sS http://127.0.0.1:8020/api/health | head -n 20
+curl -sS http://127.0.0.1:8010/api/health | head -n 20
+curl -sS http://127.0.0.1:8010/api/data | head -n 20
+curl -sS http://127.0.0.1:8010/ | head -n 40
+```
+
+Pass criteria:
+
+1. Both health endpoints return `ok: true`.
+2. Frontend `/api/data` returns valid contract JSON.
+3. Frontend `/` renders HTML successfully while backend runs as a separate service.
+
 ---
 
 ## 6) Concurrency-specific checks
@@ -285,9 +314,10 @@ Before push:
 5. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
 6. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
 7. Dynamic server probes (`/` and `/api/data`) pass.
-8. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.
-9. `git status --short` contains only intended files.
-10. README/workflow updated if command or behavior changed.
+8. Decoupled probes (`serve-data` + `serve-web`) pass when dynamic layer is touched.
+9. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.
+10. `git status --short` contains only intended files.
+11. README/workflow updated if command or behavior changed.
 
 ---
 

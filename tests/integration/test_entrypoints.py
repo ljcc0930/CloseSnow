@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 
 from src.backend import ecmwf_unified_backend
+from src.backend import weather_data_server
 from src.web import weather_page_static_render
 
 
@@ -57,3 +58,37 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     assert captured["kwargs"]["resorts_file"] == ""
     assert "Done: index.html" in out
 
+
+def test_weather_data_server_entrypoint_main(monkeypatch, capsys):
+    calls = {"closed": False, "served": False}
+
+    class DummyServer:
+        def __init__(self, addr, handler):  # noqa: ANN001
+            assert addr == ("127.0.0.1", 8020)
+            assert handler == "handler"
+
+        def serve_forever(self):
+            calls["served"] = True
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            calls["closed"] = True
+
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8020,
+        cache_file=".cache/a.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+        allow_origin="*",
+    )
+    monkeypatch.setattr("src.backend.weather_data_server.parse_args", lambda: args)
+    monkeypatch.setattr("src.backend.weather_data_server.make_handler", lambda **kwargs: "handler")
+    monkeypatch.setattr("src.backend.weather_data_server.ThreadingHTTPServer", DummyServer)
+    rc = weather_data_server.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert calls["served"] is True
+    assert calls["closed"] is True
+    assert "Serving backend data API" in out

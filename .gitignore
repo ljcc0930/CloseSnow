@@ -28,6 +28,7 @@ env/
 *.xlsx
 *.html
 !.cache/resort_coordinates.json
+!src/web/templates/*.html
 
 # Large local temp files
 tmp_*.grib2

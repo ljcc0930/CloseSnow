@@ -15,6 +15,7 @@ from src.web.data_sources import load_payload
 from src.web.pipelines import render_html, write_payload_json
 from src.web.weather_page_server import make_handler
 from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.backend.weather_data_server import make_handler as make_data_handler
 
 
 def _add_fetch_options(p: argparse.ArgumentParser) -> None:
@@ -68,6 +69,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve.add_argument("--forecast-cache-hours", type=int, default=3)
     p_serve.add_argument("--max-workers", type=int, default=8)
 
+    p_serve_data = sub.add_parser("serve-data", help="Run backend data API server only.")
+    p_serve_data.add_argument("--host", default="127.0.0.1")
+    p_serve_data.add_argument("--port", type=int, default=8020)
+    p_serve_data.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
+    p_serve_data.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
+    p_serve_data.add_argument("--forecast-cache-hours", type=int, default=3)
+    p_serve_data.add_argument("--max-workers", type=int, default=8)
+    p_serve_data.add_argument("--allow-origin", default="*")
+
+    p_serve_web = sub.add_parser("serve-web", help="Run frontend web server with configurable data source.")
+    p_serve_web.add_argument("--host", default="127.0.0.1")
+    p_serve_web.add_argument("--port", type=int, default=8010)
+    p_serve_web.add_argument("--data-mode", choices=["local", "api", "file"], default="api")
+    p_serve_web.add_argument("--data-source", default="http://127.0.0.1:8020/api/data")
+    p_serve_web.add_argument("--data-timeout", type=int, default=20)
+    p_serve_web.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
+    p_serve_web.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
+    p_serve_web.add_argument("--forecast-cache-hours", type=int, default=3)
+    p_serve_web.add_argument("--max-workers", type=int, default=8)
+
     return p
 
 
@@ -118,10 +139,61 @@ def run_server(args: argparse.Namespace) -> int:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
+        data_mode="local",
+        data_source="",
+        data_timeout=20,
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving dynamic page at http://{args.host}:{args.port}")
-    print("Open / for page, /api/data for raw JSON.")
+    print("Open / for page, /api/data for raw JSON, /api/health for health check.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
+def run_data_server(args: argparse.Namespace) -> int:
+    handler = make_data_handler(
+        cache_file=args.cache_file,
+        geocode_cache_hours=args.geocode_cache_hours,
+        forecast_cache_hours=args.forecast_cache_hours,
+        max_workers=args.max_workers,
+        allow_origin=args.allow_origin,
+    )
+    server = ThreadingHTTPServer((args.host, args.port), handler)
+    print(f"Serving backend data API at http://{args.host}:{args.port}")
+    print("Open /api/data for payload, /api/health for health check.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
+def run_web_server(args: argparse.Namespace) -> int:
+    data_source = args.data_source
+    if args.data_mode == "local":
+        data_source = ""
+    handler = make_handler(
+        cache_file=args.cache_file,
+        geocode_cache_hours=args.geocode_cache_hours,
+        forecast_cache_hours=args.forecast_cache_hours,
+        max_workers=args.max_workers,
+        data_mode=args.data_mode,
+        data_source=data_source,
+        data_timeout=args.data_timeout,
+    )
+    server = ThreadingHTTPServer((args.host, args.port), handler)
+    print(f"Serving frontend web at http://{args.host}:{args.port}")
+    print(f"Data mode: {args.data_mode}")
+    if args.data_mode in {"api", "file"}:
+        print(f"Data source: {data_source}")
+    print("Open / for page, /api/data for raw JSON, /api/health for health check.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -141,6 +213,10 @@ def main() -> int:
         return run_static(args)
     if args.command == "serve":
         return run_server(args)
+    if args.command == "serve-data":
+        return run_data_server(args)
+    if args.command == "serve-web":
+        return run_web_server(args)
     raise ValueError(f"Unsupported command: {args.command}")
 
 

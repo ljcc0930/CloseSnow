@@ -6,7 +6,7 @@ import pytest
 
 from src.contract.validators import ContractValidationError
 from src.web.data_sources.api_source import load_api_payload
-from src.web.data_sources.gateway import load_payload
+from src.web.data_sources.gateway import build_payload_client, load_payload
 from src.web.data_sources.static_json_source import load_static_payload
 
 
@@ -64,21 +64,30 @@ def test_load_api_payload_invalid_contract(monkeypatch, valid_payload):
 
 
 def test_load_payload_gateway_api(monkeypatch):
-    def fake_load_api(url, timeout=20):  # noqa: ANN001
-        assert timeout == 20
-        return {"source": url, "mode": "api"}
+    class DummyClient:
+        def __init__(self, url, timeout):  # noqa: ANN001
+            self.source = url
+            self.timeout = timeout
 
-    monkeypatch.setattr("src.web.data_sources.gateway.load_api_payload", fake_load_api)
+        def load(self):
+            return {"source": self.source, "mode": "api", "timeout": self.timeout}
+
+    monkeypatch.setattr("src.web.data_sources.gateway.HttpPayloadClient", DummyClient)
     payload = load_payload("api", "https://a")
     assert payload["mode"] == "api"
     assert payload["source"] == "https://a"
+    assert payload["timeout"] == 20
 
 
 def test_load_payload_gateway_file(monkeypatch):
-    monkeypatch.setattr(
-        "src.web.data_sources.gateway.load_static_payload",
-        lambda source: {"source": source, "mode": "file"},
-    )
+    class DummyClient:
+        def __init__(self, path):  # noqa: ANN001
+            self.path = path
+
+        def load(self):
+            return {"source": self.path, "mode": "file"}
+
+    monkeypatch.setattr("src.web.data_sources.gateway.FilePayloadClient", DummyClient)
     payload = load_payload("file", "/tmp/a.json")
     assert payload["mode"] == "file"
     assert payload["source"] == "/tmp/a.json"
@@ -90,14 +99,21 @@ def test_load_payload_gateway_rejects_unknown_mode():
 
 
 def test_gateway_routes_to_api_with_timeout(monkeypatch):
-    calls = {}
+    class DummyClient:
+        def __init__(self, url, timeout):  # noqa: ANN001
+            self.source = url
+            self.timeout = timeout
 
-    def fake_load_api(url, timeout=20):  # noqa: ANN001
-        calls["url"] = url
-        calls["timeout"] = timeout
-        return {"ok": True}
+        def load(self):
+            return {"ok": True, "source": self.source, "timeout": self.timeout}
 
-    monkeypatch.setattr("src.web.data_sources.gateway.load_api_payload", fake_load_api)
+    monkeypatch.setattr("src.web.data_sources.gateway.HttpPayloadClient", DummyClient)
     payload = load_payload(mode="api", source="https://a", timeout=11)
-    assert payload == {"ok": True}
-    assert calls == {"url": "https://a", "timeout": 11}
+    assert payload == {"ok": True, "source": "https://a", "timeout": 11}
+
+
+def test_build_payload_client_types():
+    api_client = build_payload_client("api", "https://a", timeout=9)
+    file_client = build_payload_client("file", "/tmp/a.json")
+    assert type(api_client).__name__ == "HttpPayloadClient"
+    assert type(file_client).__name__ == "FilePayloadClient"

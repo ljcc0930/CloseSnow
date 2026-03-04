@@ -18,7 +18,7 @@ Implement the v3 decoupling objective:
 
 while keeping existing CLI/server/static behavior runnable at every step.
 
-Status: v2 refactor completed; v3 planning + test-layout groundwork started.
+Status: v3 refactor implemented in code and validated on 2026-03-04 local.
 
 ---
 
@@ -36,6 +36,54 @@ Status: v2 refactor completed; v3 planning + test-layout groundwork started.
 ---
 
 ## Completed Milestones
+
+## 2026-03-04 (v3 implementation: frontend/backend simplification + dynamic decoupling)
+
+### Scope
+- Implement the planned v3 refactor end-to-end.
+- Keep backward compatibility for existing CLI flows.
+
+### Changes
+- Frontend modularization:
+  - `src/web/weather_table_renderer.py` now uses metric config + reusable section composition.
+  - Reduced duplicated section shell/toggle rendering across snow/rain/temp.
+- Frontend static template extraction:
+  - added `src/web/templates/weather_page.html`
+  - `src/web/weather_html_renderer.py` now injects dynamic fragments into template.
+- Communication layer modularization:
+  - added `src/web/data_sources/clients.py`
+  - `src/web/data_sources/gateway.py` now builds and uses payload client adapters.
+- Dynamic decoupled runtime:
+  - added backend API server: `src/backend/weather_data_server.py`
+  - `src/web/weather_page_server.py` supports `data_mode=local|api|file` and `/api/health`
+  - CLI supports:
+    - `serve` (compatibility local mode)
+    - `serve-data` (backend only)
+    - `serve-web` (frontend only, remote/file/local data source)
+- Backend compute modularization:
+  - added `src/backend/compute/resort_selection.py`
+  - added `src/backend/compute/payload_metadata.py`
+  - `src/backend/pipeline.py` delegates resort selection + payload metadata build to compute modules.
+- Tests:
+  - added backend compute tests
+  - added backend data server integration tests
+  - expanded CLI/web/gateway integration tests for new modes/commands
+
+### Validation
+- `python3 -m compileall src`
+- `python3 -m pytest tests/backend -q` (`37 passed`)
+- `python3 -m pytest tests/frontend -q` (`14 passed`)
+- `python3 -m pytest tests/integration -q` (`52 passed`)
+- `python3 -m pytest tests/smoke -q` (`3 passed`)
+- `python3 -m pytest -q` (`106 passed`)
+
+### Outcome
+- v3 Definition of Done met for current scope:
+  1. Frontend rendering is configuration-driven and less duplicated.
+  2. HTML shell is template-based instead of Python full-document literal.
+  3. Backend has dedicated compute submodules for reusable orchestration pieces.
+  4. Dynamic pipeline supports independent FE/BE startup and cross-server communication.
+  5. Compatibility mode (`serve`) remains available.
 
 ## 2026-03-03/04 (v3 planning reset + test suite restructuring)
 
