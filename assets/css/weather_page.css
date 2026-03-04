@@ -164,12 +164,16 @@
       overflow: hidden;
       --rain-header-row1-h: 32px;
     }
+    .rain-split-wrap.mobile-only {
+      display: none;
+    }
     .rain-left-wrap {
       flex: 0 0 auto;
       border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --rain-query-w: 220px;
+      --rain-week-w: 110px;
     }
     .rain-right-wrap {
       flex: 1 1 auto;
@@ -183,8 +187,14 @@
     .rain-left-table col.col-query {
       width: var(--rain-query-w);
     }
+    .rain-left-table col.col-week {
+      width: var(--rain-week-w);
+    }
     .rain-right-table col.col-day {
       width: 66px;
+    }
+    .rain-right-table col.col-week-right {
+      width: 100px;
     }
     .rain-left-table thead tr:first-child th,
     .rain-right-table thead tr:first-child th {
@@ -277,10 +287,20 @@
     body.mobile-simple .snowfall-split-wrap.mobile-only {
       display: flex;
     }
+    body.mobile-simple .rain-split-wrap.mobile-only {
+      display: flex;
+    }
     body.mobile-simple .snowfall-left-table th,
     body.mobile-simple .snowfall-left-table td,
     body.mobile-simple .snowfall-right-table th,
     body.mobile-simple .snowfall-right-table td {
+      height: 30px;
+      box-sizing: border-box;
+    }
+    body.mobile-simple .rain-left-table th,
+    body.mobile-simple .rain-left-table td,
+    body.mobile-simple .rain-right-table th,
+    body.mobile-simple .rain-right-table td {
       height: 30px;
       box-sizing: border-box;
     }

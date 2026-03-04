@@ -4,9 +4,11 @@ from __future__ import annotations
 import html
 from typing import Dict, List
 
+from src.web.rainfall_desktop_renderer import render_rainfall_desktop_layout
+from src.web.rainfall_mobile_renderer import render_rainfall_mobile_layout
 from src.web.snowfall_desktop_renderer import render_snowfall_desktop_layout
 from src.web.snowfall_mobile_renderer import render_snowfall_mobile_layout
-from src.web.weather_table_styles import rain_color, temp_color, to_float
+from src.web.weather_table_styles import temp_color, to_float
 
 
 def render_rain_table(data: List[Dict[str, str]]) -> str:
@@ -14,53 +16,15 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
         return "<section><h2>Rainfall (mm)</h2><p>No data</p></section>"
 
     headers = [h for h in data[0].keys() if h != "matched_name"]
+    weekly_headers = [h for h in headers if h.startswith("week")]
     daily_headers = [h for h in headers if h.startswith("day_")]
-
-    def short_label(name: str) -> str:
-        if name.startswith("day_") and name.endswith("_rain_mm"):
-            idx = name[len("day_"):].split("_", 1)[0]
-            if idx == "1":
-                return "today"
-            return f"day {idx}"
-        return name
-
-    left_rows: List[List[str]] = []
-    right_rows: List[List[str]] = []
-    for r in data:
-        left_rows.append([f"<td class='query-col'>{html.escape(r.get('query', ''))}</td>"])
-        rcells = []
-        for h in daily_headers:
-            val = r.get(h, "")
-            style = ""
-            if h.endswith("_rain_mm"):
-                style = rain_color(to_float(val))
-            rcells.append(f"<td style='{style}'>{html.escape(val)}</td>")
-        right_rows.append(rcells)
-
-    left_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in left_rows)
-    right_tbody = "".join(f"<tr>{''.join(row)}</tr>" for row in right_rows)
-    right_header = "<tr>" + "".join(f"<th>{html.escape(short_label(h))}</th>" for h in daily_headers) + "</tr>"
+    desktop_layout = render_rainfall_desktop_layout(data, weekly_headers, daily_headers)
+    mobile_layout = render_rainfall_mobile_layout(data, weekly_headers, daily_headers)
     return f"""
     <section>
       <h2>Rainfall (mm)</h2>
-      <div class="rain-split-wrap">
-        <div class="rain-left-wrap" id="rain-left-wrap">
-          <table class="rain-left-table">
-            <colgroup><col class="col-query"></colgroup>
-            <thead><tr><th class='query-col'>Resort</th></tr></thead>
-            <tbody>{left_tbody}</tbody>
-          </table>
-        </div>
-        <div class="rain-right-wrap" id="rain-right-wrap">
-          <table class="rain-right-table">
-            <colgroup>
-              {"".join("<col class='col-day'>" for _ in daily_headers)}
-            </colgroup>
-            <thead>{right_header}</thead>
-            <tbody>{right_tbody}</tbody>
-          </table>
-        </div>
-      </div>
+      {desktop_layout}
+      {mobile_layout}
     </section>
     """
 

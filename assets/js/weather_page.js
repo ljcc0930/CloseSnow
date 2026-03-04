@@ -20,7 +20,13 @@ const rainLeftWrap = document.getElementById("rain-left-wrap");
 const rainRightWrap = document.getElementById("rain-right-wrap");
 const rainLeftTable = rainLeftWrap ? rainLeftWrap.querySelector(".rain-left-table") : null;
 const rainRightTable = rainRightWrap ? rainRightWrap.querySelector(".rain-right-table") : null;
-const rainSplitWrap = rainLeftWrap ? rainLeftWrap.closest(".rain-split-wrap") : null;
+const rainDesktopSplitWrap = rainLeftWrap ? rainLeftWrap.closest(".rain-split-wrap") : null;
+
+const rainLeftWrapMobile = document.getElementById("rain-left-wrap-mobile");
+const rainRightWrapMobile = document.getElementById("rain-right-wrap-mobile");
+const rainLeftTableMobile = rainLeftWrapMobile ? rainLeftWrapMobile.querySelector(".rain-left-table") : null;
+const rainRightTableMobile = rainRightWrapMobile ? rainRightWrapMobile.querySelector(".rain-right-table") : null;
+const rainMobileSplitWrap = rainLeftWrapMobile ? rainLeftWrapMobile.closest(".rain-split-wrap") : null;
 
 const reportDateEl = document.getElementById("report-date");
 if (reportDateEl) {
@@ -78,6 +84,24 @@ const setFixedSnowMobileHeights = () => {
 
   if (snowfallMobileSplitWrap) {
     snowfallMobileSplitWrap.style.setProperty("--snow-header-row1-h", `${headRowHeights[0]}px`);
+  }
+};
+
+const setFixedRainMobileHeights = () => {
+  if (!rainLeftTableMobile || !rainRightTableMobile) return;
+  const leftHeadRows = Array.from(rainLeftTableMobile.tHead?.rows || []);
+  const rightHeadRows = Array.from(rainRightTableMobile.tHead?.rows || []);
+  const leftBodyRows = Array.from(rainLeftTableMobile.tBodies[0]?.rows || []);
+  const rightBodyRows = Array.from(rainRightTableMobile.tBodies[0]?.rows || []);
+
+  const headRowHeights = [30, 30];
+  leftHeadRows.forEach((row, idx) => { row.style.height = `${headRowHeights[idx] || 30}px`; });
+  rightHeadRows.forEach((row, idx) => { row.style.height = `${headRowHeights[idx] || 30}px`; });
+  leftBodyRows.forEach((row) => { row.style.height = "30px"; });
+  rightBodyRows.forEach((row) => { row.style.height = "30px"; });
+
+  if (rainMobileSplitWrap) {
+    rainMobileSplitWrap.style.setProperty("--rain-header-row1-h", `${headRowHeights[0]}px`);
   }
 };
 
@@ -234,23 +258,40 @@ const autoSizeSnowMobileRightColumns = () => {
   rightTableMobile.style.width = `${minTotal}px`;
 };
 
-const autoSizeRainQuery = () => {
+const autoSizeRainDesktopLeftColumns = () => {
   if (!rainLeftWrap || !rainLeftTable) return;
   const rows = Array.from(rainLeftTable.querySelectorAll("tbody tr"));
-  const sampleCell = rainLeftTable.querySelector("tbody td") || rainLeftTable.querySelector("thead th");
+  const headerCells = Array.from(rainLeftTable.querySelectorAll("thead tr:last-child th"));
+  if (headerCells.length < 2) return;
+  const sampleCell = rainLeftTable.querySelector("tbody td") || headerCells[0];
   if (!sampleCell) return;
   const font = window.getComputedStyle(sampleCell).font;
+
   const queryHeader = rainLeftTable.querySelector("thead .query-col")?.textContent?.trim() || "query";
-  const values = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
-  const maxW = Math.max(
+  const queryValues = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
+  const queryMax = Math.max(
     measureTextWidth(queryHeader, font),
-    ...values.map((v) => measureTextWidth(v, font))
+    ...queryValues.map((v) => measureTextWidth(v, font))
   );
-  const queryW = Math.max(150, Math.min(240, Math.ceil(maxW + 28)));
+
+  const weekHeaders = headerCells.map((th) => th.textContent?.trim() || "");
+  const weekValues = rows.flatMap((tr) =>
+    Array.from(tr.children)
+      .slice(1)
+      .map((td) => td.textContent?.trim() || "")
+  );
+  const weekMax = Math.max(
+    ...weekHeaders.map((v) => measureTextWidth(v, font)),
+    ...weekValues.map((v) => measureTextWidth(v, font))
+  );
+
+  const queryW = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
+  const weekW = Math.max(90, Math.min(130, Math.ceil(weekMax + 24)));
   rainLeftWrap.style.setProperty("--rain-query-w", `${queryW}px`);
+  rainLeftWrap.style.setProperty("--rain-week-w", `${weekW}px`);
 };
 
-const autoSizeRainColumns = () => {
+const autoSizeRainDesktopDayColumns = () => {
   if (!rainRightWrap || !rainRightTable) return;
   const cols = Array.from(rainRightTable.querySelectorAll("col.col-day"));
   const count = cols.length;
@@ -270,6 +311,52 @@ const autoSizeRainColumns = () => {
   }
   cols.forEach((col) => { col.style.width = `${minW}px`; });
   rainRightTable.style.width = `${minTotal}px`;
+};
+
+const autoSizeRainMobileQuery = () => {
+  if (!rainLeftWrapMobile || !rainLeftTableMobile) return;
+  const rows = Array.from(rainLeftTableMobile.querySelectorAll("tbody tr"));
+  const header = rainLeftTableMobile.querySelector("thead .query-col");
+  const sampleCell = rainLeftTableMobile.querySelector("tbody td") || header;
+  if (!sampleCell || !header) return;
+  const font = window.getComputedStyle(sampleCell).font;
+
+  const queryValues = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
+  const queryHeader = header.textContent?.trim() || "Resort";
+  const queryMax = Math.max(
+    measureTextWidth(queryHeader, font),
+    ...queryValues.map((v) => measureTextWidth(v, font))
+  );
+  const queryWidth = Math.max(130, Math.min(210, Math.ceil(queryMax + 22)));
+  rainLeftWrapMobile.style.setProperty("--rain-query-w", `${queryWidth}px`);
+};
+
+const autoSizeRainMobileRightColumns = () => {
+  if (!rainRightWrapMobile || !rainRightTableMobile) return;
+  const weekCols = Array.from(rainRightTableMobile.querySelectorAll("col.col-week-right"));
+  const dayCols = Array.from(rainRightTableMobile.querySelectorAll("col.col-day"));
+  const totalCols = weekCols.length + dayCols.length;
+  if (!totalCols) return;
+
+  const minWeekWidth = 92;
+  const minDayWidth = 62;
+  const minTotal = (minWeekWidth * weekCols.length) + (minDayWidth * dayCols.length);
+  const wrapW = rainRightWrapMobile.clientWidth;
+
+  if (wrapW >= minTotal) {
+    const base = Math.floor(wrapW / totalCols);
+    const rem = wrapW - (base * totalCols);
+    [...weekCols, ...dayCols].forEach((col, idx) => {
+      const w = base + (idx < rem ? 1 : 0);
+      col.style.width = `${w}px`;
+    });
+    rainRightTableMobile.style.width = `${wrapW}px`;
+    return;
+  }
+
+  weekCols.forEach((col) => { col.style.width = `${minWeekWidth}px`; });
+  dayCols.forEach((col) => { col.style.width = `${minDayWidth}px`; });
+  rainRightTableMobile.style.width = `${minTotal}px`;
 };
 
 const autoSizeTempQuery = () => {
@@ -313,6 +400,7 @@ const autoSizeTempColumns = () => {
 attachVerticalSync(leftWrap, rightWrap);
 attachVerticalSync(leftWrapMobile, rightWrapMobile);
 attachVerticalSync(rainLeftWrap, rainRightWrap);
+attachVerticalSync(rainLeftWrapMobile, rainRightWrapMobile);
 attachVerticalSync(tempLeftWrap, tempRightWrap);
 
 let tempLayoutRaf = 0;
@@ -332,15 +420,20 @@ const applyLayout = () => {
     autoSizeSnowMobileQuery();
     autoSizeSnowMobileRightColumns();
     setFixedSnowMobileHeights();
+    autoSizeRainMobileQuery();
+    autoSizeRainMobileRightColumns();
+    setFixedRainMobileHeights();
+    syncStickySecondRowTop(rainLeftTableMobile, rainRightTableMobile, rainMobileSplitWrap, "--rain-header-row1-h");
   } else {
     autoSizeSnowDesktopLeftColumns();
     autoSizeSnowDesktopDayColumns();
     syncTableRowHeights(leftTable, rightTable);
     syncStickySecondRowTop(leftTable, rightTable, snowfallDesktopSplitWrap, "--snow-header-row1-h");
+    autoSizeRainDesktopLeftColumns();
+    autoSizeRainDesktopDayColumns();
+    syncTableRowHeights(rainLeftTable, rainRightTable);
+    syncStickySecondRowTop(rainLeftTable, rainRightTable, rainDesktopSplitWrap, "--rain-header-row1-h");
   }
-  autoSizeRainQuery();
-  autoSizeRainColumns();
-  syncStickySecondRowTop(rainLeftTable, rainRightTable, rainSplitWrap, "--rain-header-row1-h");
   scheduleTempLayout();
 };
 
@@ -357,6 +450,8 @@ if (window.ResizeObserver) {
   if (rightWrapMobile) ro.observe(rightWrapMobile);
   if (rainLeftWrap) ro.observe(rainLeftWrap);
   if (rainRightWrap) ro.observe(rainRightWrap);
+  if (rainLeftWrapMobile) ro.observe(rainLeftWrapMobile);
+  if (rainRightWrapMobile) ro.observe(rainRightWrapMobile);
   if (tempLeftWrap) ro.observe(tempLeftWrap);
   if (tempRightWrap) ro.observe(tempRightWrap);
 }

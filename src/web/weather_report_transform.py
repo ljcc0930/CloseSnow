@@ -27,7 +27,11 @@ def reports_to_snow_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
 def reports_to_rain_rows(reports: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {"query": str(report.get("query", ""))}
+        row: Dict[str, str] = {
+            "query": str(report.get("query", "")),
+            "week1_total_rain_mm": f"{float(report.get('week1_total_rain_mm', 0.0)):.1f}",
+            "week2_total_rain_mm": f"{float(report.get('week2_total_rain_mm', 0.0)):.1f}",
+        }
         daily = report.get("daily", [])
         for day_idx in range(DISPLAY_DAYS):
             value = daily[day_idx].get("rain_mm") if day_idx < len(daily) else None
