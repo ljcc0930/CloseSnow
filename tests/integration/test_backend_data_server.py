@@ -206,6 +206,59 @@ def test_backend_data_server_data_include_all(monkeypatch, valid_payload):
         thread.join(timeout=3)
 
 
+def test_backend_data_server_data_include_default(monkeypatch, valid_payload):
+    captured = {}
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return valid_payload
+
+    monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr(
+        "src.backend.weather_data_server.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "name": "Snowbird",
+                "state": "UT",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+                "default_enabled": True,
+            },
+            {
+                "resort_id": "mt-brighton-mi",
+                "query": "Mt Brighton, MI",
+                "name": "Mt Brighton",
+                "state": "MI",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["epic"],
+                "default_enabled": False,
+            },
+        ],
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        payload = json.loads(urllib.request.urlopen(f"{base}/api/data?include_default=1", timeout=3).read().decode("utf-8"))
+        assert captured["resorts"] == ["Snowbird, UT"]
+        assert captured["resorts_file"] == ""
+        assert payload["applied_filters"]["include_default"] is True
+        assert payload["applied_filters"]["include_all"] is False
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
 def test_backend_data_server_hourly_endpoint(monkeypatch):
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", lambda **kwargs: {"reports": []})
 
