@@ -13,7 +13,11 @@ from src.web.weather_report_transform import (
 
 def render_payload_html(payload: Dict[str, Any]) -> str:
     reports = payload.get("reports", [])
-    snow_rows = reports_to_snow_rows(reports)
-    rain_rows = reports_to_rain_rows(reports)
-    temp_rows = reports_to_temp_rows(reports)
+    forecast_days = payload.get("forecast_days")
+    display_days = 14
+    if isinstance(forecast_days, int) and forecast_days > 0:
+        display_days = max(0, forecast_days - 1)
+    snow_rows = reports_to_snow_rows(reports, display_days=display_days)
+    rain_rows = reports_to_rain_rows(reports, display_days=display_days)
+    temp_rows = reports_to_temp_rows(reports, display_days=display_days)
     return build_html(snow_rows, rain_rows, temp_rows)

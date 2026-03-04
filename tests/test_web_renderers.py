@@ -121,13 +121,29 @@ def test_build_html_contains_meta_sections():
 
 
 def test_render_payload_html_wires_transform_and_builder(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", lambda reports: ["snow"])
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", lambda reports: ["rain"])
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", lambda reports: ["temp"])
+    calls = {}
+
+    def fake_snow(reports, display_days=14):  # noqa: ANN001
+        calls["snow_days"] = display_days
+        return ["snow"]
+
+    def fake_rain(reports, display_days=14):  # noqa: ANN001
+        calls["rain_days"] = display_days
+        return ["rain"]
+
+    def fake_temp(reports, display_days=14):  # noqa: ANN001
+        calls["temp_days"] = display_days
+        return ["temp"]
+
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", fake_snow)
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", fake_rain)
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", fake_temp)
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
         lambda snow, rain, temp: f"html:{snow}:{rain}:{temp}",
     )
-    out = render_payload_html({"reports": [{"query": "A"}]})
+    out = render_payload_html({"reports": [{"query": "A"}], "forecast_days": 16})
     assert out == "html:['snow']:['rain']:['temp']"
-
+    assert calls["snow_days"] == 15
+    assert calls["rain_days"] == 15
+    assert calls["temp_days"] == 15

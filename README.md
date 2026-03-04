@@ -48,6 +48,8 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       │   ├── static_json_source.py
 │       │   ├── api_source.py
 │       │   └── source_selector.py
+│       ├── pipelines
+│       │   └── static_site.py
 │       ├── desktop
 │       │   ├── snowfall_renderer.py
 │       │   ├── rainfall_renderer.py
@@ -214,6 +216,7 @@ If you do not want to use the unified CLI, you can run modules directly.
 - Backend produces a single payload contract (`weather_payload_v1`).
 - Communication layer validates and loads payload from file or API (`src/web/data_sources`).
 - Frontend renderer consumes contract payload only (`render_payload_html` path shared by static/dynamic).
+- Static site assembly (`write_payload_json` / `render_html`) is in web layer (`src/web/pipelines/static_site.py`), not backend.
 
 ## Frontend Rendering Structure
 

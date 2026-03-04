@@ -136,13 +136,16 @@ src/
       static_json_source.py
       api_source.py
       source_selector.py
+    pipelines/
+      static_site.py
 ```
 
 Notes:
 
 1. Existing compatibility entrypoints still work.
 2. New modules are now source of truth for contract-oriented flow.
-3. Migration preserved behavior while switching internal boundaries.
+3. Backend `static_pipeline` handles payload fetch only; HTML/JSON static assembly is in `web/pipelines/static_site.py`.
+4. Migration preserved behavior while switching internal boundaries.
 
 ---
 

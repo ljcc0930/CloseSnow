@@ -15,7 +15,8 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.backend.constants import DEFAULT_RESORTS_FILE
-from src.backend.pipelines.static_pipeline import fetch_static_payload, render_html
+from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.web.pipelines import render_html
 
 
 def parse_args() -> argparse.Namespace:

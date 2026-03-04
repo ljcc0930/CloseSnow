@@ -11,9 +11,10 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.backend.constants import DEFAULT_RESORTS_FILE
-from src.backend.pipelines.static_pipeline import fetch_static_payload, render_html, write_payload_json
 from src.web.data_sources import load_static_payload
+from src.web.pipelines import render_html, write_payload_json
 from src.web.weather_page_server import make_handler
+from src.backend.pipelines.static_pipeline import fetch_static_payload
 
 
 def _add_fetch_options(p: argparse.ArgumentParser) -> None:
