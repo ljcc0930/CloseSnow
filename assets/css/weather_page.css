@@ -42,6 +42,37 @@
       font-weight: 500;
       color: #64748b;
     }
+    .resort-search {
+      margin: 10px 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .resort-search label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .resort-search input {
+      min-width: 260px;
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 13px;
+      color: #1f2937;
+    }
+    .resort-search button {
+      border: 1px solid #94a3b8;
+      background: #f8fafc;
+      color: #1f2937;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
     .report-powered a {
       color: #0f766e;
       text-decoration: none;

@@ -19,6 +19,29 @@ def _serve_once(handler_cls):
 
 def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", lambda **kwargs: valid_payload)
+    monkeypatch.setattr(
+        "src.backend.weather_data_server.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "name": "Snowbird",
+                "state": "UT",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+            },
+            {
+                "resort_id": "mt-brighton-mi",
+                "query": "Mt Brighton, MI",
+                "name": "Mt Brighton",
+                "state": "MI",
+                "country": "US",
+                "region": "east",
+                "pass_types": ["epic"],
+            },
+        ],
+    )
     handler = make_handler(
         cache_file=".cache/x.json",
         geocode_cache_hours=720,
@@ -29,9 +52,12 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
     try:
         payload = json.loads(urllib.request.urlopen(f"{base}/api/data", timeout=3).read().decode("utf-8"))
         health = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=3).read().decode("utf-8"))
+        resorts = json.loads(urllib.request.urlopen(f"{base}/api/resorts?search=ikon", timeout=3).read().decode("utf-8"))
         assert payload["schema_version"] == valid_payload["schema_version"]
         assert health["ok"] is True
         assert health["service"] == "closesnow-backend-data"
+        assert resorts["count"] == 1
+        assert resorts["items"][0]["resort_id"] == "snowbird-ut"
     finally:
         server.shutdown()
         server.server_close()

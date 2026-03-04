@@ -37,6 +37,15 @@ def test_read_resorts_ignores_comments_and_blanks(tmp_path):
     assert pipeline.read_resorts(str(p)) == ["Snowbird, UT", "Snowbasin, UT"]
 
 
+def test_read_resorts_from_yml_catalog(tmp_path):
+    p = tmp_path / "resorts.yml"
+    p.write_text(
+        '[{"resort_id":"snowbird-ut","query":"Snowbird, UT"},{"resort_id":"solitude-ut","query":"Solitude, UT"}]',
+        encoding="utf-8",
+    )
+    assert pipeline.read_resorts(str(p)) == ["Snowbird, UT", "Solitude, UT"]
+
+
 def test_seed_coordinate_cache_from_unified(tmp_path):
     cache = _DummyCoordCache("x")
     payload = {

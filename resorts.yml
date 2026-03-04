@@ -1,0 +1,164 @@
+[
+  {
+    "resort_id": "steamboat-co",
+    "query": "Steamboat, CO",
+    "name": "Steamboat",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "winter-park-co",
+    "query": "Winter Park, CO",
+    "name": "Winter Park",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "arapahoe-basin-co",
+    "query": "Arapahoe Basin, CO",
+    "name": "Arapahoe Basin",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "copper-mountain-co",
+    "query": "Copper Mountain, CO",
+    "name": "Copper Mountain",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "aspen-snowmass-co",
+    "query": "Aspen Snowmass, CO",
+    "name": "Aspen Snowmass",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "snowbasin-ut",
+    "query": "Snowbasin, UT",
+    "name": "Snowbasin",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "snowbird-ut",
+    "query": "Snowbird, UT",
+    "name": "Snowbird",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "solitude-ut",
+    "query": "Solitude, UT",
+    "name": "Solitude",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "brighton-ut",
+    "query": "Brighton, UT",
+    "name": "Brighton",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "jackson-hole-wy",
+    "query": "Jackson Hole, WY",
+    "name": "Jackson Hole",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "big-sky-mt",
+    "query": "Big Sky, MT",
+    "name": "Big Sky",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "palisades-tahoe-ca",
+    "query": "Palisades Tahoe, CA",
+    "name": "Palisades Tahoe",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "mammoth-mountain-ca",
+    "query": "Mammoth Mountain, CA",
+    "name": "Mammoth Mountain",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "killington-vt",
+    "query": "Killington, VT",
+    "name": "Killington",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "sugarbush-vt",
+    "query": "Sugarbush, VT",
+    "name": "Sugarbush",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "stratton-vt",
+    "query": "Stratton, VT",
+    "name": "Stratton",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": ["ikon"]
+  },
+  {
+    "resort_id": "mt-brighton-mi",
+    "query": "Mt Brighton, MI",
+    "name": "Mt Brighton",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": ["epic"]
+  },
+  {
+    "resort_id": "boyne-mountain-mi",
+    "query": "Boyne Mountain, MI",
+    "name": "Boyne Mountain",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": ["ikon", "indy"]
+  }
+]

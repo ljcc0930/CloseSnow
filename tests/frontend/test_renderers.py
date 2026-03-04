@@ -185,6 +185,7 @@ def test_build_html_contains_meta_sections():
     assert "https://open-meteo.com/en/docs/ecmwf-api" in html
     assert "Feature requests" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
+    assert 'id="resort-search-input"' in html
     assert 'data-generated-utc="' in html
     assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
 

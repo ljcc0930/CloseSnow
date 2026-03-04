@@ -35,6 +35,8 @@ const rainRightTableMobile = rainRightWrapMobile ? rainRightWrapMobile.querySele
 const rainMobileSplitWrap = rainLeftWrapMobile ? rainLeftWrapMobile.closest(".rain-split-wrap") : null;
 
 const reportDateEl = document.getElementById("report-date");
+const resortSearchInput = document.getElementById("resort-search-input");
+const resortSearchClear = document.getElementById("resort-search-clear");
 if (reportDateEl) {
   const utcRaw = reportDateEl.getAttribute("data-generated-utc");
   const utcDate = utcRaw ? new Date(utcRaw) : null;
@@ -441,6 +443,40 @@ const autoSizeSunColumns = () => {
   sunRightTable.style.width = `${minTotal}px`;
 };
 
+const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
+
+const filterPairedTables = (left, right, keyword) => {
+  if (!left || !right) return;
+  const leftRows = Array.from(left.tBodies[0]?.rows || []);
+  const rightRows = Array.from(right.tBodies[0]?.rows || []);
+  leftRows.forEach((row, idx) => {
+    const query = _normalizeSearch(row.cells[0]?.textContent);
+    const visible = !keyword || query.includes(keyword);
+    row.style.display = visible ? "" : "none";
+    if (rightRows[idx]) rightRows[idx].style.display = visible ? "" : "none";
+  });
+};
+
+const filterPlainWeatherTable = (keyword) => {
+  const rows = Array.from(document.querySelectorAll(".weather-code-table tbody tr"));
+  rows.forEach((row) => {
+    const query = _normalizeSearch(row.cells[0]?.textContent);
+    row.style.display = !keyword || query.includes(keyword) ? "" : "none";
+  });
+};
+
+const applyResortSearchFilter = () => {
+  const keyword = _normalizeSearch(resortSearchInput?.value || "");
+  filterPairedTables(leftTable, rightTable, keyword);
+  filterPairedTables(leftTableMobile, rightTableMobile, keyword);
+  filterPairedTables(rainLeftTable, rainRightTable, keyword);
+  filterPairedTables(rainLeftTableMobile, rainRightTableMobile, keyword);
+  filterPairedTables(tempLeftTable, tempRightTable, keyword);
+  filterPairedTables(sunLeftTable, sunRightTable, keyword);
+  filterPlainWeatherTable(keyword);
+  applyLayout();
+};
+
 attachVerticalSync(leftWrap, rightWrap);
 attachVerticalSync(leftWrapMobile, rightWrapMobile);
 attachVerticalSync(rainLeftWrap, rainRightWrap);
@@ -588,6 +624,16 @@ unitToggles.forEach((group) => {
 });
 
 applyLayout();
+if (resortSearchInput) {
+  resortSearchInput.addEventListener("input", applyResortSearchFilter);
+}
+if (resortSearchClear && resortSearchInput) {
+  resortSearchClear.addEventListener("click", () => {
+    resortSearchInput.value = "";
+    applyResortSearchFilter();
+    resortSearchInput.focus();
+  });
+}
 requestAnimationFrame(() => {
   document.body.classList.remove("units-pending");
 });

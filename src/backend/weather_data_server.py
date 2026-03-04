@@ -14,6 +14,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.backend.pipelines.live_pipeline import run_live_payload
+from src.backend.resort_catalog import load_resort_catalog, search_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
@@ -61,6 +62,24 @@ def make_handler(
                         "ok": True,
                         "service": "closesnow-backend-data",
                         "time_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+                    },
+                )
+                return
+            if parsed.path == "/api/resorts":
+                search_text = (qs.get("search", [""])[0] or "").strip()
+                try:
+                    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+                except Exception as exc:
+                    self._write_json(500, {"error": f"Failed to load resort catalog: {exc}"})
+                    return
+                items = search_resort_catalog(catalog, search_text)
+                self._write_json(
+                    200,
+                    {
+                        "source_file": DEFAULT_RESORTS_FILE,
+                        "search": search_text,
+                        "count": len(items),
+                        "items": items,
                     },
                 )
                 return

@@ -9,14 +9,14 @@ from src.backend.compute import build_payload_metadata, run_pipeline_async as _r
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import seed_coordinate_cache_from_unified
+from src.backend.resort_catalog import read_resort_queries
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
 
 
 def read_resorts(path: str) -> List[str]:
-    with open(path, "r", encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip() and not line.lstrip().startswith("#")]
+    return read_resort_queries(path)
 
 
 def compute_pipeline_payload(

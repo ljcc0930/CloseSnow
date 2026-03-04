@@ -539,3 +539,50 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Start F5: migrate resort source to YAML metadata and add searchable/structured resort attributes.
+
+## 2026-03-04 04:57 (local)
+
+### Scope
+- Implement F5 resort catalog migration to YAML metadata, add searchable catalog API, and add frontend resort search UI.
+
+### Changes
+- Files:
+  - `resorts.yml` (new)
+  - `src/shared/config.py`
+  - `src/backend/resort_catalog.py` (new)
+  - `src/backend/pipeline.py`
+  - `src/backend/weather_data_server.py`
+  - `src/web/templates/weather_page.html`
+  - `assets/css/weather_page.css`
+  - `assets/js/weather_page.js`
+  - `tests/backend/test_resort_catalog.py` (new)
+  - `tests/backend/test_pipeline.py`
+  - `tests/integration/test_backend_data_server.py`
+  - `tests/frontend/test_renderers.py`
+- Behavior impact:
+  - Default resort source is now `resorts.yml` (JSON-compatible YAML list with structured attributes).
+  - Resort loading supports both `.yml/.yaml` catalog and legacy `.txt` list.
+  - Backend adds `/api/resorts?search=...` for catalog search across name/query/state/region/pass type.
+  - Frontend adds a `Search Resorts` box that filters visible rows across snow/rain/weather/sun/temp sections.
+
+### Validation
+- Commands:
+  - `pytest -q tests/backend/test_resort_catalog.py tests/backend/test_pipeline.py tests/integration/test_backend_data_server.py tests/frontend/test_renderers.py`
+  - `pytest -q`
+  - `python3 -m src.cli fetch --output-json /tmp/closesnow_f5_data.json`
+  - `jq '{resorts_count, sample_query:.reports[0].query}' /tmp/closesnow_f5_data.json`
+  - `python3 - <<'PY'\nfrom src.backend.resort_catalog import load_resort_catalog, search_resort_catalog\nitems = load_resort_catalog('resorts.yml')\nprint('count', len(items))\nprint('epic', [x['query'] for x in search_resort_catalog(items, 'epic')])\nPY`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "resort-search-input|Search Resorts" index.html`
+- Results:
+  - Targeted tests passed (`20 passed`).
+  - Full suite passed (`120 passed`).
+  - Default fetch uses YAML catalog with `resorts_count: 18`.
+  - Catalog search returns expected match for `epic`.
+  - Static HTML includes resort search controls.
+
+### Risks / Notes
+- `resorts.yml` is currently stored as JSON-compatible YAML for zero-dependency parsing.
+
+### Next Slice
+- Implement F4: filter modal with pass type / east-west / country backed by catalog metadata.
