@@ -633,6 +633,9 @@
     .sun-right-table td {
       background-clip: padding-box;
     }
+    .sun-right-table td {
+      text-align: center;
+    }
     body.mobile-simple .desktop-only {
       display: none;
     }

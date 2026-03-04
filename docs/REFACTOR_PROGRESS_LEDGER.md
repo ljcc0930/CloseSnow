@@ -964,3 +964,26 @@ Copy this template for each new work session:
 
 ### Next Slice
 - If needed, add focus trapping and focus-return behavior for fully keyboard-friendly modal navigation.
+
+## 2026-03-04 06:44 (local)
+
+### Scope
+- Center-align sunrise/sunset time values in the Sun table for better readability.
+
+### Changes
+- Files:
+  - `assets/css/weather_page.css`
+- Behavior impact:
+  - Time cells under sunrise/sunset now render centered (`.sun-right-table td { text-align: center; }`).
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py`
+- Results:
+  - Frontend targeted suites passed (`15 passed`).
+
+### Risks / Notes
+- None.
+
+### Next Slice
+- Optional visual polish: apply explicit tabular-nums styling for time columns.
