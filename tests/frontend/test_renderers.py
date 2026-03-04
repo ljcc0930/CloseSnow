@@ -35,6 +35,7 @@ def _snow_row():
         "filter_pass_types": "ikon",
         "filter_region": "west",
         "filter_country": "US",
+        "filter_state": "UT",
         "resort_id": "snowbird-ut",
     }
 
@@ -178,6 +179,7 @@ def test_table_renderer_sections_and_empty_states():
     assert "🌧️" in weather
     assert "❓" in weather
     assert "data-pass-types='ikon'" in snow
+    assert "data-state='UT'" in snow
     assert "href='resort/snowbird-ut'" in snow
     assert "cm" in snow and "in" in snow
     assert "mm" in rain and "in" in rain
@@ -204,6 +206,7 @@ def test_build_html_contains_meta_sections():
     assert 'id="resort-search-input"' in html
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
+    assert 'id="filter-sort-select"' in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html

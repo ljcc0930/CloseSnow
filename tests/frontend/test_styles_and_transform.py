@@ -49,6 +49,7 @@ def test_report_transforms():
             "matched_name": "Snowbird",
             "country": "US",
             "region": "west",
+            "admin1": "UT",
             "pass_types": ["ikon", "indy"],
             "resort_id": "snowbird-ut",
             "week1_total_snowfall_cm": 12.34,
@@ -83,6 +84,7 @@ def test_report_transforms():
     assert snow_rows[0]["filter_pass_types"] == "ikon,indy"
     assert snow_rows[0]["filter_region"] == "west"
     assert snow_rows[0]["filter_country"] == "US"
+    assert snow_rows[0]["filter_state"] == "UT"
     assert snow_rows[0]["resort_id"] == "snowbird-ut"
 
     assert rain_rows[0]["week1_total_rain_mm"] == "2.2"

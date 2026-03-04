@@ -31,7 +31,8 @@ def _filter_attrs(row: Dict[str, str]) -> str:
     pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
     region = html.escape(row.get("filter_region", ""), quote=True)
     country = html.escape(row.get("filter_country", ""), quote=True)
-    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+    state = html.escape(row.get("filter_state", ""), quote=True)
+    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}' data-state='{state}'"
 
 
 def _query_cell_html(row: Dict[str, str]) -> str:

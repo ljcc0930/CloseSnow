@@ -808,3 +808,41 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Continue user-reported UI polish iterations on cross-table scrolling behavior.
+
+## 2026-03-04 05:58 (local)
+
+### Scope
+- Add sorting controls in Filters so resorts can be ordered by state or resort name, while keeping all metric tables in sync.
+
+### Changes
+- Files:
+  - `src/web/templates/weather_page.html`
+  - `assets/js/weather_page.js`
+  - `src/web/weather_report_transform.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `src/web/weather_table_renderer.py`
+  - `tests/frontend/test_renderers.py`
+  - `tests/frontend/test_styles_and_transform.py`
+- Behavior impact:
+  - Filter modal now has `Sort By` options: default, state (A-Z), resort name (A-Z).
+  - Sorting is applied client-side to all paired tables (desktop/mobile where applicable) with row order kept consistent across sections.
+  - `sort_by` is persisted in URL query params and restored on load.
+  - Resort row metadata now includes `data-state` from `admin1` for stable state-based sorting.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_styles_and_transform.py tests/frontend/test_renderers.py tests/frontend/test_assets.py`
+  - `pytest -q tests/integration/test_web_server.py tests/integration/test_gateway_render_integration.py tests/integration/test_cli.py tests/integration/test_entrypoints.py tests/frontend/test_static_site_pipeline.py`
+  - `python3 -m src.cli static --skip-fetch --output-json .cache/static_payload.json --output-html index.html`
+- Results:
+  - Frontend targeted tests passed (`15 passed`).
+  - Integration/entry/static-related suites passed (`32 passed`).
+  - Static render succeeded and includes `filter-sort-select` plus `data-state` row attributes.
+
+### Risks / Notes
+- Sorting is client-side only; backend payload order remains unchanged.
+
+### Next Slice
+- If needed, add descending or multi-key sort options and explicit locale-aware collation controls.

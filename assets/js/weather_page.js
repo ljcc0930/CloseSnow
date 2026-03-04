@@ -51,6 +51,7 @@ const filterCloseBtn = document.getElementById("filter-close-btn");
 const filterSummary = document.getElementById("filter-summary");
 const filterRegionSelect = document.getElementById("filter-region-select");
 const filterCountrySelect = document.getElementById("filter-country-select");
+const filterSortSelect = document.getElementById("filter-sort-select");
 const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
 const filterMetaRaw = window.CLOSESNOW_FILTER_META;
@@ -510,11 +511,128 @@ const autoSizeWeatherColumns = () => {
 
 const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
 const _isTruthyParam = (raw) => ["1", "true", "yes", "on"].includes(_normalizeSearch(raw));
+const VALID_SORT_BY = new Set(["default", "state", "name"]);
+const normalizeSortBy = (raw) => {
+  const normalized = _normalizeSearch(raw);
+  return VALID_SORT_BY.has(normalized) ? normalized : "default";
+};
 
 const _primaryResortRows = () => {
   const pairedRows = Array.from(leftTable?.tBodies?.[0]?.rows || []);
   if (pairedRows.length > 0) return pairedRows;
   return Array.from(weatherLeftTable?.tBodies?.[0]?.rows || []);
+};
+
+const tablePairs = [
+  [leftTable, rightTable],
+  [leftTableMobile, rightTableMobile],
+  [rainLeftTable, rainRightTable],
+  [rainLeftTableMobile, rainRightTableMobile],
+  [tempLeftTable, tempRightTable],
+  [sunLeftTable, sunRightTable],
+  [weatherLeftTable, weatherRightTable],
+];
+
+const _tagDefaultOrderForPair = (left, right) => {
+  if (!left || !right) return;
+  const leftRows = Array.from(left.tBodies[0]?.rows || []);
+  const rightRows = Array.from(right.tBodies[0]?.rows || []);
+  const count = Math.min(leftRows.length, rightRows.length);
+  for (let i = 0; i < count; i += 1) {
+    if (!leftRows[i].dataset.defaultOrder) leftRows[i].dataset.defaultOrder = String(i);
+    if (!rightRows[i].dataset.defaultOrder) rightRows[i].dataset.defaultOrder = String(i);
+  }
+};
+
+const _tagDefaultOrder = () => {
+  tablePairs.forEach(([left, right]) => _tagDefaultOrderForPair(left, right));
+};
+
+const _rowQueryText = (row) => (row?.cells?.[0]?.textContent || "").trim();
+
+const _rowSortName = (row) => {
+  const query = _rowQueryText(row);
+  const parts = query.split(",");
+  const candidate = parts.length > 0 ? parts[0] : query;
+  return _normalizeSearch(candidate);
+};
+
+const _rowSortState = (row) => {
+  const state = _normalizeSearch(row?.dataset?.state || "");
+  if (state) return state;
+  const query = _rowQueryText(row);
+  const parts = query.split(",");
+  if (parts.length < 2) return "";
+  return _normalizeSearch(parts[parts.length - 1]);
+};
+
+const _sortedIndices = (rows) => {
+  const entries = rows.map((row, idx) => {
+    const defaultOrder = Number(row.dataset.defaultOrder);
+    return {
+      idx,
+      defaultOrder: Number.isFinite(defaultOrder) ? defaultOrder : idx,
+      name: _rowSortName(row),
+      state: _rowSortState(row),
+    };
+  });
+
+  const byDefaultOrder = (a, b) => a.defaultOrder - b.defaultOrder;
+  const byNameThenDefault = (a, b) => {
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return byDefaultOrder(a, b);
+  };
+  const byStateThenNameThenDefault = (a, b) => {
+    const aState = a.state || "\uffff";
+    const bState = b.state || "\uffff";
+    const stateCmp = aState.localeCompare(bState);
+    if (stateCmp !== 0) return stateCmp;
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return byDefaultOrder(a, b);
+  };
+
+  const sortBy = normalizeSortBy(filterState.sortBy);
+  if (sortBy === "name") {
+    entries.sort(byNameThenDefault);
+  } else if (sortBy === "state") {
+    entries.sort(byStateThenNameThenDefault);
+  } else {
+    entries.sort(byDefaultOrder);
+  }
+  return entries.map((entry) => entry.idx);
+};
+
+const _applySortToPair = (left, right, orderIndices) => {
+  if (!left || !right) return;
+  const leftBody = left.tBodies[0];
+  const rightBody = right.tBodies[0];
+  if (!leftBody || !rightBody) return;
+  const leftRows = Array.from(leftBody.rows);
+  const rightRows = Array.from(rightBody.rows);
+  const count = Math.min(leftRows.length, rightRows.length);
+  if (count === 0 || orderIndices.length !== count) return;
+
+  const leftFrag = document.createDocumentFragment();
+  const rightFrag = document.createDocumentFragment();
+  let appended = 0;
+  orderIndices.forEach((idx) => {
+    if (idx < 0 || idx >= count) return;
+    leftFrag.appendChild(leftRows[idx]);
+    rightFrag.appendChild(rightRows[idx]);
+    appended += 1;
+  });
+  if (appended !== count) return;
+  leftBody.appendChild(leftFrag);
+  rightBody.appendChild(rightFrag);
+};
+
+const applySortOrder = () => {
+  const primaryRows = _primaryResortRows();
+  if (!primaryRows.length) return;
+  const orderIndices = _sortedIndices(primaryRows);
+  tablePairs.forEach(([left, right]) => _applySortToPair(left, right, orderIndices));
 };
 
 const deriveAvailableFiltersFromRows = () => {
@@ -632,6 +750,7 @@ const filterState = {
   passTypes: new Set(),
   region: "",
   country: "",
+  sortBy: "default",
   includeAll: false,
 };
 
@@ -693,12 +812,14 @@ const syncFilterSummary = () => {
   if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
   if (filterState.region) parts.push(`region: ${filterState.region}`);
   if (filterState.country) parts.push(`country: ${filterState.country}`);
+  if (filterState.sortBy !== "default") parts.push(`sort: ${filterState.sortBy}`);
   if (filterState.includeAll) parts.push("scope: full catalog");
   filterSummary.textContent = parts.length > 0 ? `${parts.join(" | ")} | visible: ${scope}` : `All resorts (${scope})`;
 };
 
 const applyResortSearchFilter = () => {
   const keyword = _normalizeSearch(resortSearchInput?.value || "");
+  applySortOrder();
   filterPairedTables(leftTable, rightTable, keyword);
   filterPairedTables(leftTableMobile, rightTableMobile, keyword);
   filterPairedTables(rainLeftTable, rainRightTable, keyword);
@@ -729,6 +850,7 @@ const applyFilterStateFromControls = () => {
   );
   filterState.region = _normalizeSearch(filterRegionSelect?.value || "");
   filterState.country = (filterCountrySelect?.value || "").trim().toUpperCase();
+  filterState.sortBy = normalizeSortBy(filterSortSelect?.value || "default");
   filterState.includeAll = Boolean(filterIncludeAllInput?.checked);
 };
 
@@ -737,18 +859,22 @@ const applyControlsFromQueryOrMeta = () => {
   const urlPassTypes = parsePassTypeValues(params.getAll("pass_type"));
   const urlRegion = _normalizeSearch(params.get("region") || "");
   const urlCountry = (params.get("country") || "").trim().toUpperCase();
+  const hasUrlSortBy = params.has("sort_by");
+  const urlSortBy = normalizeSortBy(params.get("sort_by") || "");
   const urlSearch = params.get("search");
   const urlIncludeAll = _isTruthyParam(params.get("include_all") || "");
 
   const metaPassTypes = parsePassTypeValues(Array.isArray(filterMetaApplied.pass_type) ? filterMetaApplied.pass_type : []);
   const metaRegion = _normalizeSearch(filterMetaApplied.region || "");
   const metaCountry = String(filterMetaApplied.country || "").trim().toUpperCase();
+  const metaSortBy = normalizeSortBy(filterMetaApplied.sort_by || "");
   const metaSearch = String(filterMetaApplied.search || "");
   const metaIncludeAll = Boolean(filterMetaApplied.include_all);
 
   const passTypes = urlPassTypes.length > 0 ? urlPassTypes : metaPassTypes;
   const region = urlRegion || metaRegion;
   const country = urlCountry || metaCountry;
+  const sortBy = hasUrlSortBy ? urlSortBy : metaSortBy;
   const search = urlSearch !== null ? urlSearch : metaSearch;
   const includeAll = urlIncludeAll || metaIncludeAll;
 
@@ -762,6 +888,9 @@ const applyControlsFromQueryOrMeta = () => {
     const normalizedCountry = country.toUpperCase();
     const hasCountryOption = Array.from(filterCountrySelect.options || []).some((opt) => opt.value === normalizedCountry);
     filterCountrySelect.value = hasCountryOption ? normalizedCountry : "";
+  }
+  if (filterSortSelect) {
+    filterSortSelect.value = sortBy;
   }
   if (filterIncludeAllInput) {
     filterIncludeAllInput.checked = includeAll;
@@ -785,6 +914,7 @@ const buildFilterQueryParams = () => {
     });
   if (filterState.region) params.set("region", filterState.region);
   if (filterState.country) params.set("country", filterState.country);
+  if (filterState.sortBy !== "default") params.set("sort_by", filterState.sortBy);
   if (filterState.includeAll) params.set("include_all", "1");
   const keyword = (resortSearchInput?.value || "").trim();
   if (keyword) params.set("search", keyword);
@@ -808,6 +938,7 @@ const resetFilterControls = () => {
   });
   if (filterRegionSelect) filterRegionSelect.value = "";
   if (filterCountrySelect) filterCountrySelect.value = "";
+  if (filterSortSelect) filterSortSelect.value = "default";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = false;
 };
 
@@ -971,6 +1102,7 @@ unitToggles.forEach((group) => {
 });
 
 initializeFilterControls();
+_tagDefaultOrder();
 applyControlsFromQueryOrMeta();
 if (resortSearchInput) {
   resortSearchInput.addEventListener("input", applyResortSearchFilter);
