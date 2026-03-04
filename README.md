@@ -39,7 +39,9 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       ├── weather_table_renderer.py
 │       ├── weather_table_styles.py
 │       ├── snowfall_desktop_renderer.py
-│       └── snowfall_mobile_renderer.py
+│       ├── snowfall_mobile_renderer.py
+│       ├── rainfall_desktop_renderer.py
+│       └── rainfall_mobile_renderer.py
 ├── assets
 │   ├── css/weather_page.css
 │   └── js/weather_page.js
@@ -127,6 +129,9 @@ If you do not want to use the unified CLI, you can run modules directly.
 - Snowfall table layout is decoupled:
   - Desktop layout: `src/web/snowfall_desktop_renderer.py`
   - Mobile layout: `src/web/snowfall_mobile_renderer.py`
+- Rainfall table layout is decoupled:
+  - Desktop layout: `src/web/rainfall_desktop_renderer.py`
+  - Mobile layout: `src/web/rainfall_mobile_renderer.py`
 - Shared table cell style logic (snow/rain/temp color mapping and numeric parsing):
   - `src/web/weather_table_styles.py`
 - Runtime mode switch remains in browser JS:
