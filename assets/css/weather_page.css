@@ -30,9 +30,25 @@
     }
     .report-date {
       margin: -8px 0 12px;
+    }
+    .report-powered {
       font-size: 13px;
       color: #475569;
       font-weight: 600;
+    }
+    .report-generated {
+      margin-top: 2px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+    }
+    .report-powered a {
+      color: #0f766e;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .report-powered a:hover {
+      text-decoration: underline;
     }
     h2 {
       margin: 24px 0 8px;

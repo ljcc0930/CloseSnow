@@ -36,8 +36,11 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
 <body>
   <main>
     <h1>Ski Resorts Weather Forcast</h1>
-    <div class="report-date" id="report-date" data-generated-utc="{generated_utc_iso}">
-      Generated At: loading...
+    <div class="report-date">
+      <div class="report-powered">
+        Powered by <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo ECMWF IFS 0.25</a>
+      </div>
+      <div id="report-date" class="report-generated" data-generated-utc="{generated_utc_iso}">Generated At: loading...</div>
     </div>
     {snow_table}
     {rain_table}
