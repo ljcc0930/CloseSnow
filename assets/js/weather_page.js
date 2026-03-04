@@ -827,8 +827,7 @@ const syncFilterSummary = () => {
   if (filterState.country) parts.push(`country: ${filterState.country}`);
   if (filterState.sortBy !== "state") parts.push(`sort: ${filterState.sortBy}`);
   if (filterState.includeAll) parts.push("scope: full catalog");
-  filterSummary.textContent =
-    parts.length > 0 ? `${parts.join(" | ")} | visible: ${scope}` : `ljcc preferred resorts (${scope})`;
+  filterSummary.textContent = parts.length > 0 ? `${parts.join(" | ")} | visible: ${scope}` : `Default resorts (${scope})`;
 };
 
 const applyResortSearchFilter = () => {

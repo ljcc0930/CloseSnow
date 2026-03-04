@@ -320,19 +320,6 @@
     .query-col .resort-link:hover {
       text-decoration: underline;
     }
-    .resort-favorite-badge {
-      display: inline-block;
-      margin-left: 6px;
-      padding: 1px 6px;
-      border-radius: 999px;
-      border: 1px solid #fcd34d;
-      background: #fffbeb;
-      color: #92400e;
-      font-size: 10px;
-      line-height: 1.4;
-      font-weight: 700;
-      vertical-align: middle;
-    }
     .desktop-only {
       display: block;
     }

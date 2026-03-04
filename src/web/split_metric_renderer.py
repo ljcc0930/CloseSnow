@@ -67,9 +67,6 @@ def _query_cell_html(row: Dict[str, str]) -> str:
     if resort_id:
         href = f"resort/{quote(resort_id)}"
         query_text = f"<a class='resort-link' href='{href}'>{query_text}</a>"
-    favorite_raw = str(row.get("ljcc_favorite", "")).strip().lower()
-    if favorite_raw in {"1", "true", "yes", "on"}:
-        query_text += " <span class='resort-favorite-badge'>ljcc喜欢</span>"
     return f"<td class='query-col'>{query_text}</td>"
 
 

@@ -188,11 +188,11 @@ def test_table_renderer_sections_and_empty_states():
     assert "data-target-kind=\"snow\"" in snow
     assert "data-target-kind=\"rain\"" in rain
     assert "data-target-kind=\"temp\"" in temp
-    assert "ljcc喜欢" in snow
-    assert "ljcc喜欢" in rain
-    assert "ljcc喜欢" in weather
-    assert "ljcc喜欢" in sun
-    assert "ljcc喜欢" in temp
+    assert "ljcc喜欢" not in snow
+    assert "ljcc喜欢" not in rain
+    assert "ljcc喜欢" not in weather
+    assert "ljcc喜欢" not in sun
+    assert "ljcc喜欢" not in temp
     assert "<h2>Weather</h2>" in weather
     assert "weather-split-wrap" in weather
     assert "<h2>Sunrise / Sunset</h2>" in sun
@@ -244,7 +244,7 @@ def test_build_html_contains_meta_sections():
     assert 'name="filter-pass-type" value="epic"' in html
     assert 'name="filter-pass-type" value="indy"' not in html
     assert "Include all Epic + Ikon resorts (slower)" in html
-    assert "ljcc preferred resorts" in html
+    assert "Default resorts" in html
     assert '<option value="state" selected>State (A-Z)</option>' in html
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
