@@ -16,7 +16,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.backend.pipelines.static_pipeline import fetch_static_payload
-from src.web.pipelines import render_html
+from src.web.pipelines import render_hourly_pages, render_html
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,7 +59,9 @@ def main() -> int:
     )
 
     out = render_html(args.output_html, payload)
+    hourly_pages = render_hourly_pages(args.output_html, payload)
     print(f"Done: {out}")
+    print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0
 
 

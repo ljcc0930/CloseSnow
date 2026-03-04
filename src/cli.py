@@ -13,7 +13,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
 
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
-from src.web.pipelines import render_html, write_payload_json
+from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
 from src.web.weather_page_server import make_handler
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.backend.weather_data_server import make_handler as make_data_handler
@@ -133,7 +133,9 @@ def run_fetch(args: argparse.Namespace) -> int:
 def run_render(args: argparse.Namespace) -> int:
     payload = load_payload(mode="file", source=args.input_json)
     out = render_html(args.output_html, payload)
+    hourly_pages = render_hourly_pages(args.output_html, payload)
     print(f"Done: {out}")
+    print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0
 
 
@@ -148,7 +150,9 @@ def run_static(args: argparse.Namespace) -> int:
         if payload is None:
             payload = load_payload(mode="file", source=args.output_json)
         out = render_html(args.output_html, payload)
+        hourly_pages = render_hourly_pages(args.output_html, payload)
         print(f"Done: {out}")
+        print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0
 
 

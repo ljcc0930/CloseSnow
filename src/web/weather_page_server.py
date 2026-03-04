@@ -42,6 +42,14 @@ _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hour
 )
 
 
+def _render_hourly_page_html(resort_id: str) -> str:
+    return (
+        _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../assets")
+        .replace("{{back_href}}", "../")
+        .replace("{{resort_id}}", resort_id)
+    )
+
+
 def _normalize_known_path(path: str) -> str:
     if path in {"", "/"}:
         return "/"
@@ -227,7 +235,7 @@ def make_handler(
                 if not resort_id:
                     self._write(404, b"Not Found", "text/plain; charset=utf-8")
                     return
-                html = _HOURLY_TEMPLATE.replace("{{resort_id}}", resort_id)
+                html = _render_hourly_page_html(resort_id)
                 self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
                 return
 

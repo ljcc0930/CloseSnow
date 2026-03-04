@@ -81,6 +81,7 @@ def test_run_render(monkeypatch, tmp_path, capsys):
     args = argparse.Namespace(input_json=str(tmp_path / "in.json"), output_html=str(tmp_path / "out.html"))
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "from": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload: Path(path))
+    monkeypatch.setattr("src.cli.render_hourly_pages", lambda path, payload: [])
     rc = cli.run_render(args)
     out = capsys.readouterr().out
     assert rc == 0
@@ -96,6 +97,7 @@ def test_run_static_default(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": [{"query": "a", "daily": []}]})
     monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
     monkeypatch.setattr("src.cli.render_html", lambda path, payload: Path(path))
+    monkeypatch.setattr("src.cli.render_hourly_pages", lambda path, payload: [])
     rc = cli.run_static(args)
     out = capsys.readouterr().out
     assert rc == 0
@@ -109,6 +111,7 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     args.skip_render = False
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload: Path(path))
+    monkeypatch.setattr("src.cli.render_hourly_pages", lambda path, payload: [])
     rc = cli.run_static(args)
     assert rc == 0
 
