@@ -987,3 +987,27 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional visual polish: apply explicit tabular-nums styling for time columns.
+
+## 2026-03-04 06:53 (local)
+
+### Scope
+- Align `Search Resorts` behavior with placeholder text by adding pass-type keyword matching.
+
+### Changes
+- Files:
+  - `assets/js/weather_page.js`
+- Behavior impact:
+  - Search now matches across resort name text, state text, and pass types (`ikon/epic/indy`) from row metadata.
+  - Existing filter conditions (pass/region/country/sort/include_all) remain unchanged.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py`
+- Results:
+  - Frontend targeted suites passed (`15 passed`).
+
+### Risks / Notes
+- Search remains substring-based; short keywords (e.g., `i`) may match broadly as designed.
+
+### Next Slice
+- Optionally support multi-keyword AND search tokenization for stricter matching.

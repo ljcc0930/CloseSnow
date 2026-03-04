@@ -764,9 +764,22 @@ const _rowPassTypeSet = (row) => {
   );
 };
 
-const rowMatchesFilters = (row, keyword) => {
+const _rowSearchText = (row) => {
   const query = _normalizeSearch(row?.cells?.[0]?.textContent || "");
-  if (keyword && !query.includes(keyword)) return false;
+  const passTypes = String(row?.dataset?.passTypes || "")
+    .split(",")
+    .map((v) => _normalizeSearch(v))
+    .filter((v) => v)
+    .join(" ");
+  const state = _normalizeSearch(row?.dataset?.state || "");
+  return `${query} ${state} ${passTypes}`.trim();
+};
+
+const rowMatchesFilters = (row, keyword) => {
+  if (keyword) {
+    const searchable = _rowSearchText(row);
+    if (!searchable.includes(keyword)) return false;
+  }
 
   if (filterState.passTypes.size > 0) {
     const rowPassTypes = _rowPassTypeSet(row);
