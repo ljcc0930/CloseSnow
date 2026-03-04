@@ -438,10 +438,6 @@ const applyLayout = () => {
 };
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
-const UNIT_LABELS = {
-  metric: { snow: "cm", rain: "mm", temp: "°C" },
-  imperial: { snow: "in", rain: "in", temp: "°F" },
-};
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const unitToggles = Array.from(document.querySelectorAll(".unit-toggle[data-target-kind]"));
 
@@ -477,12 +473,6 @@ const renderUnitValues = (kind, mode) => {
     // Restart CSS animation when the same class is applied repeatedly.
     void cell.offsetWidth; // eslint-disable-line no-unused-expressions
     cell.classList.add("unit-changing");
-  });
-
-  const unitLabels = Array.from(document.querySelectorAll(`[data-unit-kind="${kind}"]`));
-  unitLabels.forEach((el) => {
-    const text = UNIT_LABELS[mode]?.[kind];
-    if (text) el.textContent = text;
   });
 };
 

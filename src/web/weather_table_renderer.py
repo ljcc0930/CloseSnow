@@ -51,10 +51,12 @@ def render_rain_table(data: List[Dict[str, str]]) -> str:
     )
     return f"""
     <section>
-      <h2>Rainfall (<span data-unit-kind="rain">mm</span>)</h2>
-      <div class="unit-toggle" role="group" aria-label="Rainfall unit system" data-target-kind="rain">
-        <button type="button" class="unit-btn is-active" data-unit-mode="metric">Metric</button>
-        <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
+      <div class="section-header">
+        <h2>Rainfall</h2>
+        <div class="unit-toggle" role="group" aria-label="Rainfall unit system" data-target-kind="rain">
+          <button type="button" class="unit-btn is-active" data-unit-mode="metric">mm</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">in</button>
+        </div>
       </div>
       {layout}
     </section>
@@ -76,10 +78,12 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
     )
     return f"""
     <section>
-      <h2>Snowfall (<span data-unit-kind="snow">cm</span>)</h2>
-      <div class="unit-toggle" role="group" aria-label="Snowfall unit system" data-target-kind="snow">
-        <button type="button" class="unit-btn is-active" data-unit-mode="metric">Metric</button>
-        <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
+      <div class="section-header">
+        <h2>Snowfall</h2>
+        <div class="unit-toggle" role="group" aria-label="Snowfall unit system" data-target-kind="snow">
+          <button type="button" class="unit-btn is-active" data-unit-mode="metric">cm</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">in</button>
+        </div>
       </div>
       {layout}
     </section>
@@ -93,10 +97,12 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
     # Temperature currently has no mobile renderer; fallback is desktop layout.
     return f"""
     <section>
-      <h2>Temperature (<span data-unit-kind="temp">°C</span>)</h2>
-      <div class="unit-toggle" role="group" aria-label="Temperature unit system" data-target-kind="temp">
-        <button type="button" class="unit-btn is-active" data-unit-mode="metric">Metric</button>
-        <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
+      <div class="section-header">
+        <h2>Temperature</h2>
+        <div class="unit-toggle" role="group" aria-label="Temperature unit system" data-target-kind="temp">
+          <button type="button" class="unit-btn is-active" data-unit-mode="metric">°C</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">°F</button>
+        </div>
       </div>
       {render_temperature_desktop_layout(data)}
     </section>

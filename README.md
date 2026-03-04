@@ -9,7 +9,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 - Export results as unified JSON plus daily CSV tables for downstream use.
 - Serve the report as either dynamic web page (`/` + `/api/data`) or pre-rendered static HTML (`index.html`).
 - Support desktop/mobile table layouts with synced scrolling for large forecast grids.
-- Provide per-table Metric/Imperial switching (snow/rain/temp) with saved browser preference.
+- Provide per-table unit switching (snow: `cm/in`, rain: `mm/in`, temperature: `°C/°F`) with saved browser preference.
 
 ## Repository Layout
 
@@ -140,7 +140,7 @@ If you do not want to use the unified CLI, you can run modules directly.
   - `assets/js/weather_page.js` toggles `body.mobile-simple`
   - `assets/css/weather_page.css` controls `.desktop-only` / `.mobile-only`
 - Unit conversion switch is also in browser JS:
-  - each table has its own Metric/Imperial toggle
+  - each table has its own unit toggle (`cm/in`, `mm/in`, `°C/°F`)
   - displayed values are converted client-side from metric source values
   - saved unit modes are restored before page reveal to avoid loading flicker
 

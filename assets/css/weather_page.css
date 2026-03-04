@@ -54,12 +54,22 @@
       position: relative;
       display: inline-flex;
       gap: 0;
-      margin: 0 0 12px;
+      margin: 0;
       padding: 4px;
       border: 1px solid #cbd5e1;
       border-radius: 999px;
       background: #f8fafc;
       overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 24px 0 8px;
+    }
+    .section-header h2 {
+      margin: 0;
     }
     body.units-pending main,
     body.units-pending .page-footer {
@@ -78,7 +88,7 @@
       z-index: 0;
     }
     body:not(.units-pending) .unit-toggle::before {
-      transition: transform 180ms ease;
+      transition: transform 240ms ease;
     }
     .unit-toggle[data-mode="imperial"]::before {
       transform: translateX(100%);
@@ -87,24 +97,18 @@
       border: 0;
       background: transparent;
       color: #334155;
-      padding: 5px 10px;
+      padding: 5px 0;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: color 160ms ease, transform 120ms ease;
-      width: 72px;
+      transition: color 160ms ease;
+      width: 52px;
       position: relative;
       z-index: 1;
     }
     body.units-pending .unit-btn {
       transition: none;
-    }
-    .unit-btn:hover {
-      transform: translateY(-1px);
-    }
-    .unit-btn:active {
-      transform: translateY(0);
     }
     .unit-btn.is-active {
       color: #fff;
@@ -120,7 +124,7 @@
       }
     }
     td.unit-changing {
-      animation: unitCellRefresh 160ms ease;
+      animation: unitCellRefresh 240ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     h2 {
       margin: 24px 0 8px;
