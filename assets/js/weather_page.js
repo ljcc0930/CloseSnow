@@ -16,6 +16,12 @@ const tempLeftTable = tempLeftWrap ? tempLeftWrap.querySelector(".temperature-le
 const tempRightTable = tempRightWrap ? tempRightWrap.querySelector(".temperature-right-table") : null;
 const tempSplitWrap = tempLeftWrap ? tempLeftWrap.closest(".temperature-split-wrap") : null;
 
+const sunLeftWrap = document.getElementById("sun-left-wrap");
+const sunRightWrap = document.getElementById("sun-right-wrap");
+const sunLeftTable = sunLeftWrap ? sunLeftWrap.querySelector(".sun-left-table") : null;
+const sunRightTable = sunRightWrap ? sunRightWrap.querySelector(".sun-right-table") : null;
+const sunSplitWrap = sunLeftWrap ? sunLeftWrap.closest(".sun-split-wrap") : null;
+
 const rainLeftWrap = document.getElementById("rain-left-wrap");
 const rainRightWrap = document.getElementById("rain-right-wrap");
 const rainLeftTable = rainLeftWrap ? rainLeftWrap.querySelector(".rain-left-table") : null;
@@ -397,11 +403,50 @@ const autoSizeTempColumns = () => {
   tempRightTable.style.width = `${minTotal}px`;
 };
 
+const autoSizeSunQuery = () => {
+  if (!sunLeftWrap || !sunLeftTable) return;
+  const rows = Array.from(sunLeftTable.querySelectorAll("tbody tr"));
+  const sampleCell = sunLeftTable.querySelector("tbody td") || sunLeftTable.querySelector("thead th");
+  if (!sampleCell) return;
+  const font = window.getComputedStyle(sampleCell).font;
+  const queryHeader = sunLeftTable.querySelector("thead .query-col")?.textContent?.trim() || "query";
+  const queryValues = rows.map((tr) => tr.children[0]?.textContent?.trim() || "");
+  const queryMax = Math.max(
+    measureTextWidth(queryHeader, font),
+    ...queryValues.map((v) => measureTextWidth(v, font))
+  );
+  const queryW = Math.max(150, Math.min(240, Math.ceil(queryMax + 28)));
+  sunLeftWrap.style.setProperty("--sun-query-w", `${queryW}px`);
+};
+
+const autoSizeSunColumns = () => {
+  if (!sunRightWrap || !sunRightTable) return;
+  const cols = Array.from(sunRightTable.querySelectorAll("col.col-sun"));
+  const count = cols.length;
+  if (!count) return;
+  const minW = 58;
+  const wrapW = sunRightWrap.clientWidth;
+  const minTotal = minW * count;
+  if (wrapW >= minTotal) {
+    const base = Math.floor(wrapW / count);
+    const rem = wrapW - (base * count);
+    cols.forEach((col, idx) => {
+      const w = base + (idx < rem ? 1 : 0);
+      col.style.width = `${w}px`;
+    });
+    sunRightTable.style.width = `${wrapW}px`;
+    return;
+  }
+  cols.forEach((col) => { col.style.width = `${minW}px`; });
+  sunRightTable.style.width = `${minTotal}px`;
+};
+
 attachVerticalSync(leftWrap, rightWrap);
 attachVerticalSync(leftWrapMobile, rightWrapMobile);
 attachVerticalSync(rainLeftWrap, rainRightWrap);
 attachVerticalSync(rainLeftWrapMobile, rainRightWrapMobile);
 attachVerticalSync(tempLeftWrap, tempRightWrap);
+attachVerticalSync(sunLeftWrap, sunRightWrap);
 
 let tempLayoutRaf = 0;
 const scheduleTempLayout = () => {
@@ -411,6 +456,17 @@ const scheduleTempLayout = () => {
     autoSizeTempColumns();
     syncTableRowHeights(tempLeftTable, tempRightTable);
     syncStickySecondRowTop(tempLeftTable, tempRightTable, tempSplitWrap, "--temp-header-row1-h");
+  });
+};
+
+let sunLayoutRaf = 0;
+const scheduleSunLayout = () => {
+  if (sunLayoutRaf) cancelAnimationFrame(sunLayoutRaf);
+  sunLayoutRaf = requestAnimationFrame(() => {
+    autoSizeSunQuery();
+    autoSizeSunColumns();
+    syncTableRowHeights(sunLeftTable, sunRightTable);
+    syncStickySecondRowTop(sunLeftTable, sunRightTable, sunSplitWrap, "--sun-header-row1-h");
   });
 };
 
@@ -435,6 +491,7 @@ const applyLayout = () => {
     syncStickySecondRowTop(rainLeftTable, rainRightTable, rainDesktopSplitWrap, "--rain-header-row1-h");
   }
   scheduleTempLayout();
+  scheduleSunLayout();
 };
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
@@ -550,4 +607,6 @@ if (window.ResizeObserver) {
   if (rainRightWrapMobile) ro.observe(rainRightWrapMobile);
   if (tempLeftWrap) ro.observe(tempLeftWrap);
   if (tempRightWrap) ro.observe(tempRightWrap);
+  if (sunLeftWrap) ro.observe(sunLeftWrap);
+  if (sunRightWrap) ro.observe(sunRightWrap);
 }

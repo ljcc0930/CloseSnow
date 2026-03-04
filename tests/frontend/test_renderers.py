@@ -17,6 +17,7 @@ from src.web.weather_table_renderer import (
     _render_desktop_and_mobile,
     render_rain_table,
     render_snowfall_table,
+    render_sun_table,
     render_temperature_table,
     render_weather_table,
 )
@@ -68,6 +69,19 @@ def _weather_row():
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
         "label_day_3": "03-06 Fri",
+    }
+
+
+def _sun_row():
+    return {
+        "query": "Snowbird <UT>",
+        "matched_name": "Snowbird",
+        "day_1_sunrise": "07:01",
+        "day_1_sunset": "18:22",
+        "day_2_sunrise": "07:00",
+        "day_2_sunset": "18:23",
+        "label_day_1": "03-04 Wed",
+        "label_day_2": "03-05 Thu",
     }
 
 
@@ -137,16 +151,23 @@ def test_table_renderer_sections_and_empty_states():
     assert "No data" in render_snowfall_table([])
     assert "No data" in render_rain_table([])
     assert "No data" in render_weather_table([])
+    assert "No data" in render_sun_table([])
     assert "No data" in render_temperature_table([])
 
     snow = render_snowfall_table([_snow_row()])
     rain = render_rain_table([_rain_row()])
     weather = render_weather_table([_weather_row()])
+    sun = render_sun_table([_sun_row()])
     temp = render_temperature_table([_temp_row()])
     assert "data-target-kind=\"snow\"" in snow
     assert "data-target-kind=\"rain\"" in rain
     assert "data-target-kind=\"temp\"" in temp
     assert "<h2>Weather</h2>" in weather
+    assert "<h2>Sunrise / Sunset</h2>" in sun
+    assert "07:01" in sun
+    assert "18:23" in sun
+    assert "sunrise" in sun
+    assert "sunset" in sun
     assert "03-04 Wed" in weather
     assert "☀️" in weather
     assert "🌧️" in weather
@@ -157,12 +178,13 @@ def test_table_renderer_sections_and_empty_states():
 
 
 def test_build_html_contains_meta_sections():
-    html = build_html([_snow_row()], [_rain_row()], [_weather_row()], [_temp_row()])
+    html = build_html([_snow_row()], [_rain_row()], [_weather_row()], [_sun_row()], [_temp_row()])
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
     assert "Powered by" in html
     assert "https://open-meteo.com/en/docs/ecmwf-api" in html
     assert "Feature requests" in html
+    assert "<h2>Sunrise / Sunset</h2>" in html
     assert 'data-generated-utc="' in html
     assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
 
@@ -186,17 +208,23 @@ def test_render_payload_html_wires_transform_and_builder(monkeypatch):
         calls["weather_days"] = display_days
         return ["weather"]
 
+    def fake_sun(reports, display_days=14):  # noqa: ANN001
+        calls["sun_days"] = display_days
+        return ["sun"]
+
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", fake_snow)
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", fake_rain)
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_weather_rows", fake_weather)
+    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_sun_rows", fake_sun)
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", fake_temp)
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
-        lambda snow, rain, weather, temp: f"html:{snow}:{rain}:{weather}:{temp}",
+        lambda snow, rain, weather, sun, temp: f"html:{snow}:{rain}:{weather}:{sun}:{temp}",
     )
     out = render_payload_html({"reports": [{"query": "A"}], "forecast_days": 16})
-    assert out == "html:['snow']:['rain']:['weather']:['temp']"
+    assert out == "html:['snow']:['rain']:['weather']:['sun']:['temp']"
     assert calls["snow_days"] == 15
     assert calls["rain_days"] == 15
     assert calls["weather_days"] == 15
+    assert calls["sun_days"] == 15
     assert calls["temp_days"] == 15

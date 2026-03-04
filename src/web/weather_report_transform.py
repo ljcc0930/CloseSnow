@@ -25,6 +25,19 @@ def _day_label_from_date(raw_date: Any) -> str:
     return f"{parsed.strftime('%m-%d')} {_WEEKDAY_ABBR[parsed.weekday()]}"
 
 
+def _hhmm_value(raw: Any) -> str:
+    if not isinstance(raw, str):
+        return ""
+    value = raw.strip()
+    if not value:
+        return ""
+    if "T" in value:
+        value = value.split("T", 1)[1]
+    if len(value) >= 5 and value[2] == ":" and value[:2].isdigit() and value[3:5].isdigit():
+        return value[:5]
+    return ""
+
+
 def _reports_to_metric_rows(
     reports: List[Dict[str, Any]],
     display_days: int,
@@ -109,6 +122,30 @@ def reports_to_weather_rows(reports: List[Dict[str, Any]], display_days: int = 1
             day = daily[day_idx] if day_idx < len(daily) else {}
             code = day.get("weather_code")
             row[f"day_{day_idx+1}_weather_code"] = "" if code is None else str(code)
+            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+        rows.append(row)
+    return rows
+
+
+def reports_to_sun_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for report in reports:
+        row: Dict[str, str] = {
+            "query": str(report.get("query", "")),
+            "matched_name": str(report.get("matched_name", "")),
+        }
+        daily = report.get("daily", [])
+        for day_idx in range(display_days):
+            day = daily[day_idx] if day_idx < len(daily) else {}
+            sunrise = day.get("sunrise_local_hhmm")
+            sunset = day.get("sunset_local_hhmm")
+            if sunrise is None:
+                sunrise = _hhmm_value(day.get("sunrise_iso"))
+            if sunset is None:
+                sunset = _hhmm_value(day.get("sunset_iso"))
+
+            row[f"day_{day_idx+1}_sunrise"] = "" if sunrise is None else str(sunrise)
+            row[f"day_{day_idx+1}_sunset"] = "" if sunset is None else str(sunset)
             row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows

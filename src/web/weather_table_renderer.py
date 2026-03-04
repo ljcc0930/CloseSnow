@@ -9,6 +9,7 @@ from src.web.desktop.precipitation_renderer import (
     render_rainfall_desktop_layout,
     render_snowfall_desktop_layout,
 )
+from src.web.desktop.sun_renderer import render_sunrise_sunset_desktop_layout
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
 from src.web.weather_code_emoji import emoji_for_weather_code
 
@@ -137,6 +138,17 @@ def render_snowfall_table(data: List[Dict[str, str]]) -> str:
 
 def render_temperature_table(data: List[Dict[str, str]]) -> str:
     return _render_metric_section(data, _TEMPERATURE_VIEW)
+
+
+def render_sun_table(data: List[Dict[str, str]]) -> str:
+    if not data:
+        return "<section><h2>Sunrise / Sunset</h2><p>No data</p></section>"
+    return (
+        "<section>"
+        "<h2>Sunrise / Sunset</h2>"
+        f"{render_sunrise_sunset_desktop_layout(data)}"
+        "</section>"
+    )
 
 
 def render_weather_table(data: List[Dict[str, str]]) -> str:

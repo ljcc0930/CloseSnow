@@ -246,7 +246,10 @@ def fetch_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int)
             "forecast_days": FORECAST_DAYS,
             "timezone": "auto",
             "models": "ecmwf_ifs025",
-            "daily": "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code",
+            "daily": (
+                "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,"
+                "temperature_2m_min,weather_code,sunrise,sunset"
+            ),
         },
         cache=cache,
         namespace="forecast_ecmwf_unified",
@@ -265,7 +268,10 @@ def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) 
             "past_days": HISTORY_DAYS,
             "forecast_days": 1,
             "timezone": "auto",
-            "daily": "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code",
+            "daily": (
+                "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,"
+                "temperature_2m_min,weather_code,sunrise,sunset"
+            ),
         },
         cache=cache,
         namespace="history_ecmwf_unified",

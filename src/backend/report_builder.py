@@ -26,6 +26,19 @@ def as_int_list(values: List[Any]) -> List[Optional[int]]:
     return out
 
 
+def extract_hhmm(raw: Any) -> Optional[str]:
+    if not isinstance(raw, str):
+        return None
+    value = raw.strip()
+    if not value:
+        return None
+    if "T" in value:
+        value = value.split("T", 1)[1]
+    if len(value) >= 5 and value[2] == ":" and value[:2].isdigit() and value[3:5].isdigit():
+        return value[:5]
+    return None
+
+
 def safe_sum(values: List[Optional[float]]) -> float:
     return float(sum(value for value in values if value is not None))
 
@@ -38,11 +51,25 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
     tmax = as_float_list(daily.get("temperature_2m_max", []))
     tmin = as_float_list(daily.get("temperature_2m_min", []))
     weather_code = as_int_list(daily.get("weather_code", []))
+    sunrise = daily.get("sunrise", [])
+    sunset = daily.get("sunset", [])
 
     rows: List[Dict[str, Any]] = []
-    n = max(len(dates), len(snowfall), len(rain), len(precipitation), len(tmax), len(tmin), len(weather_code))
+    n = max(
+        len(dates),
+        len(snowfall),
+        len(rain),
+        len(precipitation),
+        len(tmax),
+        len(tmin),
+        len(weather_code),
+        len(sunrise),
+        len(sunset),
+    )
     for idx in range(n):
         max_v = tmax[idx] if idx < len(tmax) else None
+        sunrise_iso = sunrise[idx] if idx < len(sunrise) else None
+        sunset_iso = sunset[idx] if idx < len(sunset) else None
         rows.append(
             {
                 "date": dates[idx] if idx < len(dates) else None,
@@ -52,6 +79,10 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "temperature_max_c": max_v,
                 "temperature_min_c": tmin[idx] if idx < len(tmin) else None,
                 "weather_code": weather_code[idx] if idx < len(weather_code) else None,
+                "sunrise_iso": sunrise_iso,
+                "sunset_iso": sunset_iso,
+                "sunrise_local_hhmm": extract_hhmm(sunrise_iso),
+                "sunset_local_hhmm": extract_hhmm(sunset_iso),
                 "above_0": 1 if (max_v is not None and max_v > 0) else 0,
             }
         )

@@ -370,6 +370,64 @@
     .temperature-right-table td {
       background-clip: padding-box;
     }
+    .sun-split-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+      --sun-header-row1-h: 32px;
+    }
+    .sun-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --sun-query-w: 220px;
+    }
+    .sun-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .sun-left-table,
+    .sun-right-table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 0;
+    }
+    .sun-left-table col.col-query {
+      width: var(--sun-query-w);
+    }
+    .sun-right-table col.col-sun {
+      width: 58px;
+    }
+    .sun-left-table thead tr:first-child th,
+    .sun-right-table thead tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .sun-left-table thead tr:nth-child(2) th,
+    .sun-right-table thead tr:nth-child(2) th {
+      position: sticky;
+      top: var(--sun-header-row1-h);
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .sun-left-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      background: #fff;
+      max-width: var(--sun-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sun-left-table td,
+    .sun-right-table td {
+      background-clip: padding-box;
+    }
     body.mobile-simple .desktop-only {
       display: none;
     }

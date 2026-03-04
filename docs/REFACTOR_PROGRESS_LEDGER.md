@@ -493,3 +493,49 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Implement F2 sunrise/sunset daily fields and a dedicated sunrise/sunset section in frontend.
+
+## 2026-03-04 04:52 (local)
+
+### Scope
+- Implement F2 sunrise/sunset end-to-end with backend daily fields and frontend Sunrise/Sunset section.
+
+### Changes
+- Files:
+  - `src/backend/open_meteo.py`
+  - `src/backend/report_builder.py`
+  - `src/web/weather_report_transform.py`
+  - `src/web/desktop/sun_renderer.py` (new)
+  - `src/web/weather_table_renderer.py`
+  - `src/web/weather_html_renderer.py`
+  - `src/web/weather_page_render_core.py`
+  - `src/web/templates/weather_page.html`
+  - `assets/css/weather_page.css`
+  - `assets/js/weather_page.js`
+  - `tests/backend/test_report_builder.py`
+  - `tests/backend/test_open_meteo.py`
+  - `tests/frontend/test_styles_and_transform.py`
+  - `tests/frontend/test_renderers.py`
+- Behavior impact:
+  - Forecast/history daily requests now include `sunrise,sunset`.
+  - Daily payload now carries `sunrise_iso`, `sunset_iso`, and formatted `sunrise_local_hhmm` / `sunset_local_hhmm`.
+  - Main page now includes a dedicated `Sunrise / Sunset` split table (temperature-like layout) with concrete date headers.
+
+### Validation
+- Commands:
+  - `pytest -q tests/backend/test_report_builder.py tests/backend/test_open_meteo.py tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py`
+  - `pytest -q`
+  - `python3 -m src.cli fetch --output-json /tmp/closesnow_f2_data.json`
+  - `jq '.reports[0].daily[0] | {date, sunrise_local_hhmm, sunset_local_hhmm}' /tmp/closesnow_f2_data.json`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "Sunrise / Sunset|sunrise|sunset|[0-2][0-9]:[0-5][0-9]" index.html | head -n 40`
+- Results:
+  - Targeted suite passed (`27 passed`).
+  - Full suite passed (`116 passed`).
+  - Payload sample contains `sunrise_local_hhmm` and `sunset_local_hhmm`.
+  - Static HTML contains `Sunrise / Sunset` section and rendered HH:MM values.
+
+### Risks / Notes
+- Sunrise/sunset HH:MM extraction currently assumes Open-Meteo ISO-like time format and truncates to minute precision.
+
+### Next Slice
+- Start F5: migrate resort source to YAML metadata and add searchable/structured resort attributes.

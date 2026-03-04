@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from src.web.weather_report_transform import reports_to_rain_rows, reports_to_snow_rows, reports_to_temp_rows
+from src.web.weather_report_transform import (
+    reports_to_rain_rows,
+    reports_to_snow_rows,
+    reports_to_sun_rows,
+    reports_to_temp_rows,
+)
 from src.web.weather_table_styles import rain_color, render_measure_cell, snow_color, temp_color, to_float
 
 
@@ -48,12 +53,21 @@ def test_report_transforms():
             "week2_total_rain_mm": 1.1,
             "daily": [
                 {"date": "2026-03-04", "snowfall_cm": 1.0, "rain_mm": 0.0, "temperature_max_c": -1, "temperature_min_c": -5},
-                {"date": "2026-03-05", "snowfall_cm": None, "rain_mm": 0.5, "temperature_max_c": 2, "temperature_min_c": -2},
+                {
+                    "date": "2026-03-05",
+                    "snowfall_cm": None,
+                    "rain_mm": 0.5,
+                    "temperature_max_c": 2,
+                    "temperature_min_c": -2,
+                    "sunrise_local_hhmm": "07:00",
+                    "sunset_local_hhmm": "18:23",
+                },
             ],
         }
     ]
     snow_rows = reports_to_snow_rows(reports)
     rain_rows = reports_to_rain_rows(reports)
+    sun_rows = reports_to_sun_rows(reports)
     temp_rows = reports_to_temp_rows(reports)
 
     assert snow_rows[0]["query"] == "Snowbird, UT"
@@ -68,6 +82,12 @@ def test_report_transforms():
     assert rain_rows[0]["day_2_rain_mm"] == "0.5"
     assert rain_rows[0]["label_day_1"] == "03-04 Wed"
 
+    assert sun_rows[0]["day_1_sunrise"] == ""
+    assert sun_rows[0]["day_1_sunset"] == ""
+    assert sun_rows[0]["day_2_sunrise"] == "07:00"
+    assert sun_rows[0]["day_2_sunset"] == "18:23"
+    assert sun_rows[0]["label_day_2"] == "03-05 Thu"
+
     assert temp_rows[0]["matched_name"] == "Snowbird"
     assert temp_rows[0]["day_1_max_c"] == "-1"
     assert temp_rows[0]["day_2_above_0"] == "1"
@@ -79,3 +99,20 @@ def test_report_transforms_date_label_fallback_when_date_missing():
     snow_rows = reports_to_snow_rows(reports, display_days=2)
     assert snow_rows[0]["label_day_1"] == ""
     assert snow_rows[0]["label_day_2"] == ""
+
+
+def test_sun_rows_fallback_to_iso_strings_when_hhmm_missing():
+    reports = [
+        {
+            "query": "A",
+            "daily": [
+                {"date": "2026-03-04", "sunrise_iso": "2026-03-04T06:45", "sunset_iso": "2026-03-04T17:55"},
+                {"date": "2026-03-05", "sunrise_iso": "bad", "sunset_iso": None},
+            ],
+        }
+    ]
+    sun_rows = reports_to_sun_rows(reports, display_days=2)
+    assert sun_rows[0]["day_1_sunrise"] == "06:45"
+    assert sun_rows[0]["day_1_sunset"] == "17:55"
+    assert sun_rows[0]["day_2_sunrise"] == ""
+    assert sun_rows[0]["day_2_sunset"] == ""

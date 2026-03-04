@@ -7,6 +7,7 @@ import urllib.error
 import pytest
 
 from src.backend import open_meteo
+from src.backend.models import ResortLocation
 
 
 class _DummyCache:
@@ -183,3 +184,31 @@ def test_async_wrappers(monkeypatch):
     assert g == "g"
     assert f == {"f": 1}
     assert h == {"h": 1}
+
+
+def test_fetch_forecast_and_history_include_weather_and_sun_daily_fields(monkeypatch):
+    captured = {}
+
+    def fake_fetch_json(url, params, cache, namespace, ttl_seconds):  # noqa: ANN001
+        del url, cache, ttl_seconds
+        captured[namespace] = params["daily"]
+        return {"ok": True}
+
+    monkeypatch.setattr("src.backend.open_meteo.fetch_json", fake_fetch_json)
+    loc = ResortLocation(
+        query="Snowbird, UT",
+        name="Snowbird",
+        latitude=40.58,
+        longitude=-111.65,
+        country="US",
+        admin1="UT",
+    )
+    open_meteo.fetch_forecast(loc, cache=_DummyCache(), ttl_seconds=10)
+    open_meteo.fetch_history(loc, cache=_DummyCache(), ttl_seconds=10)
+
+    forecast_daily = captured["forecast_ecmwf_unified"]
+    history_daily = captured["history_ecmwf_unified"]
+    for daily_params in (forecast_daily, history_daily):
+        assert "weather_code" in daily_params
+        assert "sunrise" in daily_params
+        assert "sunset" in daily_params
