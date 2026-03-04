@@ -511,10 +511,10 @@ const autoSizeWeatherColumns = () => {
 
 const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
 const _isTruthyParam = (raw) => ["1", "true", "yes", "on"].includes(_normalizeSearch(raw));
-const VALID_SORT_BY = new Set(["default", "state", "name"]);
+const VALID_SORT_BY = new Set(["state", "name"]);
 const normalizeSortBy = (raw) => {
   const normalized = _normalizeSearch(raw);
-  return VALID_SORT_BY.has(normalized) ? normalized : "default";
+  return VALID_SORT_BY.has(normalized) ? normalized : "state";
 };
 
 const _primaryResortRows = () => {
@@ -750,7 +750,7 @@ const filterState = {
   passTypes: new Set(),
   region: "",
   country: "",
-  sortBy: "default",
+  sortBy: "state",
   includeAll: false,
 };
 
@@ -812,7 +812,7 @@ const syncFilterSummary = () => {
   if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
   if (filterState.region) parts.push(`region: ${filterState.region}`);
   if (filterState.country) parts.push(`country: ${filterState.country}`);
-  if (filterState.sortBy !== "default") parts.push(`sort: ${filterState.sortBy}`);
+  if (filterState.sortBy !== "state") parts.push(`sort: ${filterState.sortBy}`);
   if (filterState.includeAll) parts.push("scope: full catalog");
   filterSummary.textContent = parts.length > 0 ? `${parts.join(" | ")} | visible: ${scope}` : `All resorts (${scope})`;
 };
@@ -850,7 +850,7 @@ const applyFilterStateFromControls = () => {
   );
   filterState.region = _normalizeSearch(filterRegionSelect?.value || "");
   filterState.country = (filterCountrySelect?.value || "").trim().toUpperCase();
-  filterState.sortBy = normalizeSortBy(filterSortSelect?.value || "default");
+  filterState.sortBy = normalizeSortBy(filterSortSelect?.value || "state");
   filterState.includeAll = Boolean(filterIncludeAllInput?.checked);
 };
 
@@ -914,7 +914,7 @@ const buildFilterQueryParams = () => {
     });
   if (filterState.region) params.set("region", filterState.region);
   if (filterState.country) params.set("country", filterState.country);
-  if (filterState.sortBy !== "default") params.set("sort_by", filterState.sortBy);
+  if (filterState.sortBy !== "state") params.set("sort_by", filterState.sortBy);
   if (filterState.includeAll) params.set("include_all", "1");
   const keyword = (resortSearchInput?.value || "").trim();
   if (keyword) params.set("search", keyword);
@@ -938,7 +938,7 @@ const resetFilterControls = () => {
   });
   if (filterRegionSelect) filterRegionSelect.value = "";
   if (filterCountrySelect) filterCountrySelect.value = "";
-  if (filterSortSelect) filterSortSelect.value = "default";
+  if (filterSortSelect) filterSortSelect.value = "state";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = false;
 };
 

@@ -207,6 +207,8 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
+    assert '<option value="state" selected>State (A-Z)</option>' in html
+    assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html

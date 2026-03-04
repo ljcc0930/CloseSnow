@@ -909,3 +909,34 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optionally add a lightweight workflow smoke check (assert `site/resort/*/index.html` and `site/resort/*/hourly.json` exist) before upload.
+
+## 2026-03-04 06:28 (local)
+
+### Scope
+- Update filter sorting UX to default to state order and remove the redundant `Default` sort option.
+
+### Changes
+- Files:
+  - `src/web/templates/weather_page.html`
+  - `assets/js/weather_page.js`
+  - `tests/frontend/test_renderers.py`
+- Behavior impact:
+  - Filter sort dropdown now has only `State (A-Z)` and `Resort Name (A-Z)`.
+  - Default sort mode is now `state` (when no `sort_by` query parameter is provided).
+  - URL query only includes `sort_by` when user chooses `name`; state sort remains implicit default.
+  - Filter summary only shows `sort: ...` when non-default (`name`) is selected.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py tests/integration/test_gateway_render_integration.py`
+  - `python3 -m src.cli static --skip-fetch --output-json .cache/static_payload.json --output-html index.html`
+  - `rg -n "filter-sort-select|option value=\"state\"|option value=\"default\"" index.html`
+- Results:
+  - Targeted suites passed (`17 passed`).
+  - Static compile succeeded and rendered only state/name options; `default` option no longer present.
+
+### Risks / Notes
+- Existing links containing `sort_by=default` will be normalized to state sort.
+
+### Next Slice
+- If desired, add secondary state-region grouping labels (e.g., by country + state) for international expansion.
