@@ -16,6 +16,7 @@ A change is considered "runnable" only if all of these are true:
 4. Dynamic server boots and serves both HTML and JSON endpoints.
 5. Core frontend assets are reachable.
 6. No obvious runtime errors appear in the smoke flow.
+7. Layer boundaries are not regressing (backend/web/communication responsibilities stay clear).
 
 ---
 
@@ -73,6 +74,18 @@ Pass criteria:
 
 1. All tests pass.
 2. No flaky network dependency (suite should be deterministic).
+
+### 3.4 Layer boundary checks (v2 refactor)
+
+Hard boundary (must always pass):
+
+```bash
+rg -n "from src\\.web|import src\\.web" src/backend -S
+```
+
+Pass criteria:
+
+1. No matches.
 
 ---
 
@@ -255,8 +268,9 @@ Before push:
 4. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
 5. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
 6. Dynamic server probes (`/` and `/api/data`) pass.
-7. `git status --short` contains only intended files.
-8. README/workflow updated if command or behavior changed.
+7. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.
+8. `git status --short` contains only intended files.
+9. README/workflow updated if command or behavior changed.
 
 ---
 
@@ -265,3 +279,4 @@ Before push:
 1. `pytest-cov`/coverage percentage gates are not yet configured.
 2. External API availability/rate limits can still affect live smoke checks.
 3. Validation remains mostly unit/smoke-level, not a full correctness proof.
+4. Layer-boundary checks are static-text heuristics; they do not replace design review.

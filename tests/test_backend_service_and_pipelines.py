@@ -11,11 +11,14 @@ from src.web.pipelines.static_site import render_html, write_payload_json
 def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     captured = {}
 
-    def fake_run_pipeline(**kwargs):  # noqa: ANN001
+    def fake_compute_pipeline_payload(**kwargs):  # noqa: ANN001
         captured.update(kwargs)
         return {"ok": True}
 
-    monkeypatch.setattr("src.backend.services.weather_service.run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr(
+        "src.backend.services.weather_service.compute_pipeline_payload",
+        fake_compute_pipeline_payload,
+    )
     out = build_weather_payload(
         resorts=["A"],
         resorts_file="resorts.txt",
@@ -27,7 +30,6 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     assert out == {"ok": True}
     assert captured["resorts"] == ["A"]
     assert captured["resorts_file"] == "resorts.txt"
-    assert captured["write_outputs"] is False
     assert captured["max_workers"] == 4
 
 

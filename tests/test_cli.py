@@ -68,7 +68,7 @@ def test_run_fetch(monkeypatch, tmp_path, capsys):
 
 def test_run_render(monkeypatch, tmp_path, capsys):
     args = argparse.Namespace(input_json=str(tmp_path / "in.json"), output_html=str(tmp_path / "out.html"))
-    monkeypatch.setattr("src.cli.load_static_payload", lambda path: {"reports": [], "from": path})
+    monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "from": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload: Path(path))
     rc = cli.run_render(args)
     out = capsys.readouterr().out
@@ -96,7 +96,7 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     args.output_html = str(tmp_path / "index.html")
     args.skip_fetch = True
     args.skip_render = False
-    monkeypatch.setattr("src.cli.load_static_payload", lambda path: {"reports": [], "loaded": path})
+    monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload: Path(path))
     rc = cli.run_static(args)
     assert rc == 0
@@ -162,4 +162,3 @@ def test_main_raises_for_unknown_command(monkeypatch):
     )
     with pytest.raises(ValueError, match="Unsupported command"):
         cli.main()
-

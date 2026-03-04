@@ -108,10 +108,6 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
         "src.backend.pipeline.validate_weather_payload_v1",
         lambda payload: validate_calls.setdefault("payload", payload),
     )
-    monkeypatch.setattr("src.backend.pipeline.write_unified_json", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError))
-    monkeypatch.setattr("src.backend.pipeline.write_snow_csv", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError))
-    monkeypatch.setattr("src.backend.pipeline.write_rain_csv", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError))
-    monkeypatch.setattr("src.backend.pipeline.write_temp_csv", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError))
 
     out = pipeline.run_pipeline(
         resorts=["A", "A", " ", "B"],
@@ -139,10 +135,12 @@ def test_run_pipeline_writes_outputs_when_enabled(monkeypatch, tmp_path):
     monkeypatch.setattr("src.backend.pipeline._run_pipeline_async", fake_run_pipeline_async)
     monkeypatch.setattr("src.backend.pipeline.validate_weather_payload_v1", lambda payload: None)
     calls = []
-    monkeypatch.setattr("src.backend.pipeline.write_unified_json", lambda path, payload: calls.append(("json", path)))
-    monkeypatch.setattr("src.backend.pipeline.write_snow_csv", lambda path, reports: calls.append(("snow", path)))
-    monkeypatch.setattr("src.backend.pipeline.write_rain_csv", lambda path, reports: calls.append(("rain", path)))
-    monkeypatch.setattr("src.backend.pipeline.write_temp_csv", lambda path, reports: calls.append(("temp", path)))
+    monkeypatch.setattr(
+        "src.backend.pipeline.export_payload_artifacts",
+        lambda payload, output_json, snow_csv, rain_csv, temp_csv: calls.append(
+            ("export", output_json, snow_csv, rain_csv, temp_csv)
+        ),
+    )
 
     pipeline.run_pipeline(
         resorts=["A"],
@@ -153,7 +151,7 @@ def test_run_pipeline_writes_outputs_when_enabled(monkeypatch, tmp_path):
         temp_csv="t.csv",
         write_outputs=True,
     )
-    assert calls == [("json", "o.json"), ("snow", "s.csv"), ("rain", "r.csv"), ("temp", "t.csv")]
+    assert calls == [("export", "o.json", "s.csv", "r.csv", "t.csv")]
 
 
 def test_run_pipeline_uses_default_resorts_when_empty(monkeypatch, tmp_path):
@@ -170,4 +168,3 @@ def test_run_pipeline_uses_default_resorts_when_empty(monkeypatch, tmp_path):
 
     pipeline.run_pipeline(resorts=[], resorts_file="", use_default_resorts=False, write_outputs=False)
     assert captured["selected"] == ["D1", "D2"]
-

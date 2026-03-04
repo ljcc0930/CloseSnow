@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Tuple
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.backend.constants import DEFAULT_RESORTS_FILE
-from src.web.data_sources import load_static_payload
+from src.shared.config import DEFAULT_RESORTS_FILE
+from src.web.data_sources import load_payload
 from src.web.pipelines import render_html, write_payload_json
 from src.web.weather_page_server import make_handler
 from src.backend.pipelines.static_pipeline import fetch_static_payload
@@ -91,7 +91,7 @@ def run_fetch(args: argparse.Namespace) -> int:
 
 
 def run_render(args: argparse.Namespace) -> int:
-    payload = load_static_payload(args.input_json)
+    payload = load_payload(mode="file", source=args.input_json)
     out = render_html(args.output_html, payload)
     print(f"Done: {out}")
     return 0
@@ -106,7 +106,7 @@ def run_static(args: argparse.Namespace) -> int:
 
     if not args.skip_render:
         if payload is None:
-            payload = load_static_payload(args.output_json)
+            payload = load_payload(mode="file", source=args.output_json)
         out = render_html(args.output_html, payload)
         print(f"Done: {out}")
     return 0

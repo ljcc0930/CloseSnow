@@ -16,6 +16,7 @@ Implement the `Frontend -> Communication Contract -> Backend` architecture incre
 while keeping existing CLI/server/static behavior runnable at every step.
 
 Status: completed in code and validation on 2026-03-03 (local run).
+Status update: v2 boundary refactor completed on 2026-03-03/04 local session.
 
 ---
 
@@ -33,6 +34,48 @@ Status: completed in code and validation on 2026-03-03 (local run).
 ---
 
 ## Completed Milestones
+
+## 2026-03-03/04 (v2 boundary hardening)
+
+### Scope
+- Finish remaining architecture-boundary refactor items from v2 guide.
+
+### Changes
+- Shared config extraction:
+  - added `src/shared/config.py`
+  - moved cross-layer `DEFAULT_RESORTS_FILE` usage to shared config
+  - updated `src/cli.py`, `src/web/weather_page_server.py`, `src/web/weather_page_static_render.py`
+- Communication gateway unification:
+  - added `src/web/data_sources/gateway.py` as canonical runtime loader
+  - migrated CLI render/static loading paths to `load_payload(...)`
+  - removed legacy `src/web/data_sources/source_selector.py`
+- Backend compute/export separation:
+  - added `src/backend/export/payload_exporter.py`
+  - `src/backend/pipeline.py` now uses compute function + export orchestrator split
+  - service path switched to compute-only function (`build_weather_payload` no file outputs)
+- Updated docs to reflect final v2 architecture:
+  - `README.md`
+  - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
+  - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+
+### Validation
+- `python3 -m compileall src`
+- `python3 -m pytest -q` (`87 passed`)
+- `python3 -m src.cli fetch --output-json /tmp/final_refactor_data.json --max-workers 8`
+- `python3 -m src.cli render --input-json /tmp/final_refactor_data.json --output-html /tmp/final_refactor_index.html`
+- `python3 -m src.cli static --output-html /tmp/final_refactor_static.html --max-workers 8`
+- `python3 -m src.cli serve --host 127.0.0.1 --port 8010 --max-workers 8` + smoke `GET /api/data`, `GET /`
+- boundary checks:
+  - `rg -n "from src\\.web|import src\\.web" src/backend -S` -> no matches
+  - `rg -n "from src\\.backend\\.constants" src/web src/cli.py -S` -> no matches
+
+### Outcome
+- v2 Definition of Done met:
+  1. Web/CLI no longer depend on backend constants for shared config.
+  2. Communication gateway is the single runtime payload-loading entry.
+  3. Backend compute and export are separated internally.
+  4. Backend imports do not reference web modules.
+  5. Docs/tests/workflow align with architecture.
 
 ## 2026-03-03 (automated pytest coverage expansion)
 

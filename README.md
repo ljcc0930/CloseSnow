@@ -18,6 +18,8 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 .
 ├── src
 │   ├── cli.py
+│   ├── shared
+│   │   └── config.py
 │   ├── contract
 │   │   ├── weather_payload_v1.py
 │   │   └── validators.py
@@ -30,6 +32,8 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │   │   ├── writers.py
 │   │   ├── pipeline.py
 │   │   ├── ecmwf_unified_backend.py
+│   │   ├── export
+│   │   │   └── payload_exporter.py
 │   │   ├── services
 │   │   │   └── weather_service.py
 │   │   └── pipelines
@@ -47,7 +51,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 │       ├── data_sources
 │       │   ├── static_json_source.py
 │       │   ├── api_source.py
-│       │   └── source_selector.py
+│       │   └── gateway.py
 │       ├── pipelines
 │       │   └── static_site.py
 │       ├── desktop
@@ -214,9 +218,11 @@ If you do not want to use the unified CLI, you can run modules directly.
 ## Architecture (Refactor State)
 
 - Backend produces a single payload contract (`weather_payload_v1`).
-- Communication layer validates and loads payload from file or API (`src/web/data_sources`).
+- Communication layer validates and loads payload from file or API (`src/web/data_sources/gateway.py`, `load_payload`).
+- Shared cross-layer runtime defaults are in `src/shared/config.py` (not backend-owned).
 - Frontend renderer consumes contract payload only (`render_payload_html` path shared by static/dynamic).
 - Static site assembly (`write_payload_json` / `render_html`) is in web layer (`src/web/pipelines/static_site.py`), not backend.
+- Backend orchestration separates payload compute (`compute_pipeline_payload`) from artifact export (`src/backend/export/payload_exporter.py`).
 
 ## Frontend Rendering Structure
 

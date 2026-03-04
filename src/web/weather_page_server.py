@@ -19,7 +19,7 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import DEFAULT_RESORTS_FILE
+from src.shared.config import DEFAULT_RESORTS_FILE
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html

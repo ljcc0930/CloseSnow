@@ -6,7 +6,7 @@ import pytest
 
 from src.contract.validators import ContractValidationError
 from src.web.data_sources.api_source import load_api_payload
-from src.web.data_sources.source_selector import load_payload
+from src.web.data_sources.gateway import load_payload
 from src.web.data_sources.static_json_source import load_static_payload
 
 
@@ -63,19 +63,20 @@ def test_load_api_payload_invalid_contract(monkeypatch, valid_payload):
         load_api_payload("https://example.test/api/data")
 
 
-def test_load_payload_selector_api(monkeypatch):
-    monkeypatch.setattr(
-        "src.web.data_sources.source_selector.load_api_payload",
-        lambda source: {"source": source, "mode": "api"},
-    )
+def test_load_payload_gateway_api(monkeypatch):
+    def fake_load_api(url, timeout=20):  # noqa: ANN001
+        assert timeout == 20
+        return {"source": url, "mode": "api"}
+
+    monkeypatch.setattr("src.web.data_sources.gateway.load_api_payload", fake_load_api)
     payload = load_payload("api", "https://a")
     assert payload["mode"] == "api"
     assert payload["source"] == "https://a"
 
 
-def test_load_payload_selector_file(monkeypatch):
+def test_load_payload_gateway_file(monkeypatch):
     monkeypatch.setattr(
-        "src.web.data_sources.source_selector.load_static_payload",
+        "src.web.data_sources.gateway.load_static_payload",
         lambda source: {"source": source, "mode": "file"},
     )
     payload = load_payload("file", "/tmp/a.json")
@@ -83,7 +84,20 @@ def test_load_payload_selector_file(monkeypatch):
     assert payload["source"] == "/tmp/a.json"
 
 
-def test_load_payload_selector_rejects_unknown_mode():
+def test_load_payload_gateway_rejects_unknown_mode():
     with pytest.raises(ValueError, match="Unsupported data source mode"):
         load_payload("unknown", "x")
 
+
+def test_gateway_routes_to_api_with_timeout(monkeypatch):
+    calls = {}
+
+    def fake_load_api(url, timeout=20):  # noqa: ANN001
+        calls["url"] = url
+        calls["timeout"] = timeout
+        return {"ok": True}
+
+    monkeypatch.setattr("src.web.data_sources.gateway.load_api_payload", fake_load_api)
+    payload = load_payload(mode="api", source="https://a", timeout=11)
+    assert payload == {"ok": True}
+    assert calls == {"url": "https://a", "timeout": 11}

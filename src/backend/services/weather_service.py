@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from src.backend.pipeline import run_pipeline
+from src.backend.pipeline import compute_pipeline_payload
 
 
 def build_weather_payload(
@@ -14,7 +14,7 @@ def build_weather_payload(
     max_workers: int = 8,
 ) -> Dict[str, Any]:
     selected = [r.strip() for r in (resorts or []) if r and r.strip()]
-    return run_pipeline(
+    return compute_pipeline_payload(
         resorts=selected,
         resorts_file=resorts_file,
         use_default_resorts=False,
@@ -22,5 +22,4 @@ def build_weather_payload(
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
-        write_outputs=False,
     )

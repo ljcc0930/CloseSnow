@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE, FORECAST_DAYS
+from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
-from src.backend.writers import write_rain_csv, write_snow_csv, write_temp_csv, write_unified_json
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
@@ -152,18 +152,14 @@ async def _run_pipeline_async(
     return {"reports": reports, "failed": failed}
 
 
-def run_pipeline(
+def compute_pipeline_payload(
     resorts: Optional[List[str]] = None,
     resorts_file: str = DEFAULT_RESORTS_FILE,
     use_default_resorts: bool = False,
     output_json: str = ".cache/resorts_weather_unified.json",
-    snow_csv: str = ".cache/resorts_snowfall_daily.csv",
-    rain_csv: str = ".cache/resorts_rainfall_daily.csv",
-    temp_csv: str = ".cache/resorts_temperature_daily.csv",
     cache_file: str = ".cache/open_meteo_cache.json",
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
-    write_outputs: bool = True,
     max_workers: int = 8,
 ) -> Dict[str, Any]:
     selected: List[str] = [r.strip() for r in (resorts or []) if r and r.strip()]
@@ -229,11 +225,6 @@ def run_pipeline(
 
     cache.save()
     coord_cache.save()
-    if write_outputs:
-        write_unified_json(output_json, out)
-        write_snow_csv(snow_csv, reports)
-        write_rain_csv(rain_csv, reports)
-        write_temp_csv(temp_csv, reports)
 
     logger.info(
         "Pipeline done: success=%d failed=%d cache_hits=%d cache_misses=%d",
@@ -243,3 +234,38 @@ def run_pipeline(
         cache.misses,
     )
     return out
+
+
+def run_pipeline(
+    resorts: Optional[List[str]] = None,
+    resorts_file: str = DEFAULT_RESORTS_FILE,
+    use_default_resorts: bool = False,
+    output_json: str = ".cache/resorts_weather_unified.json",
+    snow_csv: str = ".cache/resorts_snowfall_daily.csv",
+    rain_csv: str = ".cache/resorts_rainfall_daily.csv",
+    temp_csv: str = ".cache/resorts_temperature_daily.csv",
+    cache_file: str = ".cache/open_meteo_cache.json",
+    geocode_cache_hours: int = 24 * 30,
+    forecast_cache_hours: int = 3,
+    write_outputs: bool = True,
+    max_workers: int = 8,
+) -> Dict[str, Any]:
+    payload = compute_pipeline_payload(
+        resorts=resorts,
+        resorts_file=resorts_file,
+        use_default_resorts=use_default_resorts,
+        output_json=output_json,
+        cache_file=cache_file,
+        geocode_cache_hours=geocode_cache_hours,
+        forecast_cache_hours=forecast_cache_hours,
+        max_workers=max_workers,
+    )
+    if write_outputs:
+        export_payload_artifacts(
+            payload=payload,
+            output_json=output_json,
+            snow_csv=snow_csv,
+            rain_csv=rain_csv,
+            temp_csv=temp_csv,
+        )
+    return payload
