@@ -39,9 +39,9 @@
         <h3 id="filter-title">Resort Filters</h3>
         <div class="filter-group">
           <div class="filter-group-title">Pass Type</div>
-          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon</label>
-          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic</label>
-          <label><input type="checkbox" name="filter-pass-type" value="indy" /> Indy</label>
+          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon <span data-pass-count="ikon"></span></label>
+          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic <span data-pass-count="epic"></span></label>
+          <label><input type="checkbox" name="filter-pass-type" value="indy" /> Indy <span data-pass-count="indy"></span></label>
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Region</div>
@@ -49,15 +49,20 @@
             <option value="">All</option>
             <option value="west">West</option>
             <option value="east">East</option>
+            <option value="intl">Intl</option>
           </select>
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Country</div>
           <select id="filter-country-select">
             <option value="">All</option>
-            <option value="US">US</option>
-            <option value="CA">CA</option>
           </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-include-all-label">
+            <input type="checkbox" id="filter-include-all" />
+            Include full catalog (slower)
+          </label>
         </div>
         <div class="filter-actions">
           <button id="filter-apply-btn" type="button">Apply</button>
@@ -75,6 +80,9 @@
   <footer class="page-footer">
     Author: Codex, vibed by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a>. <a href="https://github.com/ljcc0930/CloseSnow/issues/new?template=feature_request.yml" target="_blank" rel="noopener noreferrer">Feature requests</a> are welcome.
   </footer>
+  <script>
+    window.CLOSESNOW_FILTER_META = {{filter_meta_json}};
+  </script>
   <script src="assets/js/weather_page.js"></script>
 </body>
 </html>

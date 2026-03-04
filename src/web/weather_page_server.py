@@ -26,19 +26,29 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 from src.web.data_sources import load_payload
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
-from src.backend.weather_data_server import _hourly_payload_for_resort
+from src.backend.pipelines.live_pipeline import run_live_payload
+from src.backend.resort_catalog import load_resort_catalog
+from src.backend.weather_data_server import (
+    _available_filters,
+    _default_applied_filters,
+    _empty_payload,
+    _hourly_payload_for_resort,
+    select_resorts_from_query,
+)
+from src.shared.config import DEFAULT_RESORTS_FILE
 
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
 
 
-def _append_resort_query(base_url: str, resorts: List[str]) -> str:
-    if not resorts:
+def _append_query_values(base_url: str, qs: Dict[str, List[str]]) -> str:
+    if not qs:
         return base_url
     parsed = urlsplit(base_url)
     merged = parse_qs(parsed.query, keep_blank_values=True)
-    merged["resort"] = resorts
+    for key, values in qs.items():
+        merged[key] = list(values)
     query = urlencode(merged, doseq=True)
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))
 
@@ -72,10 +82,37 @@ def make_handler(
 
         def _load_request_payload(self, qs: Dict[str, List[str]]) -> Dict[str, Any]:
             resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
+            has_server_side_filters = any(
+                qs.get(key)
+                for key in ("pass_type", "region", "country", "search", "include_all")
+            )
+
+            if data_mode == "local" and has_server_side_filters:
+                selected, resorts_file, applied, available, no_match = select_resorts_from_query(qs)
+                if no_match:
+                    payload = _empty_payload(
+                        cache_file=cache_file,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                    )
+                else:
+                    payload = run_live_payload(
+                        resorts=selected,
+                        resorts_file=resorts_file,
+                        cache_file=cache_file,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                        max_workers=max_workers,
+                    )
+                payload["available_filters"] = available
+                payload["applied_filters"] = applied
+                return payload
+
             source = data_source
             if data_mode == "api":
-                source = _append_resort_query(data_source, resorts)
-            return load_payload(
+                source = _append_query_values(data_source, qs)
+
+            payload = load_payload(
                 mode=data_mode,
                 source=source,
                 timeout=data_timeout,
@@ -85,6 +122,15 @@ def make_handler(
                 forecast_cache_hours=forecast_cache_hours,
                 max_workers=max_workers,
             )
+            if "available_filters" not in payload:
+                try:
+                    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+                    payload["available_filters"] = _available_filters(catalog)
+                except Exception:
+                    payload["available_filters"] = {"pass_type": {}, "region": {}, "country": {}}
+            if "applied_filters" not in payload:
+                payload["applied_filters"] = _default_applied_filters()
+            return payload
 
         def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:
             if data_mode == "local":

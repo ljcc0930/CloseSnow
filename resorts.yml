@@ -1,39 +1,15 @@
 [
   {
-    "resort_id": "steamboat-co",
-    "query": "Steamboat, CO",
-    "name": "Steamboat",
-    "state": "CO",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "winter-park-co",
-    "query": "Winter Park, CO",
-    "name": "Winter Park",
-    "state": "CO",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
     "resort_id": "arapahoe-basin-co",
     "query": "Arapahoe Basin, CO",
     "name": "Arapahoe Basin",
     "state": "CO",
     "country": "US",
     "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "copper-mountain-co",
-    "query": "Copper Mountain, CO",
-    "name": "Copper Mountain",
-    "state": "CO",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
   },
   {
     "resort_id": "aspen-snowmass-co",
@@ -42,52 +18,10 @@
     "state": "CO",
     "country": "US",
     "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "snowbasin-ut",
-    "query": "Snowbasin, UT",
-    "name": "Snowbasin",
-    "state": "UT",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "snowbird-ut",
-    "query": "Snowbird, UT",
-    "name": "Snowbird",
-    "state": "UT",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "solitude-ut",
-    "query": "Solitude, UT",
-    "name": "Solitude",
-    "state": "UT",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "brighton-ut",
-    "query": "Brighton, UT",
-    "name": "Brighton",
-    "state": "UT",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "jackson-hole-wy",
-    "query": "Jackson Hole, WY",
-    "name": "Jackson Hole",
-    "state": "WY",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
   },
   {
     "resort_id": "big-sky-mt",
@@ -96,61 +30,10 @@
     "state": "MT",
     "country": "US",
     "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "palisades-tahoe-ca",
-    "query": "Palisades Tahoe, CA",
-    "name": "Palisades Tahoe",
-    "state": "CA",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "mammoth-mountain-ca",
-    "query": "Mammoth Mountain, CA",
-    "name": "Mammoth Mountain",
-    "state": "CA",
-    "country": "US",
-    "region": "west",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "killington-vt",
-    "query": "Killington, VT",
-    "name": "Killington",
-    "state": "VT",
-    "country": "US",
-    "region": "east",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "sugarbush-vt",
-    "query": "Sugarbush, VT",
-    "name": "Sugarbush",
-    "state": "VT",
-    "country": "US",
-    "region": "east",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "stratton-vt",
-    "query": "Stratton, VT",
-    "name": "Stratton",
-    "state": "VT",
-    "country": "US",
-    "region": "east",
-    "pass_types": ["ikon"]
-  },
-  {
-    "resort_id": "mt-brighton-mi",
-    "query": "Mt Brighton, MI",
-    "name": "Mt Brighton",
-    "state": "MI",
-    "country": "US",
-    "region": "east",
-    "pass_types": ["epic"]
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
   },
   {
     "resort_id": "boyne-mountain-mi",
@@ -159,6 +42,4309 @@
     "state": "MI",
     "country": "US",
     "region": "east",
-    "pass_types": ["ikon", "indy"]
+    "pass_types": [
+      "ikon",
+      "indy"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "brighton-ut",
+    "query": "Brighton, UT",
+    "name": "Brighton",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "copper-mountain-co",
+    "query": "Copper Mountain, CO",
+    "name": "Copper Mountain",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "jackson-hole-wy",
+    "query": "Jackson Hole, WY",
+    "name": "Jackson Hole",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "killington-vt",
+    "query": "Killington, VT",
+    "name": "Killington",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "mammoth-mountain-ca",
+    "query": "Mammoth Mountain, CA",
+    "name": "Mammoth Mountain",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "mt-brighton-mi",
+    "query": "Mt Brighton, MI",
+    "name": "Mt Brighton",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "palisades-tahoe-ca",
+    "query": "Palisades Tahoe, CA",
+    "name": "Palisades Tahoe",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "snowbasin-ut",
+    "query": "Snowbasin, UT",
+    "name": "Snowbasin",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "snowbird-ut",
+    "query": "Snowbird, UT",
+    "name": "Snowbird",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "solitude-ut",
+    "query": "Solitude, UT",
+    "name": "Solitude",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "steamboat-co",
+    "query": "Steamboat, CO",
+    "name": "Steamboat",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "stratton-vt",
+    "query": "Stratton, VT",
+    "name": "Stratton",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "sugarbush-vt",
+    "query": "Sugarbush, VT",
+    "name": "Sugarbush",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "winter-park-co",
+    "query": "Winter Park, CO",
+    "name": "Winter Park",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true
+  },
+  {
+    "resort_id": "49-degrees-north-wa",
+    "query": "49 Degrees North, WA",
+    "name": "49 Degrees North",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "appi-resort-japan",
+    "query": "APPI Resort, Japan",
+    "name": "APPI Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "afton-alps-mn",
+    "query": "Afton Alps, MN",
+    "name": "Afton Alps",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "alpine-valley-oh",
+    "query": "Alpine Valley, OH",
+    "name": "Alpine Valley",
+    "state": "OH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "alta-ski-area-ut",
+    "query": "Alta Ski Area, UT",
+    "name": "Alta Ski Area",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "alyeska-resort-ak",
+    "query": "Alyeska Resort, AK",
+    "name": "Alyeska Resort",
+    "state": "AK",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "andes-tower-hills-mn",
+    "query": "Andes Tower Hills, MN",
+    "name": "Andes Tower Hills",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ani-hero-1",
+    "query": "Ani Hero 1",
+    "name": "Ani Hero 1",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "anihari-ski-resort-aerial-view",
+    "query": "Anihari Ski Resort Aerial view",
+    "name": "Anihari Ski Resort Aerial view",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "antelope-butte-wy",
+    "query": "Antelope Butte, WY",
+    "name": "Antelope Butte",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aomori-spring-ski-resort",
+    "query": "Aomori Spring Ski Resort",
+    "name": "Aomori Spring Ski Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "apex-mountain-resort-bc",
+    "query": "Apex Mountain Resort, BC",
+    "name": "Apex Mountain Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "arai-snow-resort-japan",
+    "query": "Arai Snow Resort, Japan",
+    "name": "Arai Snow Resort, Japan",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "arctic-valley-ak",
+    "query": "Arctic Valley, AK",
+    "name": "Arctic Valley",
+    "state": "AK",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "attitash-nh",
+    "query": "Attitash, NH",
+    "name": "Attitash",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "baldy-mountain-resort-bc",
+    "query": "Baldy Mountain Resort, BC",
+    "name": "Baldy Mountain Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bear-valley-skiier-in-sun",
+    "query": "Bear Valley skiier in sun",
+    "name": "Bear Valley skiier in sun",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "beaver-creek-co",
+    "query": "Beaver Creek, CO",
+    "name": "Beaver Creek",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "beaver-mountain-ut",
+    "query": "Beaver Mountain, UT",
+    "name": "Beaver Mountain",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "berkshire-east-mountain-resort-ma",
+    "query": "Berkshire East Mountain Resort, MA",
+    "name": "Berkshire East Mountain Resort",
+    "state": "MA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-bear-mountain-resort-ca",
+    "query": "Big Bear Mountain Resort, CA",
+    "name": "Big Bear Mountain Resort",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-boulder-pa",
+    "query": "Big Boulder, PA",
+    "name": "Big Boulder",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-powderhorn-mi",
+    "query": "Big Powderhorn, MI",
+    "name": "Big Powderhorn",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-rock-mountain-me",
+    "query": "Big Rock Mountain, ME",
+    "name": "Big Rock Mountain",
+    "state": "ME",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-sky-resort-mt",
+    "query": "Big Sky Resort, MT",
+    "name": "Big Sky Resort",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "big-white-ski-resort-bc",
+    "query": "Big White Ski Resort, BC",
+    "name": "Big White Ski Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "blacktail-mountain-resort-mt",
+    "query": "Blacktail Mountain Resort, MT",
+    "name": "Blacktail Mountain Resort",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "blue-knob-all-season-resort-pa",
+    "query": "Blue Knob All Season Resort, PA",
+    "name": "Blue Knob All Season Resort",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "blue-mountain-resort-pa",
+    "query": "Blue Mountain Resort, PA",
+    "name": "Blue Mountain Resort",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "blue-mountain-on",
+    "query": "Blue Mountain, ON",
+    "name": "Blue Mountain",
+    "state": "ON",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bolton-valley-resort-vt",
+    "query": "Bolton Valley Resort, VT",
+    "name": "Bolton Valley Resort",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "boston-mills-brandywine-oh",
+    "query": "Boston Mills / Brandywine, OH",
+    "name": "Boston Mills / Brandywine",
+    "state": "OH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bottineau-winter-park-nd",
+    "query": "Bottineau Winter Park, ND",
+    "name": "Bottineau Winter Park",
+    "state": "ND",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bousquet-mountain-snowboarding-group",
+    "query": "Bousquet Mountain snowboarding group",
+    "name": "Bousquet Mountain snowboarding group",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "breckenridge-co",
+    "query": "Breckenridge, CO",
+    "name": "Breckenridge",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bruce-mound-snow-and-snowboarder",
+    "query": "Bruce Mound snow and snowboarder",
+    "name": "Bruce Mound snow and snowboarder",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "brundage-mountain-resort-id",
+    "query": "Brundage Mountain Resort, ID",
+    "name": "Brundage Mountain Resort",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bryce-resort-va",
+    "query": "Bryce Resort, VA",
+    "name": "Bryce Resort",
+    "state": "VA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "caberfae-peaks-mi",
+    "query": "Caberfae Peaks, MI",
+    "name": "Caberfae Peaks",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "calabogie-peaks-resort-on",
+    "query": "Calabogie Peaks Resort, ON",
+    "name": "Calabogie Peaks Resort",
+    "state": "ON",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "camelback-resort-pa",
+    "query": "Camelback Resort, PA",
+    "name": "Camelback Resort",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "camp-fortune-sunset-over-mountain",
+    "query": "Camp Fortune sunset over mountain",
+    "name": "Camp Fortune sunset over mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "canaan-valley-wv",
+    "query": "Canaan Valley, WV",
+    "name": "Canaan Valley",
+    "state": "WV",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cannon-mountain-nh",
+    "query": "Cannon Mountain, NH",
+    "name": "Cannon Mountain",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "castle-mountain-resort-ab",
+    "query": "Castle Mountain Resort, AB",
+    "name": "Castle Mountain Resort",
+    "state": "AB",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cataloochee-ski-area-nc",
+    "query": "Cataloochee Ski Area, NC",
+    "name": "Cataloochee Ski Area",
+    "state": "NC",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "catamount-mountain-resort-ma",
+    "query": "Catamount Mountain Resort, MA",
+    "name": "Catamount Mountain Resort",
+    "state": "MA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cazenovia-ski-club-skiers-powder",
+    "query": "Cazenovia Ski Club skiers powder",
+    "name": "Cazenovia Ski Club skiers powder",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "chamonix-mont-blanc-valley-france",
+    "query": "Chamonix Mont-Blanc Valley, France",
+    "name": "Chamonix Mont-Blanc Valley, France",
+    "state": "",
+    "country": "FR",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cherry-peak-hero",
+    "query": "Cherry Peak Hero",
+    "name": "Cherry Peak Hero",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cherry-peak-hero-ut",
+    "query": "Cherry Peak Hero, UT",
+    "name": "Cherry Peak Hero",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "chestnut-mountain-resort-il",
+    "query": "Chestnut Mountain Resort, IL",
+    "name": "Chestnut Mountain Resort",
+    "state": "IL",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "china-peak-ca",
+    "query": "China Peak, CA",
+    "name": "China Peak",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "christie-mountain-snowboarder-in-trees",
+    "query": "Christie Mountain snowboarder in trees",
+    "name": "Christie Mountain snowboarder in trees",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cooper-spur-ski-area-or",
+    "query": "Cooper Spur Ski Area, OR",
+    "name": "Cooper Spur Ski Area",
+    "state": "OR",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "coronet-peak-the-remarkables-mt-hutt-new-zealand",
+    "query": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand",
+    "name": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand",
+    "state": "",
+    "country": "NZ",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "crested-butte-co",
+    "query": "Crested Butte, CO",
+    "name": "Crested Butte",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "crotched-nh",
+    "query": "Crotched, NH",
+    "name": "Crotched",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "crystal-mountain-mi",
+    "query": "Crystal Mountain, MI",
+    "name": "Crystal Mountain",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "crystal-mountain-wa",
+    "query": "Crystal Mountain, WA",
+    "name": "Crystal Mountain",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "cypress-mountain-bc",
+    "query": "Cypress Mountain, BC",
+    "name": "Cypress Mountain",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "dartmouth-skiway-nh",
+    "query": "Dartmouth Skiway, NH",
+    "name": "Dartmouth Skiway",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "deer-valley-resort-ut",
+    "query": "Deer Valley Resort, UT",
+    "name": "Deer Valley Resort",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "detroit-mountain-mn",
+    "query": "Detroit Mountain, MN",
+    "name": "Detroit Mountain",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "dodge-ridge-ca",
+    "query": "Dodge Ridge, CA",
+    "name": "Dodge Ridge",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "dolomiti-superski-italy",
+    "query": "Dolomiti Superski, Italy",
+    "name": "Dolomiti Superski, Italy",
+    "state": "",
+    "country": "IT",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "drone-shot-of-baqueira-beret-resort",
+    "query": "Drone shot of Baqueira/Beret resort",
+    "name": "Drone shot of Baqueira/Beret resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "dynaland-center-house",
+    "query": "Dynaland Center House",
+    "name": "Dynaland Center House",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "eagle-point-ut",
+    "query": "Eagle Point, UT",
+    "name": "Eagle Point",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "eaglecrest-ak",
+    "query": "Eaglecrest, AK",
+    "name": "Eaglecrest",
+    "state": "AK",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "echo-mountain-co",
+    "query": "Echo Mountain, CO",
+    "name": "Echo Mountain",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "eldora-mountain-resort-co",
+    "query": "Eldora Mountain Resort, CO",
+    "name": "Eldora Mountain Resort",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "facility-2-of-yuzawa-nakazato-snow-resort",
+    "query": "Facility 2 of Yuzawa Nakazato Snow Resort",
+    "name": "Facility 2 of Yuzawa Nakazato Snow Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "fairmont-hot-springs",
+    "query": "Fairmont Hot Springs",
+    "name": "Fairmont Hot Springs",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "fairmont-hot-springs-bc",
+    "query": "Fairmont Hot Springs, BC",
+    "name": "Fairmont Hot Springs",
+    "state": "BC",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "furano-ski-resort-japan",
+    "query": "Furano Ski Resort, Japan",
+    "name": "Furano Ski Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "geto-kogen",
+    "query": "Geto Kogen",
+    "name": "Geto Kogen",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "granby-ranch-co",
+    "query": "Granby Ranch, CO",
+    "name": "Granby Ranch",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "grandvalira-resorts-andorra-andorra",
+    "query": "Grandvalira Resorts Andorra, Andorra",
+    "name": "Grandvalira Resorts Andorra",
+    "state": "",
+    "country": "AD",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "granite-peak-wi",
+    "query": "Granite Peak, WI",
+    "name": "Granite Peak",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon",
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "great-bear-ski-valley-sd",
+    "query": "Great Bear Ski Valley, SD",
+    "name": "Great Bear Ski Valley",
+    "state": "SD",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "greek-peak-mountain-resort-ny",
+    "query": "Greek Peak Mountain Resort, NY",
+    "name": "Greek Peak Mountain Resort",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hyland-hills",
+    "query": "HYLAND HILLS",
+    "name": "HYLAND HILLS",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "heavenly-ca",
+    "query": "Heavenly, CA",
+    "name": "Heavenly",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hidden-valley-mo",
+    "query": "Hidden Valley, MO",
+    "name": "Hidden Valley",
+    "state": "MO",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hidden-valley-pa",
+    "query": "Hidden Valley, PA",
+    "name": "Hidden Valley",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hirugano-kogen-ski-resort-with-mountain",
+    "query": "Hirugano Kogen Ski Resort with mountain",
+    "name": "Hirugano Kogen Ski Resort with mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hodaigi-ski-resort",
+    "query": "Hodaigi Ski Resort",
+    "name": "Hodaigi Ski Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hoodoo-or",
+    "query": "Hoodoo, OR",
+    "name": "Hoodoo",
+    "state": "OR",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "howelsen-hill-co",
+    "query": "Howelsen Hill, CO",
+    "name": "Howelsen Hill",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hudson-bay-scenic",
+    "query": "Hudson Bay - Scenic",
+    "name": "Hudson Bay - Scenic",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hudson-bay-scenic-bc",
+    "query": "Hudson Bay - Scenic, BC",
+    "name": "Hudson Bay - Scenic",
+    "state": "BC",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "huff-hills-ski-area-nd",
+    "query": "Huff Hills Ski Area, ND",
+    "name": "Huff Hills Ski Area",
+    "state": "ND",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hunt-hollow-sunny-ski-day",
+    "query": "Hunt Hollow sunny ski day",
+    "name": "Hunt Hollow sunny ski day",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hunter-ny",
+    "query": "Hunter, NY",
+    "name": "Hunter",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hurricane-ridge-wa",
+    "query": "Hurricane Ridge, WA",
+    "name": "Hurricane Ridge",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "innsbruck-ski-city-network-lodge-and-view",
+    "query": "Innsbruck Ski & City Network lodge and view",
+    "name": "Innsbruck Ski & City Network lodge and view",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ischgl-austria",
+    "query": "Ischgl, Austria",
+    "name": "Ischgl, Austria",
+    "state": "",
+    "country": "AT",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "jack-frost-pa",
+    "query": "Jack Frost, PA",
+    "name": "Jack Frost",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "jackson-hole-mountain-resort-wy",
+    "query": "Jackson Hole Mountain Resort, WY",
+    "name": "Jackson Hole Mountain Resort",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "jay-peak-resort-vt",
+    "query": "Jay Peak Resort, VT",
+    "name": "Jay Peak Resort",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "june-mountain-ca",
+    "query": "June Mountain, CA",
+    "name": "June Mountain",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kamui-ski-links",
+    "query": "Kamui Ski Links",
+    "name": "Kamui Ski Links",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kaunertal-glacier",
+    "query": "Kaunertal Glacier",
+    "name": "Kaunertal Glacier",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kelly-canyon-id",
+    "query": "Kelly Canyon, ID",
+    "name": "Kelly Canyon",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "keystone-co",
+    "query": "Keystone, CO",
+    "name": "Keystone",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kids-at-ninox-snow-resort",
+    "query": "Kids at Ninox Snow Resort",
+    "name": "Kids at Ninox Snow Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "killington-pico-vt",
+    "query": "Killington-Pico, VT",
+    "name": "Killington-Pico",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "king-pine-hero-1",
+    "query": "King Pine Hero 1",
+    "name": "King Pine Hero 1",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "king-pine-hero-1-nh",
+    "query": "King Pine Hero 1, NH",
+    "name": "King Pine Hero 1",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kirkwood-ca",
+    "query": "Kirkwood, CA",
+    "name": "Kirkwood",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kiroro-snow-world",
+    "query": "Kiroro Snow World",
+    "name": "Kiroro Snow World",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "kitzb-hel-austria",
+    "query": "Kitzbühel, Austria",
+    "name": "Kitzbühel, Austria",
+    "state": "",
+    "country": "AT",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "laurel-mountain-pa",
+    "query": "Laurel Mountain, PA",
+    "name": "Laurel Mountain",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "le-massif-qc",
+    "query": "Le Massif, QC",
+    "name": "Le Massif",
+    "state": "QC",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "leavenworth-winter-sports-club-wa",
+    "query": "Leavenworth Winter Sports Club, WA",
+    "name": "Leavenworth Winter Sports Club",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "les-7-laux",
+    "query": "Les 7 Laux",
+    "name": "Les 7 Laux",
+    "state": "",
+    "country": "FR",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "liberty-mountain-pa",
+    "query": "Liberty Mountain, PA",
+    "name": "Liberty Mountain",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "little-switzerland-wi",
+    "query": "Little Switzerland, WI",
+    "name": "Little Switzerland",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "loch-lomond-on",
+    "query": "Loch Lomond, ON",
+    "name": "Loch Lomond",
+    "state": "ON",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "loon-mountain-nh",
+    "query": "Loon Mountain, NH",
+    "name": "Loon Mountain",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "lost-trail-powder-mountain-mt",
+    "query": "Lost Trail Powder Mountain, MT",
+    "name": "Lost Trail Powder Mountain",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "lost-valley-at-night",
+    "query": "Lost Valley at night",
+    "name": "Lost Valley at night",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "loup-loup-ski-bowl-wa",
+    "query": "Loup Loup Ski Bowl, WA",
+    "name": "Loup Loup Ski Bowl",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "lutsen-mountains-mn",
+    "query": "Lutsen Mountains, MN",
+    "name": "Lutsen Mountains",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon",
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mad-river-mountain-oh",
+    "query": "Mad River Mountain, OH",
+    "name": "Mad River Mountain",
+    "state": "OH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "magic-mountain-vt",
+    "query": "Magic Mountain, VT",
+    "name": "Magic Mountain",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "maiko-resort",
+    "query": "Maiko Resort",
+    "name": "Maiko Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mala-upa-scenery",
+    "query": "Mala Upa scenery",
+    "name": "Mala Upa scenery",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "manning-park-bc",
+    "query": "Manning Park, BC",
+    "name": "Manning Park",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "maple-ski-ridge-ny",
+    "query": "Maple Ski Ridge, NY",
+    "name": "Maple Ski Ridge",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "marquette-mountain-mi",
+    "query": "Marquette Mountain, MI",
+    "name": "Marquette Mountain",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "massanutten-resort-va",
+    "query": "Massanutten Resort, VA",
+    "name": "Massanutten Resort",
+    "state": "VA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "massif-du-sud-ski-resort-snowboarder",
+    "query": "Massif du Sud Ski Resort snowboarder",
+    "name": "Massif du Sud Ski Resort snowboarder",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mcintyre-ski-area-nh",
+    "query": "McIntyre Ski Area, NH",
+    "name": "McIntyre Ski Area",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "meadowlark-ski-resort-wy",
+    "query": "Meadowlark Ski Resort, WY",
+    "name": "Meadowlark Ski Resort",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "meg-ve-ski-area-france",
+    "query": "Megève Ski Area, France",
+    "name": "Megève Ski Area",
+    "state": "",
+    "country": "FR",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mission-ridge-wa",
+    "query": "Mission Ridge, WA",
+    "name": "Mission Ridge",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mohawk-mountain-ct",
+    "query": "Mohawk Mountain, CT",
+    "name": "Mohawk Mountain",
+    "state": "CT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mona-yongpyong-south-korea",
+    "query": "Mona YongPyong, South Korea",
+    "name": "Mona YongPyong",
+    "state": "",
+    "country": "KR",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mont-edouard",
+    "query": "Mont Edouard",
+    "name": "Mont Edouard",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mont-edouard-qc",
+    "query": "Mont Edouard, QC",
+    "name": "Mont Edouard",
+    "state": "",
+    "country": "QC",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mont-rigaud-skier-in-snow-and-trees",
+    "query": "Mont Rigaud skier in snow and trees",
+    "name": "Mont Rigaud skier in snow and trees",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mont-ripley-ski-area-mi",
+    "query": "Mont Ripley Ski Area, MI",
+    "name": "Mont Ripley Ski Area",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "montage-mountain-pa",
+    "query": "Montage Mountain, PA",
+    "name": "Montage Mountain",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "montana-snowbowl-mt",
+    "query": "Montana Snowbowl, MT",
+    "name": "Montana Snowbowl",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "moose-mountain-aerial",
+    "query": "Moose Mountain - Aerial",
+    "name": "Moose Mountain - Aerial",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mount-baldy-ski-area-on",
+    "query": "Mount Baldy Ski Area, ON",
+    "name": "Mount Baldy Ski Area",
+    "state": "ON",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mount-kato-mn",
+    "query": "Mount Kato, MN",
+    "name": "Mount Kato",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mount-snow-vt",
+    "query": "Mount Snow, VT",
+    "name": "Mount Snow",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mount-sunapee-nh",
+    "query": "Mount Sunapee, NH",
+    "name": "Mount Sunapee",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mountain-high-ca",
+    "query": "Mountain High, CA",
+    "name": "Mountain High",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-buller-australia",
+    "query": "Mt Buller, Australia",
+    "name": "Mt Buller, Australia",
+    "state": "",
+    "country": "AU",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-washington",
+    "query": "Mt Washington",
+    "name": "Mt Washington",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-bachelor-or",
+    "query": "Mt. Bachelor, OR",
+    "name": "Mt. Bachelor",
+    "state": "OR",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-holiday-skier-jumping",
+    "query": "Mt. Holiday skier jumping",
+    "name": "Mt. Holiday skier jumping",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-shasta-ca",
+    "query": "Mt. Shasta, CA",
+    "name": "Mt. Shasta",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-t-japan",
+    "query": "Mt. T, Japan",
+    "name": "Mt. T",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "murray-ridge-ski-area",
+    "query": "Murray Ridge Ski Area",
+    "name": "Murray Ridge Ski Area",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "murray-ridge-ski-area-bc",
+    "query": "Murray Ridge Ski Area, BC",
+    "name": "Murray Ridge Ski Area",
+    "state": "",
+    "country": "BC",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "myoko-suginohara-ski-resort-japan",
+    "query": "Myoko Suginohara Ski Resort, Japan",
+    "name": "Myoko Suginohara Ski Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "nekoma-mountain-japan",
+    "query": "NEKOMA Mountain, Japan",
+    "name": "NEKOMA Mountain",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "nayoro-piyashiri-ski-resort",
+    "query": "Nayoro Piyashiri Ski Resort",
+    "name": "Nayoro Piyashiri Ski Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "niseko-united-japan",
+    "query": "Niseko United, Japan",
+    "name": "Niseko United, Japan",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "nordic-mountain-wi",
+    "query": "Nordic Mountain, WI",
+    "name": "Nordic Mountain",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "northstar-ca",
+    "query": "Northstar, CA",
+    "name": "Northstar",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "norway-mountain-overview-of-mountain",
+    "query": "Norway Mountain overview of mountain",
+    "name": "Norway Mountain overview of mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "nubs-nob-mi",
+    "query": "Nubs Nob, MI",
+    "name": "Nubs Nob",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "okemo-vt",
+    "query": "Okemo, VT",
+    "name": "Okemo",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "okunakayama-kogen",
+    "query": "Okunakayama Kogen",
+    "name": "Okunakayama Kogen",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "palcall-tsumagoi-resort",
+    "query": "Palcall Tsumagoi Resort",
+    "name": "Palcall Tsumagoi Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "panorama-bc",
+    "query": "Panorama, BC",
+    "name": "Panorama",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "paoli-peaks-in",
+    "query": "Paoli Peaks, IN",
+    "name": "Paoli Peaks",
+    "state": "IN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "park-city-ut",
+    "query": "Park City, UT",
+    "name": "Park City",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pass-powderkeg-ab",
+    "query": "Pass Powderkeg, AB",
+    "name": "Pass Powderkeg",
+    "state": "AB",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pats-peak-nh",
+    "query": "Pats Peak, NH",
+    "name": "Pats Peak",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pebble-creek",
+    "query": "Pebble Creek",
+    "name": "Pebble Creek",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pebble-creek-id",
+    "query": "Pebble Creek, ID",
+    "name": "Pebble Creek",
+    "state": "",
+    "country": "ID",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "peek-n-peak-ny",
+    "query": "Peek ‘n Peak, NY",
+    "name": "Peek ‘n Peak",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "phoenix-mountain-bc",
+    "query": "Phoenix Mountain, BC",
+    "name": "Phoenix Mountain",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pine-mountain-mi",
+    "query": "Pine Mountain, MI",
+    "name": "Pine Mountain",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pippu",
+    "query": "Pippu",
+    "name": "Pippu",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pomerelle-mountain-resort-id",
+    "query": "Pomerelle Mountain Resort, ID",
+    "name": "Pomerelle Mountain Resort",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "powder-ridge-mn",
+    "query": "Powder Ridge, MN",
+    "name": "Powder Ridge",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "powderhorn",
+    "query": "Powderhorn",
+    "name": "Powderhorn",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "powderhorn-co",
+    "query": "Powderhorn, CO",
+    "name": "Powderhorn",
+    "state": "",
+    "country": "CO",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "red-mountain-bc",
+    "query": "RED Mountain, BC",
+    "name": "RED Mountain",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "rauriser-hochalmbahnen",
+    "query": "Rauriser-Hochalmbahnen",
+    "name": "Rauriser-Hochalmbahnen",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "red-lodge",
+    "query": "Red Lodge",
+    "name": "Red Lodge",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "revelstoke-mountain-resort-bc",
+    "query": "Revelstoke Mountain Resort, BC",
+    "name": "Revelstoke Mountain Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "roundtop-mountain-pa",
+    "query": "Roundtop Mountain, PA",
+    "name": "Roundtop Mountain",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "saddleback-mountain-me",
+    "query": "Saddleback Mountain, ME",
+    "name": "Saddleback Mountain",
+    "state": "ME",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "saskadena-six-ski-area-vt",
+    "query": "Saskadena Six Ski Area, VT",
+    "name": "Saskadena Six Ski Area",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sasquatch-mountain-resort-bc",
+    "query": "Sasquatch Mountain Resort, BC",
+    "name": "Sasquatch Mountain Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "schuss-mountain-at-shanty-creek-mi",
+    "query": "Schuss Mountain at Shanty Creek, MI",
+    "name": "Schuss Mountain at Shanty Creek",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "schweitzer-id",
+    "query": "Schweitzer, ID",
+    "name": "Schweitzer",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "seven-springs-pa",
+    "query": "Seven Springs, PA",
+    "name": "Seven Springs",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "shames-mountain-bc",
+    "query": "Shames Mountain, BC",
+    "name": "Shames Mountain",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "shawnee-mountain-ski-area-pa",
+    "query": "Shawnee Mountain Ski Area, PA",
+    "name": "Shawnee Mountain Ski Area",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "shiga-kogen-mountain-resort-japan",
+    "query": "Shiga Kogen Mountain Resort, Japan",
+    "name": "Shiga Kogen Mountain Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sierra-at-tahoe-ca",
+    "query": "Sierra-at-Tahoe, CA",
+    "name": "Sierra-at-Tahoe",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "silver-mountain-id",
+    "query": "Silver Mountain, ID",
+    "name": "Silver Mountain",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skaneateles-ski-club-ny",
+    "query": "Skaneateles Ski Club, NY",
+    "name": "Skaneateles Ski Club",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ski-big-bear-pa",
+    "query": "Ski Big Bear, PA",
+    "name": "Ski Big Bear",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ski-bluewood-wa",
+    "query": "Ski Bluewood, WA",
+    "name": "Ski Bluewood",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ski-sawmill-pa",
+    "query": "Ski Sawmill, PA",
+    "name": "Ski Sawmill",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skibig3-ab",
+    "query": "SkiBig3, AB",
+    "name": "SkiBig3",
+    "state": "AB",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiwelt",
+    "query": "SkiWelt",
+    "name": "SkiWelt",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiwelt-austria",
+    "query": "SkiWelt, Austria",
+    "name": "SkiWelt",
+    "state": "",
+    "country": "AT",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiers-on-top-of-mountain",
+    "query": "Skiers on top of mountain",
+    "name": "Skiers on top of mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiers-overlooking-mountain-at-muica-snow-resort",
+    "query": "Skiers overlooking mountain at Muica Snow Resort",
+    "name": "Skiers overlooking mountain at Muica Snow Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snow-creek-mo",
+    "query": "Snow Creek, MO",
+    "name": "Snow Creek",
+    "state": "MO",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snow-king-mountain-resort-wy",
+    "query": "Snow King Mountain Resort, WY",
+    "name": "Snow King Mountain Resort",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snow-ridge-ny",
+    "query": "Snow Ridge, NY",
+    "name": "Snow Ridge",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snow-valley-ca",
+    "query": "Snow Valley, CA",
+    "name": "Snow Valley",
+    "state": "CA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snowboarder-at-sunset-at-washigatake-ski-resort",
+    "query": "Snowboarder at sunset at Washigatake Ski Resort",
+    "name": "Snowboarder at sunset at Washigatake Ski Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snowriver-mountain-resort-mi",
+    "query": "Snowriver Mountain Resort, MI",
+    "name": "Snowriver Mountain Resort",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snowriver-mi",
+    "query": "Snowriver, MI",
+    "name": "Snowriver",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon",
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snowshoe-wv",
+    "query": "Snowshoe, WV",
+    "name": "Snowshoe",
+    "state": "WV",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "snowstar-il",
+    "query": "Snowstar, IL",
+    "name": "Snowstar",
+    "state": "IL",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "soldier-mountain-id",
+    "query": "Soldier Mountain, ID",
+    "name": "Soldier Mountain",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "solitude-mountain-resort-ut",
+    "query": "Solitude Mountain Resort, UT",
+    "name": "Solitude Mountain Resort",
+    "state": "UT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "spirit-mountain-mn",
+    "query": "Spirit Mountain, MN",
+    "name": "Spirit Mountain",
+    "state": "MN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "st-moritz-switzerland",
+    "query": "St. Moritz, Switzerland",
+    "name": "St. Moritz, Switzerland",
+    "state": "",
+    "country": "CH",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stevens-pass-wa",
+    "query": "Stevens Pass, WA",
+    "name": "Stevens Pass",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stoten-i-salen",
+    "query": "Stoten i Salen",
+    "name": "Stoten i Salen",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stoten-i-salen-sweden",
+    "query": "Stoten i Salen, Sweden",
+    "name": "Stoten i Salen",
+    "state": "",
+    "country": "SE",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stowe-vt",
+    "query": "Stowe, VT",
+    "name": "Stowe",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stranda-ski-resort",
+    "query": "Stranda Ski Resort",
+    "name": "Stranda Ski Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "stranda-ski-resort-norway",
+    "query": "Stranda Ski Resort, Norway",
+    "name": "Stranda Ski Resort",
+    "state": "",
+    "country": "NO",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sugarbush-resort-vt",
+    "query": "Sugarbush Resort, VT",
+    "name": "Sugarbush Resort",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sugarloaf-me",
+    "query": "Sugarloaf, ME",
+    "name": "Sugarloaf",
+    "state": "ME",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sun-peaks-resort-bc",
+    "query": "Sun Peaks Resort, BC",
+    "name": "Sun Peaks Resort",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sun-valley-id",
+    "query": "Sun Valley, ID",
+    "name": "Sun Valley",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sunday-river-me",
+    "query": "Sunday River, ME",
+    "name": "Sunday River",
+    "state": "ME",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sundown-mountain-ia",
+    "query": "Sundown Mountain, IA",
+    "name": "Sundown Mountain",
+    "state": "IA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sunlight-mountain-resort-co",
+    "query": "Sunlight Mountain Resort, CO",
+    "name": "Sunlight Mountain Resort",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "swain-resort-ny",
+    "query": "Swain Resort, NY",
+    "name": "Swain Resort",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "takasu-snow-park-scenery",
+    "query": "Takasu Snow Park scenery",
+    "name": "Takasu Snow Park scenery",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tamarack-mountain-resort-id",
+    "query": "Tamarack Mountain Resort, ID",
+    "name": "Tamarack Mountain Resort",
+    "state": "ID",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tangram-ski-circus-snowboarder",
+    "query": "Tangram Ski Circus snowboarder",
+    "name": "Tangram Ski Circus snowboarder",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "taos-ski-valley-nm",
+    "query": "Taos Ski Valley, NM",
+    "name": "Taos Ski Valley",
+    "state": "NM",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tazawako-hero-1",
+    "query": "Tazawako Hero 1",
+    "name": "Tazawako Hero 1",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "terry-peak-sd",
+    "query": "Terry Peak, SD",
+    "name": "Terry Peak",
+    "state": "SD",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "the-highlands-mi",
+    "query": "The Highlands, MI",
+    "name": "The Highlands",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "the-rock-snowpark",
+    "query": "The Rock Snowpark",
+    "name": "The Rock Snowpark",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "the-rock-snowpark-wi",
+    "query": "The Rock Snowpark, WI",
+    "name": "The Rock Snowpark",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "the-summit-at-snoqualmie-wa",
+    "query": "The Summit at Snoqualmie, WA",
+    "name": "The Summit at Snoqualmie",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "thredbo-australia",
+    "query": "Thredbo, Australia",
+    "name": "Thredbo, Australia",
+    "state": "",
+    "country": "AU",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "thrill-hills",
+    "query": "Thrill Hills",
+    "name": "Thrill Hills",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "thrill-hills-nd",
+    "query": "Thrill Hills, ND",
+    "name": "Thrill Hills",
+    "state": "",
+    "country": "ND",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "titus-mountain-ny",
+    "query": "Titus Mountain, NY",
+    "name": "Titus Mountain",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tree-tops-resort",
+    "query": "Tree Tops Resort",
+    "name": "Tree Tops Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tree-tops-resort-mi",
+    "query": "Tree Tops Resort, MI",
+    "name": "Tree Tops Resort",
+    "state": "MI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tremblant-qc",
+    "query": "Tremblant, QC",
+    "name": "Tremblant",
+    "state": "QC",
+    "country": "CA",
+    "region": "east",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "trollhaugen-wi",
+    "query": "Trollhaugen, WI",
+    "name": "Trollhaugen",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tussey-mountain-pa",
+    "query": "Tussey Mountain, PA",
+    "name": "Tussey Mountain",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tyrol-basin-ski-and-snowboard-wi",
+    "query": "Tyrol Basin Ski and Snowboard, WI",
+    "name": "Tyrol Basin Ski and Snowboard",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "vail-co",
+    "query": "Vail, CO",
+    "name": "Vail",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "valle-nevado-chile",
+    "query": "Valle Nevado, Chile",
+    "name": "Valle Nevado, Chile",
+    "state": "",
+    "country": "CL",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "valle-d-aosta-italy",
+    "query": "Valle d'Aosta, Italy",
+    "name": "Valle d'Aosta, Italy",
+    "state": "",
+    "country": "IT",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "valmorel",
+    "query": "Valmorel",
+    "name": "Valmorel",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "west-mountain-ny",
+    "query": "West Mountain, NY",
+    "name": "West Mountain",
+    "state": "NY",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whaleback-mountain-nh",
+    "query": "Whaleback Mountain, NH",
+    "name": "Whaleback Mountain",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whistler-blackcomb-bc",
+    "query": "Whistler Blackcomb, BC",
+    "name": "Whistler Blackcomb",
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "white-pass",
+    "query": "White Pass",
+    "name": "White Pass",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "white-pass-wa",
+    "query": "White Pass, WA",
+    "name": "White Pass",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whitepia-takasu-snowboarder",
+    "query": "WhitePIA Takasu snowboarder",
+    "name": "WhitePIA Takasu snowboarder",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whitepine-mountain-resort",
+    "query": "Whitepine Mountain Resort",
+    "name": "Whitepine Mountain Resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whitepine-mountain-resort-wy",
+    "query": "Whitepine Mountain Resort, WY",
+    "name": "Whitepine Mountain Resort",
+    "state": "WY",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "whitetail-resort-pa",
+    "query": "Whitetail Resort, PA",
+    "name": "Whitetail Resort",
+    "state": "PA",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "wildcat-nh",
+    "query": "Wildcat, NH",
+    "name": "Wildcat",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "wilmot-mountain-wi",
+    "query": "Wilmot Mountain, WI",
+    "name": "Wilmot Mountain",
+    "state": "WI",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "epic"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "winter-park-resort-co",
+    "query": "Winter Park Resort, CO",
+    "name": "Winter Park Resort",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "winterplace-ski-resort-wv",
+    "query": "Winterplace Ski Resort, WV",
+    "name": "Winterplace Ski Resort",
+    "state": "WV",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "wisp",
+    "query": "Wisp",
+    "name": "Wisp",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "yubari",
+    "query": "Yubari",
+    "name": "Yubari",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "yunding-snow-park-china",
+    "query": "Yunding Snow Park, China",
+    "name": "Yunding Snow Park",
+    "state": "",
+    "country": "CN",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "zao-onsen-ski-resort-japan",
+    "query": "Zao Onsen Ski Resort, Japan",
+    "name": "Zao Onsen Ski Resort",
+    "state": "",
+    "country": "JP",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "zermatt-matterhorn-switzerland",
+    "query": "Zermatt Matterhorn, Switzerland",
+    "name": "Zermatt Matterhorn, Switzerland",
+    "state": "",
+    "country": "CH",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial",
+    "query": "aerial",
+    "name": "aerial",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-black-mtn",
+    "query": "aerial black mtn",
+    "name": "aerial black mtn",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-black-mtn-nh",
+    "query": "aerial black mtn, NH",
+    "name": "aerial black mtn",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-image-of-ragged",
+    "query": "aerial image of ragged",
+    "name": "aerial image of ragged",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-photo-bmom",
+    "query": "aerial photo bmom",
+    "name": "aerial photo bmom",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-photo-bmom-me",
+    "query": "aerial photo bmom, ME",
+    "name": "aerial photo bmom",
+    "state": "ME",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-view-of-pitztaler-gletscherbahn-in-snowy-mountains",
+    "query": "aerial view of Pitztaler Gletscherbahn in snowy mountains",
+    "name": "aerial view of Pitztaler Gletscherbahn in snowy mountains",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "aerial-view-of-ski-lifts",
+    "query": "aerial view of ski lifts",
+    "name": "aerial view of ski lifts",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bear-creek-sunset",
+    "query": "bear creek sunset",
+    "name": "bear creek sunset",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bjorkliden",
+    "query": "bjorkliden",
+    "name": "bjorkliden",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "bjorkliden-sweden",
+    "query": "bjorkliden, Sweden",
+    "name": "bjorkliden",
+    "state": "",
+    "country": "SE",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "buffalo-ski-club",
+    "query": "buffalo ski club",
+    "name": "buffalo ski club",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "burke-mountain",
+    "query": "burke mountain",
+    "name": "burke mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "burke-mountain-vt",
+    "query": "burke mountain, VT",
+    "name": "burke mountain",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "camden",
+    "query": "camden",
+    "name": "camden",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "canmore-banner",
+    "query": "canmore banner",
+    "name": "canmore banner",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "centre-vorlage",
+    "query": "centre vorlage",
+    "name": "centre vorlage",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "corralco",
+    "query": "corralco",
+    "name": "corralco",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "donner-ski-ranch",
+    "query": "donner ski ranch",
+    "name": "donner ski ranch",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ejder3000",
+    "query": "ejder3000",
+    "name": "ejder3000",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "family-celebrating-at-loveland-ski-area",
+    "query": "family celebrating at loveland ski area",
+    "name": "family celebrating at loveland ski area",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "glencoe-vistas",
+    "query": "glencoe vistas",
+    "name": "glencoe vistas",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "glenshee",
+    "query": "glenshee",
+    "name": "glenshee",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hatley-pointe",
+    "query": "hatley pointe",
+    "name": "hatley pointe",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hilltop",
+    "query": "hilltop",
+    "name": "hilltop",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hockley-valley",
+    "query": "hockley valley",
+    "name": "hockley valley",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "hoedown-hill",
+    "query": "hoedown hill",
+    "name": "hoedown hill",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "krvavec",
+    "query": "krvavec",
+    "name": "krvavec",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "lake-view-from-chair",
+    "query": "lake view from chair",
+    "name": "lake view from chair",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "leukerbad",
+    "query": "leukerbad",
+    "name": "leukerbad",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "levi-finland",
+    "query": "levi finland",
+    "name": "levi finland",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "lodge-at-middlebury-snow-bowl",
+    "query": "lodge at middlebury snow bowl",
+    "name": "lodge at middlebury snow bowl",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "magic-mountain-idaho",
+    "query": "magic mountain idaho",
+    "name": "magic mountain idaho",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "main-image",
+    "query": "main image",
+    "name": "main image",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mont-sutton-background",
+    "query": "mont sutton background",
+    "name": "mont sutton background",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-eyak-lift",
+    "query": "mt eyak lift",
+    "name": "mt eyak lift",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-abrams",
+    "query": "mt. abrams",
+    "name": "mt. abrams",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-hood-meadows",
+    "query": "mt. hood meadows",
+    "name": "mt. hood meadows",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-hood-meadows-or",
+    "query": "mt. hood meadows, OR",
+    "name": "mt. hood meadows",
+    "state": "OR",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "mt-la-crosse",
+    "query": "mt. la crosse",
+    "name": "mt. la crosse",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ober-mountain-tram",
+    "query": "ober mountain tram",
+    "name": "ober mountain tram",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ober-mountain-tram-tn",
+    "query": "ober mountain tram, TN",
+    "name": "ober mountain tram",
+    "state": "TN",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ok-bergbahnen",
+    "query": "ok-bergbahnen",
+    "name": "ok-bergbahnen",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "on-mountain",
+    "query": "on mountain",
+    "name": "on mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "owls-head",
+    "query": "owls head",
+    "name": "owls head",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "pila-ski-resort",
+    "query": "pila ski resort",
+    "name": "pila ski resort",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "portes-du-solei",
+    "query": "portes du solei",
+    "name": "portes du solei",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "riksgransen",
+    "query": "riksgransen",
+    "name": "riksgransen",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "riksgransen-sweden",
+    "query": "riksgransen, Sweden",
+    "name": "riksgransen",
+    "state": "",
+    "country": "SE",
+    "region": "intl",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "saas-grund",
+    "query": "saas grund",
+    "name": "saas grund",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "ski-area",
+    "query": "ski area",
+    "name": "ski area",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skier-absolutely-ripping-through-pow",
+    "query": "skier absolutely ripping through pow",
+    "name": "skier absolutely ripping through pow",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skier-ripping-cord-during-sunrise",
+    "query": "skier ripping cord during sunrise",
+    "name": "skier ripping cord during sunrise",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiing",
+    "query": "skiing",
+    "name": "skiing",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "skiing-at-little-ski-hill",
+    "query": "skiing at little ski hill",
+    "name": "skiing at little ski hill",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "smokey",
+    "query": "smokey",
+    "name": "smokey",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "subbust-main-image",
+    "query": "subbust main image",
+    "name": "subbust main image",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "summit-view-of-hochzeiger",
+    "query": "summit view of Hochzeiger",
+    "name": "summit view of Hochzeiger",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "sunset-skiing",
+    "query": "sunset skiing",
+    "name": "sunset skiing",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "tenney-mountain",
+    "query": "tenney mountain",
+    "name": "tenney mountain",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "togakushi-hero",
+    "query": "togakushi hero",
+    "name": "togakushi hero",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "waterville-header",
+    "query": "waterville header",
+    "name": "waterville header",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "waterville-header-nh",
+    "query": "waterville header, NH",
+    "name": "waterville header",
+    "state": "NH",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
+  },
+  {
+    "resort_id": "wintergreen-sunset",
+    "query": "wintergreen sunset",
+    "name": "wintergreen sunset",
+    "state": "",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "indy"
+    ],
+    "default_enabled": false
   }
 ]

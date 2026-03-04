@@ -45,7 +45,19 @@ const filterCloseBtn = document.getElementById("filter-close-btn");
 const filterSummary = document.getElementById("filter-summary");
 const filterRegionSelect = document.getElementById("filter-region-select");
 const filterCountrySelect = document.getElementById("filter-country-select");
+const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
+const filterMetaRaw = window.CLOSESNOW_FILTER_META;
+const filterMeta =
+  filterMetaRaw && typeof filterMetaRaw === "object" && !Array.isArray(filterMetaRaw) ? filterMetaRaw : {};
+const filterMetaAvailable =
+  filterMeta.available_filters && typeof filterMeta.available_filters === "object"
+    ? filterMeta.available_filters
+    : {};
+const filterMetaApplied =
+  filterMeta.applied_filters && typeof filterMeta.applied_filters === "object"
+    ? filterMeta.applied_filters
+    : {};
 if (reportDateEl) {
   const utcRaw = reportDateEl.getAttribute("data-generated-utc");
   const utcDate = utcRaw ? new Date(utcRaw) : null;
@@ -453,11 +465,130 @@ const autoSizeSunColumns = () => {
 };
 
 const _normalizeSearch = (text) => (text || "").trim().toLowerCase();
+const _isTruthyParam = (raw) => ["1", "true", "yes", "on"].includes(_normalizeSearch(raw));
+
+const _primaryResortRows = () => {
+  const pairedRows = Array.from(leftTable?.tBodies?.[0]?.rows || []);
+  if (pairedRows.length > 0) return pairedRows;
+  return Array.from(document.querySelectorAll(".weather-code-table tbody tr"));
+};
+
+const deriveAvailableFiltersFromRows = () => {
+  const rows = _primaryResortRows();
+  const passTypeCounts = {};
+  const regionCounts = {};
+  const countryCounts = {};
+
+  rows.forEach((row) => {
+    const passTypes = (row?.dataset?.passTypes || "")
+      .split(",")
+      .map((v) => _normalizeSearch(v))
+      .filter((v) => v);
+    const region = _normalizeSearch(row?.dataset?.region || "");
+    const country = (row?.dataset?.country || "").trim().toUpperCase();
+    passTypes.forEach((passType) => {
+      passTypeCounts[passType] = (passTypeCounts[passType] || 0) + 1;
+    });
+    if (region) {
+      regionCounts[region] = (regionCounts[region] || 0) + 1;
+    }
+    if (country) {
+      countryCounts[country] = (countryCounts[country] || 0) + 1;
+    }
+  });
+
+  return {
+    pass_type: passTypeCounts,
+    region: regionCounts,
+    country: countryCounts,
+  };
+};
+
+const availableFiltersForUi = () => {
+  const passType = filterMetaAvailable.pass_type || {};
+  const region = filterMetaAvailable.region || {};
+  const country = filterMetaAvailable.country || {};
+  const hasMeta = Object.keys(passType).length || Object.keys(region).length || Object.keys(country).length;
+  if (hasMeta) {
+    return {
+      pass_type: passType,
+      region,
+      country,
+    };
+  }
+  return deriveAvailableFiltersFromRows();
+};
+
+const updatePassTypeCountLabels = (passTypeCounts) => {
+  document.querySelectorAll("[data-pass-count]").forEach((el) => {
+    const key = _normalizeSearch(el.getAttribute("data-pass-count") || "");
+    const count = Number(passTypeCounts[key] || 0);
+    el.textContent = count > 0 ? `(${count})` : "";
+  });
+};
+
+const updateRegionOptionLabels = (regionCounts) => {
+  if (!filterRegionSelect) return;
+  Array.from(filterRegionSelect.options || []).forEach((opt) => {
+    const value = _normalizeSearch(opt.value || "");
+    const baseLabel = opt.getAttribute("data-base-label") || opt.textContent.replace(/\s+\(\d+\)$/, "");
+    opt.setAttribute("data-base-label", baseLabel);
+    if (!value) {
+      opt.textContent = baseLabel;
+      return;
+    }
+    const count = Number(regionCounts[value] || 0);
+    opt.textContent = count > 0 ? `${baseLabel} (${count})` : baseLabel;
+  });
+};
+
+const populateCountryOptions = (countryCounts) => {
+  if (!filterCountrySelect) return;
+  const selected = (filterCountrySelect.value || "").trim().toUpperCase();
+  filterCountrySelect.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All";
+  filterCountrySelect.appendChild(allOption);
+
+  const entries = Object.entries(countryCounts || {})
+    .filter(([code, count]) => /^[A-Z]{2}$/.test(code) && Number(count) > 0)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  entries.forEach(([code, count]) => {
+    const option = document.createElement("option");
+    option.value = code;
+    option.textContent = `${code} (${count})`;
+    filterCountrySelect.appendChild(option);
+  });
+  if (selected && entries.some(([code]) => code === selected)) {
+    filterCountrySelect.value = selected;
+  }
+};
+
+const initializeFilterControls = () => {
+  const available = availableFiltersForUi();
+  updatePassTypeCountLabels(available.pass_type || {});
+  updateRegionOptionLabels(available.region || {});
+  populateCountryOptions(available.country || {});
+};
+
+const parsePassTypeValues = (values) => {
+  const out = [];
+  values.forEach((raw) => {
+    String(raw || "")
+      .split(",")
+      .map((v) => _normalizeSearch(v))
+      .filter((v) => v)
+      .forEach((v) => out.push(v));
+  });
+  return Array.from(new Set(out));
+};
 
 const filterState = {
   passTypes: new Set(),
   region: "",
   country: "",
+  includeAll: false,
 };
 
 const _rowPassTypeSet = (row) => {
@@ -517,11 +648,16 @@ const filterPlainWeatherTable = (keyword) => {
 
 const syncFilterSummary = () => {
   if (!filterSummary) return;
+  const rows = _primaryResortRows();
+  const visible = rows.filter((row) => row.style.display !== "none").length;
+  const total = rows.length;
+  const scope = total > 0 ? (visible === total ? `${visible}` : `${visible}/${total}`) : "0";
   const parts = [];
   if (filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(filterState.passTypes).join(", ")}`);
   if (filterState.region) parts.push(`region: ${filterState.region}`);
   if (filterState.country) parts.push(`country: ${filterState.country}`);
-  filterSummary.textContent = parts.length > 0 ? parts.join(" | ") : "All resorts";
+  if (filterState.includeAll) parts.push("scope: full catalog");
+  filterSummary.textContent = parts.length > 0 ? `${parts.join(" | ")} | visible: ${scope}` : `All resorts (${scope})`;
 };
 
 const applyResortSearchFilter = () => {
@@ -556,6 +692,77 @@ const applyFilterStateFromControls = () => {
   );
   filterState.region = _normalizeSearch(filterRegionSelect?.value || "");
   filterState.country = (filterCountrySelect?.value || "").trim().toUpperCase();
+  filterState.includeAll = Boolean(filterIncludeAllInput?.checked);
+};
+
+const applyControlsFromQueryOrMeta = () => {
+  const params = new URLSearchParams(window.location.search);
+  const urlPassTypes = parsePassTypeValues(params.getAll("pass_type"));
+  const urlRegion = _normalizeSearch(params.get("region") || "");
+  const urlCountry = (params.get("country") || "").trim().toUpperCase();
+  const urlSearch = params.get("search");
+  const urlIncludeAll = _isTruthyParam(params.get("include_all") || "");
+
+  const metaPassTypes = parsePassTypeValues(Array.isArray(filterMetaApplied.pass_type) ? filterMetaApplied.pass_type : []);
+  const metaRegion = _normalizeSearch(filterMetaApplied.region || "");
+  const metaCountry = String(filterMetaApplied.country || "").trim().toUpperCase();
+  const metaSearch = String(filterMetaApplied.search || "");
+  const metaIncludeAll = Boolean(filterMetaApplied.include_all);
+
+  const passTypes = urlPassTypes.length > 0 ? urlPassTypes : metaPassTypes;
+  const region = urlRegion || metaRegion;
+  const country = urlCountry || metaCountry;
+  const search = urlSearch !== null ? urlSearch : metaSearch;
+  const includeAll = urlIncludeAll || metaIncludeAll;
+
+  filterPassTypeInputs.forEach((el) => {
+    el.checked = passTypes.includes(_normalizeSearch(el.value));
+  });
+  if (filterRegionSelect) {
+    filterRegionSelect.value = region;
+  }
+  if (filterCountrySelect) {
+    const normalizedCountry = country.toUpperCase();
+    const hasCountryOption = Array.from(filterCountrySelect.options || []).some((opt) => opt.value === normalizedCountry);
+    filterCountrySelect.value = hasCountryOption ? normalizedCountry : "";
+  }
+  if (filterIncludeAllInput) {
+    filterIncludeAllInput.checked = includeAll;
+  }
+  if (resortSearchInput && search) {
+    resortSearchInput.value = search;
+  }
+};
+
+const buildFilterQueryParams = () => {
+  const params = new URLSearchParams();
+  const existing = new URLSearchParams(window.location.search);
+  existing.getAll("resort").forEach((value) => {
+    if (value) params.append("resort", value);
+  });
+
+  Array.from(filterState.passTypes)
+    .sort()
+    .forEach((passType) => {
+      params.append("pass_type", passType);
+    });
+  if (filterState.region) params.set("region", filterState.region);
+  if (filterState.country) params.set("country", filterState.country);
+  if (filterState.includeAll) params.set("include_all", "1");
+  const keyword = (resortSearchInput?.value || "").trim();
+  if (keyword) params.set("search", keyword);
+  return params;
+};
+
+const syncUrlAndReloadIfNeeded = () => {
+  const nextParams = buildFilterQueryParams();
+  const currentUrl = new URL(window.location.href);
+  const currentQuery = currentUrl.search.replace(/^\?/, "");
+  const nextQuery = nextParams.toString();
+  if (currentQuery === nextQuery) return false;
+  currentUrl.search = nextQuery;
+  window.location.assign(currentUrl.toString());
+  return true;
 };
 
 const resetFilterControls = () => {
@@ -564,6 +771,7 @@ const resetFilterControls = () => {
   });
   if (filterRegionSelect) filterRegionSelect.value = "";
   if (filterCountrySelect) filterCountrySelect.value = "";
+  if (filterIncludeAllInput) filterIncludeAllInput.checked = false;
 };
 
 attachVerticalSync(leftWrap, rightWrap);
@@ -712,9 +920,16 @@ unitToggles.forEach((group) => {
   }
 });
 
-applyLayout();
+initializeFilterControls();
+applyControlsFromQueryOrMeta();
 if (resortSearchInput) {
   resortSearchInput.addEventListener("input", applyResortSearchFilter);
+  resortSearchInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    applyFilterStateFromControls();
+    syncUrlAndReloadIfNeeded();
+  });
 }
 if (resortSearchClear && resortSearchInput) {
   resortSearchClear.addEventListener("click", () => {
@@ -732,6 +947,7 @@ if (filterCloseBtn) {
 if (filterApplyBtn) {
   filterApplyBtn.addEventListener("click", () => {
     applyFilterStateFromControls();
+    if (syncUrlAndReloadIfNeeded()) return;
     closeFilterModal();
     applyResortSearchFilter();
   });
@@ -739,7 +955,9 @@ if (filterApplyBtn) {
 if (filterResetBtn) {
   filterResetBtn.addEventListener("click", () => {
     resetFilterControls();
+    if (resortSearchInput) resortSearchInput.value = "";
     applyFilterStateFromControls();
+    if (syncUrlAndReloadIfNeeded()) return;
     closeFilterModal();
     applyResortSearchFilter();
   });
@@ -749,6 +967,7 @@ if (filterModal) {
     if (event.target === filterModal) closeFilterModal();
   });
 }
+applyLayout();
 applyFilterStateFromControls();
 applyResortSearchFilter();
 requestAnimationFrame(() => {

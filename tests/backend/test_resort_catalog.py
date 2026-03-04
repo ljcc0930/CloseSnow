@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import json
 
-from src.backend.resort_catalog import load_resort_catalog, read_resort_queries, search_resort_catalog
+from src.backend.resort_catalog import (
+    load_resort_catalog,
+    read_resort_queries,
+    search_resort_catalog,
+    validate_resort_catalog,
+)
 
 
 def test_load_resort_catalog_from_txt(tmp_path):
@@ -35,6 +40,54 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
     assert entries[0]["query"] == "Snowbird, UT"
     assert entries[0]["pass_types"] == ["ikon"]
     assert read_resort_queries(str(p)) == ["Snowbird, UT"]
+
+
+def test_read_resort_queries_respects_default_enabled(tmp_path):
+    p = tmp_path / "resorts.yml"
+    p.write_text(
+        json.dumps(
+            [
+                {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "country": "US", "region": "west", "pass_types": ["ikon"]},
+                {
+                    "resort_id": "alpental-wa",
+                    "query": "Alpental, WA",
+                    "country": "US",
+                    "region": "west",
+                    "pass_types": ["indy"],
+                    "default_enabled": False,
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert read_resort_queries(str(p)) == ["Snowbird, UT"]
+    assert read_resort_queries(str(p), include_all=True) == ["Snowbird, UT", "Alpental, WA"]
+
+
+def test_validate_resort_catalog_reports_integrity_errors():
+    errors = validate_resort_catalog(
+        [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+            },
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "country": "USA",
+                "region": "bad-region",
+                "pass_types": ["unknown"],
+            },
+        ]
+    )
+    assert any("duplicate resort_id" in msg for msg in errors)
+    assert any("duplicate query" in msg for msg in errors)
+    assert any("invalid country" in msg for msg in errors)
+    assert any("invalid region" in msg for msg in errors)
+    assert any("invalid pass_types" in msg for msg in errors)
 
 
 def test_search_resort_catalog_supports_multi_term():

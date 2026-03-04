@@ -184,7 +184,15 @@ def test_table_renderer_sections_and_empty_states():
 
 
 def test_build_html_contains_meta_sections():
-    html = build_html([_snow_row()], [_rain_row()], [_weather_row()], [_sun_row()], [_temp_row()])
+    html = build_html(
+        [_snow_row()],
+        [_rain_row()],
+        [_weather_row()],
+        [_sun_row()],
+        [_temp_row()],
+        available_filters={"pass_type": {"ikon": 1}},
+        applied_filters={"pass_type": ["ikon"], "include_all": False},
+    )
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
     assert "Powered by" in html
@@ -194,6 +202,8 @@ def test_build_html_contains_meta_sections():
     assert 'id="resort-search-input"' in html
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
+    assert "window.CLOSESNOW_FILTER_META" in html
+    assert "include_all" in html
     assert 'data-generated-utc="' in html
     assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
 
@@ -228,10 +238,17 @@ def test_render_payload_html_wires_transform_and_builder(monkeypatch):
     monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", fake_temp)
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
-        lambda snow, rain, weather, sun, temp: f"html:{snow}:{rain}:{weather}:{sun}:{temp}",
+        lambda snow, rain, weather, sun, temp, **kwargs: f"html:{snow}:{rain}:{weather}:{sun}:{temp}:{bool(kwargs)}",
     )
-    out = render_payload_html({"reports": [{"query": "A"}], "forecast_days": 16})
-    assert out == "html:['snow']:['rain']:['weather']:['sun']:['temp']"
+    out = render_payload_html(
+        {
+            "reports": [{"query": "A"}],
+            "forecast_days": 16,
+            "available_filters": {"pass_type": {"ikon": 1}},
+            "applied_filters": {"pass_type": ["ikon"]},
+        }
+    )
+    assert out == "html:['snow']:['rain']:['weather']:['sun']:['temp']:True"
     assert calls["snow_days"] == 15
     assert calls["rain_days"] == 15
     assert calls["weather_days"] == 15

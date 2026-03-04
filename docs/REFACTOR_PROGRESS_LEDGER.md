@@ -688,3 +688,56 @@ Copy this template for each new work session:
 
 ### Next Slice
 - F6 remaining: extend `resorts.yml` coverage to full Ikon/Epic/Indy catalog.
+
+## 2026-03-04 05:34 (local)
+
+### Scope
+- Implement F6 full-pass catalog coverage for Ikon/Epic/Indy with automated catalog sync/validation, include-all filtering path, and large-catalog-ready filter UX metadata.
+
+### Changes
+- Files:
+  - `resorts.yml`
+  - `scripts/sync_resorts_catalog.py` (new)
+  - `scripts/sync_pass_resorts.py`
+  - `src/backend/resort_catalog.py`
+  - `src/backend/weather_data_server.py`
+  - `src/web/weather_page_server.py`
+  - `src/web/weather_html_renderer.py`
+  - `src/web/weather_page_render_core.py`
+  - `src/web/templates/weather_page.html`
+  - `assets/css/weather_page.css`
+  - `assets/js/weather_page.js`
+  - `tests/backend/test_resort_catalog.py`
+  - `tests/integration/test_backend_data_server.py`
+  - `tests/integration/test_web_server.py`
+  - `tests/frontend/test_renderers.py`
+  - `docs/FEATURE_DESIGN_SKI_WEATHER_FULL_INFO.md`
+- Behavior impact:
+  - Added `scripts/sync_resorts_catalog.py` with network sync + `--validate-only` integrity checks (required fields, duplicate ids/queries, pass coverage).
+  - Expanded `resorts.yml` to full synced catalog coverage for Ikon/Epic/Indy while keeping default page scope manageable via `default_enabled` entries.
+  - Backend `/api/data` now supports `include_all=1` in applied filters and selection logic.
+  - Web server query passthrough now forwards `pass_type/region/country/search/include_all` to API mode and executes backend-equivalent filtered selection in local mode.
+  - Frontend filter modal now includes `Include full catalog (slower)`, dynamic pass/country/region counts, URL-sync/reload behavior for server-side filtering, and visible resort count summary.
+  - HTML render core now injects filter metadata (`window.CLOSESNOW_FILTER_META`) into page output.
+
+### Validation
+- Commands:
+  - `pytest -q tests/backend/test_resort_catalog.py tests/integration/test_backend_data_server.py tests/integration/test_web_server.py tests/frontend/test_renderers.py`
+  - `pytest -q`
+  - `python3 scripts/sync_resorts_catalog.py --validate-only`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "filter-include-all|CLOSESNOW_FILTER_META|data-pass-count|include_all" index.html`
+  - `python3 -m src.cli serve-data --host 127.0.0.1 --port 8041` + `curl "http://127.0.0.1:8041/api/data?search=snowbird&include_all=1" | jq ...`
+  - `python3 -m src.cli serve-web --host 127.0.0.1 --port 8042 --data-mode local` + `curl "http://127.0.0.1:8042/?search=snowbird&include_all=1"`
+- Results:
+  - Targeted suites passed (`26 passed`).
+  - Full suite passed (`128 passed`).
+  - Catalog validation passed for expanded `resorts.yml` (`total 362`, pass counts include `ikon/epic/indy`).
+  - Static render succeeded and includes new full-catalog controls and filter metadata script.
+  - Runtime smoke checks confirmed include-all query path and server-side filtered render behavior.
+
+### Risks / Notes
+- `include_all=1` without additional narrowing can trigger very large fetches; UI labels this mode as slower.
+
+### Next Slice
+- Feature backlog in current design doc is fully implemented; next work should be user-prioritized polish/performance iteration on full-catalog workflows.

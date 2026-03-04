@@ -39,6 +39,10 @@ def _split_query_values(values: List[str]) -> List[str]:
     return [x for x in out if not (x in seen or seen.add(x))]
 
 
+def _to_bool_flag(raw: str) -> bool:
+    return (raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _available_filters(catalog: List[Dict[str, object]]) -> Dict[str, Dict[str, int]]:
     pass_type_counts: Dict[str, int] = {}
     region_counts: Dict[str, int] = {}
@@ -98,6 +102,66 @@ def _empty_payload(cache_file: str, geocode_cache_hours: int, forecast_cache_hou
         reports=[],
         failed=[],
     )
+
+
+def _default_applied_filters() -> Dict[str, object]:
+    return {
+        "pass_type": [],
+        "region": "",
+        "country": "",
+        "search": "",
+        "include_all": False,
+    }
+
+
+def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, bool]:
+    resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
+    pass_types = _split_query_values(qs.get("pass_type", []))
+    region = (qs.get("region", [""])[0] or "").strip().lower()
+    country = (qs.get("country", [""])[0] or "").strip().upper()
+    search_text = (qs.get("search", [""])[0] or "").strip()
+    include_all = _to_bool_flag((qs.get("include_all", [""])[0] or ""))
+    applied = {
+        "pass_type": pass_types,
+        "region": region,
+        "country": country,
+        "search": search_text,
+        "include_all": include_all,
+    }
+
+    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    available = _available_filters(catalog)
+    has_filters = bool(pass_types or region or country or search_text or include_all)
+    if not has_filters:
+        resorts_file = "" if resorts else DEFAULT_RESORTS_FILE
+        return resorts, resorts_file, applied, available, False
+
+    if include_all and not (pass_types or region or country or search_text):
+        filtered_catalog = list(catalog)
+    else:
+        filtered_catalog = _apply_catalog_filters(
+            catalog,
+            pass_types=pass_types,
+            region=region,
+            country=country,
+            search=search_text,
+        )
+
+    allowed_queries = {
+        str(item.get("query", "")).strip()
+        for item in filtered_catalog
+        if str(item.get("query", "")).strip()
+    }
+    if resorts:
+        selected = [r for r in resorts if r in allowed_queries]
+    else:
+        selected = [
+            str(item["query"]).strip()
+            for item in filtered_catalog
+            if str(item.get("query", "")).strip()
+        ]
+    no_match = len(selected) == 0
+    return selected, "", applied, available, no_match
 
 
 def _parse_hours(raw: str, default: int = 72) -> int:
@@ -201,38 +265,7 @@ def make_handler(
             self.wfile.write(body)
 
         def _selected_resorts(self, qs: dict) -> tuple[List[str], str, dict, dict, bool]:
-            resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
-            pass_types = _split_query_values(qs.get("pass_type", []))
-            region = (qs.get("region", [""])[0] or "").strip().lower()
-            country = (qs.get("country", [""])[0] or "").strip().upper()
-            search_text = (qs.get("search", [""])[0] or "").strip()
-            applied = {
-                "pass_type": pass_types,
-                "region": region,
-                "country": country,
-                "search": search_text,
-            }
-            catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
-            available = _available_filters(catalog)
-            has_filters = bool(pass_types or region or country or search_text)
-            if not has_filters:
-                resorts_file = "" if resorts else DEFAULT_RESORTS_FILE
-                return resorts, resorts_file, applied, available, False
-
-            filtered_catalog = _apply_catalog_filters(
-                catalog,
-                pass_types=pass_types,
-                region=region,
-                country=country,
-                search=search_text,
-            )
-            allowed_queries = {str(item.get("query", "")) for item in filtered_catalog if str(item.get("query", ""))}
-            if resorts:
-                selected = [r for r in resorts if r in allowed_queries]
-            else:
-                selected = [str(item["query"]) for item in filtered_catalog]
-            no_match = len(selected) == 0
-            return selected, "", applied, available, no_match
+            return select_resorts_from_query(qs)
 
         def do_OPTIONS(self) -> None:  # noqa: N802
             self.send_response(204)
@@ -304,6 +337,7 @@ def make_handler(
                             "pass_type": pass_types,
                             "region": region,
                             "country": country,
+                            "include_all": False,
                         },
                         "available_filters": _available_filters(catalog),
                         "count": len(items),

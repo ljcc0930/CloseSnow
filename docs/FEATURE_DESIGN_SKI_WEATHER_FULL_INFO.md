@@ -33,7 +33,7 @@ Current payload and page:
 - F5 resort YAML metadata + search baseline: implemented
 - F4 filter modal + backend filter query support: implemented
 - F3 per-resort hourly standalone page: implemented
-- F6 include all Ikon/Epic/Indy resorts: pending
+- F6 include all Ikon/Epic/Indy resorts: implemented
 
 ## 3. Cross-Feature Architecture Decisions
 

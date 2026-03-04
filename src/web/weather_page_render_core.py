@@ -24,4 +24,20 @@ def render_payload_html(payload: Dict[str, Any]) -> str:
     weather_rows = reports_to_weather_rows(reports, display_days=display_days)
     sun_rows = reports_to_sun_rows(reports, display_days=display_days)
     temp_rows = reports_to_temp_rows(reports, display_days=display_days)
-    return build_html(snow_rows, rain_rows, weather_rows, sun_rows, temp_rows)
+    return build_html(
+        snow_rows,
+        rain_rows,
+        weather_rows,
+        sun_rows,
+        temp_rows,
+        available_filters=(
+            payload.get("available_filters")
+            if isinstance(payload.get("available_filters"), dict)
+            else None
+        ),
+        applied_filters=(
+            payload.get("applied_filters")
+            if isinstance(payload.get("applied_filters"), dict)
+            else None
+        ),
+    )

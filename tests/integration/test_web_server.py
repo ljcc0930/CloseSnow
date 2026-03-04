@@ -158,12 +158,73 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
     )
     server, thread, base = _serve_once(handler)
     try:
-        urllib.request.urlopen(f"{base}/api/data?resort=A&resort=B", timeout=3).read()
+        urllib.request.urlopen(
+            f"{base}/api/data?resort=A&resort=B&pass_type=ikon&region=west&country=US&search=snow&include_all=1",
+            timeout=3,
+        ).read()
         assert calls["mode"] == "api"
         assert "resort=A" in calls["source"]
         assert "resort=B" in calls["source"]
+        assert "pass_type=ikon" in calls["source"]
+        assert "region=west" in calls["source"]
+        assert "country=US" in calls["source"]
+        assert "search=snow" in calls["source"]
+        assert "include_all=1" in calls["source"]
         assert calls["timeout"] == 11
         assert calls["kwargs"]["resorts"] == ["A", "B"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr(
+        "src.web.weather_page_server.select_resorts_from_query",
+        lambda qs: (
+            ["Snowbird, UT"],
+            "",
+            {"pass_type": ["ikon"], "region": "west", "country": "US", "search": "snow", "include_all": False},
+            {"pass_type": {"ikon": 1}, "region": {"west": 1}, "country": {"US": 1}},
+            False,
+        ),
+    )
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 1,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [{"query": "Snowbird, UT", "daily": []}],
+        }
+
+    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        body = urllib.request.urlopen(f"{base}/api/data?pass_type=ikon&region=west&country=US&search=snow", timeout=3)
+        payload = json.loads(body.read().decode("utf-8"))
+        assert captured["resorts"] == ["Snowbird, UT"]
+        assert payload["available_filters"]["pass_type"]["ikon"] == 1
+        assert payload["applied_filters"]["pass_type"] == ["ikon"]
+        assert payload["applied_filters"]["search"] == "snow"
     finally:
         server.shutdown()
         server.server_close()
