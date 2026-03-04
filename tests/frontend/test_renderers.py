@@ -177,7 +177,7 @@ def test_table_renderer_sections_and_empty_states():
     assert "🌧️" in weather
     assert "❓" in weather
     assert "data-pass-types='ikon'" in snow
-    assert "/resort/snowbird-ut" in snow
+    assert "href='resort/snowbird-ut'" in snow
     assert "cm" in snow and "in" in snow
     assert "mm" in rain and "in" in rain
     assert "°C" in temp and "°F" in temp

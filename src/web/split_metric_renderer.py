@@ -63,7 +63,7 @@ def _query_cell_html(row: Dict[str, str]) -> str:
     query_text = html.escape(row.get("query", ""))
     resort_id = row.get("resort_id", "").strip()
     if resort_id:
-        href = f"/resort/{quote(resort_id)}"
+        href = f"resort/{quote(resort_id)}"
         query_text = f"<a class='resort-link' href='{href}'>{query_text}</a>"
     return f"<td class='query-col'>{query_text}</td>"
 

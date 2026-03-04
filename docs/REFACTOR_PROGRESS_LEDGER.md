@@ -741,3 +741,41 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Feature backlog in current design doc is fully implemented; next work should be user-prioritized polish/performance iteration on full-catalog workflows.
+
+## 2026-03-04 05:38 (local)
+
+### Scope
+- Fix incorrect resort hourly links under sub-path deployments by converting hard-coded absolute hourly routes/assets/API paths to prefix-safe relative addressing.
+
+### Changes
+- Files:
+  - `src/web/weather_table_renderer.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/js/resort_hourly.js`
+  - `src/web/weather_page_server.py`
+  - `tests/frontend/test_renderers.py`
+  - `tests/integration/test_web_server.py`
+- Behavior impact:
+  - Resort links now use relative `resort/<id>` instead of absolute `/resort/<id>`.
+  - Hourly page assets use relative `../assets/...` and hourly API calls derive prefix from current pathname.
+  - Web server now normalizes prefixed paths (e.g. `/CloseSnow/resort/...`, `/CloseSnow/api/resort-hourly`, `/CloseSnow/assets/...`).
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_renderers.py tests/integration/test_web_server.py`
+  - `pytest -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "href='resort/|../assets/js/resort_hourly.js|../assets/css/resort_hourly.css" index.html src/web/templates/resort_hourly_page.html`
+- Results:
+  - Targeted tests passed (`16 passed`).
+  - Full suite passed (`128 passed`).
+  - Static render succeeded and now contains relative hourly links/resources.
+
+### Risks / Notes
+- Static GitHub Pages build still has no backend API route; this fix corrects path resolution and sub-path compatibility for dynamic serving and prefixed deployments.
+
+### Next Slice
+- If needed, add static-friendly hourly artifact generation for GitHub Pages-only hosting.

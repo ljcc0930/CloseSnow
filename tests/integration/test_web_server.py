@@ -55,6 +55,8 @@ def test_server_api_root_and_asset(monkeypatch):
 
         asset = urllib.request.urlopen(f"{base}/assets/css/weather_page.css", timeout=3).read()
         assert asset == b"body{}"
+        asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/css/weather_page.css", timeout=3).read()
+        assert asset_with_prefix == b"body{}"
     finally:
         server.shutdown()
         server.server_close()
@@ -300,9 +302,21 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert hourly["resort_id"] == "snowbird-ut"
         assert len(hourly["hourly"]["time"]) == 2
 
+        hourly_with_prefix = json.loads(
+            urllib.request.urlopen(f"{base}/CloseSnow/api/resort-hourly?resort_id=snowbird-ut&hours=2", timeout=3)
+            .read()
+            .decode("utf-8")
+        )
+        assert hourly_with_prefix["resort_id"] == "snowbird-ut"
+
         page = urllib.request.urlopen(f"{base}/resort/snowbird-ut", timeout=3).read().decode("utf-8")
         assert "Hourly Forecast" in page
         assert "snowbird-ut" in page
+        assert "../assets/js/resort_hourly.js" in page
+
+        prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")
+        assert "Hourly Forecast" in prefixed_page
+        assert "snowbird-ut" in prefixed_page
     finally:
         server.shutdown()
         server.server_close()

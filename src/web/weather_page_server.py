@@ -42,6 +42,26 @@ _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hour
 )
 
 
+def _normalize_known_path(path: str) -> str:
+    if path in {"", "/"}:
+        return "/"
+    for marker in ("/api/health", "/api/data", "/api/resort-hourly", "/resort/"):
+        idx = path.find(marker)
+        if idx >= 0:
+            return path[idx:]
+    return path
+
+
+def _asset_name_from_path(path: str) -> str:
+    if path.startswith("/assets/"):
+        return path.lstrip("/")
+    marker = "/assets/"
+    idx = path.find(marker)
+    if idx >= 0:
+        return path[idx + 1 :]
+    return path.lstrip("/")
+
+
 def _append_query_values(base_url: str, qs: Dict[str, List[str]]) -> str:
     if not qs:
         return base_url
@@ -171,8 +191,9 @@ def make_handler(
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
+            normalized_path = _normalize_known_path(parsed.path)
 
-            asset_name = parsed.path.lstrip("/")
+            asset_name = _asset_name_from_path(parsed.path)
             if asset_name in ASSET_MIME_TYPES:
                 try:
                     body = read_asset_bytes(asset_name)
@@ -182,12 +203,12 @@ def make_handler(
                 self._write(200, body, ASSET_MIME_TYPES[asset_name])
                 return
 
-            if parsed.path == "/api/health":
+            if normalized_path == "/api/health":
                 body = json.dumps({"ok": True, "mode": data_mode}, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(200, body, "application/json; charset=utf-8")
                 return
 
-            if parsed.path == "/api/resort-hourly":
+            if normalized_path == "/api/resort-hourly":
                 resort_id = (qs.get("resort_id", [""])[0] or "").strip()
                 if not resort_id:
                     self._write(400, b"{\"error\":\"Missing required query parameter: resort_id\"}", "application/json")
@@ -201,8 +222,8 @@ def make_handler(
                 self._write(code, body, "application/json; charset=utf-8")
                 return
 
-            if parsed.path.startswith("/resort/"):
-                resort_id = parsed.path.split("/resort/", 1)[1].strip()
+            if normalized_path.startswith("/resort/"):
+                resort_id = normalized_path.split("/resort/", 1)[1].strip()
                 if not resort_id:
                     self._write(404, b"Not Found", "text/plain; charset=utf-8")
                     return
@@ -212,7 +233,7 @@ def make_handler(
 
             payload = self._load_request_payload(qs)
 
-            if parsed.path == "/api/data":
+            if normalized_path == "/api/data":
                 body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(200, body, "application/json; charset=utf-8")
                 return

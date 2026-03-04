@@ -20,6 +20,20 @@ const metricDefs = [
   { key: "visibility", label: "visibility (m)" },
 ];
 
+const routePrefix = (() => {
+  const path = window.location.pathname || "";
+  const marker = "/resort/";
+  const idx = path.lastIndexOf(marker);
+  if (idx < 0) return "";
+  return path.slice(0, idx);
+})();
+
+const withPrefix = (path) => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (!routePrefix) return cleanPath;
+  return `${routePrefix}${cleanPath}`;
+};
+
 const formatValue = (value) => {
   if (value === null || value === undefined || value === "") return "";
   if (typeof value === "number") {
@@ -69,7 +83,10 @@ const loadHourly = async () => {
   if (metaEl) metaEl.textContent = "Loading...";
 
   try {
-    const resp = await fetch(`/api/resort-hourly?resort_id=${encodeURIComponent(resortId)}&hours=${encodeURIComponent(hours)}`);
+    const endpoint = new URL(withPrefix("/api/resort-hourly"), window.location.origin);
+    endpoint.searchParams.set("resort_id", resortId);
+    endpoint.searchParams.set("hours", hours);
+    const resp = await fetch(endpoint.toString());
     const payload = await resp.json();
     if (!resp.ok) {
       throw new Error(payload.error || `HTTP ${resp.status}`);
