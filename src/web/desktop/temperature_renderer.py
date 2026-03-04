@@ -5,6 +5,7 @@ import html
 from typing import Dict, List
 from urllib.parse import quote
 
+from src.web.day_label_html import render_day_label_html
 from src.web.weather_table_styles import render_measure_cell, temp_color, to_float
 
 
@@ -53,7 +54,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
     left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = (
         "<tr>"
-        + "".join(f"<th colspan='2'>{day_label(d)}</th>" for d in days)
+        + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days)
         + "</tr>"
     )
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"

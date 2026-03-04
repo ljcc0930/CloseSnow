@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 from urllib.parse import quote
 
+from src.web.day_label_html import render_day_label_html
 from src.web.desktop.precipitation_renderer import (
     render_rainfall_desktop_layout,
     render_snowfall_desktop_layout,
@@ -189,7 +190,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         label = first.get(f"label_day_{idx}", "").strip()
         if not label:
             label = "today" if idx == 1 else f"day {idx}"
-        day_head_cells.append(f"<th>{html.escape(label)}</th>")
+        day_head_cells.append(f"<th>{render_day_label_html(label)}</th>")
 
     left_rows: List[str] = []
     right_rows: List[str] = []

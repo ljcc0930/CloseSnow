@@ -100,8 +100,14 @@ def test_snowfall_desktop_mobile_renderers():
     assert "snowfall-split-wrap mobile-only" in mobile
     assert "Snowbird &lt;UT&gt;" in desktop
     assert "week 1" in desktop
-    assert "03-04 Wed" in desktop
-    assert "03-04 Wed" in mobile
+    assert "day-label-date" in desktop
+    assert "day-label-weekday" in desktop
+    assert ">03-04<" in desktop
+    assert ">Wed<" in desktop
+    assert "day-label-date" in mobile
+    assert "day-label-weekday" in mobile
+    assert ">03-04<" in mobile
+    assert ">Wed<" in mobile
 
 
 def test_rainfall_desktop_mobile_renderers():
@@ -114,15 +120,25 @@ def test_rainfall_desktop_mobile_renderers():
     assert "rain-split-wrap mobile-only" in mobile
     assert "Snowbird &lt;UT&gt;" in desktop
     assert "week 2" in desktop
-    assert "03-05 Thu" in desktop
-    assert "03-04 Wed" in mobile
+    assert "day-label-date" in desktop
+    assert "day-label-weekday" in desktop
+    assert ">03-05<" in desktop
+    assert ">Thu<" in desktop
+    assert "day-label-date" in mobile
+    assert "day-label-weekday" in mobile
+    assert ">03-04<" in mobile
+    assert ">Wed<" in mobile
 
 
 def test_temperature_desktop_renderer():
     html = render_temperature_desktop_layout([_temp_row()])
     assert "temperature-split-wrap" in html
-    assert "03-04 Wed" in html
-    assert "03-05 Thu" in html
+    assert "day-label-date" in html
+    assert "day-label-weekday" in html
+    assert ">03-04<" in html
+    assert ">Wed<" in html
+    assert ">03-05<" in html
+    assert ">Thu<" in html
     assert "Snowbird &lt;UT&gt;" in html
 
 
@@ -174,7 +190,14 @@ def test_table_renderer_sections_and_empty_states():
     assert "18:23" in sun
     assert "sunrise" in sun
     assert "sunset" in sun
-    assert "03-04 Wed" in weather
+    assert "day-label-date" in sun
+    assert "day-label-weekday" in sun
+    assert ">03-04<" in sun
+    assert ">Wed<" in sun
+    assert "day-label-date" in weather
+    assert "day-label-weekday" in weather
+    assert ">03-04<" in weather
+    assert ">Wed<" in weather
     assert "☀️" in weather
     assert "🌧️" in weather
     assert "❓" in weather

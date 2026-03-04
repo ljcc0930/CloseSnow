@@ -290,6 +290,16 @@
       text-align: center;
       font-weight: 700;
     }
+    th .day-label-date,
+    th .day-label-weekday {
+      display: block;
+      line-height: 1.15;
+    }
+    th .day-label-weekday {
+      font-size: 11px;
+      color: #475569;
+      font-weight: 600;
+    }
     .plain-table thead th {
       position: sticky;
       top: 0;

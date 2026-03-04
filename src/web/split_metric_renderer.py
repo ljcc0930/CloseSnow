@@ -5,6 +5,7 @@ import html
 from typing import Callable, Dict, List, Optional
 from urllib.parse import quote
 
+from src.web.day_label_html import render_day_label_html
 from src.web.weather_table_styles import render_measure_cell, to_float
 
 ColorFn = Callable[[Optional[float]], str]
@@ -121,7 +122,7 @@ def render_desktop_split_metric_layout(
     right_detail = (
         "<tr>"
         + "".join(
-            f"<th>{html.escape(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
+            f"<th>{render_day_label_html(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
             for h in daily_headers
         )
         + "</tr>"
@@ -194,7 +195,7 @@ def render_mobile_split_metric_layout(
             for h in weekly_headers
         )
         + "".join(
-            f"<th>{html.escape(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
+            f"<th>{render_day_label_html(_daily_header_label(h, daily_suffix=daily_suffix, sample_row=sample_row, weekly_suffix=weekly_suffix))}</th>"
             for h in daily_headers
         )
         + "</tr>"
