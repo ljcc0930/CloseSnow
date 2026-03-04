@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 from src.web.weather_page_render_core import render_payload_html
@@ -43,17 +43,65 @@ def _iter_resort_ids(payload: Dict[str, Any]) -> List[str]:
     return resort_ids
 
 
-def render_hourly_pages(index_html_path: str, payload: Dict[str, Any]) -> List[Path]:
+def _build_hourly_payload(
+    *,
+    resort_id: str,
+    hours: int,
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+) -> Optional[Dict[str, Any]]:
+    from src.backend.weather_data_server import _hourly_payload_for_resort
+
+    return _hourly_payload_for_resort(
+        resort_id=resort_id,
+        hours=hours,
+        cache_file=cache_file,
+        geocode_cache_hours=geocode_cache_hours,
+        forecast_cache_hours=forecast_cache_hours,
+    )
+
+
+def render_hourly_pages(
+    index_html_path: str,
+    payload: Dict[str, Any],
+    *,
+    include_hourly_data: bool = False,
+    hourly_hours: int = 120,
+    cache_file: str = ".cache/open_meteo_cache.json",
+    geocode_cache_hours: int = 24 * 30,
+    forecast_cache_hours: int = 3,
+) -> List[Path]:
     site_root = Path(index_html_path).parent
     outputs: List[Path] = []
     for resort_id in _iter_resort_ids(payload):
         encoded_id = quote(resort_id)
-        out = site_root / "resort" / encoded_id / "index.html"
-        out.parent.mkdir(parents=True, exist_ok=True)
+        out_dir = site_root / "resort" / encoded_id
+        out = out_dir / "index.html"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        hourly_context: Dict[str, Any] = {"resortId": resort_id}
+        if include_hourly_data:
+            hourly_payload = _build_hourly_payload(
+                resort_id=resort_id,
+                hours=hourly_hours,
+                cache_file=cache_file,
+                geocode_cache_hours=geocode_cache_hours,
+                forecast_cache_hours=forecast_cache_hours,
+            )
+            if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
+                hourly_data_path = out_dir / "hourly.json"
+                hourly_data_path.write_text(
+                    json.dumps(hourly_payload, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                hourly_context["hourlyDataUrl"] = "./hourly.json"
+
         html = (
             _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../../assets")
             .replace("{{back_href}}", "../../")
             .replace("{{resort_id}}", resort_id)
+            .replace("{{hourly_context_json}}", json.dumps(hourly_context, ensure_ascii=False))
         )
         out.write_text(html, encoding="utf-8")
         outputs.append(out)

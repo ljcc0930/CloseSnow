@@ -53,7 +53,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
     monkeypatch.setattr(
         "src.web.weather_page_static_render.render_hourly_pages",
-        lambda path, payload: [f"{path}:resort/snowbird-ut/index.html"],
+        lambda *args, **kwargs: [f"{args[0]}:resort/snowbird-ut/index.html"],
     )
     rc = weather_page_static_render.main()
     out = capsys.readouterr().out

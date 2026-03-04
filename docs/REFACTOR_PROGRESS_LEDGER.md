@@ -846,3 +846,41 @@ Copy this template for each new work session:
 
 ### Next Slice
 - If needed, add descending or multi-key sort options and explicit locale-aware collation controls.
+
+## 2026-03-04 06:12 (local)
+
+### Scope
+- Fix static resort hourly pages showing `fetch failed` by making static builds emit local hourly data artifacts and making hourly page JS read local JSON first.
+
+### Changes
+- Files:
+  - `src/web/pipelines/static_site.py`
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/js/resort_hourly.js`
+  - `src/web/weather_page_server.py`
+  - `src/cli.py`
+  - `src/web/weather_page_static_render.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_cli.py`
+  - `tests/integration/test_entrypoints.py`
+- Behavior impact:
+  - `static` and `weather_page_static_render` now generate `resort/<resort_id>/hourly.json` (120h) alongside `resort/<resort_id>/index.html`.
+  - Hourly page context now supports `hourlyDataUrl`; static pages inject `./hourly.json`.
+  - `resort_hourly.js` now prefers local `hourlyDataUrl` and slices rows for selected hour window (24/48/72/120), with API fallback kept for dynamic mode.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_cli.py tests/integration/test_entrypoints.py tests/integration/test_web_server.py`
+  - `pytest -q tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/frontend/test_styles_and_transform.py`
+  - `python3 -m src.cli static --skip-fetch --output-json .cache/static_payload.json --output-html index.html`
+  - `find resort -maxdepth 3 -name hourly.json`
+- Results:
+  - Targeted static/cli/web tests passed (`31 passed`).
+  - Frontend regression suites passed (`15 passed`).
+  - Static compile succeeded and generated `hourly.json` for all rendered resorts.
+
+### Risks / Notes
+- `render` command (file->html only) still does not proactively fetch hourly data; it only renders pages. Full static hourly artifacts are produced by `static` and static-render entrypoint.
+
+### Next Slice
+- If desired, add optional `--with-hourly-data` for `render` to fetch and emit hourly artifacts from file mode too.

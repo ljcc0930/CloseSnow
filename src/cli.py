@@ -150,7 +150,14 @@ def run_static(args: argparse.Namespace) -> int:
         if payload is None:
             payload = load_payload(mode="file", source=args.output_json)
         out = render_html(args.output_html, payload)
-        hourly_pages = render_hourly_pages(args.output_html, payload)
+        hourly_pages = render_hourly_pages(
+            args.output_html,
+            payload,
+            include_hourly_data=True,
+            cache_file=args.cache_file,
+            geocode_cache_hours=args.geocode_cache_hours,
+            forecast_cache_hours=args.forecast_cache_hours,
+        )
         print(f"Done: {out}")
         print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0

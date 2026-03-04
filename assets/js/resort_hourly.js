@@ -1,5 +1,6 @@
 const context = window.CLOSESNOW_HOURLY_CONTEXT || {};
 const resortId = String(context.resortId || "").trim();
+const hourlyDataUrl = String(context.hourlyDataUrl || "").trim();
 
 const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
@@ -73,6 +74,23 @@ const renderHourlyTable = (payload) => {
   tbody.innerHTML = rows.join("");
 };
 
+const trimHourlyPayload = (payload, hours) => {
+  const hourly = payload?.hourly || {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const maxHours = Math.max(1, Number(hours) || 72);
+  const n = Math.min(maxHours, times.length);
+  const trimmedHourly = { time: times.slice(0, n) };
+  metricDefs.forEach((metric) => {
+    const values = Array.isArray(hourly[metric.key]) ? hourly[metric.key] : [];
+    trimmedHourly[metric.key] = values.slice(0, n);
+  });
+  return {
+    ...payload,
+    hours: n,
+    hourly: trimmedHourly,
+  };
+};
+
 const loadHourly = async () => {
   if (!resortId) {
     setError("Missing resort id.");
@@ -83,13 +101,24 @@ const loadHourly = async () => {
   if (metaEl) metaEl.textContent = "Loading...";
 
   try {
-    const endpoint = new URL(withPrefix("/api/resort-hourly"), window.location.origin);
-    endpoint.searchParams.set("resort_id", resortId);
-    endpoint.searchParams.set("hours", hours);
-    const resp = await fetch(endpoint.toString());
-    const payload = await resp.json();
-    if (!resp.ok) {
-      throw new Error(payload.error || `HTTP ${resp.status}`);
+    let payload;
+    if (hourlyDataUrl) {
+      const staticUrl = new URL(hourlyDataUrl, window.location.href);
+      const resp = await fetch(staticUrl.toString());
+      const rawPayload = await resp.json();
+      if (!resp.ok) {
+        throw new Error(rawPayload.error || `HTTP ${resp.status}`);
+      }
+      payload = trimHourlyPayload(rawPayload, Number(hours));
+    } else {
+      const endpoint = new URL(withPrefix("/api/resort-hourly"), window.location.origin);
+      endpoint.searchParams.set("resort_id", resortId);
+      endpoint.searchParams.set("hours", hours);
+      const resp = await fetch(endpoint.toString());
+      payload = await resp.json();
+      if (!resp.ok) {
+        throw new Error(payload.error || `HTTP ${resp.status}`);
+      }
     }
     if (titleEl) titleEl.textContent = `Hourly Forecast: ${payload.query || resortId}`;
     if (metaEl) {

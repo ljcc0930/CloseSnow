@@ -43,10 +43,12 @@ _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hour
 
 
 def _render_hourly_page_html(resort_id: str) -> str:
+    hourly_context_json = json.dumps({"resortId": resort_id}, ensure_ascii=False)
     return (
         _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../assets")
         .replace("{{back_href}}", "../")
         .replace("{{resort_id}}", resort_id)
+        .replace("{{hourly_context_json}}", hourly_context_json)
     )
 
 
