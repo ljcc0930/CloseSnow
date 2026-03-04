@@ -437,6 +437,92 @@ const applyLayout = () => {
   scheduleTempLayout();
 };
 
+const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
+const UNIT_LABELS = {
+  metric: { snow: "cm", rain: "mm", temp: "°C" },
+  imperial: { snow: "in", rain: "in", temp: "°F" },
+};
+const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
+const unitToggles = Array.from(document.querySelectorAll(".unit-toggle[data-target-kind]"));
+
+const getStoredUnitMode = (kind) => {
+  try {
+    const saved = localStorage.getItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`);
+    if (saved === "imperial" || saved === "metric") return saved;
+  } catch (e) {
+    // Ignore localStorage access failures.
+  }
+  return "metric";
+};
+
+const formatMeasure = (metricValue, kind, mode) => {
+  if (mode === "imperial") {
+    if (kind === "snow") return (metricValue / 2.54).toFixed(1);
+    if (kind === "rain") return (metricValue / 25.4).toFixed(2);
+    if (kind === "temp") return ((metricValue * 9 / 5) + 32).toFixed(1);
+  }
+  if (kind === "rain") return metricValue.toFixed(1);
+  if (kind === "snow" || kind === "temp") return metricValue.toFixed(1);
+  return String(metricValue);
+};
+
+const renderUnitValues = (kind, mode) => {
+  const cells = Array.from(document.querySelectorAll(`td[data-kind="${kind}"][data-metric-value]`));
+  cells.forEach((cell) => {
+    const metricRaw = cell.getAttribute("data-metric-value");
+    const metricValue = metricRaw === null ? NaN : Number(metricRaw);
+    if (!Number.isFinite(metricValue)) return;
+    cell.textContent = formatMeasure(metricValue, kind, mode);
+  });
+
+  const unitLabels = Array.from(document.querySelectorAll(`[data-unit-kind="${kind}"]`));
+  unitLabels.forEach((el) => {
+    const text = UNIT_LABELS[mode]?.[kind];
+    if (text) el.textContent = text;
+  });
+};
+
+const syncToggleButtons = (kind, mode) => {
+  const kindButtons = Array.from(
+    document.querySelectorAll(`.unit-toggle[data-target-kind="${kind}"] .unit-btn[data-unit-mode]`)
+  );
+  kindButtons.forEach((btn) => {
+    btn.classList.toggle("is-active", btn.getAttribute("data-unit-mode") === mode);
+  });
+};
+
+const setUnitMode = (kind, mode, persist = true, relayout = true) => {
+  if (!VALID_UNIT_KINDS.has(kind)) return;
+  const nextMode = mode === "imperial" ? "imperial" : "metric";
+  renderUnitValues(kind, nextMode);
+  syncToggleButtons(kind, nextMode);
+  if (persist) {
+    try {
+      localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`, nextMode);
+    } catch (e) {
+      // Ignore localStorage access failures.
+    }
+  }
+  if (relayout) applyLayout();
+};
+
+const initializedKinds = new Set();
+unitToggles.forEach((group) => {
+  const kind = group.getAttribute("data-target-kind");
+  if (!kind || !VALID_UNIT_KINDS.has(kind)) return;
+  const buttons = Array.from(group.querySelectorAll(".unit-btn[data-unit-mode]"));
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.getAttribute("data-unit-mode");
+      setUnitMode(kind, mode || "metric");
+    });
+  });
+  if (!initializedKinds.has(kind)) {
+    setUnitMode(kind, getStoredUnitMode(kind), false, false);
+    initializedKinds.add(kind);
+  }
+});
+
 applyLayout();
 window.addEventListener("resize", () => {
   applyLayout();

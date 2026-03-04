@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import html
 from typing import Optional
 
 
@@ -60,3 +61,17 @@ def rain_color(v: Optional[float]) -> str:
     g = round(255 + (239 - 255) * x)
     b = round(255 + (216 - 255) * x)
     return f"background:rgb({r},{g},{b});"
+
+
+def render_measure_cell(raw_value: str, kind: str, style: str = "", klass: str = "") -> str:
+    class_attr = f" class='{klass}'" if klass else ""
+    style_attr = f" style='{style}'" if style else ""
+    value = (raw_value or "").strip()
+    escaped = html.escape(raw_value)
+    numeric = to_float(value)
+    if numeric is None:
+        return f"<td{class_attr}{style_attr}>{escaped}</td>"
+    return (
+        f"<td{class_attr}{style_attr} "
+        f"data-kind='{kind}' data-metric-value='{numeric:.6f}'>{escaped}</td>"
+    )

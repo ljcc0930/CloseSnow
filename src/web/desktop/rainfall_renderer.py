@@ -4,7 +4,7 @@ from __future__ import annotations
 import html
 from typing import Dict, List
 
-from src.web.weather_table_styles import rain_color, to_float
+from src.web.weather_table_styles import rain_color, render_measure_cell, to_float
 
 
 def _short_label(name: str) -> str:
@@ -36,12 +36,12 @@ def render_rainfall_desktop_layout(
             if header.endswith("_rain_mm") and header != "query":
                 style = rain_color(to_float(val))
             klass = "query-col" if header == "query" else ""
-            left_cells.append(f"<td class='{klass}' style='{style}'>{html.escape(val)}</td>")
+            left_cells.append(render_measure_cell(val, kind="rain", style=style, klass=klass))
 
         for header in daily_headers:
             val = row.get(header, "")
             style = rain_color(to_float(val)) if header.endswith("_rain_mm") else ""
-            right_cells.append(f"<td style='{style}'>{html.escape(val)}</td>")
+            right_cells.append(render_measure_cell(val, kind="rain", style=style))
 
         left_rows.append(left_cells)
         right_rows.append(right_cells)

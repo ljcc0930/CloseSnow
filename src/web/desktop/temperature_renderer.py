@@ -4,7 +4,7 @@ from __future__ import annotations
 import html
 from typing import Dict, List
 
-from src.web.weather_table_styles import temp_color, to_float
+from src.web.weather_table_styles import render_measure_cell, temp_color, to_float
 
 
 def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
@@ -44,8 +44,8 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
             max_v = row.get(max_h, "") if max_h else ""
             min_style = temp_color(to_float(min_v)) if min_h else ""
             max_style = temp_color(to_float(max_v)) if max_h else ""
-            cells.append(f"<td style='{min_style}'>{html.escape(min_v)}</td>")
-            cells.append(f"<td style='{max_style}'>{html.escape(max_v)}</td>")
+            cells.append(render_measure_cell(min_v, kind="temp", style=min_style))
+            cells.append(render_measure_cell(max_v, kind="temp", style=max_style))
         right_rows.append("<tr>" + "".join(cells) + "</tr>")
 
     return f"""

@@ -13,6 +13,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 - Dual geocoding path: Open-Meteo first, Nominatim fallback
 - Date-partitioned cache files: `*_YYYY-MM-DD.json`
 - Google tag is embedded in page HTML: `G-V9NBX3H6M9`
+- Per-table unit toggles: Metric/Imperial for snowfall, rainfall, and temperature; each toggle is persisted in browser localStorage
 
 ## Repository Layout
 
@@ -142,6 +143,9 @@ If you do not want to use the unified CLI, you can run modules directly.
 - Runtime mode switch remains in browser JS:
   - `assets/js/weather_page.js` toggles `body.mobile-simple`
   - `assets/css/weather_page.css` controls `.desktop-only` / `.mobile-only`
+- Unit conversion switch is also in browser JS:
+  - each table has its own Metric/Imperial toggle
+  - displayed values are converted client-side from metric source values
 
 ### Unified backend (writes JSON/CSV)
 
