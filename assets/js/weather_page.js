@@ -541,6 +541,9 @@ unitToggles.forEach((group) => {
 });
 
 applyLayout();
+requestAnimationFrame(() => {
+  document.body.classList.remove("units-pending");
+});
 window.addEventListener("resize", () => {
   applyLayout();
 }, { passive: true });

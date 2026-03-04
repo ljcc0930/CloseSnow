@@ -33,7 +33,7 @@ def build_html(snowfall: List[Dict[str, str]], rain: List[Dict[str, str]], temp:
   <title>Ski Resorts Weather Forcast</title>
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
-<body>
+<body class="units-pending">
   <main>
     <h1>Ski Resorts Weather Forcast</h1>
     <div class="report-date">
