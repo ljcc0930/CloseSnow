@@ -884,3 +884,28 @@ Copy this template for each new work session:
 
 ### Next Slice
 - If desired, add optional `--with-hourly-data` for `render` to fetch and emit hourly artifacts from file mode too.
+
+## 2026-03-04 06:20 (local)
+
+### Scope
+- Fix GitHub Pages workflow so Actions artifacts include newly added resort subpages and hourly static assets/data.
+
+### Changes
+- Files:
+  - `.github/workflows/deploy-pages.yml`
+- Behavior impact:
+  - Build step now uses unified `python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8`.
+  - Workflow now copies full `assets/css` and `assets/js` directories into `site/assets`, not only `weather_page.css/js`.
+  - Pages artifact now includes static hourly subpages + required hourly JS/CSS and locally generated hourly JSON files.
+
+### Validation
+- Commands:
+  - `sed -n '1,260p' .github/workflows/deploy-pages.yml`
+- Results:
+  - Workflow confirmed updated to static pipeline command and full asset copy strategy.
+
+### Risks / Notes
+- This change only affects future GitHub Actions runs (after push/merge to `main`).
+
+### Next Slice
+- Optionally add a lightweight workflow smoke check (assert `site/resort/*/index.html` and `site/resort/*/hourly.json` exist) before upload.
