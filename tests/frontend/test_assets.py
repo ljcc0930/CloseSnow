@@ -27,3 +27,5 @@ def test_read_asset_bytes_reads_known_assets():
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
+    css_text = css.decode("utf-8", errors="ignore")
+    assert ".weather-code-table .query-col" in css_text

@@ -779,3 +779,32 @@ Copy this template for each new work session:
 
 ### Next Slice
 - If needed, add static-friendly hourly artifact generation for GitHub Pages-only hosting.
+
+## 2026-03-04 05:40 (local)
+
+### Scope
+- Fix Weather section single-table header/left column usability by making the Resort column sticky in the Weather table.
+
+### Changes
+- Files:
+  - `assets/css/weather_page.css`
+  - `tests/frontend/test_assets.py`
+- Behavior impact:
+  - Weather table now keeps the Resort column fixed (`position: sticky; left: 0`) while horizontal scrolling.
+  - Header/query intersection cell has elevated z-index for stable sticky layering.
+
+### Validation
+- Commands:
+  - `pytest -q tests/frontend/test_assets.py tests/frontend/test_renderers.py`
+  - `pytest -q`
+  - `python3 -m src.cli static --output-html index.html`
+- Results:
+  - Targeted tests passed (`10 passed`).
+  - Full suite passed (`128 passed`).
+  - Static render succeeded with updated weather table styles.
+
+### Risks / Notes
+- None.
+
+### Next Slice
+- Continue user-reported UI polish iterations on cross-table scrolling behavior.
