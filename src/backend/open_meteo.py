@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import time
 import urllib.error
 import urllib.request
@@ -279,6 +280,28 @@ def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) 
     )
 
 
+def fetch_hourly_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int, hours: int = 72) -> Dict[str, Any]:
+    requested_hours = max(1, int(hours))
+    forecast_days = max(1, min(16, math.ceil(requested_hours / 24)))
+    return fetch_json(
+        FORECAST_URL,
+        {
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "forecast_days": forecast_days,
+            "timezone": "auto",
+            "models": "ecmwf_ifs025",
+            "hourly": (
+                "snowfall,rain,precipitation_probability,snow_depth,"
+                "wind_speed_10m,wind_direction_10m,visibility"
+            ),
+        },
+        cache=cache,
+        namespace="hourly_ecmwf_unified",
+        ttl_seconds=ttl_seconds,
+    )
+
+
 async def geocode_async(
     name: str,
     cache: JsonCache,
@@ -300,3 +323,12 @@ async def fetch_forecast_async(location: ResortLocation, cache: JsonCache, ttl_s
 
 async def fetch_history_async(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
     return await asyncio.to_thread(fetch_history, location, cache, ttl_seconds)
+
+
+async def fetch_hourly_forecast_async(
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    hours: int = 72,
+) -> Dict[str, Any]:
+    return await asyncio.to_thread(fetch_hourly_forecast, location, cache, ttl_seconds, hours)

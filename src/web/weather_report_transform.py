@@ -22,10 +22,12 @@ def _filter_meta(report: Dict[str, Any]) -> Dict[str, str]:
         pass_types = ""
     country = str(report.get("country_code") or report.get("country", "")).strip().upper()
     region = str(report.get("region", "")).strip().lower()
+    resort_id = str(report.get("resort_id", "")).strip()
     return {
         "filter_pass_types": pass_types,
         "filter_country": country,
         "filter_region": region,
+        "resort_id": resort_id,
     }
 
 

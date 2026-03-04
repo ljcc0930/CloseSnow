@@ -6,6 +6,8 @@ import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 
+import pytest
+
 from src.backend.weather_data_server import make_handler
 
 
@@ -116,6 +118,57 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
         assert payload["applied_filters"]["pass_type"] == ["epic"]
         assert payload["applied_filters"]["region"] == "east"
         assert payload["applied_filters"]["country"] == "US"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_backend_data_server_hourly_endpoint(monkeypatch):
+    monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", lambda **kwargs: {"reports": []})
+
+    def fake_hourly(**kwargs):  # noqa: ANN001
+        if kwargs["resort_id"] == "unknown":
+            return None
+        return {
+            "resort_id": kwargs["resort_id"],
+            "query": "Snowbird, UT",
+            "timezone": "America/Denver",
+            "model": "ecmwf_ifs025",
+            "hours": 3,
+            "hourly": {
+                "time": ["2026-03-04T00:00", "2026-03-04T01:00", "2026-03-04T02:00"],
+                "snowfall": [0.0, 0.2, 0.0],
+                "rain": [0.0, 0.0, 0.0],
+                "precipitation_probability": [10, 30, 20],
+                "snow_depth": [120, 121, 121],
+                "wind_speed_10m": [5.0, 6.0, 5.5],
+                "wind_direction_10m": [120, 130, 110],
+                "visibility": [9000, 8500, 8000],
+            },
+        }
+
+    monkeypatch.setattr("src.backend.weather_data_server._hourly_payload_for_resort", fake_hourly)
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        hourly = json.loads(
+            urllib.request.urlopen(f"{base}/api/resort-hourly?resort_id=snowbird-ut&hours=3", timeout=3)
+            .read()
+            .decode("utf-8")
+        )
+        assert hourly["resort_id"] == "snowbird-ut"
+        assert len(hourly["hourly"]["time"]) == 3
+        assert "visibility" in hourly["hourly"]
+
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(f"{base}/api/resort-hourly?resort_id=unknown", timeout=3)
+        assert exc.value.code == 404
     finally:
         server.shutdown()
         server.server_close()

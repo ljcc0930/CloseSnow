@@ -199,3 +199,50 @@ def test_server_requires_data_source_for_api_mode():
             data_mode="api",
             data_source="",
         )
+
+
+def test_server_hourly_api_and_hourly_page_route(monkeypatch):
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr(
+        "src.web.weather_page_server._hourly_payload_for_resort",
+        lambda **kwargs: {
+            "resort_id": kwargs["resort_id"],
+            "query": "Snowbird, UT",
+            "timezone": "America/Denver",
+            "hours": 2,
+            "hourly": {
+                "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+                "snowfall": [0.0, 0.1],
+                "rain": [0.0, 0.0],
+                "precipitation_probability": [20, 10],
+                "snow_depth": [100, 100],
+                "wind_speed_10m": [5.0, 6.0],
+                "wind_direction_10m": [120, 110],
+                "visibility": [9000, 8800],
+            },
+        },
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        hourly = json.loads(
+            urllib.request.urlopen(f"{base}/api/resort-hourly?resort_id=snowbird-ut&hours=2", timeout=3)
+            .read()
+            .decode("utf-8")
+        )
+        assert hourly["resort_id"] == "snowbird-ut"
+        assert len(hourly["hourly"]["time"]) == 2
+
+        page = urllib.request.urlopen(f"{base}/resort/snowbird-ut", timeout=3).read().decode("utf-8")
+        assert "Hourly Forecast" in page
+        assert "snowbird-ut" in page
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)

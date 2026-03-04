@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 from typing import Dict, List
+from urllib.parse import quote
 
 
 def _filter_attrs(row: Dict[str, str]) -> str:
@@ -10,6 +11,14 @@ def _filter_attrs(row: Dict[str, str]) -> str:
     region = html.escape(row.get("filter_region", ""), quote=True)
     country = html.escape(row.get("filter_country", ""), quote=True)
     return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
+def _query_cell(row: Dict[str, str]) -> str:
+    query_text = html.escape(row.get("query", ""))
+    resort_id = row.get("resort_id", "").strip()
+    if resort_id:
+        query_text = f"<a class='resort-link' href='/resort/{quote(resort_id)}'>{query_text}</a>"
+    return f"<td class='query-col'>{query_text}</td>"
 
 
 def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
@@ -46,7 +55,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
     right_rows: List[str] = []
     for row in data:
         attrs = _filter_attrs(row)
-        left_rows.append(f"<tr{attrs}><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
+        left_rows.append(f"<tr{attrs}>{_query_cell(row)}</tr>")
         cells: List[str] = []
         for day in days:
             sunrise_h = sunrise_by_day.get(day)

@@ -31,9 +31,9 @@ Current payload and page:
 - F2 `sunrise/sunset`: implemented
 - F7 concrete date labels in list headers: implemented
 - F5 resort YAML metadata + search baseline: implemented
-- F4 filter modal + backend filter query support: in progress
+- F4 filter modal + backend filter query support: implemented
+- F3 per-resort hourly standalone page: implemented
 - F6 include all Ikon/Epic/Indy resorts: pending
-- F3 per-resort hourly standalone page: pending
 
 ## 3. Cross-Feature Architecture Decisions
 

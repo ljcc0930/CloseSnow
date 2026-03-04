@@ -212,3 +212,37 @@ def test_fetch_forecast_and_history_include_weather_and_sun_daily_fields(monkeyp
         assert "weather_code" in daily_params
         assert "sunrise" in daily_params
         assert "sunset" in daily_params
+
+
+def test_fetch_hourly_forecast_requests_required_hourly_fields(monkeypatch):
+    captured = {}
+
+    def fake_fetch_json(url, params, cache, namespace, ttl_seconds):  # noqa: ANN001
+        del url, cache, ttl_seconds
+        captured["namespace"] = namespace
+        captured["hourly"] = params["hourly"]
+        captured["forecast_days"] = params["forecast_days"]
+        return {"ok": True}
+
+    monkeypatch.setattr("src.backend.open_meteo.fetch_json", fake_fetch_json)
+    loc = ResortLocation(
+        query="Snowbird, UT",
+        name="Snowbird",
+        latitude=40.58,
+        longitude=-111.65,
+        country="US",
+        admin1="UT",
+    )
+    open_meteo.fetch_hourly_forecast(loc, cache=_DummyCache(), ttl_seconds=10, hours=72)
+    assert captured["namespace"] == "hourly_ecmwf_unified"
+    assert captured["forecast_days"] == 3
+    for key in [
+        "snowfall",
+        "rain",
+        "precipitation_probability",
+        "snow_depth",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "visibility",
+    ]:
+        assert key in captured["hourly"]

@@ -631,3 +631,60 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Implement F6 by extending resort catalog coverage toward full Ikon/Epic/Indy set.
+
+## 2026-03-04 05:14 (local)
+
+### Scope
+- Implement F3 per-resort hourly standalone flow: backend hourly endpoint, frontend hourly page route/assets, and main-table resort links.
+
+### Changes
+- Files:
+  - `src/backend/open_meteo.py`
+  - `src/backend/weather_data_server.py`
+  - `src/web/weather_page_server.py`
+  - `src/web/weather_page_assets.py`
+  - `src/web/templates/resort_hourly_page.html` (new)
+  - `assets/css/resort_hourly.css` (new)
+  - `assets/js/resort_hourly.js` (new)
+  - `src/web/weather_report_transform.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `src/web/weather_table_renderer.py`
+  - `assets/css/weather_page.css`
+  - tests:
+    - `tests/backend/test_open_meteo.py`
+    - `tests/integration/test_backend_data_server.py`
+    - `tests/integration/test_web_server.py`
+    - `tests/frontend/test_assets.py`
+    - `tests/frontend/test_renderers.py`
+    - `tests/frontend/test_styles_and_transform.py`
+  - docs:
+    - `docs/FEATURE_DESIGN_SKI_WEATHER_FULL_INFO.md`
+- Behavior impact:
+  - Backend adds `GET /api/resort-hourly?resort_id=<id>&hours=<n>` with hourly metrics:
+    - `snowfall`, `rain`, `precipitation_probability`, `snow_depth`, `wind_speed_10m`, `wind_direction_10m`, `visibility`.
+  - Web server adds:
+    - `/resort/<resort_id>` hourly page route
+    - `/api/resort-hourly` proxy/local endpoint for page data fetch
+  - Main weather tables now link resort names to `/resort/<resort_id>`.
+
+### Validation
+- Commands:
+  - `pytest -q tests/backend/test_open_meteo.py tests/integration/test_backend_data_server.py tests/integration/test_web_server.py tests/frontend/test_assets.py tests/frontend/test_renderers.py`
+  - `pytest -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "/resort/|filter-open-btn" index.html | head -n 40`
+  - `python3 -m src.cli serve-data --host 127.0.0.1 --port 8031` + `curl /api/resort-hourly?...` smoke
+  - `python3 -m src.cli serve-web --host 127.0.0.1 --port 8032 --data-mode local` + `curl /resort/snowbird-ut` and `curl /api/resort-hourly?...` smoke
+- Results:
+  - Targeted suites passed (`32 passed`).
+  - Full suite passed (`124 passed`).
+  - Static HTML contains `/resort/<id>` links in resort columns.
+  - Backend/web smoke checks return hourly payload with required keys and valid route rendering.
+
+### Risks / Notes
+- `hours` is capped to `240` for endpoint stability.
+
+### Next Slice
+- F6 remaining: extend `resorts.yml` coverage to full Ikon/Epic/Indy catalog.

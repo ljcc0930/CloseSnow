@@ -16,6 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import sys
 from typing import Any, Dict, List
+import urllib.error
+import urllib.request
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
@@ -24,6 +26,11 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 from src.web.data_sources import load_payload
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
+from src.backend.weather_data_server import _hourly_payload_for_resort
+
+_HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
+    encoding="utf-8"
+)
 
 
 def _append_resort_query(base_url: str, resorts: List[str]) -> str:
@@ -34,6 +41,11 @@ def _append_resort_query(base_url: str, resorts: List[str]) -> str:
     merged["resort"] = resorts
     query = urlencode(merged, doseq=True)
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))
+
+
+def _hourly_endpoint_from_data_source(base_url: str) -> str:
+    parsed = urlsplit(base_url)
+    return urlunsplit((parsed.scheme, parsed.netloc, "/api/resort-hourly", "", ""))
 
 
 def make_handler(
@@ -74,6 +86,42 @@ def make_handler(
                 max_workers=max_workers,
             )
 
+        def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:
+            if data_mode == "local":
+                payload = _hourly_payload_for_resort(
+                    resort_id=resort_id,
+                    hours=hours,
+                    cache_file=cache_file,
+                    geocode_cache_hours=geocode_cache_hours,
+                    forecast_cache_hours=forecast_cache_hours,
+                )
+                if payload is None:
+                    return 404, {"error": f"Unknown resort_id: {resort_id}"}
+                if "error" in payload:
+                    return 502, payload
+                return 200, payload
+
+            if data_mode == "api":
+                hourly_base = _hourly_endpoint_from_data_source(data_source)
+                hourly_url = f"{hourly_base}?{urlencode({'resort_id': resort_id, 'hours': str(hours)})}"
+                try:
+                    with urllib.request.urlopen(hourly_url, timeout=data_timeout) as resp:
+                        body = resp.read().decode("utf-8")
+                        return 200, json.loads(body)
+                except urllib.error.HTTPError as exc:
+                    error_body = exc.read().decode("utf-8", errors="ignore")
+                    try:
+                        payload = json.loads(error_body)
+                    except Exception:
+                        payload = {"error": error_body or f"HTTP {exc.code}"}
+                    return exc.code, payload
+                except urllib.error.URLError as exc:
+                    return 502, {"error": str(exc)}
+                except Exception as exc:
+                    return 500, {"error": str(exc)}
+
+            return 501, {"error": "Hourly endpoint unavailable in file mode"}
+
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
@@ -91,6 +139,29 @@ def make_handler(
             if parsed.path == "/api/health":
                 body = json.dumps({"ok": True, "mode": data_mode}, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(200, body, "application/json; charset=utf-8")
+                return
+
+            if parsed.path == "/api/resort-hourly":
+                resort_id = (qs.get("resort_id", [""])[0] or "").strip()
+                if not resort_id:
+                    self._write(400, b"{\"error\":\"Missing required query parameter: resort_id\"}", "application/json")
+                    return
+                try:
+                    hours = max(1, min(240, int((qs.get("hours", ["72"])[0] or "72"))))
+                except ValueError:
+                    hours = 72
+                code, payload = self._load_hourly_payload(resort_id, hours)
+                body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+                self._write(code, body, "application/json; charset=utf-8")
+                return
+
+            if parsed.path.startswith("/resort/"):
+                resort_id = parsed.path.split("/resort/", 1)[1].strip()
+                if not resort_id:
+                    self._write(404, b"Not Found", "text/plain; charset=utf-8")
+                    return
+                html = _HOURLY_TEMPLATE.replace("{{resort_id}}", resort_id)
+                self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
                 return
 
             payload = self._load_request_payload(qs)
@@ -136,7 +207,7 @@ def main() -> int:
     print(f"Data mode: {args.data_mode}")
     if args.data_mode in {"api", "file"}:
         print(f"Data source: {args.data_source}")
-    print("Open / for page, /api/data for raw JSON, /api/health for health check.")
+    print("Open / for page, /resort/<id> for hourly page, /api/data, /api/resort-hourly, /api/health.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

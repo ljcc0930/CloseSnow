@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 from typing import Callable, Dict, List, Optional
+from urllib.parse import quote
 
 from src.web.weather_table_styles import render_measure_cell, to_float
 
@@ -58,6 +59,15 @@ def _filter_attrs(row: Dict[str, str]) -> str:
     return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
 
 
+def _query_cell_html(row: Dict[str, str]) -> str:
+    query_text = html.escape(row.get("query", ""))
+    resort_id = row.get("resort_id", "").strip()
+    if resort_id:
+        href = f"/resort/{quote(resort_id)}"
+        query_text = f"<a class='resort-link' href='{href}'>{query_text}</a>"
+    return f"<td class='query-col'>{query_text}</td>"
+
+
 def render_desktop_split_metric_layout(
     data: List[Dict[str, str]],
     weekly_headers: List[str],
@@ -76,10 +86,12 @@ def render_desktop_split_metric_layout(
         right_cells: List[str] = []
 
         for header in ["query"] + weekly_headers:
+            if header == "query":
+                left_cells.append(_query_cell_html(row))
+                continue
             val = row.get(header, "")
-            style = "" if header == "query" else _style_for_value(header, val, weekly_suffix, color_fn)
-            klass = "query-col" if header == "query" else ""
-            left_cells.append(render_measure_cell(val, kind=kind, style=style, klass=klass))
+            style = _style_for_value(header, val, weekly_suffix, color_fn)
+            left_cells.append(render_measure_cell(val, kind=kind, style=style))
 
         for header in daily_headers:
             val = row.get(header, "")
@@ -154,7 +166,7 @@ def render_mobile_split_metric_layout(
     right_rows: List[str] = []
     for row in data:
         attrs = _filter_attrs(row)
-        left_rows.append(f"<tr{attrs}><td class='query-col'>{html.escape(row.get('query', ''))}</td></tr>")
+        left_rows.append(f"<tr{attrs}>{_query_cell_html(row)}</tr>")
         right_cells: List[str] = []
 
         for header in weekly_headers:

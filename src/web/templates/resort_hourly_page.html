@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resort Hourly Forecast</title>
+  <link rel="stylesheet" href="/assets/css/resort_hourly.css" />
+</head>
+<body>
+  <main>
+    <a class="back-link" href="/">Back to Main Forecast</a>
+    <h1 id="hourly-title">Hourly Forecast: {{resort_id}}</h1>
+    <div class="hourly-controls">
+      <label for="hours-select">Hours</label>
+      <select id="hours-select">
+        <option value="24">24</option>
+        <option value="48">48</option>
+        <option value="72" selected>72</option>
+        <option value="120">120</option>
+      </select>
+      <button id="hours-refresh-btn" type="button">Refresh</button>
+    </div>
+    <p id="hourly-meta" class="hourly-meta">Loading...</p>
+    <div id="hourly-error" class="hourly-error" hidden></div>
+    <div class="table-wrap">
+      <table id="hourly-table" class="hourly-table">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    window.CLOSESNOW_HOURLY_CONTEXT = {
+      resortId: "{{resort_id}}"
+    };
+  </script>
+  <script src="/assets/js/resort_hourly.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ from __future__ import annotations
 import html
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
+from urllib.parse import quote
 
 from src.web.desktop.precipitation_renderer import (
     render_rainfall_desktop_layout,
@@ -31,6 +32,14 @@ def _filter_attrs(row: Dict[str, str]) -> str:
     region = html.escape(row.get("filter_region", ""), quote=True)
     country = html.escape(row.get("filter_country", ""), quote=True)
     return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+
+
+def _query_cell_html(row: Dict[str, str]) -> str:
+    text = html.escape(row.get("query", ""))
+    resort_id = row.get("resort_id", "").strip()
+    if resort_id:
+        text = f"<a class='resort-link' href='/resort/{quote(resort_id)}'>{text}</a>"
+    return f"<td class='query-col'>{text}</td>"
 
 
 @dataclass(frozen=True)
@@ -184,7 +193,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
     body_rows: List[str] = []
     for row in data:
         attrs = _filter_attrs(row)
-        cells: List[str] = [f"<td class='query-col'>{html.escape(row.get('query', ''))}</td>"]
+        cells: List[str] = [_query_cell_html(row)]
         for header in day_headers:
             code = row.get(header, "").strip()
             emoji = emoji_for_weather_code(code if code else None)

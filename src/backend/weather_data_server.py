@@ -13,7 +13,10 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
+from src.backend.constants import COORDINATES_CACHE_FILE
 from src.backend.compute.payload_metadata import build_payload_metadata
+from src.backend.open_meteo import fetch_hourly_forecast, geocode
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.resort_catalog import load_resort_catalog, search_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
@@ -97,6 +100,89 @@ def _empty_payload(cache_file: str, geocode_cache_hours: int, forecast_cache_hou
     )
 
 
+def _parse_hours(raw: str, default: int = 72) -> int:
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = default
+    return max(1, min(240, value))
+
+
+def _hourly_payload_for_resort(
+    *,
+    resort_id: str,
+    hours: int,
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+) -> Dict[str, object] | None:
+    catalog = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next((r for r in catalog if str(r.get("resort_id", "")) == resort_id), None)
+    if item is None:
+        return None
+
+    cache_path = dated_cache_path(cache_file)
+    cache = JsonCache(cache_path)
+    coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
+    query = str(item.get("query", "")).strip()
+    location = geocode(
+        query,
+        cache=cache,
+        ttl_seconds=geocode_cache_hours * 3600,
+        coord_cache=coord_cache,
+    )
+    if location is None:
+        return {
+            "error": f"Unable to geocode resort '{query}'",
+            "resort_id": resort_id,
+            "query": query,
+        }
+
+    forecast = fetch_hourly_forecast(
+        location,
+        cache=cache,
+        ttl_seconds=forecast_cache_hours * 3600,
+        hours=hours,
+    )
+    cache.save()
+    coord_cache.save()
+
+    hourly = forecast.get("hourly", {}) if isinstance(forecast, dict) else {}
+    times = list(hourly.get("time", []))
+    n = min(hours, len(times))
+    metric_keys = [
+        "snowfall",
+        "rain",
+        "precipitation_probability",
+        "snow_depth",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "visibility",
+    ]
+    trimmed_hourly: Dict[str, object] = {"time": times[:n]}
+    for key in metric_keys:
+        values = hourly.get(key, [])
+        if isinstance(values, list):
+            trimmed_hourly[key] = values[:n]
+        else:
+            trimmed_hourly[key] = []
+
+    return {
+        "resort_id": resort_id,
+        "query": query,
+        "matched_name": location.name,
+        "country": item.get("country"),
+        "region": item.get("region"),
+        "pass_types": item.get("pass_types", []),
+        "timezone": forecast.get("timezone"),
+        "model": "ecmwf_ifs025",
+        "resolved_latitude": forecast.get("latitude"),
+        "resolved_longitude": forecast.get("longitude"),
+        "hours": n,
+        "hourly": trimmed_hourly,
+    }
+
+
 def make_handler(
     cache_file: str,
     geocode_cache_hours: int,
@@ -166,6 +252,31 @@ def make_handler(
                         "time_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
                     },
                 )
+                return
+            if parsed.path == "/api/resort-hourly":
+                resort_id = (qs.get("resort_id", [""])[0] or "").strip()
+                if not resort_id:
+                    self._write_json(400, {"error": "Missing required query parameter: resort_id"})
+                    return
+                hours = _parse_hours((qs.get("hours", ["72"])[0] or "72"), default=72)
+                try:
+                    result = _hourly_payload_for_resort(
+                        resort_id=resort_id,
+                        hours=hours,
+                        cache_file=cache_file,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                    )
+                except Exception as exc:
+                    self._write_json(500, {"error": f"Failed to build hourly payload: {exc}"})
+                    return
+                if result is None:
+                    self._write_json(404, {"error": f"Unknown resort_id: {resort_id}"})
+                    return
+                if "error" in result:
+                    self._write_json(502, result)
+                    return
+                self._write_json(200, result)
                 return
             if parsed.path == "/api/resorts":
                 search_text = (qs.get("search", [""])[0] or "").strip()
@@ -250,7 +361,7 @@ def main() -> int:
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving backend data API at http://{args.host}:{args.port}")
-    print("Open /api/data for payload, /api/health for health check.")
+    print("Open /api/data, /api/resorts, /api/resort-hourly, and /api/health.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
