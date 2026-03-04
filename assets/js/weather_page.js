@@ -473,6 +473,10 @@ const renderUnitValues = (kind, mode) => {
     const metricValue = metricRaw === null ? NaN : Number(metricRaw);
     if (!Number.isFinite(metricValue)) return;
     cell.textContent = formatMeasure(metricValue, kind, mode);
+    cell.classList.remove("unit-changing");
+    // Restart CSS animation when the same class is applied repeatedly.
+    void cell.offsetWidth; // eslint-disable-line no-unused-expressions
+    cell.classList.add("unit-changing");
   });
 
   const unitLabels = Array.from(document.querySelectorAll(`[data-unit-kind="${kind}"]`));
@@ -483,12 +487,24 @@ const renderUnitValues = (kind, mode) => {
 };
 
 const syncToggleButtons = (kind, mode) => {
+  const kindToggles = Array.from(document.querySelectorAll(`.unit-toggle[data-target-kind="${kind}"]`));
+  kindToggles.forEach((toggle) => {
+    toggle.setAttribute("data-mode", mode);
+  });
   const kindButtons = Array.from(
     document.querySelectorAll(`.unit-toggle[data-target-kind="${kind}"] .unit-btn[data-unit-mode]`)
   );
   kindButtons.forEach((btn) => {
     btn.classList.toggle("is-active", btn.getAttribute("data-unit-mode") === mode);
   });
+};
+
+const getCurrentUnitMode = (kind) => {
+  const activeBtn = document.querySelector(
+    `.unit-toggle[data-target-kind="${kind}"] .unit-btn.is-active`
+  );
+  const activeMode = activeBtn?.getAttribute("data-unit-mode");
+  return activeMode === "imperial" ? "imperial" : "metric";
 };
 
 const setUnitMode = (kind, mode, persist = true, relayout = true) => {
@@ -513,8 +529,9 @@ unitToggles.forEach((group) => {
   const buttons = Array.from(group.querySelectorAll(".unit-btn[data-unit-mode]"));
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const mode = btn.getAttribute("data-unit-mode");
-      setUnitMode(kind, mode || "metric");
+      const current = getCurrentUnitMode(kind);
+      const next = current === "metric" ? "imperial" : "metric";
+      setUnitMode(kind, next);
     });
   });
   if (!initializedKinds.has(kind)) {
