@@ -10,6 +10,7 @@ Its core flow fetches 15-day forecast data per resort in one pipeline and output
 - Serve the report as either dynamic web page (`/` + `/api/data`) or pre-rendered static HTML (`index.html`).
 - Support desktop/mobile table layouts with synced scrolling for large forecast grids.
 - Provide per-table unit switching (snow: `cm/in`, rain: `mm/in`, temperature: `°C/°F`) with saved browser preference.
+- Fetch resort data concurrently with configurable worker count (`--max-workers`).
 
 ## Repository Layout
 
@@ -91,6 +92,7 @@ python3 -m src.cli static \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
+  [--max-workers 8] \
   [--output-html index.html]
 ```
 
@@ -107,7 +109,8 @@ python3 -m src.cli serve \
   [--port 8010] \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
-  [--forecast-cache-hours 3]
+  [--forecast-cache-hours 3] \
+  [--max-workers 8]
 ```
 
 Notes:
@@ -150,7 +153,8 @@ If you do not want to use the unified CLI, you can run modules directly.
 python3 -m src.backend.ecmwf_unified_backend \
   --resorts-file resorts.txt \
   --forecast-cache-hours 3 \
-  --geocode-cache-hours 720
+  --geocode-cache-hours 720 \
+  --max-workers 8
 ```
 
 Default outputs:
@@ -163,13 +167,13 @@ Default outputs:
 ### Dynamic server
 
 ```bash
-python3 -m src.web.weather_page_server --host 127.0.0.1 --port 8010
+python3 -m src.web.weather_page_server --host 127.0.0.1 --port 8010 --max-workers 8
 ```
 
 ### Static renderer
 
 ```bash
-python3 -m src.web.weather_page_static_render --output-html index.html
+python3 -m src.web.weather_page_static_render --output-html index.html --max-workers 8
 ```
 
 ## Resort Input Rules
@@ -212,11 +216,11 @@ Triggers:
 
 - `workflow_dispatch`
 - push to `main`
-- schedule (daily at local `America/Los_Angeles` 00:01 with PST/PDT dual cron)
+- schedule (hourly at minute 1)
 
 Build steps:
 
-- Run `python -m src.web.weather_page_static_render --output-html site/index.html`
+- Run `python -m src.cli static --output-html site/index.html --max-workers 8`
 - Copy `assets/css/weather_page.css` and `assets/js/weather_page.js` into `site/`
 - Deploy `site/` to GitHub Pages
 

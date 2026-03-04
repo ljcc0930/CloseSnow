@@ -34,6 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_static.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p_static.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p_static.add_argument("--forecast-cache-hours", type=int, default=3)
+    p_static.add_argument("--max-workers", type=int, default=8)
     p_static.add_argument("--output-html", default="index.html")
 
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
@@ -42,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p_serve.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p_serve.add_argument("--forecast-cache-hours", type=int, default=3)
+    p_serve.add_argument("--max-workers", type=int, default=8)
 
     return p
 
@@ -56,6 +58,7 @@ def run_static(args: argparse.Namespace) -> int:
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
+        max_workers=args.max_workers,
         write_outputs=False,
     )
 
@@ -71,6 +74,7 @@ def run_server(args: argparse.Namespace) -> int:
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
+        max_workers=args.max_workers,
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving dynamic page at http://{args.host}:{args.port}")

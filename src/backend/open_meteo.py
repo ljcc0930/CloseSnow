@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 import urllib.error
@@ -270,3 +271,26 @@ def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) 
         namespace="history_ecmwf_unified",
         ttl_seconds=ttl_seconds,
     )
+
+
+async def geocode_async(
+    name: str,
+    cache: JsonCache,
+    ttl_seconds: int,
+    coord_cache: Optional[ResortCoordinateCache] = None,
+) -> Optional[ResortLocation]:
+    return await asyncio.to_thread(
+        geocode,
+        name,
+        cache,
+        ttl_seconds,
+        coord_cache,
+    )
+
+
+async def fetch_forecast_async(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+    return await asyncio.to_thread(fetch_forecast, location, cache, ttl_seconds)
+
+
+async def fetch_history_async(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+    return await asyncio.to_thread(fetch_history, location, cache, ttl_seconds)
