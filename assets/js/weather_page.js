@@ -778,12 +778,19 @@ const _rowSearchText = (row) => {
 };
 
 const _rowIsDefaultResort = (row) => {
-  const marker = String(row?.dataset?.defaultEnabled || row?.dataset?.ljccFavorite || "")
-    .trim()
-    .toLowerCase();
-  // Older static pages may not include the marker yet; fail open in that case.
-  if (!marker) return true;
-  return marker === "1" || marker === "true" || marker === "yes";
+  if (!row || typeof row.hasAttribute !== "function") return true;
+  // New pages always emit this attribute (`1` for default, empty for non-default).
+  if (row.hasAttribute("data-default-enabled")) {
+    const marker = String(row.getAttribute("data-default-enabled") || "").trim().toLowerCase();
+    return marker === "1" || marker === "true" || marker === "yes";
+  }
+  // Backward compatibility for any legacy attribute naming.
+  if (row.hasAttribute("data-ljcc-favorite")) {
+    const marker = String(row.getAttribute("data-ljcc-favorite") || "").trim().toLowerCase();
+    return marker === "1" || marker === "true" || marker === "yes";
+  }
+  // Older static pages may not include default markers at all; fail open in that case.
+  return true;
 };
 
 const rowMatchesFilters = (row, keyword) => {

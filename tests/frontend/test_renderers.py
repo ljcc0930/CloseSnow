@@ -220,6 +220,13 @@ def test_table_renderer_sections_and_empty_states():
     assert "°C" in temp and "°F" in temp
 
 
+def test_non_default_rows_emit_empty_default_marker():
+    row = _snow_row()
+    row["ljcc_favorite"] = ""
+    snow = render_snowfall_table([row])
+    assert "data-default-enabled=''" in snow
+
+
 def test_build_html_contains_meta_sections():
     html = build_html(
         [_snow_row()],

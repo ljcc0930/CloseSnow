@@ -37,3 +37,4 @@ def test_read_asset_bytes_reads_known_assets():
     assert "resolved_latitude" in hourly_js_text
     assert "history.replaceState" in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
+    assert 'row.hasAttribute("data-default-enabled")' in js_text
