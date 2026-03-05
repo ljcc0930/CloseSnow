@@ -58,6 +58,12 @@ const formatValue = (value) => {
   return String(value);
 };
 
+const formatCoordinate = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "";
+  return num.toFixed(4);
+};
+
 const setError = (msg) => {
   if (!errorEl) return;
   const text = String(msg || "").trim();
@@ -346,7 +352,10 @@ const loadHourly = async () => {
       const tz = payload.timezone || "unknown timezone";
       const model = payload.model || "unknown model";
       const count = payload.hours || 0;
-      metaEl.textContent = `${count} hours | ${tz} | ${model}`;
+      const lat = formatCoordinate(payload.resolved_latitude);
+      const lon = formatCoordinate(payload.resolved_longitude);
+      const coordText = lat && lon ? ` | ${lat}, ${lon}` : "";
+      metaEl.textContent = `${count} hours | ${tz} | ${model}${coordText}`;
     }
     renderHourlyTable(payload);
     try {

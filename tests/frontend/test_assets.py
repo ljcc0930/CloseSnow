@@ -33,3 +33,4 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".weather-left-table .query-col" in css_text
     assert ".hourly-charts" in hourly_css_text
     assert "renderHourlyCharts" in hourly_js_text
+    assert "resolved_latitude" in hourly_js_text
