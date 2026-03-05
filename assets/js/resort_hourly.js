@@ -347,7 +347,10 @@ const loadHourly = async () => {
         throw new Error(payload.error || `HTTP ${resp.status}`);
       }
     }
-    if (titleEl) titleEl.textContent = `Hourly Forecast: ${payload.query || resortId}`;
+    if (titleEl) {
+      const resortLabel = String(payload?.query || "").trim();
+      titleEl.textContent = resortLabel ? `Hourly Forecast: ${resortLabel}` : "Hourly Forecast";
+    }
     if (metaEl) {
       const tz = payload.timezone || "unknown timezone";
       const model = payload.model || "unknown model";

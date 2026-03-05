@@ -38,6 +38,8 @@ def test_render_hourly_pages(tmp_path):
     assert "../../assets/css/resort_hourly.css" in html
     assert 'window.CLOSESNOW_HOURLY_CONTEXT = {' in html
     assert '"resortId": "snowbird-ut"' in html
+    assert "Hourly Forecast: snowbird-ut" not in html
+    assert '<h1 id="hourly-title">Hourly Forecast</h1>' in html
     assert 'id="hourly-charts"' in html
 
 

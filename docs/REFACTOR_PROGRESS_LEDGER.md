@@ -37,6 +37,42 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-05 16:25 (hourly page alias flicker fix)
+
+### Scope
+- Remove transient `resort_id` alias flash on per-resort hourly pages during initial load.
+
+### Changes
+- Files:
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_web_server.py`
+- Behavior impact:
+  - Hourly page title no longer renders `resort_id` in initial HTML.
+  - Frontend title now only appends resort name when `payload.query` is available, otherwise keeps generic title.
+  - Added regression assertions to ensure slug-style alias is not rendered in hourly page title.
+
+### Validation
+- Commands:
+  - `pytest tests/frontend/test_static_site_pipeline.py -q`
+  - `pytest tests/integration/test_web_server.py::test_server_hourly_api_and_hourly_page_route -q`
+  - `pytest tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "hourly-title|Hourly Forecast: snowbird-ut|Hourly Forecast</h1>" resort/snowbird-ut/index.html`
+- Results:
+  - frontend static-site tests: `4 passed`
+  - hourly route integration test: `1 passed`
+  - full web server integration tests: `10 passed`
+  - static render: succeeded (`Done: index.html`, `Done: 18 resort hourly page(s)`)
+  - generated hourly page contains `<h1 id="hourly-title">Hourly Forecast</h1>` and no slug title
+
+### Risks / Notes
+- If hourly payload lacks `query`, page title remains generic (`Hourly Forecast`) by design to avoid alias flash.
+
+### Next Slice
+- Optionally pass canonical resort display name into hourly context JSON so title can be stable without waiting for payload fetch.
+
 ## 2026-03-04 00:55 (v4 classification + merge pass)
 
 ### Scope
