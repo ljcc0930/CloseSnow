@@ -24,18 +24,6 @@
     "default_enabled": true
   },
   {
-    "resort_id": "big-sky-mt",
-    "query": "Big Sky, MT",
-    "name": "Big Sky",
-    "state": "MT",
-    "country": "US",
-    "region": "west",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true
-  },
-  {
     "resort_id": "boyne-mountain-mi",
     "query": "Boyne Mountain, MI",
     "name": "Boyne Mountain",
@@ -65,18 +53,6 @@
     "query": "Copper Mountain, CO",
     "name": "Copper Mountain",
     "state": "CO",
-    "country": "US",
-    "region": "west",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true
-  },
-  {
-    "resort_id": "jackson-hole-wy",
-    "query": "Jackson Hole, WY",
-    "name": "Jackson Hole",
-    "state": "WY",
     "country": "US",
     "region": "west",
     "pass_types": [
@@ -157,18 +133,6 @@
     "default_enabled": true
   },
   {
-    "resort_id": "solitude-ut",
-    "query": "Solitude, UT",
-    "name": "Solitude",
-    "state": "UT",
-    "country": "US",
-    "region": "west",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true
-  },
-  {
     "resort_id": "steamboat-co",
     "query": "Steamboat, CO",
     "name": "Steamboat",
@@ -187,30 +151,6 @@
     "state": "VT",
     "country": "US",
     "region": "east",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true
-  },
-  {
-    "resort_id": "sugarbush-vt",
-    "query": "Sugarbush, VT",
-    "name": "Sugarbush",
-    "state": "VT",
-    "country": "US",
-    "region": "east",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true
-  },
-  {
-    "resort_id": "winter-park-co",
-    "query": "Winter Park, CO",
-    "name": "Winter Park",
-    "state": "CO",
-    "country": "US",
-    "region": "west",
     "pass_types": [
       "ikon"
     ],
@@ -346,7 +286,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": true
   },
   {
     "resort_id": "blue-mountain-resort-pa",
@@ -635,7 +575,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": true
   },
   {
     "resort_id": "june-mountain-ca",
@@ -1105,7 +1045,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": true
   },
   {
     "resort_id": "st-moritz-switzerland",
@@ -1153,7 +1093,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": true
   },
   {
     "resort_id": "sugarloaf-me",
@@ -1357,7 +1297,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": true
   },
   {
     "resort_id": "yunding-snow-park-china",
