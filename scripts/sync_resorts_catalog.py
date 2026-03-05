@@ -9,6 +9,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 import sys
 from typing import Any, Dict, Iterable, List, Optional
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,20 @@ from src.backend.resort_catalog import VALID_PASS_TYPES, validate_resort_catalog
 
 DEFAULT_RESORTS_PATH = REPO_ROOT / "resorts.yml"
 USER_AGENT = "Mozilla/5.0 (compatible; CloseSnow/1.0)"
+IKON_DESTINATIONS_PAGE_URL = "https://www.ikonpass.com/en/destinations"
+IKON_SANITY_QUERY_URL = "https://bjsgnxuy.apicdn.sanity.io/v2022-05-12/data/query/~production"
+IKON_DESTINATIONS_QUERY = (
+    '*[_type == "destination" && excludeFromListings != true]|order(orderRank asc)'
+    "{name,title,ignoreSubDestinations,subDestinations[]{name,title}}"
+)
+# Known naming differences between Ikon's destinations page and catalog/API naming.
+IKON_DESTINATION_CANONICAL_ALIASES = {
+    "arai mountain": {"arai snow"},
+}
+IKON_CHECK_SUFFIX_RE = re.compile(
+    r"\b(resort|ski area|ski and snowboard|ski hill|ski center|ski centre)\b$",
+    flags=re.IGNORECASE,
+)
 
 US_WEST = {
     "AK",
@@ -170,6 +185,15 @@ def strip_name_suffix(name: str) -> str:
 
 def canonical_name(name: str) -> str:
     base = strip_name_suffix(name).lower().replace("&", " and ")
+    base = re.sub(r"[^a-z0-9]+", " ", base)
+    return re.sub(r"\s+", " ", base).strip()
+
+
+def canonical_ikon_check_name(raw_name: str) -> str:
+    name, _, _ = split_name_state_country(clean_text(raw_name))
+    base = clean_text(name or raw_name)
+    base = IKON_CHECK_SUFFIX_RE.sub("", base).strip(" ,-")
+    base = base.lower().replace("&", " and ")
     base = re.sub(r"[^a-z0-9]+", " ", base)
     return re.sub(r"\s+", " ", base).strip()
 
@@ -331,6 +355,36 @@ def fetch_ikon_resorts() -> List[CatalogResort]:
                 continue
             resorts[item.query.lower()] = item
     return list(resorts.values())
+
+
+def flatten_ikon_destination_names(destinations: List[Dict[str, Any]]) -> List[str]:
+    names: List[str] = []
+    seen: set[str] = set()
+
+    for destination in destinations:
+        if not isinstance(destination, dict):
+            continue
+        sub_destinations = [x for x in (destination.get("subDestinations") or []) if isinstance(x, dict)]
+        candidates = [destination] if bool(destination.get("ignoreSubDestinations")) or not sub_destinations else sub_destinations
+        for candidate in candidates:
+            raw_name = clean_text(candidate.get("name") or candidate.get("title") or "")
+            if not raw_name:
+                continue
+            canonical = canonical_ikon_check_name(raw_name)
+            if not canonical or canonical in seen:
+                continue
+            seen.add(canonical)
+            names.append(raw_name)
+    return names
+
+
+def fetch_ikon_destination_names() -> List[str]:
+    url = f"{IKON_SANITY_QUERY_URL}?{urlencode({'query': IKON_DESTINATIONS_QUERY})}"
+    payload = request_json(url)
+    rows = payload.get("result", [])
+    if not isinstance(rows, list):
+        return []
+    return flatten_ikon_destination_names(rows)
 
 
 def clean_epic_text(text: str) -> str:
@@ -617,16 +671,80 @@ def validate_coverage(entries: List[Dict[str, Any]]) -> List[str]:
     return errors
 
 
-def run_validate_only(path: Path) -> int:
+def _catalog_ikon_name_map(entries: List[Dict[str, Any]]) -> Dict[str, str]:
+    out: Dict[str, str] = {}
+    for entry in entries:
+        pass_types = [str(v).strip().lower() for v in (entry.get("pass_types") or []) if str(v).strip()]
+        if "ikon" not in pass_types:
+            continue
+        source_name = clean_text(entry.get("name") or "")
+        if not source_name:
+            source_name, _, _ = split_name_state_country(clean_text(entry.get("query") or ""))
+        canonical = canonical_ikon_check_name(source_name)
+        if canonical and canonical not in out:
+            out[canonical] = source_name
+    return out
+
+
+def _ikon_name_matches_catalog(name_canonical: str, catalog_canonicals: set[str]) -> bool:
+    if name_canonical in catalog_canonicals:
+        return True
+
+    aliases = IKON_DESTINATION_CANONICAL_ALIASES.get(name_canonical, set())
+    if any(alias in catalog_canonicals for alias in aliases):
+        return True
+
+    for canonical, canonical_aliases in IKON_DESTINATION_CANONICAL_ALIASES.items():
+        if name_canonical in canonical_aliases and canonical in catalog_canonicals:
+            return True
+    for catalog_canonical in catalog_canonicals:
+        if len(name_canonical) >= 5 and (name_canonical in catalog_canonical or catalog_canonical in name_canonical):
+            return True
+    return False
+
+
+def validate_ikon_destinations_coverage(entries: List[Dict[str, Any]], ikon_destination_names: List[str]) -> List[str]:
+    if not ikon_destination_names:
+        return [f"ikon destinations check returned 0 names from {IKON_DESTINATIONS_PAGE_URL}"]
+
+    catalog_names = _catalog_ikon_name_map(entries)
+    catalog_canonicals = set(catalog_names.keys())
+    missing: List[str] = []
+    for name in ikon_destination_names:
+        canonical = canonical_ikon_check_name(name)
+        if not canonical:
+            continue
+        if _ikon_name_matches_catalog(canonical, catalog_canonicals):
+            continue
+        missing.append(name)
+
+    if not missing:
+        return []
+    sample = ", ".join(missing[:10])
+    suffix = "" if len(missing) <= 10 else ", ..."
+    return [f"ikon destinations missing from catalog ({len(missing)}): {sample}{suffix}"]
+
+
+def run_validate_only(path: Path, *, check_ikon_destinations: bool) -> int:
     rows = load_existing_catalog(path)
     errors = validate_resort_catalog(rows)
     errors.extend(validate_coverage(rows))
+    ikon_destination_names: List[str] = []
+    if check_ikon_destinations:
+        try:
+            ikon_destination_names = fetch_ikon_destination_names()
+        except Exception as exc:
+            errors.append(f"ikon destinations check failed ({IKON_DESTINATIONS_PAGE_URL}): {exc}")
+        else:
+            errors.extend(validate_ikon_destinations_coverage(rows, ikon_destination_names))
 
     stats = summarize_catalog(rows)
     print(f"Catalog: {path}")
     print(f"Total resorts: {stats['total']}")
     print(f"Default enabled: {stats['default_enabled']}")
     print(f"Pass counts: {json.dumps(stats['pass_counts'], ensure_ascii=False, sort_keys=True)}")
+    if check_ikon_destinations and ikon_destination_names:
+        print(f"Ikon destinations (from page): {len(ikon_destination_names)}")
 
     if errors:
         print("Validation failed:")
@@ -642,6 +760,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--input", default=str(DEFAULT_RESORTS_PATH), help="Existing catalog file path.")
     p.add_argument("--output", default=str(DEFAULT_RESORTS_PATH), help="Output catalog file path.")
     p.add_argument("--validate-only", action="store_true", help="Validate the existing catalog and exit.")
+    p.add_argument(
+        "--skip-ikon-destinations-check",
+        action="store_true",
+        help=f"Skip Ikon destination coverage check against {IKON_DESTINATIONS_PAGE_URL}.",
+    )
     return p.parse_args()
 
 
@@ -649,9 +772,10 @@ def main() -> int:
     args = parse_args()
     input_path = Path(args.input).resolve()
     output_path = Path(args.output).resolve()
+    check_ikon_destinations = not args.skip_ikon_destinations_check
 
     if args.validate_only:
-        return run_validate_only(input_path)
+        return run_validate_only(input_path, check_ikon_destinations=check_ikon_destinations)
 
     existing = load_existing_catalog(input_path)
     ikon = fetch_ikon_resorts()
@@ -661,6 +785,14 @@ def main() -> int:
     merged = merge_entries(existing, [*ikon, *epic, *indy])
     errors = validate_resort_catalog(merged)
     errors.extend(validate_coverage(merged))
+    ikon_destination_names: List[str] = []
+    if check_ikon_destinations:
+        try:
+            ikon_destination_names = fetch_ikon_destination_names()
+        except Exception as exc:
+            errors.append(f"ikon destinations check failed ({IKON_DESTINATIONS_PAGE_URL}): {exc}")
+        else:
+            errors.extend(validate_ikon_destinations_coverage(merged, ikon_destination_names))
     if errors:
         print("Sync failed validation:")
         for msg in errors:
@@ -675,6 +807,8 @@ def main() -> int:
     )
     print(f"Default enabled: {stats['default_enabled']}")
     print(f"Pass counts: {json.dumps(stats['pass_counts'], ensure_ascii=False, sort_keys=True)}")
+    if check_ikon_destinations and ikon_destination_names:
+        print(f"Ikon destinations (from page): {len(ikon_destination_names)}")
     return 0
 
 

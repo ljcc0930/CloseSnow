@@ -1140,3 +1140,36 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional: expose `include_all_resorts` as a repo-level workflow input so manual runs can choose default-only vs full catalog.
+
+## 2026-03-05 04:58 (local)
+
+### Scope
+- Add Ikon destinations page coverage check to resort catalog sync/validation flow.
+
+### Changes
+- Files:
+  - `scripts/sync_resorts_catalog.py`
+  - `tests/backend/test_sync_resorts_catalog.py` (new)
+- Behavior impact:
+  - Added Ikon destinations source check using Ikon destinations page data backend (`destinations` list query).
+  - `sync_resorts_catalog.py` now validates that Ikon-tagged catalog entries cover destinations-page resorts.
+  - Added `--skip-ikon-destinations-check` flag to bypass this network check when needed.
+  - Added normalization + alias handling (`Arai Mountain Resort` vs `Arai Snow`) to reduce false mismatches.
+
+### Validation
+- Commands:
+  - `python3 -m pytest -q tests/backend/test_sync_resorts_catalog.py`
+  - `python3 -m pytest -q tests/backend/test_resort_catalog.py tests/backend/test_sync_resorts_catalog.py`
+  - `python3 scripts/sync_resorts_catalog.py --validate-only`
+  - `python3 -m src.cli static --output-html index.html`
+- Results:
+  - New sync-catalog tests passed (`3 passed`).
+  - Combined backend catalog suites passed (`8 passed`).
+  - Validate-only passed with Ikon destinations check enabled (`Ikon destinations (from page): 64`).
+  - Static render pipeline succeeded (`Done: index.html`, `Done: 18 resort hourly page(s)`).
+
+### Risks / Notes
+- Ikon destinations check depends on upstream Ikon Sanity data endpoint availability.
+
+### Next Slice
+- Optional: add explicit per-destination diff output mode (machine-readable JSON) for easier catalog update triage.
