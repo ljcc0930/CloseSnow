@@ -29,6 +29,12 @@
         <input id="resort-search-input" type="search" placeholder="Name, state, or pass type" autocomplete="off" />
         <button id="resort-search-clear" type="button">Clear</button>
       </div>
+      <div class="resort-search-options">
+        <label class="resort-search-toggle">
+          <input type="checkbox" id="filter-search-all" checked />
+          Search all resorts
+        </label>
+      </div>
       <div class="resort-filter-bar">
         <button id="filter-open-btn" type="button">Filters</button>
         <span id="filter-summary" class="filter-summary">Default resorts</span>
@@ -68,12 +74,6 @@
           <label class="filter-include-all-label">
             <input type="checkbox" id="filter-include-all" checked />
             Default resorts only
-          </label>
-        </div>
-        <div class="filter-group">
-          <label class="filter-include-all-label">
-            <input type="checkbox" id="filter-search-all" checked />
-            Search all resorts
           </label>
         </div>
         <div class="filter-actions">
