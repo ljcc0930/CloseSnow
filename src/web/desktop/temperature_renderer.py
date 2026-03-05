@@ -14,7 +14,11 @@ def _filter_attrs(row: Dict[str, str]) -> str:
     region = html.escape(row.get("filter_region", ""), quote=True)
     country = html.escape(row.get("filter_country", ""), quote=True)
     state = html.escape(row.get("filter_state", ""), quote=True)
-    return f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}' data-state='{state}'"
+    default_enabled = html.escape(row.get("ljcc_favorite", ""), quote=True)
+    return (
+        f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
+        f" data-state='{state}' data-default-enabled='{default_enabled}'"
+    )
 
 
 def _query_cell(row: Dict[str, str]) -> str:

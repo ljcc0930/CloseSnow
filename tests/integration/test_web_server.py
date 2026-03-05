@@ -181,6 +181,110 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
         thread.join(timeout=3)
 
 
+def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
+    captured = {}
+
+    def fake_load_payload(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        }
+
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr(
+        "src.web.weather_page_server.select_resorts_from_query",
+        lambda qs: (_ for _ in ()).throw(AssertionError("select_resorts_from_query should not be used for HTML root")),
+    )
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        body = urllib.request.urlopen(
+            f"{base}/?pass_type=ikon&region=west&country=US&search=snow&include_default=0&search_all=0",
+            timeout=3,
+        ).read()
+        assert body.decode("utf-8") == "<html>ok</html>"
+        assert captured["mode"] == "local"
+        assert captured["source"] == ""
+        assert captured["resorts"] == []
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
+    calls = {}
+
+    def fake_load_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
+        calls["mode"] = mode
+        calls["source"] = source
+        calls["timeout"] = timeout
+        calls["kwargs"] = kwargs
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        }
+
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+        data_mode="api",
+        data_source="http://127.0.0.1:8020/api/data",
+        data_timeout=11,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        urllib.request.urlopen(
+            f"{base}/?resort=A&pass_type=ikon&region=west&country=US&search=snow&include_all=1&search_all=0",
+            timeout=3,
+        ).read()
+        assert calls["mode"] == "api"
+        assert "resort=A" in calls["source"]
+        assert "pass_type=ikon" not in calls["source"]
+        assert "region=west" not in calls["source"]
+        assert "country=US" not in calls["source"]
+        assert "search=snow" not in calls["source"]
+        assert "include_all=1" not in calls["source"]
+        assert "search_all=0" not in calls["source"]
+        assert calls["timeout"] == 11
+        assert calls["kwargs"]["resorts"] == ["A"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
 def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch):
     captured = {}
 

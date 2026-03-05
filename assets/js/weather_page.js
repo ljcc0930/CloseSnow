@@ -777,6 +777,15 @@ const _rowSearchText = (row) => {
   return `${query} ${state} ${passTypes}`.trim();
 };
 
+const _rowIsDefaultResort = (row) => {
+  const marker = String(row?.dataset?.defaultEnabled || row?.dataset?.ljccFavorite || "")
+    .trim()
+    .toLowerCase();
+  // Older static pages may not include the marker yet; fail open in that case.
+  if (!marker) return true;
+  return marker === "1" || marker === "true" || marker === "yes";
+};
+
 const rowMatchesFilters = (row, keyword) => {
   if (keyword) {
     const searchable = _rowSearchText(row);
@@ -786,6 +795,7 @@ const rowMatchesFilters = (row, keyword) => {
     // Search-all mode ignores other filter controls while a keyword is present.
     return true;
   }
+  if (filterState.includeDefault && !_rowIsDefaultResort(row)) return false;
 
   if (filterState.passTypes.size > 0) {
     const rowPassTypes = _rowPassTypeSet(row);
@@ -970,14 +980,14 @@ const buildFilterQueryParams = () => {
   return params;
 };
 
-const syncUrlAndReloadIfNeeded = () => {
+const syncUrlFromFilterState = () => {
   const nextParams = buildFilterQueryParams();
   const currentUrl = new URL(window.location.href);
   const currentQuery = currentUrl.search.replace(/^\?/, "");
   const nextQuery = nextParams.toString();
   if (currentQuery === nextQuery) return false;
   currentUrl.search = nextQuery;
-  window.location.assign(currentUrl.toString());
+  window.history.replaceState({}, "", currentUrl.toString());
   return true;
 };
 
@@ -1160,12 +1170,15 @@ if (resortSearchInput) {
     if (event.key !== "Enter") return;
     event.preventDefault();
     applyFilterStateFromControls();
-    syncUrlAndReloadIfNeeded();
+    syncUrlFromFilterState();
+    applyResortSearchFilter();
   });
 }
 if (resortSearchClear && resortSearchInput) {
   resortSearchClear.addEventListener("click", () => {
     resortSearchInput.value = "";
+    applyFilterStateFromControls();
+    syncUrlFromFilterState();
     applyResortSearchFilter();
     resortSearchInput.focus();
   });
@@ -1179,7 +1192,7 @@ if (filterCloseBtn) {
 if (filterApplyBtn) {
   filterApplyBtn.addEventListener("click", () => {
     applyFilterStateFromControls();
-    if (syncUrlAndReloadIfNeeded()) return;
+    syncUrlFromFilterState();
     closeFilterModal();
     applyResortSearchFilter();
   });
@@ -1189,7 +1202,7 @@ if (filterResetBtn) {
     resetFilterControls();
     if (resortSearchInput) resortSearchInput.value = "";
     applyFilterStateFromControls();
-    if (syncUrlAndReloadIfNeeded()) return;
+    syncUrlFromFilterState();
     closeFilterModal();
     applyResortSearchFilter();
   });

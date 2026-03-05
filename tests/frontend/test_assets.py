@@ -30,7 +30,10 @@ def test_read_asset_bytes_reads_known_assets():
     css_text = css.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
+    js_text = js.decode("utf-8", errors="ignore")
     assert ".weather-left-table .query-col" in css_text
     assert ".hourly-charts" in hourly_css_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "resolved_latitude" in hourly_js_text
+    assert "history.replaceState" in js_text
+    assert "window.location.assign(currentUrl.toString())" not in js_text

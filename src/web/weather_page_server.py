@@ -89,6 +89,13 @@ def _hourly_endpoint_from_data_source(base_url: str) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, "/api/resort-hourly", "", ""))
 
 
+_SERVER_FILTER_QUERY_KEYS = ("pass_type", "region", "country", "search", "include_all", "include_default", "search_all")
+
+
+def _qs_without_server_filters(qs: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    return {key: list(values) for key, values in qs.items() if key not in _SERVER_FILTER_QUERY_KEYS}
+
+
 def make_handler(
     cache_file: str,
     geocode_cache_hours: int,
@@ -111,14 +118,14 @@ def make_handler(
             self.end_headers()
             self.wfile.write(body)
 
-        def _load_request_payload(self, qs: Dict[str, List[str]]) -> Dict[str, Any]:
+        def _load_request_payload(self, qs: Dict[str, List[str]], *, apply_server_filters: bool = True) -> Dict[str, Any]:
             resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
             has_server_side_filters = any(
                 qs.get(key)
-                for key in ("pass_type", "region", "country", "search", "include_all", "include_default", "search_all")
+                for key in _SERVER_FILTER_QUERY_KEYS
             )
 
-            if data_mode == "local" and has_server_side_filters:
+            if data_mode == "local" and apply_server_filters and has_server_side_filters:
                 selected, resorts_file, applied, available, no_match = select_resorts_from_query(qs)
                 if no_match:
                     payload = _empty_payload(
@@ -242,13 +249,14 @@ def make_handler(
                 self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
                 return
 
-            payload = self._load_request_payload(qs)
-
             if normalized_path == "/api/data":
+                payload = self._load_request_payload(qs, apply_server_filters=True)
                 body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(200, body, "application/json; charset=utf-8")
                 return
 
+            page_qs = _qs_without_server_filters(qs)
+            payload = self._load_request_payload(page_qs, apply_server_filters=False)
             html = render_payload_html(payload)
             self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
 
