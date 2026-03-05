@@ -33,7 +33,7 @@ jobs:
       - name: Build static site
         run: |
           mkdir -p site/assets
-          python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8
+          python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8 --include-all-resorts
           cp -R assets/css site/assets/
           cp -R assets/js site/assets/
 

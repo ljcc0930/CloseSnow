@@ -1098,3 +1098,45 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional: add chart legend toggle and synchronized crosshair across all metric cards.
+
+## 2026-03-05 04:49 (local)
+
+### Scope
+- Make GitHub Actions static build support full `resorts.yml` catalog instead of only default-enabled resorts.
+
+### Changes
+- Files:
+  - `.github/workflows/deploy-pages.yml`
+  - `src/cli.py`
+  - `src/backend/pipeline.py`
+  - `src/backend/pipelines/live_pipeline.py`
+  - `src/backend/services/weather_service.py`
+  - `tests/integration/test_cli.py`
+  - `tests/backend/test_pipeline.py`
+  - `tests/backend/test_service_pipelines.py`
+  - `tests/smoke/test_static_pipeline_smoke.py`
+- Behavior impact:
+  - Added CLI option `--include-all-resorts` for `fetch/static`.
+  - Propagated `include_all_resorts` through live/service/pipeline path.
+  - `deploy-pages` workflow now builds with `--include-all-resorts`, producing all resorts from `resorts.yml`.
+  - Default behavior remains unchanged when the new flag is not provided.
+
+### Validation
+- Commands:
+  - `python3 -m pytest -q tests/integration/test_cli.py tests/backend/test_service_pipelines.py tests/backend/test_pipeline.py tests/smoke/test_static_pipeline_smoke.py`
+  - `python3 -m src.cli fetch --output-json /tmp/closesnow-data-default.json --max-workers 8`
+  - `python3 -m src.cli fetch --output-json /tmp/closesnow-data-all.json --max-workers 8 --include-all-resorts`
+  - `python3 -m src.cli static --output-json /tmp/static-all.json --output-html /tmp/static-all.html --max-workers 8 --include-all-resorts`
+  - `python3 -m pytest -q`
+- Results:
+  - Targeted suites: `29 passed`.
+  - Default fetch: `18` reports.
+  - Include-all fetch: `111` reports.
+  - Static include-all: `Done: 111 resort hourly page(s)`.
+  - Full suite: `139 passed`.
+
+### Risks / Notes
+- Full catalog build takes longer in Actions due to higher API request volume.
+
+### Next Slice
+- Optional: expose `include_all_resorts` as a repo-level workflow input so manual runs can choose default-only vs full catalog.

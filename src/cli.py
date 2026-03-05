@@ -31,16 +31,24 @@ def _add_fetch_options(p: argparse.ArgumentParser) -> None:
         default=DEFAULT_RESORTS_FILE,
         help="Input resorts file when --resort is not provided.",
     )
+    p.add_argument(
+        "--include-all-resorts",
+        action="store_true",
+        help="Include all resorts from --resorts-file, including default_enabled=false entries.",
+    )
     p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
     p.add_argument("--max-workers", type=int, default=8)
 
 
-def _resolve_resorts(args: argparse.Namespace) -> Tuple[List[str], str]:
+def _resolve_resorts(args: argparse.Namespace) -> Tuple[List[str], str, bool]:
     resorts = [r.strip() for r in args.resort if r.strip()]
+    include_all_resorts = bool(getattr(args, "include_all_resorts", False))
+    if resorts:
+        include_all_resorts = False
     resorts_file = "" if resorts else args.resorts_file
-    return resorts, resorts_file
+    return resorts, resorts_file, include_all_resorts
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -94,10 +102,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
-    resorts, resorts_file = _resolve_resorts(args)
+    resorts, resorts_file, include_all_resorts = _resolve_resorts(args)
     return fetch_static_payload(
         resorts=resorts,
         resorts_file=resorts_file,
+        include_all_resorts=include_all_resorts,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,

@@ -19,6 +19,7 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     out = build_weather_payload(
         resorts=["A"],
         resorts_file="resorts.txt",
+        include_all_resorts=True,
         cache_file=".cache/a.json",
         geocode_cache_hours=100,
         forecast_cache_hours=2,
@@ -27,6 +28,7 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     assert out == {"ok": True}
     assert captured["resorts"] == ["A"]
     assert captured["resorts_file"] == "resorts.txt"
+    assert captured["include_all_resorts"] is True
     assert captured["max_workers"] == 4
 
 
@@ -35,9 +37,10 @@ def test_run_live_payload_calls_build_weather_payload(monkeypatch):
         "src.backend.pipelines.live_pipeline.build_weather_payload",
         lambda **kwargs: {"called": kwargs},
     )
-    out = run_live_payload(resorts=["A"], resorts_file="x")
+    out = run_live_payload(resorts=["A"], resorts_file="x", include_all_resorts=True)
     assert out["called"]["resorts"] == ["A"]
     assert out["called"]["resorts_file"] == "x"
+    assert out["called"]["include_all_resorts"] is True
 
 
 def test_fetch_static_payload_aliases_live_pipeline():

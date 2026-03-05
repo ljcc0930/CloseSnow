@@ -15,8 +15,8 @@ from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 logger = logging.getLogger(__name__)
 
 
-def read_resorts(path: str) -> List[str]:
-    return read_resort_queries(path)
+def read_resorts(path: str, *, include_all: bool = False) -> List[str]:
+    return read_resort_queries(path, include_all=include_all)
 
 
 def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -59,6 +59,7 @@ def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadat
 def compute_pipeline_payload(
     resorts: Optional[List[str]] = None,
     resorts_file: str = DEFAULT_RESORTS_FILE,
+    include_all_resorts: bool = False,
     use_default_resorts: bool = False,
     output_json: str = ".cache/resorts_weather_unified.json",
     cache_file: str = ".cache/open_meteo_cache.json",
@@ -71,7 +72,7 @@ def compute_pipeline_payload(
         resorts_file=resorts_file,
         use_default_resorts=use_default_resorts,
         default_resorts=list(DEFAULT_RESORTS),
-        read_resorts_fn=read_resorts,
+        read_resorts_fn=lambda path: read_resorts(path, include_all=include_all_resorts),
     )
     logger.info("Pipeline start: resorts=%d", len(selected))
 
@@ -126,6 +127,7 @@ def compute_pipeline_payload(
 def run_pipeline(
     resorts: Optional[List[str]] = None,
     resorts_file: str = DEFAULT_RESORTS_FILE,
+    include_all_resorts: bool = False,
     use_default_resorts: bool = False,
     output_json: str = ".cache/resorts_weather_unified.json",
     snow_csv: str = ".cache/resorts_snowfall_daily.csv",
@@ -140,6 +142,7 @@ def run_pipeline(
     payload = compute_pipeline_payload(
         resorts=resorts,
         resorts_file=resorts_file,
+        include_all_resorts=include_all_resorts,
         use_default_resorts=use_default_resorts,
         output_json=output_json,
         cache_file=cache_file,

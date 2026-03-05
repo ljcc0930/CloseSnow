@@ -13,6 +13,7 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
     fetch_args = argparse.Namespace(
         resort=[],
         resorts_file="resorts.txt",
+        include_all_resorts=False,
         cache_file=".cache/open_meteo_cache.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,

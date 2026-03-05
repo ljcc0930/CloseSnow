@@ -32,23 +32,26 @@ def test_serve_web_parser_uses_env_default(monkeypatch):
 
 
 def test_resolve_resorts_prefers_cli_resorts():
-    args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.txt")
-    resorts, resorts_file = cli._resolve_resorts(args)
+    args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.txt", include_all_resorts=True)
+    resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)
     assert resorts == ["Snowbird, UT"]
     assert resorts_file == ""
+    assert include_all_resorts is False
 
 
 def test_resolve_resorts_uses_file_when_no_resort():
-    args = argparse.Namespace(resort=[], resorts_file="resorts.txt")
-    resorts, resorts_file = cli._resolve_resorts(args)
+    args = argparse.Namespace(resort=[], resorts_file="resorts.txt", include_all_resorts=True)
+    resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)
     assert resorts == []
     assert resorts_file == "resorts.txt"
+    assert include_all_resorts is True
 
 
 def _build_fetch_like_args(tmp_path: Path):
     return argparse.Namespace(
         resort=[],
         resorts_file="resorts.txt",
+        include_all_resorts=False,
         cache_file=".cache/open_meteo_cache.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,
@@ -75,6 +78,20 @@ def test_run_fetch(monkeypatch, tmp_path, capsys):
     assert "Done:" in out
     assert called["path"] == args.output_json
     assert called["payload"]["reports"] == []
+
+
+def test_fetch_payload_forwards_include_all_resorts(monkeypatch, tmp_path):
+    args = _build_fetch_like_args(tmp_path)
+    args.include_all_resorts = True
+    captured = {}
+
+    def fake_fetch_static_payload(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {"reports": []}
+
+    monkeypatch.setattr("src.cli.fetch_static_payload", fake_fetch_static_payload)
+    cli._fetch_payload(args)
+    assert captured["include_all_resorts"] is True
 
 
 def test_run_render(monkeypatch, tmp_path, capsys):

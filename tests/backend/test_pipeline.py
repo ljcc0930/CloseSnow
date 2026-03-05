@@ -46,6 +46,19 @@ def test_read_resorts_from_yml_catalog(tmp_path):
     assert pipeline.read_resorts(str(p)) == ["Snowbird, UT", "Solitude, UT"]
 
 
+def test_read_resorts_from_yml_catalog_include_all(tmp_path):
+    p = tmp_path / "resorts.yml"
+    p.write_text(
+        (
+            '[{"resort_id":"snowbird-ut","query":"Snowbird, UT","default_enabled":true},'
+            '{"resort_id":"alta-ut","query":"Alta Ski Area, UT","default_enabled":false}]'
+        ),
+        encoding="utf-8",
+    )
+    assert pipeline.read_resorts(str(p)) == ["Snowbird, UT"]
+    assert pipeline.read_resorts(str(p), include_all=True) == ["Snowbird, UT", "Alta Ski Area, UT"]
+
+
 def test_seed_coordinate_cache_from_unified(tmp_path):
     cache = _DummyCoordCache("x")
     payload = {
