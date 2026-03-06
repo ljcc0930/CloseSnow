@@ -110,6 +110,13 @@
       color: #475569;
       font-weight: 600;
     }
+    .section-loading,
+    .page-load-error {
+      margin: 0;
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
     .filter-modal[hidden] {
       display: none;
     }

@@ -13,6 +13,7 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 - Unified payload contract (`weather_payload_v1`) with validator in `src/contract/validators.py`
 - Main page sections: Snowfall, Rainfall, Temperature, Weather (emoji), Sunrise/Sunset
 - Per-resort hourly page: `/resort/<resort_id>` and hourly API `/api/resort-hourly`
+- Main page is shell-first: lightweight `index.html` + client-side render from payload JSON
 - Frontend filters are browser-side (URL state sync, no reload)
 - Backend `/api/data` supports query-based filtering for API clients
 - Resort catalog metadata (`resorts.yml`): `resort_id`, `pass_types`, `region`, `country`, `default_enabled`
@@ -236,6 +237,7 @@ Notes:
 ## Filter Behavior (Current)
 
 - Main page filters are client-side in `assets/js/weather_page.js`
+- Main page shell loads payload JSON from its bootstrap `dataUrl` and renders rows in-browser
 - Filter state is synced to URL with `history.replaceState` (no page reload)
 - On frontend page route `/`, server-side filter query keys are ignored by design
 - `/api/data` still supports server-side filtering for API clients

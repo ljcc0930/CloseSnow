@@ -14,7 +14,7 @@ def test_write_payload_json(tmp_path):
 
 def test_render_html(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    monkeypatch.setattr("src.web.pipelines.static_site.render_payload_html", lambda payload: "<html>x</html>")
+    monkeypatch.setattr("src.web.pipelines.static_site.render_payload_html", lambda payload, **kwargs: "<html>x</html>")
     out = render_html(str(p), {"a": 1})
     assert out == p
     assert p.read_text(encoding="utf-8") == "<html>x</html>"

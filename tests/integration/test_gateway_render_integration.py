@@ -18,8 +18,9 @@ def test_file_gateway_to_renderer_integration(tmp_path, valid_payload):
     html = render_payload_html(payload)
     assert "<!doctype html>" in html
     assert "Snowfall" in html
-    assert "Rainfall" in html
-    assert "Temperature" in html
+    assert 'id="page-content-root"' in html
+    assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
+    assert '"dataUrl": "./data.json"' in html
 
 
 @pytest.mark.integration
@@ -46,6 +47,7 @@ def test_api_gateway_to_renderer_integration(valid_payload):
         html = render_payload_html(payload)
         assert payload["schema_version"] == valid_payload["schema_version"]
         assert "Ski Resorts Weather Forecast" in html
+        assert "./data.json" in html
     finally:
         server.shutdown()
         server.server_close()

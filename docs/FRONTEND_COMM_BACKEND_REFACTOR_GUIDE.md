@@ -90,6 +90,10 @@ Own:
    - `local`
    - `api`
    - `file`
+3. Main forecast page now uses shell-first HTML plus browser-side payload rendering:
+   - server returns controls + bootstrap config
+   - browser fetches payload JSON from the configured data source
+   - frontend filters rerender visible rows from in-memory data
 
 ---
 
@@ -102,7 +106,7 @@ Own:
 
 Flow:
 
-`backend compute -> contract JSON -> frontend render`
+`backend compute -> contract JSON + shell HTML -> browser render`
 
 ## 4.2 Dynamic coupled mode (compatibility)
 
@@ -110,7 +114,7 @@ Flow:
 
 Flow:
 
-`frontend web server -> communication local adapter -> backend compute -> render`
+`frontend web server -> communication local adapter -> backend compute -> shell + browser render`
 
 ## 4.3 Dynamic decoupled mode (recommended)
 
@@ -119,7 +123,7 @@ Flow:
 
 Flow:
 
-`backend data API -> communication http adapter -> frontend web server`
+`backend data API -> communication http adapter -> frontend web server -> shell + browser render`
 
 Supports independent startup and cross-host deployment.
 

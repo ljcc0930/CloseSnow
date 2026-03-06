@@ -6,15 +6,15 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.web.weather_table_renderer import (
-    render_rain_table,
-    render_snowfall_table,
-    render_sun_table,
-    render_temperature_table,
-    render_weather_table,
-)
-
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
+
+_PAGE_SHELL_PLACEHOLDER = """
+    <section><h2>Snowfall</h2><p class="section-loading">Loading forecast...</p></section>
+    <section><h2>Rainfall</h2><p class="section-loading">Loading forecast...</p></section>
+    <section><h2>Temperature</h2><p class="section-loading">Loading forecast...</p></section>
+    <section><h2>Weather</h2><p class="section-loading">Loading forecast...</p></section>
+    <section><h2>Sunrise / Sunset</h2><p class="section-loading">Loading forecast...</p></section>
+"""
 
 
 def build_html(
@@ -26,12 +26,8 @@ def build_html(
     *,
     available_filters: Dict[str, Dict[str, int]] | None = None,
     applied_filters: Dict[str, Any] | None = None,
+    data_url: str = "./data.json",
 ) -> str:
-    snow_table = render_snowfall_table(snowfall)
-    rain_table = render_rain_table(rain)
-    weather_table = render_weather_table(weather)
-    sun_table = render_sun_table(sun)
-    temp_table = render_temperature_table(temp)
     now_utc = datetime.now(timezone.utc)
     generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
     filter_meta = {
@@ -39,12 +35,10 @@ def build_html(
         "applied_filters": applied_filters or {},
     }
     filter_meta_json = json.dumps(filter_meta, ensure_ascii=False)
+    page_bootstrap_json = json.dumps({"dataUrl": data_url}, ensure_ascii=False)
     return (
         _PAGE_TEMPLATE.replace("{{generated_utc_iso}}", generated_utc_iso)
         .replace("{{filter_meta_json}}", filter_meta_json)
-        .replace("{{snow_table}}", snow_table)
-        .replace("{{rain_table}}", rain_table)
-        .replace("{{weather_table}}", weather_table)
-        .replace("{{sun_table}}", sun_table)
-        .replace("{{temp_table}}", temp_table)
+        .replace("{{page_bootstrap_json}}", page_bootstrap_json)
+        .replace("{{page_shell_placeholder}}", _PAGE_SHELL_PLACEHOLDER)
     )

@@ -26,8 +26,9 @@ Own:
 
 1. Payload-to-row transform and HTML rendering.
 2. Static page shell template.
-3. Assets (CSS/JS) and page-serving modes.
-4. Communication clients for `file`/`api` payload loading and compatibility `local` adapter.
+3. Browser-side row rendering from contract payload.
+4. Assets (CSS/JS) and page-serving modes.
+5. Communication clients for `file`/`api` payload loading and compatibility `local` adapter.
 
 Do not own:
 
@@ -52,7 +53,7 @@ Own:
 
 Flow:
 
-`Backend compute -> contract JSON -> frontend render`
+`Backend compute -> contract JSON + shell HTML -> browser render`
 
 ## 2.2 Dynamic Coupled Mode (compatibility)
 
@@ -60,7 +61,7 @@ Flow:
 
 Flow:
 
-`Web server -> communication local adapter -> backend compute -> render`
+`Web server -> communication local adapter -> backend compute -> shell + browser render`
 
 ## 2.3 Dynamic Decoupled Mode (recommended)
 
@@ -69,7 +70,7 @@ Flow:
 
 Flow:
 
-`Backend data service -> communication adapter -> frontend web service`
+`Backend data service -> communication adapter -> frontend web service -> shell + browser render`
 
 This allows independent startup, scaling, and cross-host deployment.
 

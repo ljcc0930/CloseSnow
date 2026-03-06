@@ -19,10 +19,10 @@ def write_payload_json(path: str, payload: Dict[str, Any]) -> Path:
     return out
 
 
-def render_html(path: str, payload: Dict[str, Any]) -> Path:
+def render_html(path: str, payload: Dict[str, Any], *, data_url: str = "./data.json") -> Path:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render_payload_html(payload), encoding="utf-8")
+    out.write_text(render_payload_html(payload, data_url=data_url), encoding="utf-8")
     return out
 
 

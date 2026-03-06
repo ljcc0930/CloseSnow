@@ -1266,3 +1266,134 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional: add a short README matrix for filter behavior across `serve` / `serve-web(api)` / fully static page.
+
+## 2026-03-05 19:20 (local)
+
+### Scope
+- Add a recoverable refactor planning document for static main-page performance work.
+
+### Changes
+- Files:
+  - `docs/STATIC_PAGE_PERFORMANCE_REFACTOR_PLAN.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - No runtime behavior change.
+  - Added a concrete shell-first, client-rendered main-page refactor plan aligned with current frontend/communication/backend boundaries.
+  - Documented current bottlenecks, delivery slices, risks, and validation gate for the static-page speed theme.
+
+### Validation
+- Commands:
+  - `python3 -m src.cli static --output-html index.html`
+- Results:
+  - Static render passed (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`).
+
+### Risks / Notes
+- This is a planning/doc slice only; implementation still pending.
+
+### Next Slice
+- Implement Slice 1 from `docs/STATIC_PAGE_PERFORMANCE_REFACTOR_PLAN.md` by converting the main page to shell-first HTML backed by `site/data.json`.
+
+## 2026-03-05 19:27 (local)
+
+### Scope
+- Start the static-page performance refactor by converting the main page to shell-first HTML with deferred section-content loading.
+
+### Changes
+- Files:
+  - `src/web/weather_html_renderer.py`
+  - `src/web/weather_page_render_core.py`
+  - `src/web/templates/weather_page.html`
+  - `src/web/pipelines/static_site.py`
+  - `src/web/pipelines/__init__.py`
+  - `src/web/weather_page_server.py`
+  - `src/cli.py`
+  - `assets/js/weather_page.js`
+  - `assets/css/weather_page.css`
+  - `tests/frontend/test_renderers.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_gateway_render_integration.py`
+  - `tests/integration/test_web_server.py`
+  - `tests/smoke/test_static_pipeline_smoke.py`
+  - `README.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Main page now serves a lightweight shell HTML and loads heavy section markup from `page-content.html`.
+  - Static render now emits `page-content.html` alongside `index.html`.
+  - Dynamic web server now serves `GET /page-content.html` for the main page shell bootstrap path.
+  - Existing hourly page flow and `/api/data` contract remain unchanged.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py tests/integration/test_gateway_render_integration.py tests/integration/test_web_server.py tests/smoke/test_static_pipeline_smoke.py -q`
+  - `python3 -m src.cli static --output-json /tmp/closesnow-static.json --output-html /tmp/closesnow-index.html`
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/smoke/test_dynamic_server_smoke.py -q`
+  - `wc -c /tmp/closesnow-index.html /tmp/page-content.html`
+- Results:
+  - Targeted tests passed (`29 passed`).
+  - Static render passed and emitted `Done: /tmp/page-content.html`.
+  - `compileall` passed.
+  - Dynamic smoke passed (`1 passed`).
+  - Main shell size dropped to `4810` bytes while deferred content moved to `/tmp/page-content.html` (`239414` bytes).
+
+### Risks / Notes
+- This slice defers HTML transfer and DOM creation but does not yet convert the main page to true data-driven client rendering from `data.json`; that remains the next step.
+
+### Next Slice
+- Implement client-side row-model rendering so the shell loads payload data and rebuilds visible rows without fetching pre-rendered section HTML.
+
+## 2026-03-05 19:36 (local)
+
+### Scope
+- Complete the static-page performance refactor by switching the main page from deferred HTML fragments to full browser-side payload rendering.
+
+### Changes
+- Files:
+  - `assets/js/weather_page.js`
+  - `src/web/weather_html_renderer.py`
+  - `src/web/weather_page_render_core.py`
+  - `src/web/pipelines/static_site.py`
+  - `src/web/pipelines/__init__.py`
+  - `src/web/weather_page_server.py`
+  - `src/cli.py`
+  - `tests/frontend/test_renderers.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/integration/test_cli.py`
+  - `tests/integration/test_gateway_render_integration.py`
+  - `tests/integration/test_web_server.py`
+  - `tests/smoke/test_static_pipeline_smoke.py`
+  - `README.md`
+  - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
+  - `docs/FRONTEND_BACKEND_FLOW_ARCHITECTURE.md`
+  - `docs/STATIC_PAGE_PERFORMANCE_REFACTOR_PLAN.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Main page shell now bootstraps with a payload `dataUrl` and renders all visible sections fully in-browser from `weather_payload_v1`.
+  - Removed the transitional `page-content.html` fetch path from static and dynamic main-page serving.
+  - Main page filters now rerender visible rows from in-memory data rather than hiding/showing a pre-expanded DOM.
+  - Simplified main-page runtime layout work to eliminate the previous high-cost row-sync path.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py tests/frontend/test_assets.py tests/integration/test_gateway_render_integration.py tests/integration/test_web_server.py tests/smoke/test_static_pipeline_smoke.py tests/smoke/test_dynamic_server_smoke.py -q`
+  - `python3 -m pytest tests/frontend -q`
+  - `python3 -m pytest tests/integration -q`
+  - `python3 -m pytest tests/smoke -q`
+  - `python3 -m src.cli static --output-json /tmp/closesnow-static.json --output-html /tmp/closesnow-index.html`
+  - `python3 -m compileall src`
+  - `wc -c /tmp/closesnow-index.html /tmp/closesnow-static.json`
+- Results:
+  - Targeted page/refactor tests passed (`29 passed`).
+  - Frontend suite passed (`22 passed`).
+  - Integration suite passed (`65 passed`).
+  - Smoke suite passed (`3 passed`).
+  - Static render passed (`Done: /tmp/closesnow-static.json`, `Done: /tmp/closesnow-index.html`, `Done: 18 resort hourly page(s)`).
+  - `compileall` passed.
+  - Final shell size remained small (`4811` bytes) with payload fetched separately from `/tmp/closesnow-static.json` (`245124` bytes).
+
+### Risks / Notes
+- Main page now depends on client-side JavaScript to render section content. This is an explicit tradeoff for performance and static/dynamic consistency.
+
+### Next Slice
+- None for this refactor theme; static-page performance refactor is complete for the planned scope.

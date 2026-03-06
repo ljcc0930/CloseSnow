@@ -114,6 +114,15 @@ def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
 
+def _relative_url(from_html_path: str, target_path: str) -> str:
+    from_dir = Path(from_html_path).resolve().parent
+    target = Path(target_path).resolve()
+    rel = os.path.relpath(target, start=from_dir).replace(os.sep, "/")
+    if not rel.startswith("."):
+        return f"./{rel}"
+    return rel
+
+
 def _serve_http_server(
     host: str,
     port: int,
@@ -141,7 +150,7 @@ def run_fetch(args: argparse.Namespace) -> int:
 
 def run_render(args: argparse.Namespace) -> int:
     payload = load_payload(mode="file", source=args.input_json)
-    out = render_html(args.output_html, payload)
+    out = render_html(args.output_html, payload, data_url=_relative_url(args.output_html, args.input_json))
     hourly_pages = render_hourly_pages(args.output_html, payload)
     print(f"Done: {out}")
     print(f"Done: {len(hourly_pages)} resort hourly page(s)")
@@ -158,7 +167,7 @@ def run_static(args: argparse.Namespace) -> int:
     if not args.skip_render:
         if payload is None:
             payload = load_payload(mode="file", source=args.output_json)
-        out = render_html(args.output_html, payload)
+        out = render_html(args.output_html, payload, data_url=_relative_url(args.output_html, args.output_json))
         hourly_pages = render_hourly_pages(
             args.output_html,
             payload,

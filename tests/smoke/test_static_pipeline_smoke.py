@@ -34,5 +34,6 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
     html = Path(render_args.output_html).read_text(encoding="utf-8")
     assert "<!doctype html>" in html
     assert "Snowfall" in html
-    assert "Rainfall" in html
-    assert "Temperature" in html
+    assert 'id="page-content-root"' in html
+    assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
+    assert '"dataUrl": "./data.json"' in html

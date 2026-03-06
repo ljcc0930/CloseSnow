@@ -257,7 +257,7 @@ def make_handler(
 
             page_qs = _qs_without_server_filters(qs)
             payload = self._load_request_payload(page_qs, apply_server_filters=False)
-            html = render_payload_html(payload)
+            html = render_payload_html(payload, data_url="./api/data")
             self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
 
     return Handler

@@ -34,7 +34,7 @@ def test_server_api_root_and_asset(monkeypatch):
         "reports": [{"query": "A", "daily": []}],
     }
     monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: sample_payload)
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: b"body{}")
 
     handler = make_handler(
@@ -104,7 +104,7 @@ def test_server_query_resort_pass_through(monkeypatch):
         }
 
     monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -147,7 +147,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
         }
 
     monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -205,7 +205,7 @@ def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
         "src.web.weather_page_server.select_resorts_from_query",
         lambda qs: (_ for _ in ()).throw(AssertionError("select_resorts_from_query should not be used for HTML root")),
     )
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -252,7 +252,7 @@ def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
         }
 
     monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -316,7 +316,7 @@ def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch
         }
 
     monkeypatch.setattr("src.web.weather_page_server.run_live_payload", fake_run_live_payload)
-    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload: "<html>ok</html>")
+    monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
         cache_file=".cache/x.json",

@@ -259,42 +259,18 @@ def test_build_html_contains_meta_sections():
     assert '<option value="state" selected>State (A-Z)</option>' in html
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
+    assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
+    assert '"dataUrl": "./data.json"' in html
+    assert 'id="page-content-root"' in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html
     assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
 
 
 def test_render_payload_html_wires_transform_and_builder(monkeypatch):
-    calls = {}
-
-    def fake_snow(reports, display_days=14):  # noqa: ANN001
-        calls["snow_days"] = display_days
-        return ["snow"]
-
-    def fake_rain(reports, display_days=14):  # noqa: ANN001
-        calls["rain_days"] = display_days
-        return ["rain"]
-
-    def fake_temp(reports, display_days=14):  # noqa: ANN001
-        calls["temp_days"] = display_days
-        return ["temp"]
-
-    def fake_weather(reports, display_days=14):  # noqa: ANN001
-        calls["weather_days"] = display_days
-        return ["weather"]
-
-    def fake_sun(reports, display_days=14):  # noqa: ANN001
-        calls["sun_days"] = display_days
-        return ["sun"]
-
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_snow_rows", fake_snow)
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_rain_rows", fake_rain)
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_weather_rows", fake_weather)
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_sun_rows", fake_sun)
-    monkeypatch.setattr("src.web.weather_page_render_core.reports_to_temp_rows", fake_temp)
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
-        lambda snow, rain, weather, sun, temp, **kwargs: f"html:{snow}:{rain}:{weather}:{sun}:{temp}:{bool(kwargs)}",
+        lambda snow, rain, weather, sun, temp, **kwargs: f"html:{snow}:{rain}:{weather}:{sun}:{temp}:{kwargs['data_url']}:{bool(kwargs)}",
     )
     out = render_payload_html(
         {
@@ -302,11 +278,7 @@ def test_render_payload_html_wires_transform_and_builder(monkeypatch):
             "forecast_days": 16,
             "available_filters": {"pass_type": {"ikon": 1}},
             "applied_filters": {"pass_type": ["ikon"]},
-        }
+        },
+        data_url="./x.json",
     )
-    assert out == "html:['snow']:['rain']:['weather']:['sun']:['temp']:True"
-    assert calls["snow_days"] == 15
-    assert calls["rain_days"] == 15
-    assert calls["weather_days"] == 15
-    assert calls["sun_days"] == 15
-    assert calls["temp_days"] == 15
+    assert out == "html:[]:[]:[]:[]:[]:./x.json:True"
