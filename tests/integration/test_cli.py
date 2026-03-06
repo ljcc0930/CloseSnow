@@ -32,7 +32,7 @@ def test_serve_web_parser_uses_env_default(monkeypatch):
 
 
 def test_resolve_resorts_prefers_cli_resorts():
-    args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.txt", include_all_resorts=True)
+    args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.yml", include_all_resorts=True)
     resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)
     assert resorts == ["Snowbird, UT"]
     assert resorts_file == ""
@@ -40,17 +40,17 @@ def test_resolve_resorts_prefers_cli_resorts():
 
 
 def test_resolve_resorts_uses_file_when_no_resort():
-    args = argparse.Namespace(resort=[], resorts_file="resorts.txt", include_all_resorts=True)
+    args = argparse.Namespace(resort=[], resorts_file="resorts.yml", include_all_resorts=True)
     resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)
     assert resorts == []
-    assert resorts_file == "resorts.txt"
+    assert resorts_file == "resorts.yml"
     assert include_all_resorts is True
 
 
 def _build_fetch_like_args(tmp_path: Path):
     return argparse.Namespace(
         resort=[],
-        resorts_file="resorts.txt",
+        resorts_file="resorts.yml",
         include_all_resorts=False,
         cache_file=".cache/open_meteo_cache.json",
         geocode_cache_hours=720,

@@ -49,7 +49,7 @@ Before implementing all 7 features, use these shared rules:
 - Keep `query` for backward compatibility and display.
 
 3. Data source expansion:
-- Migrate resort source from `resorts.txt` to `resorts.yml` (with metadata).
+- Resort source migrated from the old `resorts.txt` list to `resorts.yml` (with metadata).
 - Keep `.txt` compatibility during migration window.
 
 4. Routing:

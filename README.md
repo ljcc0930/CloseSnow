@@ -248,7 +248,7 @@ This keeps static and dynamic page behavior aligned.
 
 ## Resort Catalog
 
-Default source is `resorts.yml` (JSON-compatible list format).
+Default source is `resorts.yml` (JSON-compatible list format). The old repo-root `resorts.txt` sample file is no longer part of the workflow; if needed, pass any custom plain-text file explicitly via `--resorts-file`.
 
 Catalog fields:
 

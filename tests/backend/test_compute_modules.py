@@ -8,7 +8,7 @@ from src.contract import SCHEMA_VERSION
 def test_select_resorts_with_file_and_defaults():
     selected = select_resorts(
         resorts=["A", " ", "A"],
-        resorts_file="resorts.txt",
+        resorts_file="custom_resorts.txt",
         use_default_resorts=True,
         default_resorts=["D1", "D2"],
         read_resorts_fn=lambda path: ["B", "A"],

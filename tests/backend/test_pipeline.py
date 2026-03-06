@@ -32,7 +32,7 @@ class _DummyCoordCache:
 
 
 def test_read_resorts_ignores_comments_and_blanks(tmp_path):
-    p = tmp_path / "resorts.txt"
+    p = tmp_path / "plain_resorts.txt"
     p.write_text("Snowbird, UT\n# comment\n\nSnowbasin, UT\n", encoding="utf-8")
     assert pipeline.read_resorts(str(p)) == ["Snowbird, UT", "Snowbasin, UT"]
 

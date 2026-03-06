@@ -11,7 +11,7 @@ from src.backend.resort_catalog import (
 
 
 def test_load_resort_catalog_from_txt(tmp_path):
-    p = tmp_path / "resorts.txt"
+    p = tmp_path / "plain_resorts.txt"
     p.write_text("Snowbird, UT\n# comment\n\nSnowbird, UT\nSolitude, UT\n", encoding="utf-8")
     entries = load_resort_catalog(str(p))
     assert [x["query"] for x in entries] == ["Snowbird, UT", "Solitude, UT"]

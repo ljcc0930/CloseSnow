@@ -18,7 +18,7 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     )
     out = build_weather_payload(
         resorts=["A"],
-        resorts_file="resorts.txt",
+        resorts_file="resorts.yml",
         include_all_resorts=True,
         cache_file=".cache/a.json",
         geocode_cache_hours=100,
@@ -27,7 +27,7 @@ def test_build_weather_payload_calls_run_pipeline(monkeypatch):
     )
     assert out == {"ok": True}
     assert captured["resorts"] == ["A"]
-    assert captured["resorts_file"] == "resorts.txt"
+    assert captured["resorts_file"] == "resorts.yml"
     assert captured["include_all_resorts"] is True
     assert captured["max_workers"] == 4
 

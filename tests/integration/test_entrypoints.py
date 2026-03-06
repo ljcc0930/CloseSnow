@@ -10,7 +10,7 @@ from src.web import weather_page_static_render
 def test_backend_entrypoint_main(monkeypatch, capsys):
     args = argparse.Namespace(
         resort=["A"],
-        resorts_file="resorts.txt",
+        resorts_file="resorts.yml",
         use_default_resorts=False,
         output_json="o.json",
         snow_csv="s.csv",
@@ -35,7 +35,7 @@ def test_backend_entrypoint_main(monkeypatch, capsys):
 def test_static_render_entrypoint_main(monkeypatch, capsys):
     args = argparse.Namespace(
         resort=["A", " "],
-        resorts_file="resorts.txt",
+        resorts_file="resorts.yml",
         cache_file=".cache/a.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,

@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--resorts-file",
         default=DEFAULT_RESORTS_FILE,
-        help="Text file with one resort per line.",
+        help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
     )
     p.add_argument("--use-default-resorts", action="store_true", help="Use built-in resort list.")
     p.add_argument("--output-json", default=".cache/resorts_weather_unified.json")

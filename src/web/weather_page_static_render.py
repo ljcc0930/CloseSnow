@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
         "--resort",
         action="append",
         default=[],
-        help="Resort query (repeatable). If set, resorts.txt is ignored.",
+        help="Resort query (repeatable). If set, --resorts-file is ignored.",
     )
     p.add_argument(
         "--resorts-file",

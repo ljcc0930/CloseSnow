@@ -258,7 +258,11 @@ def write_csv(path: str, reports: List[Dict[str, Any]]) -> None:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Fetch ECMWF 14-day snowfall for ski resorts.")
     p.add_argument("--resort", action="append", default=[], help="Resort name (repeatable).")
-    p.add_argument("--resorts-file", default="resorts.txt", help="Text file with one resort per line.")
+    p.add_argument(
+        "--resorts-file",
+        default="resorts.yml",
+        help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
+    )
     p.add_argument("--output-json", default=".cache/ecmwf_snowfall.json", help="JSON output path.")
     p.add_argument("--output-csv", default=".cache/ecmwf_snowfall_daily.csv", help="CSV output path.")
     p.add_argument("--cache-file", default=".cache/open_meteo_cache.json", help="Cache file path.")

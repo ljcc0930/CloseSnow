@@ -188,7 +188,11 @@ def write_csv(path: str, rows: List[Dict[str, Any]]) -> None:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="ECMWF 14-day temperature table for ski resorts.")
     p.add_argument("--resort", action="append", default=[], help="Resort name (repeatable).")
-    p.add_argument("--resorts-file", default="resorts.txt", help="Text file with one resort per line.")
+    p.add_argument(
+        "--resorts-file",
+        default="resorts.yml",
+        help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
+    )
     p.add_argument("--output-csv", default=".cache/resorts_temperature_daily.csv")
     p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
