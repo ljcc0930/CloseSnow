@@ -1,25 +1,40 @@
 # CloseSnow
 
 CloseSnow is a ski resort weather toolkit built on Open-Meteo ECMWF IFS 0.25.
-It fetches a unified 15-day payload (snow, rain, temperature, weather code, sunrise/sunset), then serves or renders forecast pages from the same contract.
+It fetches one unified payload contract (`weather_payload_v1`) and reuses that contract for:
+
+- Static site generation
+- Dynamic page serving
+- Decoupled backend API + frontend web deployment
 
 ## Highlights
 
-- Unified payload contract: `weather_payload_v1`
 - Unified CLI: `fetch`, `render`, `static`, `serve`, `serve-data`, `serve-web`
-- Static site generation (`index.html`) plus per-resort hourly pages (`/resort/<resort_id>/`)
-- Dynamic web mode and decoupled deployment mode
-- Resort catalog metadata support (`pass_types`, `region`, `country`, `default_enabled`)
-- Search/filter/sort controls in frontend and matching backend query filters
-- Per-table unit toggles (`cm/in`, `mm/in`, `C/F`) persisted in browser
-- Concurrency support via `--max-workers`
+- Unified payload contract (`weather_payload_v1`) with validator in `src/contract/validators.py`
+- Main page sections: Snowfall, Rainfall, Temperature, Weather (emoji), Sunrise/Sunset
+- Per-resort hourly page: `/resort/<resort_id>` and hourly API `/api/resort-hourly`
+- Frontend filters are browser-side (URL state sync, no reload)
+- Backend `/api/data` supports query-based filtering for API clients
+- Resort catalog metadata (`resorts.yml`): `resort_id`, `pass_types`, `region`, `country`, `default_enabled`
+- Concurrent resort processing via `--max-workers`
 - Date-suffixed API cache + persistent coordinate cache
 
 ## Requirements
 
 - Python `3.9+`
-- Main code in `src/` uses Python standard library only
-- Optional dependencies in `requirements.txt` are for `legacy/` scripts
+- Main workflow uses Python standard library only
+- `requirements.txt` is only for legacy scripts under `legacy/`
+
+## Repository Map
+
+- `src/cli.py`: unified CLI entrypoint
+- `src/backend/`: weather fetch pipeline, report builder, backend HTTP API
+- `src/web/`: HTML rendering, page servers, data-source adapters
+- `src/contract/`: payload contract schema + validator
+- `assets/`: frontend CSS/JS
+- `scripts/`: resort catalog sync/validation tooling
+- `tests/`: backend/frontend/integration/smoke test suites
+- `.github/workflows/deploy-pages.yml`: GitHub Pages build/deploy workflow
 
 ## Quick Start
 
@@ -32,7 +47,12 @@ cp -R assets/css site/assets/
 cp -R assets/js site/assets/
 ```
 
-Then open `site/index.html` (or deploy `site/`).
+Open `site/index.html`.
+
+Notes:
+
+- This command uses default-enabled resorts from `resorts.yml`
+- Add `--include-all-resorts` to include non-default resorts
 
 ### 2) Split static pipeline
 
@@ -51,18 +71,18 @@ python3 -m src.cli serve --host 127.0.0.1 --port 8010
 ```
 
 - Page: `http://127.0.0.1:8010/`
-- Payload: `http://127.0.0.1:8010/api/data`
+- Data: `http://127.0.0.1:8010/api/data`
 - Hourly API: `http://127.0.0.1:8010/api/resort-hourly?resort_id=snowbird-ut&hours=72`
 
-### 4) Decoupled deployment (backend + frontend)
+### 4) Decoupled deployment (recommended runtime split)
 
-Terminal A:
+Terminal A (backend):
 
 ```bash
 python3 -m src.cli serve-data --host 127.0.0.1 --port 8020
 ```
 
-Terminal B:
+Terminal B (frontend):
 
 ```bash
 python3 -m src.cli serve-web \
@@ -86,6 +106,7 @@ Fetch payload and write JSON artifact.
 python3 -m src.cli fetch \
   [--resort "Snowbird, UT"] \
   [--resorts-file resorts.yml] \
+  [--include-all-resorts] \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
@@ -95,7 +116,7 @@ python3 -m src.cli fetch \
 
 ### `render`
 
-Render HTML from payload JSON.
+Render HTML from payload JSON artifact.
 
 ```bash
 python3 -m src.cli render \
@@ -105,9 +126,9 @@ python3 -m src.cli render \
 
 Notes:
 
-- Validates payload contract before rendering.
-- Also generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`).
-- Does not embed hourly JSON data by default.
+- Validates payload contract before rendering
+- Generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`)
+- Does not embed `hourly.json` by default
 
 ### `static`
 
@@ -117,6 +138,7 @@ Fetch + render in one command.
 python3 -m src.cli static \
   [--resort "Snowbird, UT"] \
   [--resorts-file resorts.yml] \
+  [--include-all-resorts] \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
@@ -129,14 +151,14 @@ python3 -m src.cli static \
 
 Notes:
 
-- `--resort` is repeatable. If provided, `--resorts-file` is ignored.
-- `--skip-fetch`: reuse existing `--output-json`.
-- `--skip-render`: refresh payload only.
-- When rendering, generates per-resort hourly pages and writes `hourly.json` for each resort route.
+- `--resort` is repeatable; when set, `--include-all-resorts` is ignored
+- `--skip-fetch`: reuse existing JSON
+- `--skip-render`: refresh payload only
+- Static render writes per-resort `hourly.json` files
 
 ### `serve`
 
-Coupled dynamic server (frontend + in-process local backend).
+Coupled frontend server (`data_mode=local`).
 
 ```bash
 python3 -m src.cli serve [--host 127.0.0.1] [--port 8010] [...]
@@ -152,7 +174,7 @@ python3 -m src.cli serve-data [--host 127.0.0.1] [--port 8020] [...] [--allow-or
 
 ### `serve-web`
 
-Frontend web server with data source mode.
+Frontend server with selectable data source.
 
 ```bash
 python3 -m src.cli serve-web \
@@ -165,8 +187,8 @@ python3 -m src.cli serve-web \
 
 Notes:
 
-- CLI default `--data-mode` is `api`.
-- `--data-source` default is `CLOSESNOW_DATA_URL`, fallback `http://127.0.0.1:8020/api/data`.
+- Default `--data-mode` is `api`
+- Default `--data-source` uses `CLOSESNOW_DATA_URL`, fallback `http://127.0.0.1:8020/api/data`
 
 ## HTTP Endpoints
 
@@ -185,7 +207,16 @@ Notes:
 - `region` (`west|east|intl`)
 - `country` (ISO-2)
 - `search` (free text)
+- `search_all` (`1|true|yes|on`)
+- `include_default` (`1|true|yes|on`)
 - `include_all` (`1|true|yes|on`)
+
+`/api/resorts` query parameters:
+
+- `pass_type` (repeatable or comma-separated)
+- `region`
+- `country`
+- `search`
 
 `/api/resort-hourly` query parameters:
 
@@ -199,13 +230,25 @@ Notes:
 - `GET /api/resort-hourly`
 - `GET /api/health`
 - `GET /resort/<resort_id>`
-- `GET /assets/css/*`, `GET /assets/js/*`
+- `GET /assets/css/*`
+- `GET /assets/js/*`
+
+## Filter Behavior (Current)
+
+- Main page filters are client-side in `assets/js/weather_page.js`
+- Filter state is synced to URL with `history.replaceState` (no page reload)
+- On frontend page route `/`, server-side filter query keys are ignored by design
+- `/api/data` still supports server-side filtering for API clients
+- `Default resorts only` checked means `include_default=1` (show only `default_enabled=true`)
+- Search keyword + `search_all=1` ignores pass/region/country/default scope filters
+
+This keeps static and dynamic page behavior aligned.
 
 ## Resort Catalog
 
-Default resort source is `resorts.yml` (repo root), loaded as JSON array.
+Default source is `resorts.yml` (JSON-compatible list format).
 
-Entry fields:
+Catalog fields:
 
 - `resort_id`
 - `query`
@@ -214,23 +257,27 @@ Entry fields:
 - `country`
 - `region`
 - `pass_types` (`ikon|epic|indy`)
-- `default_enabled` (controls default inclusion when no filters request full catalog)
+- `default_enabled`
 
-`resorts.txt` is still supported by catalog loader, but main defaults point to `resorts.yml`.
+Notes:
+
+- Sync tooling manages Ikon/Epic/Indy metadata
+- Main page filter controls currently expose Ikon/Epic toggles
+- Runtime API/filter scope currently includes resorts that have Epic or Ikon pass types
 
 ## Static Output Structure
 
-When output is `site/index.html`, generated files are:
+If output HTML is `site/index.html`, generated artifacts include:
 
 - `site/index.html`
-- `site/data.json` (if using `fetch` or `static` with that path)
+- `site/data.json` (when chosen as fetch/static output JSON)
 - `site/resort/<resort_id>/index.html`
-- `site/resort/<resort_id>/hourly.json` (only when hourly data embedding is enabled, e.g. `cli static`)
-- `site/assets/css/*` and `site/assets/js/*` (copy from repo `assets/`)
+- `site/resort/<resort_id>/hourly.json` (when hourly embedding is enabled, e.g. `src.cli static`)
+- `site/assets/css/*` and `site/assets/js/*` (copied manually from repo `assets/`)
 
 ## Payload Contract (`weather_payload_v1`)
 
-Top-level keys:
+Top-level validated keys:
 
 - `schema_version`
 - `generated_at_utc`
@@ -244,16 +291,38 @@ Top-level keys:
 - `failed`
 - `reports`
 
-Validated by `src/contract/validators.py`.
+Contract types are defined in `src/contract/weather_payload_v1.py`.
 
 ## Cache Behavior
 
-- API cache base: `.cache/open_meteo_cache.json`
-- Runtime cache file: `.cache/open_meteo_cache_YYYY-MM-DD.json`
+- Base cache path: `.cache/open_meteo_cache.json`
+- Runtime date-suffixed cache: `.cache/open_meteo_cache_YYYY-MM-DD.json`
 - Coordinate cache: `.cache/resort_coordinates.json`
 - Default TTL:
-  - geocode: `720` hours
-  - forecast: `3` hours
+  - Geocode: `720` hours
+  - Forecast/hourly: `3` hours
+
+## Resort Catalog Sync Script
+
+Scripts:
+
+- `scripts/sync_resorts_catalog.py`
+- `scripts/sync_pass_resorts.py` (wrapper)
+
+Examples:
+
+```bash
+python3 scripts/sync_resorts_catalog.py --validate-only
+python3 scripts/sync_resorts_catalog.py --validate-only --skip-ikon-destinations-check
+python3 scripts/sync_resorts_catalog.py --input resorts.yml --output resorts.yml
+```
+
+The sync script:
+
+- Pulls Ikon/Epic/Indy source lists
+- Merges into existing catalog (preserving `default_enabled`)
+- Validates catalog schema and pass coverage
+- Checks Ikon destination coverage against `https://www.ikonpass.com/en/destinations` (can be skipped)
 
 ## Testing
 
@@ -272,16 +341,28 @@ python3 -m pytest tests/integration -q
 python3 -m pytest tests/smoke -q
 ```
 
-By marker:
+## GitHub Pages Workflow
+
+Workflow file: `.github/workflows/deploy-pages.yml`
+
+Triggers:
+
+- `workflow_dispatch`
+- Push to `main`
+- Hourly schedule (`1 * * * *`)
+
+Build command used by workflow:
 
 ```bash
-python3 -m pytest -m smoke -q
-python3 -m pytest -m integration -q
+mkdir -p site/assets
+python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8 --include-all-resorts
+cp -R assets/css site/assets/
+cp -R assets/js site/assets/
 ```
 
-## Compatibility Entrypoints
+## Compatibility Entrypoint
 
-Legacy-compatible entrypoint (still maintained):
+Legacy-compatible backend entrypoint:
 
 ```bash
 python3 -m src.backend.ecmwf_unified_backend
@@ -293,55 +374,6 @@ Default artifacts:
 - `.cache/resorts_snowfall_daily.csv`
 - `.cache/resorts_rainfall_daily.csv`
 - `.cache/resorts_temperature_daily.csv`
-
-## Resort Catalog Sync Scripts
-
-- `scripts/sync_resorts_catalog.py`
-- `scripts/sync_pass_resorts.py` (wrapper)
-
-Examples:
-
-```bash
-python3 scripts/sync_resorts_catalog.py --validate-only
-python3 scripts/sync_resorts_catalog.py --input resorts.yml --output resorts.yml
-```
-
-`sync_resorts_catalog.py` merges Ikon/Epic/Indy sources, preserves existing defaults, and validates catalog integrity + pass coverage.
-
-## GitHub Pages Workflow
-
-Workflow: `.github/workflows/deploy-pages.yml`
-
-Triggers:
-
-- `workflow_dispatch`
-- push to `main`
-- hourly schedule (`1 * * * *`)
-
-Build command:
-
-```bash
-python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8
-mkdir -p site/assets
-cp -R assets/css site/assets/
-cp -R assets/js site/assets/
-```
-
-## Legacy Scripts
-
-`legacy/` contains historical/specialized flows:
-
-- `legacy/ecmwf_ski_forecast.py`
-- `legacy/ecmwf_rain_pipeline.py`
-- `legacy/ecmwf_temperature_table.py`
-- `legacy/ecmwf_snowfall_opendata.py`
-- `legacy/colorize_weather_excel.py`
-
-Install optional dependencies for those scripts:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Architecture Docs
 

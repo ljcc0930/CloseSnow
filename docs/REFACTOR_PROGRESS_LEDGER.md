@@ -37,6 +37,35 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-05 17:54 (README sync to current code behavior)
+
+### Scope
+- Refresh `README.md` so commands, endpoints, filter semantics, workflow config, and script usage match current implementation.
+
+### Changes
+- Files:
+  - `README.md`
+- Behavior impact:
+  - Documentation now reflects current frontend filter model (browser-side filtering + URL state sync).
+  - `/api/data` query parameter docs now include `search_all` and `include_default`.
+  - GitHub Pages build command now matches workflow (`--include-all-resorts`).
+  - CLI option docs now include `--include-all-resorts` for `fetch` and `static`.
+  - Resort sync section now documents Ikon destination coverage check and skip flag.
+
+### Validation
+- Commands:
+  - `python3 -m src.cli static --output-html index.html`
+  - `python3 -m pytest tests/frontend/test_assets.py -q`
+- Results:
+  - static command: succeeded (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`)
+  - frontend assets tests: `2 passed`
+
+### Risks / Notes
+- README intentionally documents current behavior where frontend page route `/` ignores server-side filter query keys; API clients should use `/api/data` for backend filtering.
+
+### Next Slice
+- Keep README and workflow command examples synchronized whenever CLI flags or deployment defaults change.
+
 ## 2026-03-05 16:25 (hourly page alias flicker fix)
 
 ### Scope
@@ -1209,3 +1238,31 @@ Copy this template for each new work session:
 
 ### Next Slice
 - Optional: add explicit per-destination diff output mode (machine-readable JSON) for easier catalog update triage.
+
+## 2026-03-05 18:50 (local)
+
+### Scope
+- Re-sync README with current frontend/backend filter semantics and static build scope behavior.
+
+### Changes
+- Files:
+  - `README.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Documented static default-vs-all catalog behavior explicitly (`--include-all-resorts`).
+  - Clarified frontend filter semantics for `Default resorts only` (`include_default`) and `search_all`.
+  - Clarified runtime API/filter scope note (Epic/Ikon-supported resort subset).
+
+### Validation
+- Commands:
+  - `python3 -m src.cli static --output-html index.html`
+  - `python3 -m pytest tests/frontend/test_assets.py -q`
+- Results:
+  - Static build passed (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`).
+  - Frontend asset test passed (`2 passed`).
+
+### Risks / Notes
+- README reflects current behavior; any future expansion to include Indy-only runtime filtering should be documented again.
+
+### Next Slice
+- Optional: add a short README matrix for filter behavior across `serve` / `serve-web(api)` / fully static page.
