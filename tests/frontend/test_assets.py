@@ -40,4 +40,22 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
     assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert "const autoSizeSplitTables = () => {" in js_text
+    assert "wrapSelector: \".snowfall-right-wrap#snowfall-right-wrap\"" in js_text
+    assert "const _autoSizeMobileQueryColumn = ({" in js_text
+    assert "const _autoSizeDesktopLeftColumns = ({" in js_text
+    assert "const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {" in js_text
+    assert "const _autoSizeMobileRightColumns = ({" in js_text
+    assert "const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stickyVar) => {" in js_text
+    assert "const attachVerticalSync = (left, right) => {" in js_text
+    assert "const attachSplitScrollSync = () => {" in js_text
+    assert "const applyLayout = () => {" in js_text
+    assert "const observeLayoutContainers = () => {" in js_text
+    assert ".snowfall-split-wrap.mobile-only" in js_text
+    assert ".rain-split-wrap.mobile-only" in js_text
+    assert "const syncSplitTableHeights = () => {" in js_text
+    assert "syncSplitTableHeights();" in js_text
     assert "body.units-pending main" not in css_text
+    assert ".query-col .resort-link" in css_text
+    assert "text-overflow: ellipsis;" in css_text
+    assert "white-space: nowrap;" in css_text

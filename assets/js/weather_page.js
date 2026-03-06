@@ -69,6 +69,13 @@ const _isTruthyParam = (value) => {
   return text === "1" || text === "true" || text === "yes" || text === "on";
 };
 
+const measureTextWidth = (text, font) => {
+  const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
+  const context = canvas.getContext("2d");
+  context.font = font;
+  return context.measureText(text || "").width;
+};
+
 const _resolveBootstrapUrl = (rawUrl) => {
   const text = String(rawUrl || "").trim();
   if (!text) throw new Error("Missing dataUrl bootstrap.");
@@ -649,6 +656,404 @@ const updateLayoutMode = () => {
   document.body.classList.toggle("mobile-simple", window.innerWidth < MIN_DESKTOP_SNOW_3DAY_PX);
 };
 
+const isCompactLayout = () => document.body.classList.contains("mobile-simple");
+
+const _autoSizeDesktopLeftColumns = ({
+  tableSelector,
+  wrapSelector,
+  queryVarName,
+  weekVarName,
+}) => {
+  const table = document.querySelector(tableSelector);
+  const wrap = document.querySelector(wrapSelector);
+  if (!table || !wrap) return;
+  const rows = Array.from(table.querySelectorAll("tbody tr"));
+  const headerCells = Array.from(table.querySelectorAll("thead tr:last-child th"));
+  if (headerCells.length < 2) return;
+  const sampleCell = table.querySelector("tbody td") || headerCells[0];
+  if (!sampleCell) return;
+  const font = window.getComputedStyle(sampleCell).font;
+
+  const queryValues = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const queryHeader = table.querySelector("thead .query-col")?.textContent?.trim() || "query";
+  const queryMax = Math.max(
+    measureTextWidth(queryHeader, font),
+    ...queryValues.map((value) => measureTextWidth(value, font)),
+  );
+
+  const weekHeaders = headerCells.map((cell) => cell.textContent?.trim() || "");
+  const weekValues = rows.flatMap((row) =>
+    Array.from(row.children)
+      .slice(1)
+      .map((cell) => cell.textContent?.trim() || ""),
+  );
+  const weekMax = Math.max(
+    ...weekHeaders.map((value) => measureTextWidth(value, font)),
+    ...weekValues.map((value) => measureTextWidth(value, font)),
+  );
+
+  wrap.style.setProperty(queryVarName, `${Math.max(150, Math.min(240, Math.ceil(queryMax + 28)))}px`);
+  wrap.style.setProperty(weekVarName, `${Math.max(90, Math.min(130, Math.ceil(weekMax + 24)))}px`);
+};
+
+const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {
+  const table = document.querySelector(tableSelector);
+  const wrap = document.querySelector(wrapSelector);
+  if (!table || !wrap) return;
+  const rows = Array.from(table.querySelectorAll("tbody tr"));
+  const header = table.querySelector("thead .query-col") || table.querySelector("thead th");
+  const sampleCell = table.querySelector("tbody td") || header;
+  if (!sampleCell || !header) return;
+  const font = window.getComputedStyle(sampleCell).font;
+  const values = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const headerText = header.textContent?.trim() || "query";
+  const queryMax = Math.max(
+    measureTextWidth(headerText, font),
+    ...values.map((value) => measureTextWidth(value, font)),
+  );
+  wrap.style.setProperty(queryVarName, `${Math.max(150, Math.min(240, Math.ceil(queryMax + 28)))}px`);
+};
+
+const _autoSizeMobileQueryColumn = ({ tableSelector, wrapSelector, minWidth, maxWidth, padding }) => {
+  const table = document.querySelector(tableSelector);
+  const wrap = document.querySelector(wrapSelector);
+  if (!table || !wrap) return;
+  const rows = Array.from(table.querySelectorAll("tbody tr"));
+  const header = table.querySelector("thead .query-col");
+  const sampleCell = table.querySelector("tbody td") || header;
+  if (!sampleCell || !header) return;
+  const font = window.getComputedStyle(sampleCell).font;
+  const values = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const headerText = header.textContent?.trim() || "Resort";
+  const width = Math.max(
+    minWidth,
+    Math.min(
+      maxWidth,
+      Math.ceil(Math.max(measureTextWidth(headerText, font), ...values.map((value) => measureTextWidth(value, font))) + padding),
+    ),
+  );
+  wrap.style.setProperty("--query-col-w", `${width}px`);
+  wrap.style.setProperty("--rain-query-w", `${width}px`);
+};
+
+const _autoSizeMobileRightColumns = ({
+  tableSelector,
+  wrapSelector,
+  weekSelector,
+  daySelector,
+  minWeekWidth,
+  minDayWidth,
+}) => {
+  const table = document.querySelector(tableSelector);
+  const wrap = document.querySelector(wrapSelector);
+  if (!table || !wrap) return;
+  const weekCols = Array.from(table.querySelectorAll(weekSelector));
+  const dayCols = Array.from(table.querySelectorAll(daySelector));
+  const totalCols = weekCols.length + dayCols.length;
+  if (!totalCols) return;
+
+  const minTotal = (minWeekWidth * weekCols.length) + (minDayWidth * dayCols.length);
+  const wrapWidth = wrap.clientWidth;
+  if (wrapWidth >= minTotal) {
+    const base = Math.floor(wrapWidth / totalCols);
+    const remainder = wrapWidth - (base * totalCols);
+    [...weekCols, ...dayCols].forEach((col, index) => {
+      const width = base + (index < remainder ? 1 : 0);
+      col.style.width = `${width}px`;
+    });
+    table.style.width = `${wrapWidth}px`;
+    return;
+  }
+
+  weekCols.forEach((col) => {
+    col.style.width = `${minWeekWidth}px`;
+  });
+  dayCols.forEach((col) => {
+    col.style.width = `${minDayWidth}px`;
+  });
+  table.style.width = `${minTotal}px`;
+};
+
+const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stickyVar) => {
+  const leftTable = document.querySelector(leftSelector);
+  const rightTable = document.querySelector(rightSelector);
+  const splitWrap = document.querySelector(wrapSelector);
+  if (!leftTable || !rightTable) return;
+
+  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
+  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
+  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
+  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
+
+  const headRowHeights = [30, 30];
+  leftHeadRows.forEach((row, index) => { row.style.height = `${headRowHeights[index] || 30}px`; });
+  rightHeadRows.forEach((row, index) => { row.style.height = `${headRowHeights[index] || 30}px`; });
+  leftBodyRows.forEach((row) => { row.style.height = "30px"; });
+  rightBodyRows.forEach((row) => { row.style.height = "30px"; });
+
+  if (splitWrap) {
+    splitWrap.style.setProperty(stickyVar, `${headRowHeights[0]}px`);
+  }
+};
+
+const attachVerticalSync = (left, right) => {
+  if (!left || !right || left.dataset.scrollSyncAttached === "1") return;
+  let syncing = false;
+  const sync = (source, target) => {
+    if (syncing) return;
+    syncing = true;
+    target.scrollTop = source.scrollTop;
+    requestAnimationFrame(() => {
+      syncing = false;
+    });
+  };
+  left.addEventListener("scroll", () => sync(left, right), { passive: true });
+  right.addEventListener("scroll", () => sync(right, left), { passive: true });
+  left.dataset.scrollSyncAttached = "1";
+  right.dataset.scrollSyncAttached = "1";
+};
+
+const attachSplitScrollSync = () => {
+  [
+    [".snowfall-left-wrap#snowfall-left-wrap", ".snowfall-right-wrap#snowfall-right-wrap"],
+    [".snowfall-left-wrap#snowfall-left-wrap-mobile", ".snowfall-right-wrap#snowfall-right-wrap-mobile"],
+    [".rain-left-wrap#rain-left-wrap", ".rain-right-wrap#rain-right-wrap"],
+    [".rain-left-wrap#rain-left-wrap-mobile", ".rain-right-wrap#rain-right-wrap-mobile"],
+    [".temperature-left-wrap", ".temperature-right-wrap"],
+    [".weather-left-wrap", ".weather-right-wrap"],
+    [".sun-left-wrap", ".sun-right-wrap"],
+  ].forEach(([leftSelector, rightSelector]) => {
+    attachVerticalSync(document.querySelector(leftSelector), document.querySelector(rightSelector));
+  });
+};
+
+const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWidth }) => {
+  const wrap = document.querySelector(wrapSelector);
+  const table = document.querySelector(tableSelector);
+  if (!wrap || !table) return;
+  const cols = Array.from(table.querySelectorAll(colSelector));
+  const count = cols.length;
+  if (!count) return;
+
+  const wrapWidth = wrap.clientWidth;
+  const minTotal = minWidth * count;
+  if (wrapWidth >= minTotal) {
+    const base = Math.floor(wrapWidth / count);
+    const remainder = wrapWidth - (base * count);
+    cols.forEach((col, index) => {
+      const width = base + (index < remainder ? 1 : 0);
+      col.style.width = `${width}px`;
+    });
+    table.style.width = `${wrapWidth}px`;
+    return;
+  }
+
+  cols.forEach((col) => {
+    col.style.width = `${minWidth}px`;
+  });
+  table.style.width = `${minTotal}px`;
+};
+
+const autoSizeSplitTables = () => {
+  if (isCompactLayout()) {
+    _autoSizeMobileQueryColumn({
+      tableSelector: ".snowfall-left-wrap-mobile .snowfall-left-table",
+      wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile",
+      minWidth: 130,
+      maxWidth: 210,
+      padding: 22,
+    });
+    _autoSizeMobileRightColumns({
+      tableSelector: ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table",
+      wrapSelector: ".snowfall-right-wrap#snowfall-right-wrap-mobile",
+      weekSelector: "col.col-week-right",
+      daySelector: "col.col-day",
+      minWeekWidth: 92,
+      minDayWidth: 62,
+    });
+    _setFixedMobileHeights(
+      ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
+      ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table",
+      ".snowfall-split-wrap.mobile-only",
+      "--snow-header-row1-h",
+    );
+    _autoSizeMobileQueryColumn({
+      tableSelector: ".rain-left-wrap#rain-left-wrap-mobile .rain-left-table",
+      wrapSelector: ".rain-left-wrap#rain-left-wrap-mobile",
+      minWidth: 130,
+      maxWidth: 210,
+      padding: 22,
+    });
+    _autoSizeMobileRightColumns({
+      tableSelector: ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table",
+      wrapSelector: ".rain-right-wrap#rain-right-wrap-mobile",
+      weekSelector: "col.col-week-right",
+      daySelector: "col.col-day",
+      minWeekWidth: 92,
+      minDayWidth: 62,
+    });
+    _setFixedMobileHeights(
+      ".rain-left-wrap#rain-left-wrap-mobile .rain-left-table",
+      ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table",
+      ".rain-split-wrap.mobile-only",
+      "--rain-header-row1-h",
+    );
+    return;
+  }
+  _autoSizeDesktopLeftColumns({
+    tableSelector: ".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table",
+    wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap",
+    queryVarName: "--query-col-w",
+    weekVarName: "--week-col-w",
+  });
+  _stretchColumnsToWrap({
+    wrapSelector: ".snowfall-right-wrap#snowfall-right-wrap",
+    tableSelector: ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table",
+    colSelector: "col.col-day",
+    minWidth: 66,
+  });
+  _autoSizeDesktopLeftColumns({
+    tableSelector: ".rain-left-wrap#rain-left-wrap .rain-left-table",
+    wrapSelector: ".rain-left-wrap#rain-left-wrap",
+    queryVarName: "--rain-query-w",
+    weekVarName: "--rain-week-w",
+  });
+  _stretchColumnsToWrap({
+    wrapSelector: ".rain-right-wrap#rain-right-wrap",
+    tableSelector: ".rain-right-wrap#rain-right-wrap .rain-right-table",
+    colSelector: "col.col-day",
+    minWidth: 66,
+  });
+  _autoSizeQueryOnly({
+    tableSelector: ".temperature-left-wrap .temperature-left-table",
+    wrapSelector: ".temperature-left-wrap",
+    queryVarName: "--temp-query-w",
+  });
+  _stretchColumnsToWrap({
+    wrapSelector: ".temperature-right-wrap",
+    tableSelector: ".temperature-right-table",
+    colSelector: "col.col-temp",
+    minWidth: 50,
+  });
+  _stretchColumnsToWrap({
+    wrapSelector: ".weather-right-wrap",
+    tableSelector: ".weather-right-table",
+    colSelector: "col.col-weather",
+    minWidth: 68,
+  });
+  _stretchColumnsToWrap({
+    wrapSelector: ".sun-right-wrap",
+    tableSelector: ".sun-right-table",
+    colSelector: "col.col-sun",
+    minWidth: 58,
+  });
+};
+
+const _clearRowHeights = (rows) => {
+  rows.forEach((row) => {
+    row.style.height = "";
+  });
+};
+
+const _syncRowPairHeights = (leftRows, rightRows) => {
+  const count = Math.min(leftRows.length, rightRows.length);
+  for (let index = 0; index < count; index += 1) {
+    const leftRow = leftRows[index];
+    const rightRow = rightRows[index];
+    const targetHeight = Math.max(leftRow.offsetHeight, rightRow.offsetHeight);
+    leftRow.style.height = `${targetHeight}px`;
+    rightRow.style.height = `${targetHeight}px`;
+  }
+};
+
+const _syncStickySecondRowTop = (leftTable, rightTable, splitWrap, variableName) => {
+  if (!leftTable || !rightTable || !splitWrap) return;
+  const leftFirstRow = leftTable.tHead?.rows?.[0];
+  const rightFirstRow = rightTable.tHead?.rows?.[0];
+  if (!leftFirstRow || !rightFirstRow) return;
+  const top = Math.max(leftFirstRow.offsetHeight, rightFirstRow.offsetHeight);
+  if (top > 0) {
+    splitWrap.style.setProperty(variableName, `${top}px`);
+  }
+};
+
+const syncSplitTableHeights = () => {
+  const tablePairs = isCompactLayout()
+    ? [
+      [".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table", ".snowfall-split-wrap.mobile-only", "--snow-header-row1-h"],
+      [".rain-left-wrap#rain-left-wrap-mobile .rain-left-table", ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table", ".rain-split-wrap.mobile-only", "--rain-header-row1-h"],
+      [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
+      [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
+      [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
+    ]
+    : [
+      [".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table", ".snowfall-split-wrap.desktop-only", "--snow-header-row1-h"],
+      [".rain-left-wrap#rain-left-wrap .rain-left-table", ".rain-right-wrap#rain-right-wrap .rain-right-table", ".rain-split-wrap.desktop-only", "--rain-header-row1-h"],
+      [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
+      [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
+      [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
+    ];
+  tablePairs.forEach(([leftSelector, rightSelector, wrapSelector, stickyVar]) => {
+    const leftTable = document.querySelector(leftSelector);
+    const rightTable = document.querySelector(rightSelector);
+    const splitWrap = document.querySelector(wrapSelector);
+    if (!leftTable || !rightTable) return;
+
+    const leftHeadRows = Array.from(leftTable.tHead ? leftTable.tHead.rows : []);
+    const rightHeadRows = Array.from(rightTable.tHead ? rightTable.tHead.rows : []);
+    const leftBodyRows = Array.from(leftTable.tBodies[0] ? leftTable.tBodies[0].rows : []);
+    const rightBodyRows = Array.from(rightTable.tBodies[0] ? rightTable.tBodies[0].rows : []);
+
+    _clearRowHeights(leftHeadRows);
+    _clearRowHeights(rightHeadRows);
+    _clearRowHeights(leftBodyRows);
+    _clearRowHeights(rightBodyRows);
+
+    _syncRowPairHeights(leftHeadRows, rightHeadRows);
+    _syncRowPairHeights(leftBodyRows, rightBodyRows);
+    _syncStickySecondRowTop(leftTable, rightTable, splitWrap, stickyVar);
+  });
+};
+
+let layoutFrame = 0;
+let layoutObserver = null;
+
+const applyLayout = () => {
+  if (layoutFrame) cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(() => {
+    layoutFrame = 0;
+    updateLayoutMode();
+    autoSizeSplitTables();
+    syncSplitTableHeights();
+    attachSplitScrollSync();
+  });
+};
+
+const observeLayoutContainers = () => {
+  if (!window.ResizeObserver) return;
+  if (layoutObserver) layoutObserver.disconnect();
+  layoutObserver = new ResizeObserver(() => applyLayout());
+  [
+    ".snowfall-left-wrap#snowfall-left-wrap",
+    ".snowfall-right-wrap#snowfall-right-wrap",
+    ".snowfall-left-wrap#snowfall-left-wrap-mobile",
+    ".snowfall-right-wrap#snowfall-right-wrap-mobile",
+    ".rain-left-wrap#rain-left-wrap",
+    ".rain-right-wrap#rain-right-wrap",
+    ".rain-left-wrap#rain-left-wrap-mobile",
+    ".rain-right-wrap#rain-right-wrap-mobile",
+    ".temperature-left-wrap",
+    ".temperature-right-wrap",
+    ".weather-left-wrap",
+    ".weather-right-wrap",
+    ".sun-left-wrap",
+    ".sun-right-wrap",
+  ].forEach((selector) => {
+    const element = document.querySelector(selector);
+    if (element) layoutObserver.observe(element);
+  });
+};
+
 const getStoredUnitMode = (kind) => {
   try {
     const saved = localStorage.getItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`);
@@ -703,6 +1108,7 @@ const setUnitMode = (kind, mode) => {
     // Ignore storage failures.
   }
   applyUnitModes();
+  applyLayout();
 };
 
 const renderReportDate = () => {
@@ -729,11 +1135,12 @@ const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   const visibleReports = _filteredReports();
   pageContentRoot.innerHTML = _renderSections(visibleReports);
+  applyLayout();
+  observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
   syncFilterSummary(visibleReports.length, _payloadReports().length);
   renderReportDate();
   applyUnitModes();
-  updateLayoutMode();
   document.body.classList.remove("units-pending");
 };
 
@@ -859,7 +1266,9 @@ const bindControls = () => {
     const mode = button.getAttribute("data-unit-mode");
     setUnitMode(kind, mode);
   });
-  window.addEventListener("resize", updateLayoutMode, { passive: true });
+  window.addEventListener("resize", () => {
+    applyLayout();
+  }, { passive: true });
 };
 
 const initialize = async () => {

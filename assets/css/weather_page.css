@@ -329,9 +329,13 @@
       font-weight: 600;
     }
     .query-col .resort-link {
+      display: block;
       color: #0f766e;
       text-decoration: none;
       font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .query-col .resort-link:hover {
       text-decoration: underline;
