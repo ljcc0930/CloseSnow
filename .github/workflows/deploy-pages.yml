@@ -36,6 +36,19 @@ jobs:
           python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8 --include-all-resorts
           cp -R assets/css site/assets/
           cp -R assets/js site/assets/
+          touch site/.nojekyll
+
+      - name: Validate generated Pages artifact
+        run: |
+          test -f site/index.html
+          test -f site/data.json
+          test -f site/.nojekyll
+          test -f site/assets/css/weather_page.css
+          test -f site/assets/js/weather_page.js
+          test -f site/assets/css/resort_hourly.css
+          test -f site/assets/js/resort_hourly.js
+          find site/resort -mindepth 2 -maxdepth 2 -path '*/index.html' | grep -q .
+          find site/resort -mindepth 2 -maxdepth 2 -path '*/hourly.json' | grep -q .
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

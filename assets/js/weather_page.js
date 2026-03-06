@@ -69,6 +69,19 @@ const _isTruthyParam = (value) => {
   return text === "1" || text === "true" || text === "yes" || text === "on";
 };
 
+const _resolveBootstrapUrl = (rawUrl) => {
+  const text = String(rawUrl || "").trim();
+  if (!text) throw new Error("Missing dataUrl bootstrap.");
+  if (/^[a-z][a-z0-9+.-]*:/i.test(text) || text.startsWith("//")) {
+    return new URL(text, window.location.href).toString();
+  }
+  const pathname = window.location.pathname || "/";
+  const normalizedPath = pathname.endsWith("/")
+    ? pathname
+    : (pathname.includes(".") ? pathname.replace(/[^/]+$/, "") : `${pathname}/`);
+  return new URL(text, `${window.location.origin}${normalizedPath}`).toString();
+};
+
 const _asFiniteNumber = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const num = Number(value);
@@ -776,9 +789,7 @@ const openFilterModal = () => {
 };
 
 const loadPayload = async () => {
-  const dataUrl = String(pageBootstrap.dataUrl || "").trim();
-  if (!dataUrl) throw new Error("Missing dataUrl bootstrap.");
-  const response = await fetch(new URL(dataUrl, window.location.href).toString());
+  const response = await fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl));
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload && payload.error ? payload.error : `HTTP ${response.status}`);

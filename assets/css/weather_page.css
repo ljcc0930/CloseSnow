@@ -225,10 +225,6 @@
     .section-header h2 {
       margin: 0;
     }
-    body.units-pending main,
-    body.units-pending .page-footer {
-      visibility: hidden;
-    }
     .unit-toggle::before {
       content: "";
       position: absolute;

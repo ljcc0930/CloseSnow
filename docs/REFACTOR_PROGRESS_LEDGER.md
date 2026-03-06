@@ -1397,3 +1397,30 @@ Copy this template for each new work session:
 
 ### Next Slice
 - None for this refactor theme; static-page performance refactor is complete for the planned scope.
+
+## 2026-03-05 19:51 (local)
+
+### Scope
+- Recover GitHub Pages workflow after the static-page refactor so deploys validate the full published artifact set.
+
+### Changes
+- Files:
+  - `.github/workflows/deploy-pages.yml`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - GitHub Actions Pages build now writes `.nojekyll` into `site/`.
+  - Workflow now fails fast if required static outputs are missing after `src.cli static`, including main page assets and generated resort hourly files.
+
+### Validation
+- Commands:
+  - `sed -n '1,220p' .github/workflows/deploy-pages.yml`
+  - `python3 -m pytest tests/frontend/test_static_site_pipeline.py tests/smoke/test_static_pipeline_smoke.py -q`
+- Results:
+  - Workflow definition updated to validate `site/index.html`, `site/data.json`, copied assets, and generated `site/resort/*/{index.html,hourly.json}` before upload.
+  - Targeted static pipeline tests passed.
+
+### Risks / Notes
+- This recovery hardens the deploy workflow against missing-file regressions, but it does not retroactively fix already-published broken artifacts until the workflow runs again.
+
+### Next Slice
+- Optional: add a dedicated CI script for Pages artifact validation so local/manual and workflow checks share the same assertions.

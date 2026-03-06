@@ -38,4 +38,6 @@ def test_read_asset_bytes_reads_known_assets():
     assert "history.replaceState" in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
-    assert "fetch(new URL(dataUrl, window.location.href).toString())" in js_text
+    assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
+    assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert "body.units-pending main" not in css_text
