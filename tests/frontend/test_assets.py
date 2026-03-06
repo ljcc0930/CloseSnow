@@ -40,6 +40,12 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
     assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert "const applyFiltersImmediately = () => {" in js_text
+    assert 'filterPassTypeInputs.forEach((input) => {' in js_text
+    assert 'input.addEventListener("change", applyFiltersImmediately);' in js_text
+    assert 'filterRegionSelect.addEventListener("change", applyFiltersImmediately);' in js_text
+    assert 'filterSortSelect.addEventListener("change", applyFiltersImmediately);' in js_text
+    assert 'document.getElementById("filter-apply-btn")' not in js_text
     assert "const syncUrlFromFilterState = () => {" in js_text
     assert "window.history.replaceState" not in js_text
     assert "const buildFilterQueryParams = () => {" not in js_text

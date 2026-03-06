@@ -19,7 +19,6 @@ const resortSearchInput = document.getElementById("resort-search-input");
 const resortSearchClear = document.getElementById("resort-search-clear");
 const filterOpenBtn = document.getElementById("filter-open-btn");
 const filterModal = document.getElementById("filter-modal");
-const filterApplyBtn = document.getElementById("filter-apply-btn");
 const filterResetBtn = document.getElementById("filter-reset-btn");
 const filterCloseBtn = document.getElementById("filter-close-btn");
 const filterSummary = document.getElementById("filter-summary");
@@ -1233,41 +1232,40 @@ const resetFilterControls = () => {
   if (resortSearchInput) resortSearchInput.value = "";
 };
 
+const applyFiltersImmediately = () => {
+  applyFilterStateFromControls();
+  syncUrlFromFilterState();
+  renderPage();
+};
+
 const bindControls = () => {
   if (resortSearchInput) {
     resortSearchInput.addEventListener("input", () => {
-      applyFilterStateFromControls();
-      syncUrlFromFilterState();
-      renderPage();
+      applyFiltersImmediately();
     });
   }
   if (resortSearchClear) {
     resortSearchClear.addEventListener("click", () => {
       if (resortSearchInput) resortSearchInput.value = "";
-      applyFilterStateFromControls();
-      syncUrlFromFilterState();
-      renderPage();
+      applyFiltersImmediately();
     });
   }
   if (filterOpenBtn) filterOpenBtn.addEventListener("click", openFilterModal);
   if (filterCloseBtn) filterCloseBtn.addEventListener("click", closeFilterModal);
-  if (filterApplyBtn) {
-    filterApplyBtn.addEventListener("click", () => {
-      applyFilterStateFromControls();
-      syncUrlFromFilterState();
-      closeFilterModal();
-      renderPage();
-    });
-  }
   if (filterResetBtn) {
     filterResetBtn.addEventListener("click", () => {
       resetFilterControls();
-      applyFilterStateFromControls();
-      syncUrlFromFilterState();
-      closeFilterModal();
-      renderPage();
+      applyFiltersImmediately();
     });
   }
+  filterPassTypeInputs.forEach((input) => {
+    input.addEventListener("change", applyFiltersImmediately);
+  });
+  if (filterRegionSelect) filterRegionSelect.addEventListener("change", applyFiltersImmediately);
+  if (filterCountrySelect) filterCountrySelect.addEventListener("change", applyFiltersImmediately);
+  if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
+  if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
+  if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterModal) {
     filterModal.addEventListener("click", (event) => {
       if (event.target === filterModal) closeFilterModal();

@@ -251,6 +251,7 @@ def test_build_html_contains_meta_sections():
     assert 'name="filter-pass-type" value="ikon"' in html
     assert 'name="filter-pass-type" value="epic"' in html
     assert 'name="filter-pass-type" value="indy"' not in html
+    assert 'id="filter-apply-btn"' not in html
     assert "Default resorts only" in html
     assert 'id="filter-include-all" checked' in html
     assert "Search all resorts" in html
