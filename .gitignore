@@ -27,6 +27,7 @@ env/
 *.csv
 *.xlsx
 *.html
+site/
 !.cache/resort_coordinates.json
 !src/web/templates/*.html
 
