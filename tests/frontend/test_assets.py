@@ -35,11 +35,18 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".hourly-charts" in hourly_css_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "resolved_latitude" in hourly_js_text
-    assert "history.replaceState" in js_text
+    assert "history.replaceState" not in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
     assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert "const syncUrlFromFilterState = () => {" in js_text
+    assert "window.history.replaceState" not in js_text
+    assert "const buildFilterQueryParams = () => {" not in js_text
+    assert 'const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";' in js_text
+    assert "const loadStoredFilterState = () => {" in js_text
+    assert "const persistFilterState = () => {" in js_text
+    assert "localStorage.setItem(FILTER_STORAGE_KEY" in js_text
     assert "const autoSizeSplitTables = () => {" in js_text
     assert "wrapSelector: \".snowfall-right-wrap#snowfall-right-wrap\"" in js_text
     assert "const _autoSizeMobileQueryColumn = ({" in js_text

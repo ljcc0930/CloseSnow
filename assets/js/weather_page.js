@@ -31,6 +31,7 @@ const filterSearchAllInput = document.getElementById("filter-search-all");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
+const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
@@ -497,6 +498,42 @@ const normalizeSortBy = (value) => {
   return text === "name" ? "name" : "state";
 };
 
+const loadStoredFilterState = () => {
+  try {
+    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return {
+      passTypes: parsePassTypeValues(Array.isArray(parsed.passTypes) ? parsed.passTypes : []),
+      region: _normalizeSearch(parsed.region || ""),
+      country: String(parsed.country || "").trim().toUpperCase(),
+      sortBy: normalizeSortBy(parsed.sortBy || ""),
+      includeDefault: parsed.includeDefault !== false,
+      searchAll: parsed.searchAll !== false,
+      search: String(parsed.search || ""),
+    };
+  } catch (error) {
+    return null;
+  }
+};
+
+const persistFilterState = () => {
+  try {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+      passTypes: Array.from(appState.filterState.passTypes).sort(),
+      region: appState.filterState.region,
+      country: appState.filterState.country,
+      sortBy: appState.filterState.sortBy,
+      includeDefault: appState.filterState.includeDefault,
+      searchAll: appState.filterState.searchAll,
+      search: appState.filterState.search,
+    }));
+  } catch (error) {
+    // Ignore storage failures.
+  }
+};
+
 const applyControlsFromQueryOrMeta = () => {
   const params = new URLSearchParams(window.location.search);
   const urlPassTypes = parsePassTypeValues(params.getAll("pass_type"));
@@ -522,16 +559,17 @@ const applyControlsFromQueryOrMeta = () => {
   const hasMetaIncludeDefault = Object.prototype.hasOwnProperty.call(filterMetaApplied, "include_default");
   const metaIncludeDefault = Boolean(filterMetaApplied.include_default);
   const metaIncludeAll = Boolean(filterMetaApplied.include_all);
+  const stored = loadStoredFilterState();
 
-  const passTypes = urlPassTypes.length > 0 ? urlPassTypes : metaPassTypes;
-  const region = urlRegion || metaRegion;
-  const country = urlCountry || metaCountry;
-  const sortBy = hasUrlSortBy ? urlSortBy : metaSortBy;
-  const search = urlSearch !== null ? urlSearch : metaSearch;
-  const searchAll = hasUrlSearchAll ? urlSearchAll : (hasMetaSearchAll ? metaSearchAll : true);
+  const passTypes = urlPassTypes.length > 0 ? urlPassTypes : (stored ? stored.passTypes : metaPassTypes);
+  const region = urlRegion || (stored ? stored.region : metaRegion);
+  const country = urlCountry || (stored ? stored.country : metaCountry);
+  const sortBy = hasUrlSortBy ? urlSortBy : (stored ? stored.sortBy : metaSortBy);
+  const search = urlSearch !== null ? urlSearch : (stored ? stored.search : metaSearch);
+  const searchAll = hasUrlSearchAll ? urlSearchAll : (stored ? stored.searchAll : (hasMetaSearchAll ? metaSearchAll : true));
   const includeDefault = hasUrlIncludeDefault
     ? urlIncludeDefault
-    : (hasUrlIncludeAll ? !urlIncludeAll : (hasMetaIncludeDefault ? metaIncludeDefault : !metaIncludeAll));
+    : (hasUrlIncludeAll ? !urlIncludeAll : (stored ? stored.includeDefault : (hasMetaIncludeDefault ? metaIncludeDefault : !metaIncludeAll)));
 
   appState.filterState.passTypes = new Set(passTypes);
   appState.filterState.region = region;
@@ -562,30 +600,11 @@ const applyFilterStateFromControls = () => {
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
   appState.filterState.search = resortSearchInput ? String(resortSearchInput.value || "") : "";
-};
-
-const buildFilterQueryParams = () => {
-  const params = new URLSearchParams();
-  Array.from(appState.filterState.passTypes).sort().forEach((passType) => params.append("pass_type", passType));
-  if (appState.filterState.region) params.set("region", appState.filterState.region);
-  if (appState.filterState.country) params.set("country", appState.filterState.country);
-  if (appState.filterState.sortBy !== "state") params.set("sort_by", appState.filterState.sortBy);
-  params.set("include_default", appState.filterState.includeDefault ? "1" : "0");
-  params.set("search_all", appState.filterState.searchAll ? "1" : "0");
-  const keyword = appState.filterState.search.trim();
-  if (keyword) params.set("search", keyword);
-  return params;
+  persistFilterState();
 };
 
 const syncUrlFromFilterState = () => {
-  const nextParams = buildFilterQueryParams();
-  const currentUrl = new URL(window.location.href);
-  const currentQuery = currentUrl.search.replace(/^\?/, "");
-  const nextQuery = nextParams.toString();
-  if (currentQuery === nextQuery) return false;
-  currentUrl.search = nextQuery;
-  window.history.replaceState({}, "", currentUrl.toString());
-  return true;
+  return false;
 };
 
 const _rowSearchText = (report) => {
