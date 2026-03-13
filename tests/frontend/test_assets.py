@@ -44,6 +44,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const buildServerQueryParams = () => {" in js_text
     assert "const reloadDynamicPayloadForFilters = async () => {" in js_text
     assert "const loadPayload = async (url = _resolvedDataUrl()) => {" in js_text
+    assert "const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;" in js_text
+    assert "if (searchAllActive) return true;" in js_text
     assert 'const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";' in js_text
     assert "const loadFavoriteResortIds = () => {" in js_text
     assert "const toggleFavoriteResortId = (resortId) => {" in js_text
