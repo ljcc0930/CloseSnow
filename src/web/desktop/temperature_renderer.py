@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 from src.web.day_label_html import render_day_label_html
-from src.web.resort_cell_renderer import filter_attrs, query_cell_html
+from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
 from src.web.weather_table_styles import render_measure_cell, temp_color, to_float
 
 
@@ -34,7 +34,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
             return "today"
         return f"day {day}"
 
-    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = (
         "<tr>"
         + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days)
@@ -46,7 +46,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
     right_rows: List[str] = []
     for row in data:
         attrs = filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
+        left_rows.append(f"<tr{attrs}>{resort_cells_html(row)}</tr>")
         cells: List[str] = []
         for day in days:
             min_h = min_by_day.get(day)
@@ -63,7 +63,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
       <div class="temperature-split-wrap">
         <div class="temperature-left-wrap" id="temperature-left-wrap">
           <table class="temperature-left-table" id="temperature-left-table">
-            <colgroup><col class="col-query"></colgroup>
+            <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
             <thead>{left_head}</thead>
             <tbody>{"".join(left_rows)}</tbody>
           </table>

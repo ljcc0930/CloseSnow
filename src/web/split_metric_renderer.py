@@ -5,7 +5,7 @@ import html
 from typing import Callable, Dict, List, Optional
 
 from src.web.day_label_html import render_day_label_html
-from src.web.resort_cell_renderer import filter_attrs, query_cell_html
+from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
 from src.web.weather_table_styles import render_measure_cell, to_float
 
 ColorFn = Callable[[Optional[float]], str]
@@ -72,7 +72,7 @@ def render_desktop_split_metric_layout(
 
         for header in ["query"] + weekly_headers:
             if header == "query":
-                left_cells.append(query_cell_html(row))
+                left_cells.append(resort_cells_html(row))
                 continue
             val = row.get(header, "")
             style = _style_for_value(header, val, weekly_suffix, color_fn)
@@ -92,6 +92,7 @@ def render_desktop_split_metric_layout(
     sample_row = data[0] if data else None
     left_group = (
         "<tr>"
+        "<th rowspan='2' class='favorite-col favorite-head'></th>"
         "<th rowspan='2' class='query-col'>Resort</th>"
         f"<th colspan='{len(weekly_headers)}'>weekly</th>"
         "</tr>"
@@ -116,6 +117,7 @@ def render_desktop_split_metric_layout(
         <div class="{table_prefix}-left-wrap" id="{table_prefix}-left-wrap">
           <table class="{table_prefix}-left-table">
             <colgroup>
+              <col class='col-favorite'>
               <col class='col-query'>
               {"".join("<col class='col-week'>" for _ in weekly_headers)}
             </colgroup>
@@ -151,7 +153,7 @@ def render_mobile_split_metric_layout(
     right_rows: List[str] = []
     for row in data:
         attrs = filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
+        left_rows.append(f"<tr{attrs}>{resort_cells_html(row)}</tr>")
         right_cells: List[str] = []
 
         for header in weekly_headers:
@@ -165,7 +167,7 @@ def render_mobile_split_metric_layout(
 
         right_rows.append("<tr" + attrs + ">" + "".join(right_cells) + "</tr>")
 
-    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     sample_row = data[0] if data else None
     right_group = (
         f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
@@ -189,6 +191,7 @@ def render_mobile_split_metric_layout(
         <div class="{table_prefix}-left-wrap" id="{table_prefix}-left-wrap-mobile">
           <table class="{table_prefix}-left-table">
             <colgroup>
+              <col class='col-favorite'>
               <col class='col-query'>
             </colgroup>
             <thead>{left_head}</thead>

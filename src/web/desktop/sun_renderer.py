@@ -5,7 +5,7 @@ from typing import Dict, List
 import html
 
 from src.web.day_label_html import render_day_label_html
-from src.web.resort_cell_renderer import filter_attrs, query_cell_html
+from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
 
 
 def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
@@ -34,7 +34,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
             return "today"
         return f"day {day}"
 
-    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = "<tr>" + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days) + "</tr>"
     right_detail = "<tr>" + "".join("<th>sunrise</th><th>sunset</th>" for _ in days) + "</tr>"
 
@@ -42,7 +42,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
     right_rows: List[str] = []
     for row in data:
         attrs = filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
+        left_rows.append(f"<tr{attrs}>{resort_cells_html(row)}</tr>")
         cells: List[str] = []
         for day in days:
             sunrise_h = sunrise_by_day.get(day)
@@ -57,7 +57,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
       <div class="sun-split-wrap">
         <div class="sun-left-wrap" id="sun-left-wrap">
           <table class="sun-left-table" id="sun-left-table">
-            <colgroup><col class="col-query"></colgroup>
+            <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
             <thead>{left_head}</thead>
             <tbody>{"".join(left_rows)}</tbody>
           </table>

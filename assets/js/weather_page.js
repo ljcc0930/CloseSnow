@@ -228,9 +228,8 @@ const _favoriteButtonHtml = (report) => {
   const resortId = String(report.resort_id || "").trim();
   if (!resortId) return "";
   const active = _isFavoriteResortId(resortId);
-  const heart = active ? "♥" : "♡";
   const label = active ? "Remove resort from favorites" : "Add resort to favorites";
-  return `<button type='button' class='favorite-btn' data-resort-id='${_escapeHtml(resortId)}' data-favorite-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'><span aria-hidden='true'>${heart}</span></button>`;
+  return `<button type='button' class='favorite-btn' data-resort-id='${_escapeHtml(resortId)}' data-favorite-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
 };
 
 const _resortCellHtml = (report) => {
@@ -239,7 +238,7 @@ const _resortCellHtml = (report) => {
   const linkHtml = resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
-  return `<td class='query-col'><div class='resort-cell'>${_favoriteButtonHtml(report)}<div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
+  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
 };
 
 const _displayDays = () => {
@@ -305,8 +304,8 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       <div class="${options.prefix}-split-wrap desktop-only">
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap">
           <table class="${options.prefix}-left-table">
-            <colgroup><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
-            <thead><tr><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
+            <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
             <tbody>${desktopLeftRows}</tbody>
           </table>
         </div>
@@ -321,8 +320,8 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       <div class="${options.prefix}-split-wrap mobile-only">
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap-mobile">
           <table class="${options.prefix}-left-table">
-            <colgroup><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${mobileLeftRows}</tbody>
           </table>
         </div>
@@ -365,8 +364,8 @@ const _renderTemperatureSection = (reports) => {
       <div class="temperature-split-wrap">
         <div class="temperature-left-wrap" id="temperature-left-wrap">
           <table class="temperature-left-table" id="temperature-left-table">
-            <colgroup><col class="col-query"></colgroup>
-            <thead><tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -401,8 +400,8 @@ const _renderWeatherSection = (reports) => {
       <div class='weather-split-wrap'>
         <div class='weather-left-wrap' id='weather-left-wrap'>
           <table class='weather-left-table' id='weather-left-table'>
-            <colgroup><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -444,8 +443,8 @@ const _renderSunSection = (reports) => {
       <div class="sun-split-wrap">
         <div class="sun-left-wrap" id="sun-left-wrap">
           <table class="sun-left-table" id="sun-left-table">
-            <colgroup><col class="col-query"></colgroup>
-            <thead><tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -712,10 +711,11 @@ const _isFavoriteReport = (report) => _isFavoriteResortId(report && report.resor
 const _filteredReports = () => {
   const keyword = _normalizeSearch(appState.filterState.search);
   const reports = _payloadReports();
+  const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
   const filtered = reports.filter((report) => {
-    if (appState.filterState.favoritesOnly && !_isFavoriteReport(report)) return false;
     if (keyword && !_rowSearchText(report).includes(keyword)) return false;
-    if (keyword && appState.filterState.searchAll) return true;
+    if (searchAllActive) return true;
+    if (appState.filterState.favoritesOnly && !_isFavoriteReport(report)) return false;
     if (appState.filterState.includeDefault && !_isDefaultResort(report)) return false;
     if (appState.filterState.passTypes.size > 0) {
       const reportPassTypes = new Set((Array.isArray(report.pass_types) ? report.pass_types : []).map(_normalizeSearch));
@@ -755,8 +755,8 @@ const syncFilterSummary = (visibleReports, totalReports) => {
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
   const parts = [];
-  if (appState.filterState.favoritesOnly) parts.push("favorites only");
   if (!searchAllActive) {
+    if (appState.filterState.favoritesOnly) parts.push("favorites only");
     if (appState.filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(appState.filterState.passTypes).join(", ")}`);
     if (appState.filterState.region) parts.push(`region: ${appState.filterState.region}`);
     if (appState.filterState.country) parts.push(`country: ${appState.filterState.country}`);
@@ -793,7 +793,8 @@ const _autoSizeDesktopLeftColumns = ({
   if (!sampleCell) return;
   const font = window.getComputedStyle(sampleCell).font;
 
-  const queryValues = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const queryIndex = headerCells.length >= 2 ? 1 : 0;
+  const queryValues = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
   const queryHeader = table.querySelector("thead .query-col")?.textContent?.trim() || "query";
   const queryMax = Math.max(
     measureTextWidth(queryHeader, font),
@@ -803,7 +804,7 @@ const _autoSizeDesktopLeftColumns = ({
   const weekHeaders = headerCells.map((cell) => cell.textContent?.trim() || "");
   const weekValues = rows.flatMap((row) =>
     Array.from(row.children)
-      .slice(1)
+      .slice(queryIndex + 1)
       .map((cell) => cell.textContent?.trim() || ""),
   );
   const weekMax = Math.max(
@@ -824,7 +825,8 @@ const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {
   const sampleCell = table.querySelector("tbody td") || header;
   if (!sampleCell || !header) return;
   const font = window.getComputedStyle(sampleCell).font;
-  const values = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const queryIndex = header && header.cellIndex >= 0 ? header.cellIndex : 0;
+  const values = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
   const headerText = header.textContent?.trim() || "query";
   const queryMax = Math.max(
     measureTextWidth(headerText, font),
@@ -842,7 +844,8 @@ const _autoSizeMobileQueryColumn = ({ tableSelector, wrapSelector, minWidth, max
   const sampleCell = table.querySelector("tbody td") || header;
   if (!sampleCell || !header) return;
   const font = window.getComputedStyle(sampleCell).font;
-  const values = rows.map((row) => row.children[0]?.textContent?.trim() || "");
+  const queryIndex = header && header.cellIndex >= 0 ? header.cellIndex : 0;
+  const values = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
   const headerText = header.textContent?.trim() || "Resort";
   const width = Math.max(
     minWidth,
@@ -1253,7 +1256,9 @@ const renderReportDate = () => {
 const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   const visibleReports = _filteredReports();
-  if (appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0) {
+  const keyword = _normalizeSearch(appState.filterState.search);
+  const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
+  if (!searchAllActive && appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0) {
     pageContentRoot.innerHTML = "<div class='page-load-error'>No favorite resorts yet. Tap the heart icon to save some.</div>";
     syncFilterSummary(0, _payloadReports().length);
     renderReportDate();

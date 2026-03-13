@@ -12,7 +12,7 @@ from src.web.desktop.precipitation_renderer import (
 )
 from src.web.desktop.sun_renderer import render_sunrise_sunset_desktop_layout
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
-from src.web.resort_cell_renderer import filter_attrs, query_cell_html
+from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
 from src.web.weather_code_emoji import emoji_for_weather_code
 
 try:
@@ -180,7 +180,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
     right_rows: List[str] = []
     for row in data:
         attrs = filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
+        left_rows.append(f"<tr{attrs}>{resort_cells_html(row)}</tr>")
         cells: List[str] = []
         for header in day_headers:
             code = row.get(header, "").strip()
@@ -189,7 +189,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
             cells.append(f"<td class='weather-emoji-cell' title='{html.escape(title)}'>{emoji}</td>")
         right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
-    left_head = "<tr><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = f"<tr><th colspan='{len(day_headers)}'>daily</th></tr>"
     right_detail = f"<tr>{''.join(day_head_cells)}</tr>"
 
@@ -199,7 +199,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         "<div class='weather-split-wrap'>"
         "<div class='weather-left-wrap' id='weather-left-wrap'>"
         "<table class='weather-left-table' id='weather-left-table'>"
-        "<colgroup><col class='col-query'></colgroup>"
+        "<colgroup><col class='col-favorite'></col><col class='col-query'></colgroup>"
         f"<thead>{left_head}</thead>"
         f"<tbody>{''.join(left_rows)}</tbody>"
         "</table>"

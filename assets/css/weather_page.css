@@ -343,42 +343,93 @@
       text-decoration: underline;
     }
     .resort-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: block;
       min-width: 0;
     }
     .resort-link-wrap {
       min-width: 0;
-      flex: 1 1 auto;
+    }
+    .resort-link-wrap .resort-link,
+    .resort-link-wrap > span,
+    .resort-link-wrap > a {
+      display: block;
     }
     .favorite-btn {
-      flex: 0 0 auto;
-      width: 24px;
-      height: 24px;
-      border: 1px solid #f59e0b;
-      border-radius: 999px;
-      background: #fff7ed;
-      color: #b45309;
+      position: relative;
+      width: 14px;
+      height: 14px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #94a3b8;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
       line-height: 1;
       cursor: pointer;
       padding: 0;
+      transition:
+        transform 180ms ease,
+        color 180ms ease;
     }
-    .favorite-btn[data-favorite-active="1"] {
-      background: #fef2f2;
-      color: #dc2626;
-      border-color: #fca5a5;
+    .favorite-btn-icon {
+      position: absolute;
+      inset: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      margin: auto;
+      line-height: 1;
+      transition: transform 180ms ease, opacity 180ms ease, color 180ms ease;
+    }
+    .favorite-btn-outline {
+      opacity: 1;
+      transform: scale(1);
+      color: #64748b;
+    }
+    .favorite-btn-filled {
+      opacity: 0;
+      transform: scale(0.7);
+      color: #fb7185;
+    }
+    .favorite-btn[data-favorite-active="1"] .favorite-btn-outline {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+    .favorite-btn[data-favorite-active="1"] .favorite-btn-filled {
+      opacity: 1;
+      transform: scale(1);
     }
     .favorite-btn:hover {
+      transform: scale(1.08);
+    }
+    .favorite-btn:hover .favorite-btn-outline {
+      color: #fb7185;
       transform: scale(1.05);
+    }
+    .favorite-btn:hover .favorite-btn-filled {
+      transform: scale(0.82);
     }
     .favorite-btn:focus-visible {
       outline: 2px solid #fb7185;
       outline-offset: 2px;
+    }
+    .favorite-col,
+    .favorite-head {
+      width: 22px;
+      min-width: 22px;
+      text-align: center;
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 4px;
+      padding-right: 2px;
+      line-height: 1;
+    }
+    .favorite-col {
+      background: #fff;
+      vertical-align: middle;
     }
     .desktop-only {
       display: block;
@@ -411,6 +462,9 @@
       table-layout: fixed;
       width: auto;
       min-width: 0;
+    }
+    .weather-left-table col.col-favorite {
+      width: 22px;
     }
     .weather-left-table col.col-query {
       width: var(--weather-query-w);
@@ -468,6 +522,9 @@
       overflow: hidden;
       --query-col-w: 220px;
       --week-col-w: 110px;
+    }
+    .snowfall-left-table col.col-favorite {
+      width: 22px;
     }
     .snowfall-left-table col.col-query {
       width: var(--query-col-w);
@@ -552,6 +609,9 @@
       width: auto;
       min-width: 0;
     }
+    .rain-left-table col.col-favorite {
+      width: 22px;
+    }
     .rain-left-table col.col-query {
       width: var(--rain-query-w);
     }
@@ -614,6 +674,9 @@
       width: auto;
       min-width: 0;
     }
+    .temperature-left-table col.col-favorite {
+      width: 22px;
+    }
     .temperature-left-table col.col-query {
       width: var(--temp-query-w);
     }
@@ -671,6 +734,9 @@
       table-layout: fixed;
       width: auto;
       min-width: 0;
+    }
+    .sun-left-table col.col-favorite {
+      width: 22px;
     }
     .sun-left-table col.col-query {
       width: var(--sun-query-w);
