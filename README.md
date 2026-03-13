@@ -54,6 +54,7 @@ Notes:
 
 - This command uses default-enabled resorts from `resorts.yml`
 - Add `--include-all-resorts` to include non-default resorts
+- Per-resort static hourly pages are generated with sibling `hourly.json` files, so `site/resort/<resort_id>/` works on a plain static file server once `site/assets/` has been copied
 
 ### 2) Split static pipeline
 
@@ -64,6 +65,11 @@ mkdir -p site/assets
 cp -R assets/css site/assets/
 cp -R assets/js site/assets/
 ```
+
+Notes:
+
+- `render` generates per-resort hourly HTML routes and sibling `hourly.json` files by default
+- If you serve `site/` over localhost, resort pages under `site/resort/<resort_id>/` will load from local `hourly.json` instead of requiring `/api/resort-hourly`
 
 ### 3) Coupled dynamic server
 
@@ -129,7 +135,7 @@ Notes:
 
 - Validates payload contract before rendering
 - Generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`)
-- Does not embed `hourly.json` by default
+- Also writes sibling `resort/<resort_id>/hourly.json` files and points the static hourly page at `./hourly.json` by default
 
 ### `static`
 
