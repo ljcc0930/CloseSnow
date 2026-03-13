@@ -94,6 +94,17 @@ const _resolveBootstrapUrl = (rawUrl) => {
   return new URL(text, `${window.location.origin}${normalizedPath}`).toString();
 };
 
+const _resolvedDataUrl = () => _resolveBootstrapUrl(pageBootstrap.dataUrl);
+
+const _isDynamicApiDataUrl = () => {
+  try {
+    const resolved = new URL(_resolvedDataUrl());
+    return resolved.pathname.endsWith("/api/data");
+  } catch (error) {
+    return false;
+  }
+};
+
 const _asFiniteNumber = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const num = Number(value);
@@ -670,6 +681,23 @@ const applyFilterStateFromControls = () => {
 
 const syncUrlFromFilterState = () => {
   return false;
+};
+
+const buildServerQueryParams = () => {
+  const params = new URLSearchParams();
+  Array.from(appState.filterState.passTypes).sort().forEach((passType) => {
+    if (passType) params.append("pass_type", passType);
+  });
+  if (appState.filterState.region) params.set("region", appState.filterState.region);
+  if (appState.filterState.country) params.set("country", appState.filterState.country);
+  if (appState.filterState.search) params.set("search", appState.filterState.search);
+  params.set("search_all", appState.filterState.searchAll ? "1" : "0");
+  if (appState.filterState.includeDefault) {
+    params.set("include_default", "1");
+  } else {
+    params.set("include_all", "1");
+  }
+  return params;
 };
 
 const _rowSearchText = (report) => {
@@ -1293,13 +1321,23 @@ const openFilterModal = () => {
   if (filterModal) filterModal.hidden = false;
 };
 
-const loadPayload = async () => {
-  const response = await fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl));
+const loadPayload = async (url = _resolvedDataUrl()) => {
+  const response = await fetch(url);
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload && payload.error ? payload.error : `HTTP ${response.status}`);
   }
   return payload;
+};
+
+const reloadDynamicPayloadForFilters = async () => {
+  const endpoint = new URL(_resolvedDataUrl());
+  endpoint.search = buildServerQueryParams().toString();
+  const payload = await loadPayload(endpoint.toString());
+  appState.payload = payload;
+  appState.reports = _payloadReports();
+  appState.availableFilters = _availableFilters();
+  updateFilterLabels();
 };
 
 const resetFilterControls = () => {
@@ -1313,9 +1351,19 @@ const resetFilterControls = () => {
   if (resortSearchInput) resortSearchInput.value = "";
 };
 
-const applyFiltersImmediately = () => {
+const applyFiltersImmediately = async () => {
   applyFilterStateFromControls();
   syncUrlFromFilterState();
+  if (_isDynamicApiDataUrl()) {
+    try {
+      await reloadDynamicPayloadForFilters();
+    } catch (error) {
+      if (pageContentRoot) {
+        pageContentRoot.innerHTML = `<div class="page-load-error">${_escapeHtml(error instanceof Error ? error.message : String(error))}</div>`;
+      }
+      return;
+    }
+  }
   renderPage();
 };
 

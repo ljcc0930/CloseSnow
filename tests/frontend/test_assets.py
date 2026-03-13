@@ -39,14 +39,18 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.location.assign(currentUrl.toString())" not in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
-    assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert "const _resolvedDataUrl = () => _resolveBootstrapUrl(pageBootstrap.dataUrl);" in js_text
+    assert "const _isDynamicApiDataUrl = () => {" in js_text
+    assert "const buildServerQueryParams = () => {" in js_text
+    assert "const reloadDynamicPayloadForFilters = async () => {" in js_text
+    assert "const loadPayload = async (url = _resolvedDataUrl()) => {" in js_text
     assert 'const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";' in js_text
     assert "const loadFavoriteResortIds = () => {" in js_text
     assert "const toggleFavoriteResortId = (resortId) => {" in js_text
     assert "const setFavoritesOnlyControls = (checked) => {" in js_text
     assert 'const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");' in js_text
     assert 'const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");' in js_text
-    assert "const applyFiltersImmediately = () => {" in js_text
+    assert "const applyFiltersImmediately = async () => {" in js_text
     assert 'filterPassTypeInputs.forEach((input) => {' in js_text
     assert 'input.addEventListener("change", applyFiltersImmediately);' in js_text
     assert 'filterRegionSelect.addEventListener("change", applyFiltersImmediately);' in js_text
@@ -54,7 +58,6 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'document.getElementById("filter-apply-btn")' not in js_text
     assert "const syncUrlFromFilterState = () => {" in js_text
     assert "window.history.replaceState" not in js_text
-    assert "const buildFilterQueryParams = () => {" not in js_text
     assert 'const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";' in js_text
     assert "const loadStoredFilterState = () => {" in js_text
     assert "const persistFilterState = () => {" in js_text
