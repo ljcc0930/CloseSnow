@@ -548,6 +548,12 @@ const toggleFavoriteResortId = (resortId) => {
   persistFavoriteResortIds();
 };
 
+const setFavoritesOnlyControls = (checked) => {
+  const value = Boolean(checked);
+  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = value;
+  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = value;
+};
+
 const loadStoredFilterState = () => {
   try {
     const raw = localStorage.getItem(FILTER_STORAGE_KEY);
@@ -641,8 +647,7 @@ const applyControlsFromQueryOrMeta = () => {
   if (filterSortSelect) filterSortSelect.value = sortBy;
   if (filterIncludeAllInput) filterIncludeAllInput.checked = includeDefault;
   if (filterSearchAllInput) filterSearchAllInput.checked = searchAll;
-  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = favoritesOnly;
-  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = favoritesOnly;
+  setFavoritesOnlyControls(favoritesOnly);
   if (resortSearchInput) resortSearchInput.value = appState.filterState.search;
 };
 
@@ -656,9 +661,10 @@ const applyFilterStateFromControls = () => {
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
   appState.filterState.search = resortSearchInput ? String(resortSearchInput.value || "") : "";
-  appState.filterState.favoritesOnly = Boolean((favoritesOnlyToggle && favoritesOnlyToggle.checked) || (filterFavoritesOnlyInput && filterFavoritesOnlyInput.checked));
-  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = appState.filterState.favoritesOnly;
-  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = appState.filterState.favoritesOnly;
+  appState.filterState.favoritesOnly = favoritesOnlyToggle
+    ? Boolean(favoritesOnlyToggle.checked)
+    : Boolean(filterFavoritesOnlyInput && filterFavoritesOnlyInput.checked);
+  setFavoritesOnlyControls(appState.filterState.favoritesOnly);
   persistFilterState();
 };
 
@@ -1303,8 +1309,7 @@ const resetFilterControls = () => {
   if (filterSortSelect) filterSortSelect.value = "state";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
   if (filterSearchAllInput) filterSearchAllInput.checked = true;
-  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = false;
-  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = false;
+  setFavoritesOnlyControls(false);
   if (resortSearchInput) resortSearchInput.value = "";
 };
 
@@ -1342,8 +1347,18 @@ const bindControls = () => {
   if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
   if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);
-  if (favoritesOnlyToggle) favoritesOnlyToggle.addEventListener("change", applyFiltersImmediately);
-  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.addEventListener("change", applyFiltersImmediately);
+  if (favoritesOnlyToggle) {
+    favoritesOnlyToggle.addEventListener("change", () => {
+      setFavoritesOnlyControls(favoritesOnlyToggle.checked);
+      applyFiltersImmediately();
+    });
+  }
+  if (filterFavoritesOnlyInput) {
+    filterFavoritesOnlyInput.addEventListener("change", () => {
+      setFavoritesOnlyControls(filterFavoritesOnlyInput.checked);
+      applyFiltersImmediately();
+    });
+  }
   if (filterModal) {
     filterModal.addEventListener("click", (event) => {
       if (event.target === filterModal) closeFilterModal();

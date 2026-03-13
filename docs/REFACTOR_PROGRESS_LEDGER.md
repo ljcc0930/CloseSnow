@@ -37,6 +37,36 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 15:02 (favorites-only toggle sync fix)
+
+### Scope
+- Fix main-page dynamic favorites-only toggle so it can be turned off reliably when both header and modal controls are present.
+
+### Changes
+- Files:
+  - `assets/js/weather_page.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Header and modal `Favorites only` checkboxes now stay synchronized.
+  - Favorites-only state now reads from one canonical synchronized value instead of `A || B`, so turning it off works correctly.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `curl -sS http://127.0.0.1:8010/assets/js/weather_page.js | rg -n "setFavoritesOnlyControls|favoritesOnlyToggle.checked|filterFavoritesOnlyInput.checked" -n -S`
+- Results:
+  - frontend tests: `16 passed`
+  - static render: succeeded (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`)
+  - dynamic served JS confirmed synchronized favorites-only helper and handlers are present
+
+### Risks / Notes
+- This fix depends on the dynamic server being restarted so the updated JS asset is served.
+
+### Next Slice
+- Add a browser-level interaction test for dual-control filter synchronization if UI automation is introduced later.
+
 ## 2026-03-13 14:49 (resort favorites / heart refactor slice)
 
 ### Scope
