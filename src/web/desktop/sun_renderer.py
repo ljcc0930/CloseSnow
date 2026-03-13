@@ -1,31 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import html
 from typing import Dict, List
-from urllib.parse import quote
+import html
 
 from src.web.day_label_html import render_day_label_html
-
-
-def _filter_attrs(row: Dict[str, str]) -> str:
-    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
-    region = html.escape(row.get("filter_region", ""), quote=True)
-    country = html.escape(row.get("filter_country", ""), quote=True)
-    state = html.escape(row.get("filter_state", ""), quote=True)
-    default_enabled = html.escape(row.get("ljcc_favorite", ""), quote=True)
-    return (
-        f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
-        f" data-state='{state}' data-default-enabled='{default_enabled}'"
-    )
-
-
-def _query_cell(row: Dict[str, str]) -> str:
-    query_text = html.escape(row.get("query", ""))
-    resort_id = row.get("resort_id", "").strip()
-    if resort_id:
-        query_text = f"<a class='resort-link' href='resort/{quote(resort_id)}'>{query_text}</a>"
-    return f"<td class='query-col'>{query_text}</td>"
+from src.web.resort_cell_renderer import filter_attrs, query_cell_html
 
 
 def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
@@ -61,8 +41,8 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        attrs = _filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{_query_cell(row)}</tr>")
+        attrs = filter_attrs(row)
+        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
         cells: List[str] = []
         for day in days:
             sunrise_h = sunrise_by_day.get(day)

@@ -37,6 +37,53 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 14:49 (resort favorites / heart refactor slice)
+
+### Scope
+- Add main-page resort favorites with browser-local persistence while separating site default-resort semantics from user favorites.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_RESORT_FAVORITES_REFACTOR.md`
+  - `src/backend/pipeline.py`
+  - `src/web/weather_report_transform.py`
+  - `src/web/resort_cell_renderer.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `src/web/weather_table_renderer.py`
+  - `src/web/templates/weather_page.html`
+  - `assets/js/weather_page.js`
+  - `assets/css/weather_page.css`
+  - `README.md`
+  - `tests/frontend/test_renderers.py`
+  - `tests/frontend/test_styles_and_transform.py`
+  - `tests/frontend/test_assets.py`
+- Behavior impact:
+  - Backend now exposes canonical `default_resort` alongside compatibility alias `ljcc_favorite`.
+  - Main page renders heart buttons for resorts with `resort_id` and stores favorites in `localStorage`.
+  - Main page now supports `Favorites only` and `Favorites First` without changing backend APIs.
+  - Default-resort filtering remains separate from user favorites.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_renderers.py tests/frontend/test_styles_and_transform.py tests/frontend/test_assets.py -q`
+  - `python3 -m pytest tests/backend/test_pipeline.py tests/frontend/test_static_site_pipeline.py -q`
+  - `python3 -m src.cli static --output-html index.html`
+  - `rg -n "Favorites only|Favorites First|favorite-btn|default-resort|closesnow_favorite_resorts_v1" index.html assets/js/weather_page.js src/web/templates/weather_page.html -S`
+- Results:
+  - frontend renderer/style/assets tests: `16 passed`
+  - backend pipeline + static site pipeline tests: `12 passed`
+  - static render: succeeded (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`)
+  - grep validation confirmed favorites controls, browser favorites storage key, heart button markup, and `data-default-resort` markers
+
+### Risks / Notes
+- Favorites are intentionally browser-local only in v1 and do not sync across devices.
+- Python renderer helpers now emit heart-button scaffold for consistency with browser rerender shape, though the main page still renders from client-side JS at runtime.
+
+### Next Slice
+- Optionally add a small integration test for favorite button markup/state in the generated main-page browser render path.
+
 ## 2026-03-05 17:54 (README sync to current code behavior)
 
 ### Scope

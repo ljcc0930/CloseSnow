@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import html
 from typing import Callable, Dict, List, Optional
-from urllib.parse import quote
 
 from src.web.day_label_html import render_day_label_html
+from src.web.resort_cell_renderer import filter_attrs, query_cell_html
 from src.web.weather_table_styles import render_measure_cell, to_float
 
 ColorFn = Callable[[Optional[float]], str]
@@ -53,27 +53,6 @@ def _style_for_value(header: str, value: str, suffix: str, color_fn: ColorFn) ->
     return ""
 
 
-def _filter_attrs(row: Dict[str, str]) -> str:
-    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
-    region = html.escape(row.get("filter_region", ""), quote=True)
-    country = html.escape(row.get("filter_country", ""), quote=True)
-    state = html.escape(row.get("filter_state", ""), quote=True)
-    default_enabled = html.escape(row.get("ljcc_favorite", ""), quote=True)
-    return (
-        f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
-        f" data-state='{state}' data-default-enabled='{default_enabled}'"
-    )
-
-
-def _query_cell_html(row: Dict[str, str]) -> str:
-    query_text = html.escape(row.get("query", ""))
-    resort_id = row.get("resort_id", "").strip()
-    if resort_id:
-        href = f"resort/{quote(resort_id)}"
-        query_text = f"<a class='resort-link' href='{href}'>{query_text}</a>"
-    return f"<td class='query-col'>{query_text}</td>"
-
-
 def render_desktop_split_metric_layout(
     data: List[Dict[str, str]],
     weekly_headers: List[str],
@@ -93,7 +72,7 @@ def render_desktop_split_metric_layout(
 
         for header in ["query"] + weekly_headers:
             if header == "query":
-                left_cells.append(_query_cell_html(row))
+                left_cells.append(query_cell_html(row))
                 continue
             val = row.get(header, "")
             style = _style_for_value(header, val, weekly_suffix, color_fn)
@@ -104,7 +83,7 @@ def render_desktop_split_metric_layout(
             style = _style_for_value(header, val, daily_suffix, color_fn)
             right_cells.append(render_measure_cell(val, kind=kind, style=style))
 
-        attrs = _filter_attrs(row)
+        attrs = filter_attrs(row)
         left_rows.append((attrs, left_cells))
         right_rows.append((attrs, right_cells))
 
@@ -171,8 +150,8 @@ def render_mobile_split_metric_layout(
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        attrs = _filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{_query_cell_html(row)}</tr>")
+        attrs = filter_attrs(row)
+        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
         right_cells: List[str] = []
 
         for header in weekly_headers:

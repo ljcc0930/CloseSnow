@@ -37,6 +37,7 @@ def _snow_row():
         "filter_country": "US",
         "filter_state": "UT",
         "resort_id": "snowbird-ut",
+        "default_resort": "1",
         "ljcc_favorite": "1",
     }
 
@@ -50,6 +51,7 @@ def _rain_row():
         "day_2_rain_mm": "0.5",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "default_resort": "1",
         "ljcc_favorite": "1",
     }
 
@@ -64,6 +66,7 @@ def _temp_row():
         "day_2_min_c": "-2",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "default_resort": "1",
         "ljcc_favorite": "1",
     }
 
@@ -77,6 +80,7 @@ def _weather_row():
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
         "label_day_3": "03-06 Fri",
+        "default_resort": "1",
         "ljcc_favorite": "1",
     }
 
@@ -91,6 +95,7 @@ def _sun_row():
         "day_2_sunset": "18:23",
         "label_day_1": "03-04 Wed",
         "label_day_2": "03-05 Thu",
+        "default_resort": "1",
         "ljcc_favorite": "1",
     }
 
@@ -213,8 +218,10 @@ def test_table_renderer_sections_and_empty_states():
     assert "❓" in weather
     assert "data-pass-types='ikon'" in snow
     assert "data-state='UT'" in snow
-    assert "data-default-enabled='1'" in snow
+    assert "data-default-resort='1'" in snow
     assert "href='resort/snowbird-ut'" in snow
+    assert "class='favorite-btn'" in snow
+    assert "data-resort-id='snowbird-ut'" in snow
     assert "cm" in snow and "in" in snow
     assert "mm" in rain and "in" in rain
     assert "°C" in temp and "°F" in temp
@@ -222,9 +229,10 @@ def test_table_renderer_sections_and_empty_states():
 
 def test_non_default_rows_emit_empty_default_marker():
     row = _snow_row()
+    row["default_resort"] = ""
     row["ljcc_favorite"] = ""
     snow = render_snowfall_table([row])
-    assert "data-default-enabled=''" in snow
+    assert "data-default-resort=''" in snow
 
 
 def test_build_html_contains_meta_sections():
@@ -248,6 +256,8 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
+    assert 'id="favorites-only-toggle"' in html
+    assert 'id="filter-favorites-only"' in html
     assert 'name="filter-pass-type" value="ikon"' in html
     assert 'name="filter-pass-type" value="epic"' in html
     assert 'name="filter-pass-type" value="indy"' not in html
@@ -258,6 +268,7 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-search-all" checked' in html
     assert "Default resorts" in html
     assert '<option value="state" selected>State (A-Z)</option>' in html
+    assert '<option value="favorites">Favorites First</option>' in html
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html

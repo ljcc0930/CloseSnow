@@ -27,10 +27,13 @@ const filterCountrySelect = document.getElementById("filter-country-select");
 const filterSortSelect = document.getElementById("filter-sort-select");
 const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterSearchAllInput = document.getElementById("filter-search-all");
+const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");
+const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
 const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";
+const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
@@ -40,6 +43,7 @@ const appState = {
   payload: null,
   reports: [],
   availableFilters: DEFAULT_AVAILABLE_FILTERS,
+  favoriteResortIds: new Set(),
   filterState: {
     passTypes: new Set(),
     region: "",
@@ -48,6 +52,7 @@ const appState = {
     includeDefault: true,
     searchAll: true,
     search: "",
+    favoritesOnly: false,
   },
   unitModes: {
     snow: "metric",
@@ -202,15 +207,28 @@ const _filterAttrs = (report) => {
   const region = String(report.region || "").trim().toLowerCase();
   const country = String(report.country_code || report.country || "").trim().toUpperCase();
   const state = String(report.admin1 || "").trim().toUpperCase();
-  const defaultEnabled = report.ljcc_favorite ? "1" : "";
-  return ` data-pass-types='${_escapeHtml(passTypes)}' data-region='${_escapeHtml(region)}' data-country='${_escapeHtml(country)}' data-state='${_escapeHtml(state)}' data-default-enabled='${_escapeHtml(defaultEnabled)}'`;
+  const defaultResort = report.default_resort || report.ljcc_favorite ? "1" : "";
+  return ` data-pass-types='${_escapeHtml(passTypes)}' data-region='${_escapeHtml(region)}' data-country='${_escapeHtml(country)}' data-state='${_escapeHtml(state)}' data-default-resort='${_escapeHtml(defaultResort)}'`;
 };
 
-const _resortLinkHtml = (report) => {
+const _isFavoriteResortId = (resortId) => appState.favoriteResortIds.has(String(resortId || "").trim());
+
+const _favoriteButtonHtml = (report) => {
+  const resortId = String(report.resort_id || "").trim();
+  if (!resortId) return "";
+  const active = _isFavoriteResortId(resortId);
+  const heart = active ? "♥" : "♡";
+  const label = active ? "Remove resort from favorites" : "Add resort to favorites";
+  return `<button type='button' class='favorite-btn' data-resort-id='${_escapeHtml(resortId)}' data-favorite-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'><span aria-hidden='true'>${heart}</span></button>`;
+};
+
+const _resortCellHtml = (report) => {
   const text = _escapeHtml(report.query || "");
   const resortId = String(report.resort_id || "").trim();
-  if (!resortId) return `<td class='query-col'>${text}</td>`;
-  return `<td class='query-col'><a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a></td>`;
+  const linkHtml = resortId
+    ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
+    : text;
+  return `<td class='query-col'><div class='resort-cell'>${_favoriteButtonHtml(report)}<div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
 };
 
 const _displayDays = () => {
@@ -241,7 +259,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       options.week1(report),
       options.week2(report),
     ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value)));
-    return `<tr${attrs}>${_resortLinkHtml(report)}${weeklyValues.join("")}</tr>`;
+    return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}</tr>`;
   }).join("");
   const desktopRightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
@@ -251,7 +269,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     }).join("");
     return `<tr${attrs}>${dailyValues}</tr>`;
   }).join("");
-  const mobileLeftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortLinkHtml(report)}</tr>`).join("");
+  const mobileLeftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const mobileRightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const weeklyValues = [
@@ -312,7 +330,7 @@ const _renderTemperatureSection = (reports) => {
   if (!reports.length) return "<section><h2>Temperature</h2><p>No data</p></section>";
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortLinkHtml(report)}</tr>`).join("");
+  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const rightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
@@ -356,7 +374,7 @@ const _renderWeatherSection = (reports) => {
   if (!reports.length) return "<section><h2>Weather</h2><p>No data</p></section>";
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortLinkHtml(report)}</tr>`).join("");
+  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const rightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
@@ -398,7 +416,7 @@ const _renderSunSection = (reports) => {
     if (text.includes("T")) return text.split("T", 2)[1].slice(0, 5);
     return text.slice(0, 5);
   };
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortLinkHtml(report)}</tr>`).join("");
+  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const rightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
@@ -494,7 +512,40 @@ const parsePassTypeValues = (values) => {
 
 const normalizeSortBy = (value) => {
   const text = _normalizeSearch(value);
-  return text === "name" ? "name" : "state";
+  if (text === "name") return "name";
+  if (text === "favorites") return "favorites";
+  return "state";
+};
+
+const loadFavoriteResortIds = () => {
+  try {
+    const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return Array.from(new Set(parsed.map((value) => String(value || "").trim()).filter(Boolean)));
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistFavoriteResortIds = () => {
+  try {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(appState.favoriteResortIds).sort()));
+  } catch (error) {
+    // Ignore storage failures.
+  }
+};
+
+const toggleFavoriteResortId = (resortId) => {
+  const id = String(resortId || "").trim();
+  if (!id) return;
+  if (appState.favoriteResortIds.has(id)) {
+    appState.favoriteResortIds.delete(id);
+  } else {
+    appState.favoriteResortIds.add(id);
+  }
+  persistFavoriteResortIds();
 };
 
 const loadStoredFilterState = () => {
@@ -511,6 +562,7 @@ const loadStoredFilterState = () => {
       includeDefault: parsed.includeDefault !== false,
       searchAll: parsed.searchAll !== false,
       search: String(parsed.search || ""),
+      favoritesOnly: Boolean(parsed.favoritesOnly),
     };
   } catch (error) {
     return null;
@@ -527,6 +579,7 @@ const persistFilterState = () => {
       includeDefault: appState.filterState.includeDefault,
       searchAll: appState.filterState.searchAll,
       search: appState.filterState.search,
+      favoritesOnly: appState.filterState.favoritesOnly,
     }));
   } catch (error) {
     // Ignore storage failures.
@@ -569,6 +622,7 @@ const applyControlsFromQueryOrMeta = () => {
   const includeDefault = hasUrlIncludeDefault
     ? urlIncludeDefault
     : (hasUrlIncludeAll ? !urlIncludeAll : (stored ? stored.includeDefault : (hasMetaIncludeDefault ? metaIncludeDefault : !metaIncludeAll)));
+  const favoritesOnly = stored ? stored.favoritesOnly : false;
 
   appState.filterState.passTypes = new Set(passTypes);
   appState.filterState.region = region;
@@ -577,6 +631,7 @@ const applyControlsFromQueryOrMeta = () => {
   appState.filterState.includeDefault = includeDefault;
   appState.filterState.searchAll = searchAll;
   appState.filterState.search = String(search || "");
+  appState.filterState.favoritesOnly = favoritesOnly;
 
   filterPassTypeInputs.forEach((input) => {
     input.checked = appState.filterState.passTypes.has(_normalizeSearch(input.value));
@@ -586,6 +641,8 @@ const applyControlsFromQueryOrMeta = () => {
   if (filterSortSelect) filterSortSelect.value = sortBy;
   if (filterIncludeAllInput) filterIncludeAllInput.checked = includeDefault;
   if (filterSearchAllInput) filterSearchAllInput.checked = searchAll;
+  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = favoritesOnly;
+  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = favoritesOnly;
   if (resortSearchInput) resortSearchInput.value = appState.filterState.search;
 };
 
@@ -599,6 +656,9 @@ const applyFilterStateFromControls = () => {
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
   appState.filterState.search = resortSearchInput ? String(resortSearchInput.value || "") : "";
+  appState.filterState.favoritesOnly = Boolean((favoritesOnlyToggle && favoritesOnlyToggle.checked) || (filterFavoritesOnlyInput && filterFavoritesOnlyInput.checked));
+  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = appState.filterState.favoritesOnly;
+  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = appState.filterState.favoritesOnly;
   persistFilterState();
 };
 
@@ -612,12 +672,14 @@ const _rowSearchText = (report) => {
   return _normalizeSearch(`${report.query || ""} ${state} ${passTypes}`);
 };
 
-const _isDefaultResort = (report) => Boolean(report.ljcc_favorite);
+const _isDefaultResort = (report) => Boolean(report.default_resort || report.ljcc_favorite);
+const _isFavoriteReport = (report) => _isFavoriteResortId(report && report.resort_id);
 
 const _filteredReports = () => {
   const keyword = _normalizeSearch(appState.filterState.search);
   const reports = _payloadReports();
   const filtered = reports.filter((report) => {
+    if (appState.filterState.favoritesOnly && !_isFavoriteReport(report)) return false;
     if (keyword && !_rowSearchText(report).includes(keyword)) return false;
     if (keyword && appState.filterState.searchAll) return true;
     if (appState.filterState.includeDefault && !_isDefaultResort(report)) return false;
@@ -641,6 +703,10 @@ const _filteredReports = () => {
   });
   const sortBy = appState.filterState.sortBy;
   filtered.sort((a, b) => {
+    if (sortBy === "favorites") {
+      const favoriteDelta = Number(_isFavoriteReport(b)) - Number(_isFavoriteReport(a));
+      if (favoriteDelta !== 0) return favoriteDelta;
+    }
     if (sortBy === "name") return String(a.query || "").localeCompare(String(b.query || ""));
     const stateCmp = String(a.admin1 || "").localeCompare(String(b.admin1 || ""));
     if (stateCmp !== 0) return stateCmp;
@@ -655,6 +721,7 @@ const syncFilterSummary = (visibleReports, totalReports) => {
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
   const parts = [];
+  if (appState.filterState.favoritesOnly) parts.push("favorites only");
   if (!searchAllActive) {
     if (appState.filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(appState.filterState.passTypes).join(", ")}`);
     if (appState.filterState.region) parts.push(`region: ${appState.filterState.region}`);
@@ -1152,6 +1219,13 @@ const renderReportDate = () => {
 const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   const visibleReports = _filteredReports();
+  if (appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0) {
+    pageContentRoot.innerHTML = "<div class='page-load-error'>No favorite resorts yet. Tap the heart icon to save some.</div>";
+    syncFilterSummary(0, _payloadReports().length);
+    renderReportDate();
+    document.body.classList.remove("units-pending");
+    return;
+  }
   pageContentRoot.innerHTML = _renderSections(visibleReports);
   applyLayout();
   observeLayoutContainers();
@@ -1229,6 +1303,8 @@ const resetFilterControls = () => {
   if (filterSortSelect) filterSortSelect.value = "state";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
   if (filterSearchAllInput) filterSearchAllInput.checked = true;
+  if (favoritesOnlyToggle) favoritesOnlyToggle.checked = false;
+  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = false;
   if (resortSearchInput) resortSearchInput.value = "";
 };
 
@@ -1266,6 +1342,8 @@ const bindControls = () => {
   if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
   if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);
+  if (favoritesOnlyToggle) favoritesOnlyToggle.addEventListener("change", applyFiltersImmediately);
+  if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.addEventListener("change", applyFiltersImmediately);
   if (filterModal) {
     filterModal.addEventListener("click", (event) => {
       if (event.target === filterModal) closeFilterModal();
@@ -1275,6 +1353,13 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const favoriteButton = event.target.closest(".favorite-btn[data-resort-id]");
+    if (favoriteButton) {
+      event.preventDefault();
+      toggleFavoriteResortId(favoriteButton.getAttribute("data-resort-id"));
+      renderPage();
+      return;
+    }
     const button = event.target.closest(".unit-btn[data-unit-mode]");
     if (!button) return;
     const group = button.closest(".unit-toggle[data-target-kind]");
@@ -1292,6 +1377,7 @@ const initialize = async () => {
   Object.keys(appState.unitModes).forEach((kind) => {
     appState.unitModes[kind] = getStoredUnitMode(kind);
   });
+  appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
     appState.payload = await loadPayload();
     appState.reports = _payloadReports();

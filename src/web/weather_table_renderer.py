@@ -4,7 +4,6 @@ from __future__ import annotations
 import html
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
-from urllib.parse import quote
 
 from src.web.day_label_html import render_day_label_html
 from src.web.desktop.precipitation_renderer import (
@@ -13,6 +12,7 @@ from src.web.desktop.precipitation_renderer import (
 )
 from src.web.desktop.sun_renderer import render_sunrise_sunset_desktop_layout
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
+from src.web.resort_cell_renderer import filter_attrs, query_cell_html
 from src.web.weather_code_emoji import emoji_for_weather_code
 
 try:
@@ -26,26 +26,6 @@ except ModuleNotFoundError:
     render_snowfall_mobile_layout = None
 
 LayoutRenderer = Callable[[List[Dict[str, str]], List[str], List[str]], str]
-
-
-def _filter_attrs(row: Dict[str, str]) -> str:
-    pass_types = html.escape(row.get("filter_pass_types", ""), quote=True)
-    region = html.escape(row.get("filter_region", ""), quote=True)
-    country = html.escape(row.get("filter_country", ""), quote=True)
-    state = html.escape(row.get("filter_state", ""), quote=True)
-    default_enabled = html.escape(row.get("ljcc_favorite", ""), quote=True)
-    return (
-        f" data-pass-types='{pass_types}' data-region='{region}' data-country='{country}'"
-        f" data-state='{state}' data-default-enabled='{default_enabled}'"
-    )
-
-
-def _query_cell_html(row: Dict[str, str]) -> str:
-    text = html.escape(row.get("query", ""))
-    resort_id = row.get("resort_id", "").strip()
-    if resort_id:
-        text = f"<a class='resort-link' href='resort/{quote(resort_id)}'>{text}</a>"
-    return f"<td class='query-col'>{text}</td>"
 
 
 @dataclass(frozen=True)
@@ -199,8 +179,8 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
     left_rows: List[str] = []
     right_rows: List[str] = []
     for row in data:
-        attrs = _filter_attrs(row)
-        left_rows.append(f"<tr{attrs}>{_query_cell_html(row)}</tr>")
+        attrs = filter_attrs(row)
+        left_rows.append(f"<tr{attrs}>{query_cell_html(row)}</tr>")
         cells: List[str] = []
         for header in day_headers:
             code = row.get(header, "").strip()

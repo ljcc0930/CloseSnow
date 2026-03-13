@@ -40,6 +40,11 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "const _resolveBootstrapUrl = (rawUrl) => {" in js_text
     assert "fetch(_resolveBootstrapUrl(pageBootstrap.dataUrl))" in js_text
+    assert 'const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";' in js_text
+    assert "const loadFavoriteResortIds = () => {" in js_text
+    assert "const toggleFavoriteResortId = (resortId) => {" in js_text
+    assert 'const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");' in js_text
+    assert 'const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");' in js_text
     assert "const applyFiltersImmediately = () => {" in js_text
     assert 'filterPassTypeInputs.forEach((input) => {' in js_text
     assert 'input.addEventListener("change", applyFiltersImmediately);' in js_text
@@ -53,6 +58,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const loadStoredFilterState = () => {" in js_text
     assert "const persistFilterState = () => {" in js_text
     assert "localStorage.setItem(FILTER_STORAGE_KEY" in js_text
+    assert "localStorage.setItem(FAVORITES_STORAGE_KEY" in js_text
     assert "const autoSizeSplitTables = () => {" in js_text
     assert "wrapSelector: \".snowfall-right-wrap#snowfall-right-wrap\"" in js_text
     assert "const _autoSizeMobileQueryColumn = ({" in js_text
@@ -70,5 +76,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "syncSplitTableHeights();" in js_text
     assert "body.units-pending main" not in css_text
     assert ".query-col .resort-link" in css_text
+    assert ".favorite-btn" in css_text
+    assert ".resort-cell" in css_text
     assert "text-overflow: ellipsis;" in css_text
     assert "white-space: nowrap;" in css_text

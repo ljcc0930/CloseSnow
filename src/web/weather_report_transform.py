@@ -24,14 +24,15 @@ def _filter_meta(report: Dict[str, Any]) -> Dict[str, str]:
     region = str(report.get("region", "")).strip().lower()
     state = str(report.get("admin1", "")).strip().upper()
     resort_id = str(report.get("resort_id", "")).strip()
-    ljcc_favorite = "1" if bool(report.get("ljcc_favorite")) else ""
+    default_resort = "1" if bool(report.get("default_resort", report.get("ljcc_favorite"))) else ""
     return {
         "filter_pass_types": pass_types,
         "filter_country": country,
         "filter_region": region,
         "filter_state": state,
         "resort_id": resort_id,
-        "ljcc_favorite": ljcc_favorite,
+        "default_resort": default_resort,
+        "ljcc_favorite": default_resort,
     }
 
 

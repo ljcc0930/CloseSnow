@@ -238,10 +238,12 @@ Notes:
 
 - Main page filters are client-side in `assets/js/weather_page.js`
 - Main page shell loads payload JSON from its bootstrap `dataUrl` and renders rows in-browser
-- Filter state is synced to URL with `history.replaceState` (no page reload)
+- Main page filter state is persisted in `localStorage` (no page reload)
+- Main page favorites are browser-local only via `closesnow_favorite_resorts_v1`
 - On frontend page route `/`, server-side filter query keys are ignored by design
 - `/api/data` still supports server-side filtering for API clients
 - `Default resorts only` checked means `include_default=1` (show only `default_enabled=true`)
+- `Favorites only` and `Favorites First` are frontend-only behaviors on the main page
 - Search keyword + `search_all=1` ignores pass/region/country/default scope filters
 
 This keeps static and dynamic page behavior aligned.
