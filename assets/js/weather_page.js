@@ -232,6 +232,14 @@ const _favoriteButtonHtml = (report) => {
   return `<button type='button' class='favorite-btn' data-resort-id='${_escapeHtml(resortId)}' data-favorite-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
 };
 
+const _favoriteAllButtonHtml = (reports) => {
+  const visibleIds = Array.from(new Set((reports || []).map((report) => String(report?.resort_id || "").trim()).filter(Boolean)));
+  if (!visibleIds.length) return "";
+  const allFavorited = visibleIds.every((resortId) => _isFavoriteResortId(resortId));
+  const label = allFavorited ? "Remove all visible resorts from favorites" : "Favorite all visible resorts";
+  return `<button type='button' class='favorite-btn favorite-all-btn' data-favorite-all='1' data-favorite-active='${allFavorited ? "1" : "0"}' aria-pressed='${allFavorited ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
+};
+
 const _resortCellHtml = (report) => {
   const text = _escapeHtml(report.query || "");
   const resortId = String(report.resort_id || "").trim();
@@ -305,7 +313,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap">
           <table class="${options.prefix}-left-table">
             <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
             <tbody>${desktopLeftRows}</tbody>
           </table>
         </div>
@@ -321,7 +329,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap-mobile">
           <table class="${options.prefix}-left-table">
             <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${mobileLeftRows}</tbody>
           </table>
         </div>
@@ -365,7 +373,7 @@ const _renderTemperatureSection = (reports) => {
         <div class="temperature-left-wrap" id="temperature-left-wrap">
           <table class="temperature-left-table" id="temperature-left-table">
             <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -401,7 +409,7 @@ const _renderWeatherSection = (reports) => {
         <div class='weather-left-wrap' id='weather-left-wrap'>
           <table class='weather-left-table' id='weather-left-table'>
             <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -444,7 +452,7 @@ const _renderSunSection = (reports) => {
         <div class="sun-left-wrap" id="sun-left-wrap">
           <table class="sun-left-table" id="sun-left-table">
             <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </div>
@@ -555,6 +563,20 @@ const toggleFavoriteResortId = (resortId) => {
   } else {
     appState.favoriteResortIds.add(id);
   }
+  persistFavoriteResortIds();
+};
+
+const toggleFavoriteVisibleReports = (reports) => {
+  const visibleIds = Array.from(new Set((reports || []).map((report) => String(report?.resort_id || "").trim()).filter(Boolean)));
+  if (!visibleIds.length) return;
+  const allFavorited = visibleIds.every((resortId) => appState.favoriteResortIds.has(resortId));
+  visibleIds.forEach((resortId) => {
+    if (allFavorited) {
+      appState.favoriteResortIds.delete(resortId);
+    } else {
+      appState.favoriteResortIds.add(resortId);
+    }
+  });
   persistFavoriteResortIds();
 };
 
@@ -1421,6 +1443,13 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
+    if (favoriteAllButton) {
+      event.preventDefault();
+      toggleFavoriteVisibleReports(_filteredReports());
+      renderPage();
+      return;
+    }
     const favoriteButton = event.target.closest(".favorite-btn[data-resort-id]");
     if (favoriteButton) {
       event.preventDefault();

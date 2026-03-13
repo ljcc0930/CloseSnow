@@ -49,6 +49,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";' in js_text
     assert "const loadFavoriteResortIds = () => {" in js_text
     assert "const toggleFavoriteResortId = (resortId) => {" in js_text
+    assert "const toggleFavoriteVisibleReports = (reports) => {" in js_text
     assert "const setFavoritesOnlyControls = (checked) => {" in js_text
     assert 'const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");' in js_text
     assert 'const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");' in js_text
@@ -67,6 +68,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "localStorage.setItem(FAVORITES_STORAGE_KEY" in js_text
     assert "setFavoritesOnlyControls(favoritesOnlyToggle.checked);" in js_text
     assert "setFavoritesOnlyControls(filterFavoritesOnlyInput.checked);" in js_text
+    assert 'const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all=\'1\']");' in js_text
     assert "const autoSizeSplitTables = () => {" in js_text
     assert "wrapSelector: \".snowfall-right-wrap#snowfall-right-wrap\"" in js_text
     assert "const _autoSizeMobileQueryColumn = ({" in js_text

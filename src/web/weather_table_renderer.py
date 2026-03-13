@@ -12,7 +12,7 @@ from src.web.desktop.precipitation_renderer import (
 )
 from src.web.desktop.sun_renderer import render_sunrise_sunset_desktop_layout
 from src.web.desktop.temperature_renderer import render_temperature_desktop_layout
-from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
+from src.web.resort_cell_renderer import favorite_all_head_html, filter_attrs, resort_cells_html
 from src.web.weather_code_emoji import emoji_for_weather_code
 
 try:
@@ -189,7 +189,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
             cells.append(f"<td class='weather-emoji-cell' title='{html.escape(title)}'>{emoji}</td>")
         right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
-    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = f"<tr><th colspan='{len(day_headers)}'>daily</th></tr>"
     right_detail = f"<tr>{''.join(day_head_cells)}</tr>"
 

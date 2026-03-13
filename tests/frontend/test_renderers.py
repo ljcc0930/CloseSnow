@@ -221,6 +221,7 @@ def test_table_renderer_sections_and_empty_states():
     assert "data-default-resort='1'" in snow
     assert "href='resort/snowbird-ut'" in snow
     assert "class='favorite-btn'" in snow
+    assert "favorite-all-btn" in snow
     assert "data-resort-id='snowbird-ut'" in snow
     assert "cm" in snow and "in" in snow
     assert "mm" in rain and "in" in rain

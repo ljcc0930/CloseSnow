@@ -57,3 +57,17 @@ def resort_cells_html(row: Dict[str, str]) -> str:
         "</td>"
     )
     return favorite_cell + query_cell
+
+
+def favorite_all_head_html() -> str:
+    return (
+        "<button type='button' class='favorite-btn favorite-all-btn' data-favorite-all='1'"
+        " data-favorite-active='0' aria-pressed='false' aria-label='Favorite all visible resorts'>"
+        "<svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>"
+        "<path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/>"
+        "</svg>"
+        "<svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'>"
+        "<path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/>"
+        "</svg>"
+        "</button>"
+    )

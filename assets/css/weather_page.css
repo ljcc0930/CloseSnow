@@ -431,6 +431,16 @@
       background: #fff;
       vertical-align: middle;
     }
+    .favorite-head {
+      background: #f3f4f6;
+      vertical-align: middle;
+    }
+    .favorite-all-btn {
+      opacity: 0.78;
+    }
+    .favorite-all-btn:hover {
+      opacity: 1;
+    }
     .desktop-only {
       display: block;
     }

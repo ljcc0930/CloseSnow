@@ -5,7 +5,7 @@ import html
 from typing import Callable, Dict, List, Optional
 
 from src.web.day_label_html import render_day_label_html
-from src.web.resort_cell_renderer import filter_attrs, resort_cells_html
+from src.web.resort_cell_renderer import favorite_all_head_html, filter_attrs, resort_cells_html
 from src.web.weather_table_styles import render_measure_cell, to_float
 
 ColorFn = Callable[[Optional[float]], str]
@@ -92,7 +92,7 @@ def render_desktop_split_metric_layout(
     sample_row = data[0] if data else None
     left_group = (
         "<tr>"
-        "<th rowspan='2' class='favorite-col favorite-head'></th>"
+        f"<th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th>"
         "<th rowspan='2' class='query-col'>Resort</th>"
         f"<th colspan='{len(weekly_headers)}'>weekly</th>"
         "</tr>"
@@ -167,7 +167,7 @@ def render_mobile_split_metric_layout(
 
         right_rows.append("<tr" + attrs + ">" + "".join(right_cells) + "</tr>")
 
-    left_head = "<tr><th rowspan='2' class='favorite-col favorite-head'></th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
+    left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     sample_row = data[0] if data else None
     right_group = (
         f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
