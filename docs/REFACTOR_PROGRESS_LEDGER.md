@@ -37,6 +37,35 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 21:39 (local)
+
+### Scope
+- Slightly widen the main-page `Daily Summary` unit toggle without changing other toggle groups.
+
+### Changes
+- Files:
+  - `assets/css/weather_page.css`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - The `Metric / Imperial` toggle in the `Daily Summary` section is a little wider for easier scanning and tapping.
+  - Snowfall, Rainfall, Temperature, and Sunrise / Sunset toggle widths remain unchanged.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-daily-toggle-width --max-workers 2`
+  - `rg -n 'data-compact-summary-toggle="1"|width: 58px;' /tmp/closesnow-daily-toggle-width/index.html /tmp/closesnow-daily-toggle-width/assets/css/weather_page.css`
+- Results:
+  - frontend tests: `23 passed`
+  - static build: succeeded (`Done: /tmp/closesnow-daily-toggle-width/data.json`, `Done: /tmp/closesnow-daily-toggle-width/index.html`, `Done: 28 resort hourly page(s)`)
+  - artifact grep: confirmed the Daily Summary-specific width override is present in the generated CSS
+
+### Risks / Notes
+- This is a presentation-only tweak; there are no data-flow or toggle-behavior changes.
+
+### Next Slice
+- Consider whether the other unit toggles should get similar touch-target tuning, or whether the current wider treatment should remain specific to `Daily Summary`.
+
 ## 2026-03-13 21:08 (local)
 
 ### Scope
