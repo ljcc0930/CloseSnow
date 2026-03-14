@@ -38,6 +38,43 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-14 11:40 (local)
+
+### Scope
+- Add resort-page coordinate verification/reporting links and a dedicated GitHub coordinate-correction issue form.
+
+### Changes
+- Files:
+  - `.github/ISSUE_TEMPLATE/01-coordinate-correction.yml`
+  - `assets/css/resort_hourly.css`
+  - `assets/js/resort_hourly.js`
+  - `docs/FEATURE_DESIGN_RESORT_COORDINATE_VERIFICATION_LINKS.md`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort hourly pages now render resolved coordinates as a Google Maps link instead of plain text.
+  - The same meta row now appends a red `（坐标不对）` link that opens a prefilled GitHub issue form for coordinate corrections.
+  - The new issue form captures resort name, resort page URL, current wrong coordinates, current Google Maps link, corrected coordinates, corrected Google Maps link, and supporting notes.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-coordinate-verify --max-workers 8`
+  - `rg -n "coordinate-correction|坐标不对|maps/search/\\?api=1&query=|hourly-meta-issue-link" /tmp/closesnow-coordinate-verify/assets/js/resort_hourly.js /tmp/closesnow-coordinate-verify/assets/css/resort_hourly.css -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `18 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-coordinate-verify/data.json`, `Done: /tmp/closesnow-coordinate-verify/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed the generated resort hourly JS/CSS include the Google Maps link builder, the dedicated coordinate-correction template name, the `（坐标不对）` label, and the issue-link styling hook
+
+### Risks / Notes
+- The issue prefill prefers the current GitHub Pages resort URL when available and otherwise falls back to the canonical `https://ljcc0930.github.io/CloseSnow/resort/<id>/` path; custom non-Pages deployments will need to edit that field before submitting if they want to preserve their own host.
+- The resort-page metadata still uses the resolved hourly payload coordinates only; this slice does not add coordinate displays to any page that did not already show coordinates.
+
+### Next Slice
+- If we later expose coordinates on the main multi-resort page too, reuse the same GitHub form ids and Google Maps link pattern there instead of inventing a second reporting flow.
+
 ## 2026-03-13 22:30 (local)
 
 ### Scope
