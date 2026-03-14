@@ -57,7 +57,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".us-snowfall-map-section" in map_css_text
     assert ".us-snowfall-map-root" in map_css_text
     assert ".us-snowfall-map-marker" in map_css_text
+    assert ".us-snowfall-map-panel-label" in map_css_text
+    assert ".us-snowfall-map-legend-scale" in map_css_text
     assert ".us-snowfall-map-popup" in map_css_text
+    assert ".us-snowfall-map-popup-summary" in map_css_text
     assert ".us-snowfall-map-viewport" in map_css_text
     assert ".us-snowfall-map-control" in map_css_text
     assert ".us-snowfall-map-basemap" in map_css_text
@@ -85,6 +88,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "destroy" in map_js_text
     assert "next_72h" in map_js_text
     assert "week1" in map_js_text
+    assert "Intensity guide" in map_js_text
+    assert "Open the matching hourly page for snowfall timing, wind, and precipitation detail." in map_js_text
     assert "onSelectResort" in map_js_text
     assert "Open hourly page" in map_js_text
     assert "Full US view" in map_js_text
@@ -92,6 +97,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "pointerdown" in map_js_text
     assert "wheel" in map_js_text
     assert "Basemap unavailable" in map_js_text
+    assert "Preview the upcoming nationwide snowfall view" not in js_text
+    assert "Preparing nationwide resort snowfall coverage." in js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
     assert 'return "Today";' in compact_js_text

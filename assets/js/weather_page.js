@@ -328,7 +328,7 @@ const _renderUsSnowfallMapSection = () => {
     <div class="section-header us-snowfall-map-header">
       <div class="us-snowfall-map-heading-wrap">
         <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
-        <p class="us-snowfall-map-subtitle">Preview the upcoming nationwide snowfall view without displacing the resort tables below.</p>
+        <p class="us-snowfall-map-subtitle">Scan nationwide snowfall concentration, then open the same resort records and hourly pages from one map surface.</p>
       </div>
       <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="${activeMetricKey}">
         <button type="button" class="unit-btn${todayActive ? " is-active" : ""}" data-map-metric-key="today" aria-pressed="${todayActive ? "true" : "false"}">24h</button>
@@ -337,19 +337,31 @@ const _renderUsSnowfallMapSection = () => {
       </div>
     </div>
     <div class="us-snowfall-map-shell">
-      <div class="us-snowfall-map-meta">
-        <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Loading the US snowfall map controller.</p>
-        <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-5 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">5-15 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">15+ cm</span>
-        </div>
-      </div>
       <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="region" aria-label="US snowfall map">
         <div class="us-snowfall-map-placeholder">
-          <span class="us-snowfall-map-placeholder-kicker">Map canvas</span>
-          <strong>US snowfall map</strong>
-          <span>Interactive markers and popups load after the page script initializes.</span>
+          <span class="us-snowfall-map-placeholder-kicker">Nationwide resort snowfall</span>
+          <strong>Track 24h, 72h, and 7-day snow from one map.</strong>
+          <span>Interactive markers, panning, and hourly drill-ins load with the page script while the forecast tables stay available below.</span>
+        </div>
+      </div>
+      <div class="us-snowfall-map-meta">
+        <div class="us-snowfall-map-panel us-snowfall-map-panel-status">
+          <span class="us-snowfall-map-panel-label">Map status</span>
+          <div id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">
+            <strong>Preparing nationwide resort snowfall coverage.</strong>
+            <span>Switch metrics, pan the map, and open a marker to continue into the matching hourly page.</span>
+          </div>
+        </div>
+        <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
+          <div class="us-snowfall-map-panel-heading">
+            <span class="us-snowfall-map-panel-label">Intensity guide</span>
+            <p class="us-snowfall-map-panel-copy">Marker fill reflects the active snowfall range while the rest of the forecast stays available below.</p>
+          </div>
+          <div class="us-snowfall-map-legend-scale">
+            <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-5 cm</span>
+            <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">5-15 cm</span>
+            <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">15+ cm</span>
+          </div>
         </div>
       </div>
     </div>
