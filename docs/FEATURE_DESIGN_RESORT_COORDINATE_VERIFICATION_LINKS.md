@@ -9,7 +9,7 @@ Scope: add verification/reporting links next to resort-page coordinates and prov
 When a resort page shows resolved coordinates, make those coordinates actionable:
 
 1. the coordinate text should open Google Maps for manual verification
-2. the page should expose a direct `（坐标不对）` link to a GitHub issue form
+2. the page should expose a direct `(Wrong coordinates?)` link to a GitHub issue form
 3. the issue form should collect enough structured data to submit a correction quickly
 
 This applies to both:
@@ -30,7 +30,7 @@ Before this slice:
 Keep the current coordinate placement in the resort-page meta row, but upgrade the coordinate segment into two links:
 
 1. the displayed coordinates link to Google Maps
-2. a red `（坐标不对）` link opens a dedicated coordinate-correction issue form
+2. a red `(Wrong coordinates?)` link opens a dedicated coordinate-correction issue form
 
 The issue form should prefill the fields the page already knows:
 

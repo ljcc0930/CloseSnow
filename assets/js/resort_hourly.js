@@ -171,7 +171,7 @@ const buildCoordinateMetaFragment = (payload) => {
 
   const issueLink = buildExternalLink(
     buildCoordinateIssueUrl(payload, coordinatesIssueText, mapsUrl),
-    "（坐标不对）",
+    "(Wrong coordinates?)",
     "hourly-meta-issue-link",
   );
   if (issueLink) {

@@ -38,6 +38,37 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-14 12:19 (local)
+
+### Scope
+- Change the resort-page coordinate issue link label from Chinese to English.
+
+### Changes
+- Files:
+  - `assets/js/resort_hourly.js`
+  - `docs/FEATURE_DESIGN_RESORT_COORDINATE_VERIFICATION_LINKS.md`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort hourly pages now show the coordinate report link as `(Wrong coordinates?)` instead of the previous Chinese label.
+  - The dedicated coordinate-correction issue flow and prefilled fields remain unchanged.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-coordinate-verify --max-workers 8`
+  - `rg -n "Wrong coordinates|coordinate-correction|maps/search/\\?api=1&query=" /tmp/closesnow-coordinate-verify/assets/js/resort_hourly.js -S`
+- Results:
+  - targeted frontend/static/integration suites: `18 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-coordinate-verify/data.json`, `Done: /tmp/closesnow-coordinate-verify/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed the generated resort hourly JS now includes the `(Wrong coordinates?)` label together with the existing coordinate-correction template name and Google Maps link builder
+
+### Risks / Notes
+- This is a label-only change; it does not alter the Google Maps URL, GitHub issue template ids, or issue prefill behavior.
+
+### Next Slice
+- If we localize more of the resort-page metadata later, decide whether these lightweight helper links should stay English-only or follow a broader localization strategy.
+
 ## 2026-03-14 11:40 (local)
 
 ### Scope

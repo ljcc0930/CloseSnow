@@ -80,7 +80,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "https://www.google.com/maps/search/?api=1&query=" in hourly_js_text
     assert "buildCoordinateIssueUrl" in hourly_js_text
     assert "buildCoordinateMetaFragment" in hourly_js_text
-    assert "（坐标不对）" in hourly_js_text
+    assert "(Wrong coordinates?)" in hourly_js_text
     assert 'return "Today";' in hourly_js_text
     assert "const resolveChartWidth = () => {" in hourly_js_text
     assert "const splitTimeLabel = (rawTime) => {" in hourly_js_text
