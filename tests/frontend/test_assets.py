@@ -158,8 +158,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "setCompactSummaryUnitMode(oppositeUnitMode(appState.compactSummaryUnitMode));" in js_text
     assert "setSunTimeToggleMode(oppositeUnitMode(appState.sunTimeToggleMode));" in js_text
     assert "setUnitMode(kind, oppositeUnitMode(currentMode));" in js_text
-    assert 'data-unit-mode="metric">C/cm</button>' in js_text
-    assert 'data-unit-mode="imperial">F/in</button>' in js_text
+    assert 'data-unit-mode="metric">Metric</button>' in js_text
+    assert 'data-unit-mode="imperial">Imperial</button>' in js_text
     assert 'data-unit-mode="metric">24h</button>' in js_text
     assert 'data-unit-mode="imperial">12h</button>' in js_text
     assert 'data-sun-time-toggle="1"' in js_text
