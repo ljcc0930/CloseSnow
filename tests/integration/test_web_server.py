@@ -38,6 +38,7 @@ def test_server_api_root_and_asset(monkeypatch):
     asset_bodies = {
         "assets/css/weather_page.css": b"body{}",
         "assets/js/favorites_alerts.js": b"window.CloseSnowFavoritesAlerts={};",
+        "assets/js/favorites_alerts_sw.js": b"self.addEventListener('notificationclick',()=>{});",
     }
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: asset_bodies.get(name, b"body{}"))
 
@@ -63,6 +64,8 @@ def test_server_api_root_and_asset(monkeypatch):
         assert asset_with_prefix == b"body{}"
         favorites_asset = urllib.request.urlopen(f"{base}/assets/js/favorites_alerts.js", timeout=3).read()
         assert favorites_asset == b"window.CloseSnowFavoritesAlerts={};"
+        favorites_sw_asset = urllib.request.urlopen(f"{base}/assets/js/favorites_alerts_sw.js", timeout=3).read()
+        assert favorites_sw_asset == b"self.addEventListener('notificationclick',()=>{});"
     finally:
         server.shutdown()
         server.server_close()
