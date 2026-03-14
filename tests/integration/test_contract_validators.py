@@ -58,3 +58,16 @@ def test_validate_weather_payload_v1_rejects_report_shape(valid_payload):
     with pytest.raises(ContractValidationError, match=r"reports\[0\]\.daily"):
         validate_weather_payload_v1(payload)
 
+
+def test_validate_weather_payload_v1_rejects_bad_country_code(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["country_code"] = "usa"
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.country_code"):
+        validate_weather_payload_v1(payload)
+
+
+def test_validate_weather_payload_v1_rejects_bad_map_context(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["map_context"]["eligible"] = False
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.map_context\.eligible"):
+        validate_weather_payload_v1(payload)

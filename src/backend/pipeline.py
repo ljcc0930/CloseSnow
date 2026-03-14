@@ -9,10 +9,44 @@ from src.backend.compute import build_payload_metadata, run_pipeline_async as _r
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import seed_coordinate_cache_from_unified
+from src.backend.report_builder import build_map_context
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
+
+COUNTRY_NAME_TO_CODE = {
+    "US": "US",
+    "USA": "US",
+    "UNITED STATES": "US",
+    "UNITED STATES OF AMERICA": "US",
+    "CA": "CA",
+    "CAN": "CA",
+    "CANADA": "CA",
+    "JP": "JP",
+    "JAPAN": "JP",
+    "AU": "AU",
+    "AUSTRALIA": "AU",
+    "CH": "CH",
+    "SWITZERLAND": "CH",
+    "NZ": "NZ",
+    "NEW ZEALAND": "NZ",
+    "FR": "FR",
+    "FRANCE": "FR",
+    "IT": "IT",
+    "ITALY": "IT",
+    "AT": "AT",
+    "AUSTRIA": "AT",
+    "KR": "KR",
+    "SOUTH KOREA": "KR",
+    "KOREA": "KR",
+    "CN": "CN",
+    "CHINA": "CN",
+    "AD": "AD",
+    "ANDORRA": "AD",
+    "NO": "NO",
+    "NORWAY": "NO",
+}
 
 
 def read_resorts(path: str, *, include_all: bool = False) -> List[str]:
@@ -35,28 +69,52 @@ def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
     return out
 
 
+def _normalize_country_code(raw: Any) -> str:
+    value = " ".join(str(raw or "").strip().upper().split())
+    if not value:
+        return ""
+    mapped = COUNTRY_NAME_TO_CODE.get(value)
+    if mapped:
+        return mapped
+    if len(value) == 2 and value.isalpha():
+        return value
+    return ""
+
+
+def _report_country_code(report: Dict[str, Any], meta: Optional[Dict[str, Any]]) -> str:
+    if meta is not None:
+        country_code = _normalize_country_code(meta.get("country"))
+        if country_code:
+            return country_code
+    return _normalize_country_code(report.get("country_code") or report.get("country"))
+
+
 def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadata_by_query: Dict[str, Dict[str, Any]]) -> None:
     for report in reports:
         query = str(report.get("query", "")).strip()
-        if not query:
-            continue
-        meta = metadata_by_query.get(query)
-        if not meta:
-            continue
-        report["resort_id"] = str(meta.get("resort_id", "")).strip()
-        report["pass_types"] = list(meta.get("pass_types") or [])
-        report["region"] = str(meta.get("region", "")).strip().lower()
-        report["default_resort"] = bool(meta.get("default_enabled", False))
-        report["ljcc_favorite"] = report["default_resort"]
-        report["display_name"] = str(meta.get("display_name") or query).strip()
-        report["website"] = str(meta.get("website") or "").strip()
-        country_code = str(meta.get("country", "")).strip().upper()
-        if country_code:
-            report["country_code"] = country_code
+        meta = metadata_by_query.get(query) if query else None
+        if meta:
+            report["resort_id"] = str(meta.get("resort_id", "")).strip()
+            report["pass_types"] = list(meta.get("pass_types") or [])
+            report["region"] = str(meta.get("region", "")).strip().lower()
+            report["default_resort"] = bool(meta.get("default_enabled", False))
+            report["ljcc_favorite"] = report["default_resort"]
+            report["display_name"] = str(meta.get("display_name") or query).strip()
+            report["website"] = str(meta.get("website") or "").strip()
+            if not report.get("admin1"):
+                report["admin1"] = str(meta.get("state", "")).strip()
+
+        country_code = _report_country_code(report, meta)
+        report["country_code"] = country_code
         if not report.get("country"):
             report["country"] = country_code
-        if not report.get("admin1"):
-            report["admin1"] = str(meta.get("state", "")).strip()
+        report["map_context"] = build_map_context(
+            country_code=country_code,
+            resolved_latitude=report.get("resolved_latitude"),
+            resolved_longitude=report.get("resolved_longitude"),
+            daily_rows=list(report.get("daily") or []),
+            week1_total_snowfall_cm=report.get("week1_total_snowfall_cm"),
+        )
 
 
 def compute_pipeline_payload(

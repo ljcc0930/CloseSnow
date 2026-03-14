@@ -135,7 +135,20 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     async def fake_run_pipeline_async(**kwargs):  # noqa: ANN001
         captured["selected"] = deepcopy(kwargs["selected"])
         return {
-            "reports": [{"query": "A", "daily": []}],
+            "reports": [
+                {
+                    "query": "A",
+                    "country": "United States",
+                    "resolved_latitude": 40.58,
+                    "resolved_longitude": -111.65,
+                    "week1_total_snowfall_cm": 6.0,
+                    "daily": [
+                        {"snowfall_cm": 1.0},
+                        {"snowfall_cm": 2.0},
+                        {"snowfall_cm": 3.0},
+                    ],
+                }
+            ],
             "failed": [{"query": "B", "reason": "boom"}],
         }
 
@@ -164,6 +177,14 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["pass_types"] == ["ikon"]
     assert out["reports"][0]["region"] == "west"
     assert out["reports"][0]["country_code"] == "US"
+    assert out["reports"][0]["map_context"] == {
+        "eligible": True,
+        "latitude": 40.58,
+        "longitude": -111.65,
+        "today_snowfall_cm": 1.0,
+        "next_72h_snowfall_cm": 6.0,
+        "week1_total_snowfall_cm": 6.0,
+    }
     assert out["reports"][0]["ljcc_favorite"] is True
     assert out["reports"][0]["display_name"] == "Alpha Resort"
     assert ".cache/resorts_weather_unified.json" in seed_calls

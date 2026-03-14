@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from src.backend.models import ResortLocation
-from src.backend.report_builder import as_float_list, build_daily_rows, build_report, extract_hhmm, safe_sum
+from src.backend.report_builder import as_float_list, build_daily_rows, build_map_context, build_report, extract_hhmm, safe_sum
 
 
 def test_as_float_list_and_safe_sum():
@@ -94,3 +94,59 @@ def test_build_report_contains_totals_and_history():
     assert report["daily"][0]["weather_code"] == 3
     assert report["daily"][0]["sunrise_local_hhmm"] == "06:55"
     assert report["daily"][0]["sunset_local_hhmm"] == "17:42"
+
+
+def test_build_map_context_uses_daily_windows_and_us_eligibility():
+    location = ResortLocation(
+        query="Snowbird, UT",
+        name="Snowbird",
+        latitude=40.5,
+        longitude=-111.6,
+        country="US",
+        admin1="UT",
+    )
+    forecast = {
+        "timezone": "America/Denver",
+        "latitude": 40.5,
+        "longitude": -111.6,
+        "daily": {
+            "time": ["2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04"],
+            "snowfall_sum": [1, 2, 3, 4],
+            "rain_sum": [0.1, 0.2, 0.3, 0.4],
+            "precipitation_sum": [1.1, 2.2, 3.3, 4.4],
+            "temperature_2m_max": [-1, 1, 2, 3],
+            "temperature_2m_min": [-5, -3, -2, -1],
+            "weather_code": [3, 71, 75, 61],
+            "sunrise": ["2026-03-01T06:55", "2026-03-02T06:53", "2026-03-03T06:51", "2026-03-04T06:49"],
+            "sunset": ["2026-03-01T17:42", "2026-03-02T17:44", "2026-03-03T17:45", "2026-03-04T17:46"],
+        },
+    }
+
+    report = build_report(location, forecast)
+    map_context = build_map_context(
+        country_code="US",
+        resolved_latitude=report["resolved_latitude"],
+        resolved_longitude=report["resolved_longitude"],
+        daily_rows=report["daily"],
+        week1_total_snowfall_cm=report["week1_total_snowfall_cm"],
+    )
+
+    assert map_context == {
+        "eligible": True,
+        "latitude": 40.5,
+        "longitude": -111.6,
+        "today_snowfall_cm": 1.0,
+        "next_72h_snowfall_cm": 6.0,
+        "week1_total_snowfall_cm": 10.0,
+    }
+
+    map_context = build_map_context(
+        country_code="CA",
+        resolved_latitude="bad",
+        resolved_longitude=-111.6,
+        daily_rows=report["daily"],
+        week1_total_snowfall_cm=report["week1_total_snowfall_cm"],
+    )
+    assert map_context["eligible"] is False
+    assert map_context["latitude"] is None
+    assert map_context["longitude"] == -111.6
