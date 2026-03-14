@@ -7,12 +7,16 @@ from src.web.weather_page_assets import ASSET_MIME_TYPES, asset_path, read_asset
 
 def test_asset_path_points_to_repo_assets():
     css_path = asset_path("assets/css/weather_page.css")
+    map_css_path = asset_path("assets/css/us_snowfall_map.css")
     compact_js_path = asset_path("assets/js/compact_daily_summary.js")
+    map_js_path = asset_path("assets/js/us_snowfall_map.js")
     js_path = asset_path("assets/js/weather_page.js")
     hourly_css_path = asset_path("assets/css/resort_hourly.css")
     hourly_js_path = asset_path("assets/js/resort_hourly.js")
     assert str(css_path).endswith("assets/css/weather_page.css")
+    assert str(map_css_path).endswith("assets/css/us_snowfall_map.css")
     assert str(compact_js_path).endswith("assets/js/compact_daily_summary.js")
+    assert str(map_js_path).endswith("assets/js/us_snowfall_map.js")
     assert str(js_path).endswith("assets/js/weather_page.js")
     assert str(hourly_css_path).endswith("assets/css/resort_hourly.css")
     assert str(hourly_js_path).endswith("assets/js/resort_hourly.js")
@@ -20,26 +24,37 @@ def test_asset_path_points_to_repo_assets():
 
 def test_read_asset_bytes_reads_known_assets():
     css = read_asset_bytes("assets/css/weather_page.css")
+    map_css = read_asset_bytes("assets/css/us_snowfall_map.css")
     compact_js = read_asset_bytes("assets/js/compact_daily_summary.js")
+    map_js = read_asset_bytes("assets/js/us_snowfall_map.js")
     js = read_asset_bytes("assets/js/weather_page.js")
     hourly_css = read_asset_bytes("assets/css/resort_hourly.css")
     hourly_js = read_asset_bytes("assets/js/resort_hourly.js")
     assert len(css) > 100
+    assert len(map_css) > 100
     assert len(compact_js) > 100
+    assert len(map_js) > 100
     assert len(js) > 100
     assert len(hourly_css) > 100
     assert len(hourly_js) > 100
     assert ASSET_MIME_TYPES["assets/css/weather_page.css"].startswith("text/css")
+    assert ASSET_MIME_TYPES["assets/css/us_snowfall_map.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/compact_daily_summary.js"].startswith("application/javascript")
+    assert ASSET_MIME_TYPES["assets/js/us_snowfall_map.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
     css_text = css.decode("utf-8", errors="ignore")
+    map_css_text = map_css.decode("utf-8", errors="ignore")
     compact_js_text = compact_js.decode("utf-8", errors="ignore")
+    map_js_text = map_js.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
     assert ".compact-grid-wrap" in css_text
+    assert ".us-snowfall-map-section" in map_css_text
+    assert ".us-snowfall-map-root" in map_css_text
+    assert "@media (max-width: 980px)" in map_css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
@@ -56,6 +71,11 @@ def test_read_asset_bytes_reads_known_assets():
     assert "width: 100%;" in hourly_css_text
     assert "min-width: 0;" in hourly_css_text
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
+    assert "window.CloseSnowUsSnowfallMap" in map_js_text
+    assert "setVisibleReports" in map_js_text
+    assert "setMetric" in map_js_text
+    assert "setSelectedResort" in map_js_text
+    assert "destroy" in map_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
     assert 'return "Today";' in compact_js_text
