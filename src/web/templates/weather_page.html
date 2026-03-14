@@ -52,6 +52,20 @@
           <input id="home-base-lon-input" type="number" step="any" placeholder="-111.8910" inputmode="decimal" />
           <button id="home-base-manual-apply" type="button">Use Coordinates</button>
         </div>
+        <div class="home-base-nearby-row">
+          <label for="filter-radius-select">Nearby Radius</label>
+          <select id="filter-radius-select">
+            <option value="" selected>All distances</option>
+            <option value="40">25 mi / 40 km</option>
+            <option value="80">50 mi / 80 km</option>
+            <option value="160">100 mi / 160 km</option>
+            <option value="320">200 mi / 320 km</option>
+          </select>
+          <button id="home-base-sort-distance" type="button">Sort by Distance</button>
+          <span id="home-base-nearby-summary" class="home-base-nearby-summary">
+            Set a home base to unlock nearby filtering and directions.
+          </span>
+        </div>
         <p id="home-base-status" class="home-base-status">Set a home base from lookup, geolocation, or coordinates.</p>
       </div>
       <div class="resort-search">
@@ -106,16 +120,6 @@
             <option value="favorites">Favorites First</option>
             <option value="today_snow">Today's Snowfall</option>
             <option value="week_snow" selected>This Week's Snowfall</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <div class="filter-group-title">Nearby Radius</div>
-          <select id="filter-radius-select">
-            <option value="" selected>All distances</option>
-            <option value="40">25 mi / 40 km</option>
-            <option value="80">50 mi / 80 km</option>
-            <option value="160">100 mi / 160 km</option>
-            <option value="320">200 mi / 320 km</option>
           </select>
         </div>
         <div class="filter-group">

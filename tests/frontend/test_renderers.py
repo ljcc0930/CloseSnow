@@ -254,6 +254,8 @@ def test_build_html_contains_meta_sections():
     assert 'id="home-base-lookup-input"' in html
     assert 'id="home-base-geolocate-btn"' in html
     assert 'id="home-base-manual-apply"' in html
+    assert 'id="home-base-sort-distance"' in html
+    assert 'id="home-base-nearby-summary"' in html
     assert 'id="home-base-status"' in html
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html

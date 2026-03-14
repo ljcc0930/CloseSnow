@@ -25,6 +25,8 @@ const homeBaseClearBtn = document.getElementById("home-base-clear");
 const homeBaseLatInput = document.getElementById("home-base-lat-input");
 const homeBaseLonInput = document.getElementById("home-base-lon-input");
 const homeBaseManualApply = document.getElementById("home-base-manual-apply");
+const homeBaseNearbySummary = document.getElementById("home-base-nearby-summary");
+const homeBaseSortDistance = document.getElementById("home-base-sort-distance");
 const resortSearchInput = document.getElementById("resort-search-input");
 const resortSearchClear = document.getElementById("resort-search-clear");
 const filterOpenBtn = document.getElementById("filter-open-btn");
@@ -268,16 +270,29 @@ const _favoriteAllButtonHtml = (reports) => {
 
 const _displayName = (report) => String(report?.display_name || report?.query || "").trim();
 
+const _buildDirectionsUrl = (report) => {
+  if (!appState.homeBase) return "";
+  const coordinates = _reportCoordinates(report);
+  if (!coordinates) return "";
+  const url = new URL("https://www.google.com/maps/dir/");
+  url.searchParams.set("api", "1");
+  url.searchParams.set("origin", `${appState.homeBase.latitude},${appState.homeBase.longitude}`);
+  url.searchParams.set("destination", `${coordinates.latitude},${coordinates.longitude}`);
+  url.searchParams.set("travelmode", "driving");
+  return url.toString();
+};
+
 const _resortCellHtml = (report) => {
   const text = _escapeHtml(_displayName(report));
   const resortId = String(report.resort_id || "").trim();
   const linkHtml = resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
+  const directionsUrl = _buildDirectionsUrl(report);
   const distanceHtml = appState.homeBase
     ? (
       report.home_base_distance_available
-        ? `<div class='resort-distance'>${_escapeHtml(report.home_base_distance_mi.toFixed(1))} mi / ${_escapeHtml(report.home_base_distance_km.toFixed(1))} km</div>`
+        ? `<div class='resort-distance resort-distance-meta'>${_escapeHtml(report.home_base_distance_mi.toFixed(1))} mi / ${_escapeHtml(report.home_base_distance_km.toFixed(1))} km${directionsUrl ? ` <a class='resort-directions-link' href='${_escapeHtml(directionsUrl)}' target='_blank' rel='noopener noreferrer'>Directions</a>` : ""}</div>`
         : "<div class='resort-distance resort-distance-unavailable'>Distance unavailable</div>"
     )
     : "";
@@ -898,6 +913,29 @@ const syncHomeBaseControls = () => {
   if (homeBaseLonInput) homeBaseLonInput.value = homeBase ? _formatCoordinateSummary(homeBase.longitude) : "";
 };
 
+const syncHomeBaseNearbySummary = (visibleCount = null) => {
+  if (homeBaseSortDistance) {
+    homeBaseSortDistance.disabled = !appState.homeBase;
+    homeBaseSortDistance.textContent = appState.filterState.sortBy === "distance" ? "Distance Sorted" : "Sort by Distance";
+  }
+  if (!homeBaseNearbySummary) return;
+  if (!appState.homeBase) {
+    homeBaseNearbySummary.textContent = "Set a home base to unlock nearby filtering and directions.";
+    return;
+  }
+  ensureDistanceContext();
+  if (appState.distanceState.availableCount === 0) {
+    homeBaseNearbySummary.textContent = "No resort coordinates are available for nearby search yet.";
+    return;
+  }
+  if (appState.filterState.distanceRadiusKm !== null) {
+    const count = visibleCount === null ? _filteredReports().length : visibleCount;
+    homeBaseNearbySummary.textContent = `${count} resorts within ${_radiusLabel(appState.filterState.distanceRadiusKm)}.`;
+    return;
+  }
+  homeBaseNearbySummary.textContent = `${appState.distanceState.availableCount} resorts can be sorted by distance.`;
+};
+
 const setHomeBaseStatus = (message = "", isError = false) => {
   if (!homeBaseStatus) return;
   homeBaseStatus.textContent = message;
@@ -932,6 +970,7 @@ const setHomeBaseState = (rawHomeBase, options = {}) => {
     if (options.updateUrl !== false) syncHomeBaseToUrl();
   }
   syncHomeBaseControls();
+  syncHomeBaseNearbySummary();
   notifyHomeBaseChanged();
   if (options.renderPage !== false && appState.payload) {
     renderPagePreservingScroll();
@@ -1050,6 +1089,7 @@ const initializeHomeBase = () => {
   if (urlHomeBase) {
     appState.homeBase = homeBaseApi.persistHomeBase(urlHomeBase) || urlHomeBase;
     syncHomeBaseControls();
+    syncHomeBaseNearbySummary();
     notifyHomeBaseChanged();
     setHomeBaseStatus(`Home base restored from shared URL: ${urlHomeBase.label}.`, false);
     refreshHomeBaseLookupOptions();
@@ -1057,6 +1097,7 @@ const initializeHomeBase = () => {
   }
   appState.homeBase = homeBaseApi.loadStoredHomeBase();
   syncHomeBaseControls();
+  syncHomeBaseNearbySummary();
   notifyHomeBaseChanged();
   setHomeBaseStatus(
     appState.homeBase
@@ -1908,6 +1949,7 @@ const renderPage = () => {
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
   syncFilterSummary(visibleReports.length, totalReports);
+  syncHomeBaseNearbySummary(visibleReports.length);
   renderReportDate();
   applyUnitModes();
   document.body.classList.remove("units-pending");
@@ -2102,6 +2144,16 @@ const bindHomeBaseControls = () => {
   if (homeBaseGeolocateBtn) {
     homeBaseGeolocateBtn.addEventListener("click", () => {
       applyGeolocationHomeBase();
+    });
+  }
+  if (homeBaseSortDistance) {
+    homeBaseSortDistance.addEventListener("click", () => {
+      if (!appState.homeBase) {
+        setHomeBaseStatus("Set a home base before sorting nearby resorts by distance.", true);
+        return;
+      }
+      if (filterSortSelect) filterSortSelect.value = "distance";
+      applyFiltersImmediately();
     });
   }
   if (homeBaseClearBtn) {
