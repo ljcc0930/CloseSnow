@@ -77,14 +77,16 @@
       color: #1e293b;
     }
     .home-base-lookup-row,
-    .home-base-manual-row {
+    .home-base-manual-row,
+    .home-base-nearby-row {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
     }
     .home-base-lookup-row label,
-    .home-base-manual-row label {
+    .home-base-manual-row label,
+    .home-base-nearby-row label {
       font-size: 12px;
       font-weight: 700;
       color: #334155;
@@ -105,6 +107,14 @@
     #home-base-lon-input {
       width: 130px;
     }
+    #filter-radius-select {
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: #1f2937;
+      font-size: 13px;
+    }
     .home-base-controls button {
       border: 1px solid #94a3b8;
       background: #f8fafc;
@@ -119,6 +129,16 @@
       border-color: #0f766e;
       background: #ecfeff;
       color: #0f766e;
+    }
+    #home-base-sort-distance {
+      border-color: #0f766e;
+      color: #0f766e;
+      background: #f0fdfa;
+    }
+    .home-base-nearby-summary {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
     }
     .home-base-status {
       margin: 0;
@@ -462,8 +482,23 @@
       font-weight: 600;
       color: #475569;
     }
+    .resort-distance-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .resort-distance-unavailable {
       color: #94a3b8;
+    }
+    .resort-directions-link {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f766e;
+      text-decoration: none;
+    }
+    .resort-directions-link:hover {
+      text-decoration: underline;
     }
     .favorite-btn {
       position: relative;

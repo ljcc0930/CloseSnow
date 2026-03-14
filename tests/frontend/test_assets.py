@@ -83,6 +83,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "home_base_distance_km" in js_text
     assert 'if (text === "distance") return "distance";' in js_text
     assert "filter-radius-select" in js_text
+    assert "_buildDirectionsUrl" in js_text
+    assert "home-base-nearby-summary" in js_text
+    assert "Sort by Distance" in js_text
+    assert "https://www.google.com/maps/dir/" in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
