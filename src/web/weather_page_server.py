@@ -24,6 +24,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.web.data_sources import load_payload
+from src.web.compare_page_renderer import render_compare_html
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
@@ -58,7 +59,7 @@ def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | Non
 def _normalize_known_path(path: str) -> str:
     if path in {"", "/"}:
         return "/"
-    for marker in ("/api/health", "/api/data", "/api/resort-hourly", "/resort/"):
+    for marker in ("/api/health", "/api/data", "/api/resort-hourly", "/compare", "/resort/"):
         idx = path.find(marker)
         if idx >= 0:
             return path[idx:]
@@ -254,6 +255,15 @@ def make_handler(
                 except Exception:
                     daily_summary = None
                 html = _render_hourly_page_html(resort_id, daily_summary)
+                self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
+                return
+
+            if normalized_path in {"/compare", "/compare/"}:
+                html = render_compare_html(
+                    asset_prefix="../assets",
+                    home_href="../",
+                    data_url="../api/data",
+                )
                 self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
                 return
 

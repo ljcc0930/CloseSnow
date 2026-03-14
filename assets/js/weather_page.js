@@ -740,6 +740,12 @@ const buildCompareShareUrl = () => {
   return url.toString();
 };
 
+const buildCompareSurfaceHref = () => {
+  const url = new URL("compare/", window.location.href);
+  url.search = _withCompareSelectionInParams(new URLSearchParams(), appState.compareResortIds).toString();
+  return url.toString();
+};
+
 const copyCompareShareUrl = async () => {
   const url = buildCompareShareUrl();
   if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
@@ -773,6 +779,7 @@ const renderCompareToolbar = () => {
     <div class='compare-toolbar-head'>
       <div class='compare-toolbar-title'>Compare selection <strong>${selected.length}/${COMPARE_SELECTION_MAX_RESORTS}</strong></div>
       <div class='compare-toolbar-actions'>
+        <a class='compare-toolbar-btn compare-toolbar-link' href='${_escapeHtml(buildCompareSurfaceHref())}'>Open compare</a>
         <button type='button' class='compare-toolbar-btn' data-compare-copy='1'>Copy link</button>
         <button type='button' class='compare-toolbar-btn' data-compare-clear='1'>Clear</button>
       </div>

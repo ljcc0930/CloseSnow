@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resort Compare</title>
+  <link rel="stylesheet" href="{{asset_prefix}}/css/resort_compare.css" />
+</head>
+<body>
+  <main class="compare-page">
+    <a class="compare-back-link" href="{{home_href}}">Back to Main Forecast</a>
+    <section class="compare-hero">
+      <p class="compare-eyebrow">Resort Compare</p>
+      <h1>Daily Resort Compare</h1>
+      <p id="compare-summary" class="compare-summary">Loading compare surface...</p>
+      <div id="compare-selected-chips" class="compare-selected-chips" aria-live="polite"></div>
+      <div class="compare-hero-actions">
+        <a id="compare-home-link" class="compare-action-link" href="{{home_href}}">Adjust selection on homepage</a>
+        <button id="compare-copy-btn" class="compare-action-btn" type="button">Copy compare link</button>
+      </div>
+    </section>
+    <div id="compare-message" class="compare-message" hidden></div>
+    <section id="compare-empty-state" class="compare-empty-state" hidden></section>
+    <section id="compare-cards" class="compare-cards" hidden></section>
+    <section id="compare-metrics" class="compare-metrics" hidden></section>
+  </main>
+  <script>
+    window.CLOSESNOW_COMPARE_CONTEXT = {{compare_context_json}};
+  </script>
+  <script src="{{asset_prefix}}/js/compare_selection.js"></script>
+  <script src="{{asset_prefix}}/js/resort_compare.js"></script>
+</body>
+</html>

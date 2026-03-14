@@ -84,6 +84,29 @@ def test_server_asset_not_found(monkeypatch):
         thread.join(timeout=3)
 
 
+def test_server_compare_route(monkeypatch):
+    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        body = urllib.request.urlopen(f"{base}/compare", timeout=3).read().decode("utf-8")
+        assert "window.CLOSESNOW_COMPARE_CONTEXT" in body
+        assert '"dataUrl": "../api/data"' in body
+        assert "../assets/css/resort_compare.css" in body
+        body_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/compare", timeout=3).read().decode("utf-8")
+        assert "window.CLOSESNOW_COMPARE_CONTEXT" in body_with_prefix
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
 def test_server_query_resort_pass_through(monkeypatch):
     captured = {}
 

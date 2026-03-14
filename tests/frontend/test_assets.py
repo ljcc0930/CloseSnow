@@ -7,14 +7,18 @@ from src.web.weather_page_assets import ASSET_MIME_TYPES, asset_path, read_asset
 
 def test_asset_path_points_to_repo_assets():
     css_path = asset_path("assets/css/weather_page.css")
+    compare_css_path = asset_path("assets/css/resort_compare.css")
     compact_js_path = asset_path("assets/js/compact_daily_summary.js")
     compare_js_path = asset_path("assets/js/compare_selection.js")
+    compare_page_js_path = asset_path("assets/js/resort_compare.js")
     js_path = asset_path("assets/js/weather_page.js")
     hourly_css_path = asset_path("assets/css/resort_hourly.css")
     hourly_js_path = asset_path("assets/js/resort_hourly.js")
     assert str(css_path).endswith("assets/css/weather_page.css")
+    assert str(compare_css_path).endswith("assets/css/resort_compare.css")
     assert str(compact_js_path).endswith("assets/js/compact_daily_summary.js")
     assert str(compare_js_path).endswith("assets/js/compare_selection.js")
+    assert str(compare_page_js_path).endswith("assets/js/resort_compare.js")
     assert str(js_path).endswith("assets/js/weather_page.js")
     assert str(hourly_css_path).endswith("assets/css/resort_hourly.css")
     assert str(hourly_js_path).endswith("assets/js/resort_hourly.js")
@@ -22,30 +26,40 @@ def test_asset_path_points_to_repo_assets():
 
 def test_read_asset_bytes_reads_known_assets():
     css = read_asset_bytes("assets/css/weather_page.css")
+    compare_css = read_asset_bytes("assets/css/resort_compare.css")
     compact_js = read_asset_bytes("assets/js/compact_daily_summary.js")
     compare_js = read_asset_bytes("assets/js/compare_selection.js")
+    compare_page_js = read_asset_bytes("assets/js/resort_compare.js")
     js = read_asset_bytes("assets/js/weather_page.js")
     hourly_css = read_asset_bytes("assets/css/resort_hourly.css")
     hourly_js = read_asset_bytes("assets/js/resort_hourly.js")
     assert len(css) > 100
+    assert len(compare_css) > 100
     assert len(compact_js) > 100
     assert len(compare_js) > 100
+    assert len(compare_page_js) > 100
     assert len(js) > 100
     assert len(hourly_css) > 100
     assert len(hourly_js) > 100
     assert ASSET_MIME_TYPES["assets/css/weather_page.css"].startswith("text/css")
+    assert ASSET_MIME_TYPES["assets/css/resort_compare.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/compact_daily_summary.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/compare_selection.js"].startswith("application/javascript")
+    assert ASSET_MIME_TYPES["assets/js/resort_compare.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
     css_text = css.decode("utf-8", errors="ignore")
+    compare_css_text = compare_css.decode("utf-8", errors="ignore")
     compact_js_text = compact_js.decode("utf-8", errors="ignore")
     compare_js_text = compare_js.decode("utf-8", errors="ignore")
+    compare_page_js_text = compare_page_js.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
     assert ".compact-grid-wrap" in css_text
+    assert ".compare-cards" in compare_css_text
+    assert ".compare-table" in compare_css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
@@ -74,6 +88,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CloseSnowCompareSelection" in compare_js_text
     assert "parseSelectionFromSearch" in compare_js_text
     assert "toggleSelection" in compare_js_text
+    assert "window.CLOSESNOW_COMPARE_CONTEXT" in compare_page_js_text
+    assert "Daily Resort Compare" not in compare_page_js_text
+    assert "Compare link copied." in compare_page_js_text
+    assert "_renderTemperatureTable" in compare_page_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
