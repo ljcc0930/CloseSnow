@@ -431,15 +431,21 @@
     const metricValue = _formatSnowfall(_metricValue(report, metricKey));
     const passTypes = _escapeHtml(_passTypesText(report));
     const stateText = state ? _escapeHtml(state.toUpperCase()) : "US";
+    const summary = resortId
+      ? "Open the matching hourly page for snowfall timing, wind, and precipitation detail."
+      : "Use the linked resort rows below for the matching forecast record.";
     const linkHtml = resortId
       ? `<a class="us-snowfall-map-popup-link" href="resort/${encodeURIComponent(resortId)}">Open hourly page</a>`
       : "";
     return `
-      <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
-      <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+      <div class="us-snowfall-map-popup-header">
+        <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+        <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
+      </div>
       <strong class="us-snowfall-map-popup-title">${header}</strong>
       <div class="us-snowfall-map-popup-metric">${metricValue}</div>
-      <div class="us-snowfall-map-popup-meta">${stateText} · ${passTypes}</div>
+      <div class="us-snowfall-map-popup-detail">${stateText} · ${passTypes}</div>
+      <div class="us-snowfall-map-popup-summary">${_escapeHtml(summary)}</div>
       ${linkHtml}
     `;
   };
@@ -453,11 +459,17 @@
 
   const _legendHtml = () => {
     const config = _metricConfig(DEFAULT_METRIC_KEY);
-    return [
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">${config.legend[0]}</span>`,
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">${config.legend[1]}</span>`,
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">${config.legend[2]}</span>`,
-    ].join("");
+    return `
+      <div class="us-snowfall-map-panel-heading">
+        <span class="us-snowfall-map-panel-label">Intensity guide</span>
+        <p class="us-snowfall-map-panel-copy">Marker fill reflects the active snowfall range while the rest of the forecast stays available below.</p>
+      </div>
+      <div class="us-snowfall-map-legend-scale">
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">${config.legend[0]}</span>
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">${config.legend[1]}</span>
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">${config.legend[2]}</span>
+      </div>
+    `;
   };
 
   const _mapStageHtml = () => `
@@ -662,23 +674,35 @@
     const renderStatus = (eligibleReports) => {
       if (!statusElement) return;
       const metric = _metricConfig(state.metricKey);
+      const renderStatusCard = (headline, detail) => {
+        statusElement.innerHTML = `
+          <strong>${_escapeHtml(headline)}</strong>
+          <span>${_escapeHtml(detail)}</span>
+        `;
+      };
       if (state.errorMessage) {
-        statusElement.textContent = `Snowfall map unavailable. ${state.errorMessage}`;
+        renderStatusCard("Interactive map unavailable.", state.errorMessage);
         return;
       }
       const interactionText = state.basemapMode === "geographic"
-        ? "Drag to pan, use scroll or the +/- controls to zoom, and Reset for the full US view."
-        : "Basemap fallback is active. Drag to pan, use scroll or the +/- controls to zoom, and Reset for the full US view.";
+        ? "Drag to pan, use scroll or the +/- controls to zoom, and Reset to return to the full US view."
+        : "Basemap fallback is active. Drag to pan, use scroll or the +/- controls to zoom, and Reset to return to the full US view.";
       if (!eligibleReports.length) {
         const visibleCount = state.visibleReports.length;
         const scopeText = visibleCount ? "No visible resorts" : "No resorts";
-        statusElement.textContent = `${scopeText} are map-ready for ${metric.label}. Non-US resorts and resorts without projectable coordinates stay in the tables only. ${interactionText}`;
+        renderStatusCard(
+          `${scopeText} are map-ready for ${metric.label}.`,
+          `Non-US resorts and resorts without projectable coordinates stay in the tables below. ${interactionText}`,
+        );
         return;
       }
       const focused = state.selectedResortId
-        ? ` Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
-        : "";
-      statusElement.textContent = `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"} for ${metric.label}.${focused} ${interactionText}`;
+        ? `Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
+        : "Select a marker to inspect the same resort record that appears in the tables below.";
+      renderStatusCard(
+        `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"} for ${metric.label}.`,
+        `${focused} ${interactionText}`,
+      );
     };
 
     const renderLegend = () => {
