@@ -426,9 +426,9 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert hourly_with_prefix["resort_id"] == "snowbird-ut"
 
         page = urllib.request.urlopen(f"{base}/resort/snowbird-ut", timeout=3).read().decode("utf-8")
-        assert "Resort Forcast" in page
+        assert "Resort Forecast" in page
         assert "snowbird-ut" in page
-        assert "Resort Forcast: snowbird-ut" not in page
+        assert "Resort Forecast: snowbird-ut" not in page
         assert '"dailySummary": {' in page
         assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
@@ -436,9 +436,9 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert 'id="hourly-charts"' in page
 
         prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")
-        assert "Resort Forcast" in prefixed_page
+        assert "Resort Forecast" in prefixed_page
         assert "snowbird-ut" in prefixed_page
-        assert "Resort Forcast: snowbird-ut" not in prefixed_page
+        assert "Resort Forecast: snowbird-ut" not in prefixed_page
     finally:
         server.shutdown()
         server.server_close()
