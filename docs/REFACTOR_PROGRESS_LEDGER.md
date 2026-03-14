@@ -37,6 +37,36 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 20:08 (local)
+
+### Scope
+- Add resort-local current time to the hourly resort page meta line using the hourly forecast timezone.
+
+### Changes
+- Files:
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort hourly pages now show the resort's local current time in `hourly-meta` when the hourly payload provides a timezone.
+  - The local-time label refreshes once per minute without requiring a full hourly data reload.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-localtime-check --max-workers 2`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration tests: `17 passed`
+  - static output build: succeeded (`Done: /tmp/closesnow-localtime-check/data.json`, `Done: /tmp/closesnow-localtime-check/index.html`, `Done: 18 resort hourly page(s)`)
+
+### Risks / Notes
+- Local time formatting still follows the viewer's browser locale while pinning the resort timezone, so separators/order may vary slightly by browser language settings.
+
+### Next Slice
+- Consider whether the resort page should expose a clearer label for the resort timezone abbreviation near the title instead of only inside the meta line.
+
 ## 2026-03-13 20:35 (output-dir static artifact unification slice)
 
 ### Scope

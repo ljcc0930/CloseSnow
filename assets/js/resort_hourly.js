@@ -16,6 +16,8 @@ const chartsEl = document.getElementById("hourly-charts");
 const table = document.getElementById("hourly-table");
 const thead = table ? table.querySelector("thead") : null;
 const tbody = table ? table.querySelector("tbody") : null;
+let metaState = null;
+let localTimeTimerId = null;
 
 const metricDefs = [
   { key: "snowfall", label: "snowfall (cm)", title: "Snowfall", unit: "cm", color: "#2563eb" },
@@ -66,6 +68,54 @@ const formatCoordinate = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
   return num.toFixed(4);
+};
+
+const formatResortLocalTime = (timeZone) => {
+  const tz = String(timeZone || "").trim();
+  if (!tz) return "";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+      timeZoneName: "short",
+    }).format(new Date());
+  } catch (_error) {
+    return "";
+  }
+};
+
+const renderMeta = () => {
+  if (!metaEl) return;
+  if (!metaState) {
+    metaEl.textContent = "";
+    return;
+  }
+  const localTime = formatResortLocalTime(metaState.timezone);
+  const parts = [
+    `${metaState.count} hours`,
+    metaState.timezone || "unknown timezone",
+  ];
+  if (localTime) {
+    parts.push(`Local time ${localTime}`);
+  }
+  parts.push(metaState.model || "unknown model");
+  if (metaState.coordText) {
+    parts.push(metaState.coordText);
+  }
+  metaEl.textContent = parts.join(" | ");
+};
+
+const syncLocalTimeTimer = () => {
+  if (localTimeTimerId !== null) {
+    window.clearInterval(localTimeTimerId);
+    localTimeTimerId = null;
+  }
+  if (!metaState || !metaState.timezone) return;
+  localTimeTimerId = window.setInterval(renderMeta, 60 * 1000);
 };
 
 const setError = (msg) => {
@@ -367,15 +417,16 @@ const loadHourly = async () => {
       const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
       titleEl.textContent = resortLabel ? `Hourly Forecast: ${resortLabel}` : "Hourly Forecast";
     }
-    if (metaEl) {
-      const tz = payload.timezone || "unknown timezone";
-      const model = payload.model || "unknown model";
-      const count = payload.hours || 0;
-      const lat = formatCoordinate(payload.resolved_latitude);
-      const lon = formatCoordinate(payload.resolved_longitude);
-      const coordText = lat && lon ? ` | ${lat}, ${lon}` : "";
-      metaEl.textContent = `${count} hours | ${tz} | ${model}${coordText}`;
-    }
+    const lat = formatCoordinate(payload.resolved_latitude);
+    const lon = formatCoordinate(payload.resolved_longitude);
+    metaState = {
+      timezone: String(payload.timezone || "").trim(),
+      model: String(payload.model || "").trim(),
+      count: Number(payload.hours) || 0,
+      coordText: lat && lon ? `${lat}, ${lon}` : "",
+    };
+    renderMeta();
+    syncLocalTimeTimer();
     renderHourlyTable(payload);
     try {
       renderHourlyCharts(payload);
@@ -385,7 +436,9 @@ const loadHourly = async () => {
   } catch (err) {
     setError(err instanceof Error ? err.message : String(err));
     setChartError("");
-    if (metaEl) metaEl.textContent = "";
+    metaState = null;
+    syncLocalTimeTimer();
+    renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";
     if (chartsEl) chartsEl.innerHTML = "";

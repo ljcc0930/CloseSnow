@@ -46,6 +46,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "renderDailySummary();" in hourly_js_text
     assert "dailySummary" in hourly_js_text
     assert "resolved_latitude" in hourly_js_text
+    assert "const formatResortLocalTime = (timeZone) => {" in hourly_js_text
+    assert 'timeZoneName: "short"' in hourly_js_text
+    assert 'parts.push(`Local time ${localTime}`);' in hourly_js_text
+    assert "localTimeTimerId = window.setInterval(renderMeta, 60 * 1000);" in hourly_js_text
     assert "history.replaceState" not in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
