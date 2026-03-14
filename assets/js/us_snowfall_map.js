@@ -27,6 +27,7 @@
     today_snow: "today",
     week_snow: "week1",
   };
+  const MAP_SELECTION_EVENT = "closesnow:map-resort-select";
   const US_FALLBACK_VIEW = {
     minLatitude: 24,
     maxLatitude: 50,
@@ -267,6 +268,7 @@
 
     const buttons = _findMetricButtons(metricToggle);
     const legendChips = _findLegendChips(legendElement);
+    const onSelectResort = typeof options.onSelectResort === "function" ? options.onSelectResort : null;
     if (mapRoot) {
       mapRoot.innerHTML = _mapStageHtml();
       mapRoot.setAttribute("role", "region");
@@ -283,6 +285,24 @@
       popupResortId: _text(options.selectedResortId),
       visibleReports: _normalizeReports(options.reports),
       errorMessage: "",
+    };
+
+    const emitSelectedResort = (resortId) => {
+      const normalized = _text(resortId);
+      if (!normalized) return;
+      if (onSelectResort) {
+        try {
+          onSelectResort(normalized);
+        } catch (error) {
+          // Ignore selection callback failures.
+        }
+        return;
+      }
+      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") {
+        window.dispatchEvent(new CustomEvent(MAP_SELECTION_EVENT, {
+          detail: { resortId: normalized },
+        }));
+      }
     };
 
     const renderStatus = (eligibleReports) => {
@@ -437,6 +457,8 @@
       if (marker) {
         event.preventDefault();
         state.popupResortId = _text(marker.getAttribute("data-resort-id"));
+        state.selectedResortId = state.popupResortId;
+        emitSelectedResort(state.popupResortId);
         render();
         return;
       }
