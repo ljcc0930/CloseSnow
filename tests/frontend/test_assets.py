@@ -46,6 +46,9 @@ def test_read_asset_bytes_reads_known_assets():
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
     assert ".compact-grid-wrap" in css_text
+    assert ".favorite-alerts-panel" in css_text
+    assert ".favorite-alert-card" in css_text
+    assert ".favorite-alert-rule-select" in css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
@@ -78,9 +81,18 @@ def test_read_asset_bytes_reads_known_assets():
     assert "rain_crossover" in favorites_js_text
     assert "warming_shift" in favorites_js_text
     assert "syncPayload" in favorites_js_text
+    assert "markAlertRead" in favorites_js_text
+    assert "markAlertUnread" in favorites_js_text
+    assert "dismissAlert" in favorites_js_text
+    assert "setResortRule" in favorites_js_text
+    assert "read_alert_ids" in favorites_js_text
+    assert "dismissed_alert_ids" in favorites_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "window.CLOSESNOW_FAVORITE_ALERT_STATE" in js_text
     assert "syncFavoriteAlertState();" in js_text
+    assert "renderFavoriteAlertsPanel" in js_text
+    assert "favorite-alerts-root" in js_text
+    assert "favorite-alert-rule-select" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
     assert "renderHourlyCharts" in hourly_js_text
