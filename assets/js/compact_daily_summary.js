@@ -76,9 +76,26 @@
     return num === null ? "--" : num.toFixed(digits);
   };
 
-  const _formatCompactTempValue = (value) => {
+  const _normalizeUnitMode = (value) => (value === "imperial" ? "imperial" : "metric");
+
+  const _formatCompactSnowValue = (value, unitMode) => {
     const num = _asFiniteNumber(value);
     if (num === null) return "--";
+    if (_normalizeUnitMode(unitMode) === "imperial") return (num / 2.54).toFixed(1);
+    return _formatCompactValue(num);
+  };
+
+  const _formatCompactRainValue = (value, unitMode) => {
+    const num = _asFiniteNumber(value);
+    if (num === null) return "--";
+    if (_normalizeUnitMode(unitMode) === "imperial") return (num / 25.4).toFixed(2);
+    return _formatCompactValue(num);
+  };
+
+  const _formatCompactTempValue = (value, unitMode) => {
+    const num = _asFiniteNumber(value);
+    if (num === null) return "--";
+    if (_normalizeUnitMode(unitMode) === "imperial") return String(Math.round((num * 9 / 5) + 32));
     return String(Math.round(num));
   };
 
@@ -95,13 +112,14 @@
     return _tempColor(day?.temperature_max_c);
   };
 
-  const dayCellHtml = (day) => {
+  const dayCellHtml = (day, options = {}) => {
+    const unitMode = _normalizeUnitMode(options.unitMode);
     const weatherCode = day?.weather_code;
     const weatherEmoji = _weatherEmoji(weatherCode);
-    const highTemp = _formatCompactTempValue(day?.temperature_max_c);
-    const lowTemp = _formatCompactTempValue(day?.temperature_min_c);
-    const snowValue = _formatCompactValue(day?.snowfall_cm);
-    const rainValue = _formatCompactValue(day?.rain_mm);
+    const highTemp = _formatCompactTempValue(day?.temperature_max_c, unitMode);
+    const lowTemp = _formatCompactTempValue(day?.temperature_min_c, unitMode);
+    const snowValue = _formatCompactSnowValue(day?.snowfall_cm, unitMode);
+    const rainValue = _formatCompactRainValue(day?.rain_mm, unitMode);
     return `
       <div class="compact-day-card">
         <div class="compact-row compact-row-primary">

@@ -39,6 +39,7 @@ const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
+const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 
 const appState = {
   payload: null,
@@ -60,6 +61,7 @@ const appState = {
     rain: "metric",
     temp: "metric",
   },
+  compactSummaryUnitMode: "metric",
 };
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
@@ -281,13 +283,19 @@ const _renderCompactGridSection = (reports) => {
       const day = _dailyAt(report, idx);
       const style = compactDailySummary.dayStyle(day);
       const styleAttr = style ? ` style='${style}'` : "";
-      return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day)}</td>`;
+      return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
   }).join("");
   return `
     <section>
-      <h2>Daily Summary</h2>
+      <div class="section-header">
+        <h2>Daily Summary</h2>
+        <div class="unit-toggle unit-toggle-wide" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
+          <button type="button" class="unit-btn" data-unit-mode="metric">Metric</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
+        </div>
+      </div>
       <div class="compact-grid-wrap">
         <div class="compact-grid-left-wrap" id="compact-grid-left-wrap">
           <table class="compact-grid-left-table" id="compact-grid-left-table">
@@ -1312,6 +1320,16 @@ const getStoredUnitMode = (kind) => {
   }
 };
 
+const syncCompactSummaryToggle = () => {
+  document.querySelectorAll(".unit-toggle[data-compact-summary-toggle='1']").forEach((toggle) => {
+    const mode = appState.compactSummaryUnitMode || "metric";
+    toggle.setAttribute("data-mode", mode);
+    toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
+      button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
+    });
+  });
+};
+
 const formatMeasure = (metricValue, kind, mode) => {
   if (mode === "imperial") {
     if (kind === "snow") return (metricValue / 2.54).toFixed(1);
@@ -1346,6 +1364,7 @@ const applyUnitModes = () => {
     renderUnitValues(kind, mode);
   });
   syncToggleButtons();
+  syncCompactSummaryToggle();
 };
 
 const setUnitMode = (kind, mode) => {
@@ -1358,6 +1377,16 @@ const setUnitMode = (kind, mode) => {
   }
   applyUnitModes();
   applyLayout();
+};
+
+const setCompactSummaryUnitMode = (mode) => {
+  appState.compactSummaryUnitMode = mode === "imperial" ? "imperial" : "metric";
+  try {
+    localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${COMPACT_SUMMARY_UNIT_KIND}`, appState.compactSummaryUnitMode);
+  } catch (error) {
+    // Ignore storage failures.
+  }
+  renderPage();
 };
 
 const renderReportDate = () => {
@@ -1476,7 +1505,7 @@ const resetFilterControls = () => {
   filterPassTypeInputs.forEach((input) => { input.checked = false; });
   if (filterRegionSelect) filterRegionSelect.value = "";
   if (filterCountrySelect) filterCountrySelect.value = "";
-  if (filterSortSelect) filterSortSelect.value = "state";
+  if (filterSortSelect) filterSortSelect.value = "week_snow";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
   if (filterSearchAllInput) filterSearchAllInput.checked = true;
   setFavoritesOnlyControls(false);
@@ -1564,6 +1593,11 @@ const bindControls = () => {
     }
     const button = event.target.closest(".unit-btn[data-unit-mode]");
     if (!button) return;
+    const compactToggle = button.closest(".unit-toggle[data-compact-summary-toggle='1']");
+    if (compactToggle) {
+      setCompactSummaryUnitMode(button.getAttribute("data-unit-mode"));
+      return;
+    }
     const group = button.closest(".unit-toggle[data-target-kind]");
     if (!group) return;
     const kind = group.getAttribute("data-target-kind");
@@ -1579,6 +1613,7 @@ const initialize = async () => {
   Object.keys(appState.unitModes).forEach((kind) => {
     appState.unitModes[kind] = getStoredUnitMode(kind);
   });
+  appState.compactSummaryUnitMode = getStoredUnitMode(COMPACT_SUMMARY_UNIT_KIND);
   appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
     appState.payload = await loadPayload();

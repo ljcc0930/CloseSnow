@@ -259,6 +259,9 @@
       position: relative;
       z-index: 1;
     }
+    .unit-toggle.unit-toggle-wide .unit-btn {
+      width: 76px;
+    }
     body.units-pending .unit-btn {
       transition: none;
     }

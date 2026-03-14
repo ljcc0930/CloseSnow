@@ -37,6 +37,39 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 20:35 (local)
+
+### Scope
+- Add a unit-system toggle for the main-page `Daily Summary` compact cards.
+
+### Changes
+- Files:
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/weather_page.js`
+  - `assets/css/weather_page.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Main-page `Daily Summary` now renders a `Metric / Imperial` toggle in its section header.
+  - Compact daily cards now convert snowfall, rainfall, and high/low temperature values when the summary toggle changes.
+  - The `Daily Summary` unit preference now persists independently from the larger table-specific unit toggles.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-daily-summary-toggle --max-workers 2`
+  - `rg -n "Daily Summary unit system|data-compact-summary-toggle|Metric|Imperial" /tmp/closesnow-daily-summary-toggle/assets/js/weather_page.js /tmp/closesnow-daily-summary-toggle/index.html`
+- Results:
+  - targeted frontend/static/integration tests: `26 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-daily-summary-toggle/data.json`, `Done: /tmp/closesnow-daily-summary-toggle/index.html`, `Done: 24 resort hourly page(s)`)
+  - artifact grep: confirmed the summary toggle markup and button labels are present in generated assets
+
+### Risks / Notes
+- The new toggle is intentionally scoped to the compact `Daily Summary`; it does not auto-sync the larger Snowfall/Rainfall/Temperature table toggles.
+
+### Next Slice
+- Consider whether the resort hourly page's reused compact `Daily Summary` should expose the same unit toggle for consistency.
+
 ## 2026-03-13 20:11 (local)
 
 ### Scope
