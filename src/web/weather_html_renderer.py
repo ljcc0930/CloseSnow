@@ -14,7 +14,7 @@ _PAGE_SHELL_PLACEHOLDER = """
         <div class="us-snowfall-map-heading-wrap">
           <p class="us-snowfall-map-eyebrow">National snowfall outlook</p>
           <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
-          <p class="us-snowfall-map-subtitle">Compare map-ready US resorts across 24-hour, 72-hour, and 7-day snowfall windows without losing the full forecast tables below.</p>
+          <p class="us-snowfall-map-subtitle">Compare map-ready US resorts across 24-hour, 72-hour, and 7-day snowfall windows, then open the same hourly forecasts from one map surface.</p>
         </div>
         <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="today">
           <button type="button" class="unit-btn is-active" data-map-metric-key="today" aria-pressed="true">24h</button>
@@ -23,32 +23,33 @@ _PAGE_SHELL_PLACEHOLDER = """
         </div>
       </div>
       <div class="us-snowfall-map-shell">
-        <div class="us-snowfall-map-stage">
-          <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="region" aria-label="US snowfall map">
-            <div class="us-snowfall-map-placeholder">
-              <span class="us-snowfall-map-placeholder-kicker">Nationwide outlook</span>
-              <strong>Preparing live snowfall markers</strong>
-              <span>Switch forecast windows above to compare the latest map-ready US resort totals.</span>
-            </div>
-          </div>
-          <div class="us-snowfall-map-stage-footer">
-            <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Preparing the nationwide snowfall map and resort markers.</p>
+        <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="region" aria-label="US snowfall map">
+          <div class="us-snowfall-map-placeholder">
+            <span class="us-snowfall-map-placeholder-kicker">Nationwide resort snowfall</span>
+            <strong>Track 24h, 72h, and 7-day snow from one map.</strong>
+            <span>Interactive markers, panning, and hourly drill-ins load with the page script while the forecast tables stay available below.</span>
           </div>
         </div>
-        <aside class="us-snowfall-map-meta" aria-label="Snowfall map support">
-          <div class="us-snowfall-map-meta-card">
-            <div class="us-snowfall-map-meta-label">Snow intensity</div>
-            <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
+        <div class="us-snowfall-map-meta">
+          <div class="us-snowfall-map-panel us-snowfall-map-panel-status">
+            <span class="us-snowfall-map-panel-label">Map status</span>
+            <div id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">
+              <strong>Preparing nationwide resort snowfall coverage.</strong>
+              <span>Switch metrics, pan the map, and open a marker to continue into the matching hourly page.</span>
+            </div>
+          </div>
+          <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
+            <div class="us-snowfall-map-panel-heading">
+              <span class="us-snowfall-map-panel-label">Intensity guide</span>
+              <p class="us-snowfall-map-panel-copy">Marker fill reflects the active snowfall range while the rest of the forecast stays available below.</p>
+            </div>
+            <div class="us-snowfall-map-legend-scale">
               <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-5 cm</span>
               <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">5-15 cm</span>
               <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">15+ cm</span>
             </div>
           </div>
-          <div class="us-snowfall-map-meta-card">
-            <div class="us-snowfall-map-meta-label">Coverage</div>
-            <p class="us-snowfall-map-meta-copy">US resorts with projectable coordinates appear on the map. The full forecast tables below still carry the broader resort set.</p>
-          </div>
-        </aside>
+        </div>
       </div>
     </section>
     <section><h2>Daily Summary</h2><p class="section-loading">Loading forecast...</p></section>

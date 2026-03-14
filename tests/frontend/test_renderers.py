@@ -254,15 +254,14 @@ def test_build_html_contains_meta_sections():
     assert 'id="us-snowfall-map-status"' in html
     assert 'id="us-snowfall-map-root"' in html
     assert 'class="us-snowfall-map-eyebrow"' in html
-    assert 'class="us-snowfall-map-stage-footer"' in html
-    assert 'class="us-snowfall-map-meta-card"' in html
+    assert "Map status" in html
+    assert "Intensity guide" in html
+    assert "Preparing nationwide resort snowfall coverage." in html
+    assert "Track 24h, 72h, and 7-day snow from one map." in html
     assert 'data-map-metric-key="today"' in html
     assert 'data-map-metric-key="next_72h"' in html
     assert 'data-map-metric-key="week1"' in html
     assert "National snowfall outlook" in html
-    assert "Preparing live snowfall markers" in html
-    assert "Snow intensity" in html
-    assert "Coverage" in html
     assert "Preview the upcoming nationwide snowfall view" not in html
     assert "Loading the US snowfall map controller." not in html
     assert html.index('id="us-snowfall-map-section"') < html.index("<h2>Daily Summary</h2>")
