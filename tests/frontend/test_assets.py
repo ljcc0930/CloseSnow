@@ -9,12 +9,14 @@ def test_asset_path_points_to_repo_assets():
     css_path = asset_path("assets/css/weather_page.css")
     compact_js_path = asset_path("assets/js/compact_daily_summary.js")
     favorites_js_path = asset_path("assets/js/favorites_alerts.js")
+    favorites_sw_js_path = asset_path("assets/js/favorites_alerts_sw.js")
     js_path = asset_path("assets/js/weather_page.js")
     hourly_css_path = asset_path("assets/css/resort_hourly.css")
     hourly_js_path = asset_path("assets/js/resort_hourly.js")
     assert str(css_path).endswith("assets/css/weather_page.css")
     assert str(compact_js_path).endswith("assets/js/compact_daily_summary.js")
     assert str(favorites_js_path).endswith("assets/js/favorites_alerts.js")
+    assert str(favorites_sw_js_path).endswith("assets/js/favorites_alerts_sw.js")
     assert str(js_path).endswith("assets/js/weather_page.js")
     assert str(hourly_css_path).endswith("assets/css/resort_hourly.css")
     assert str(hourly_js_path).endswith("assets/js/resort_hourly.js")
@@ -24,24 +26,28 @@ def test_read_asset_bytes_reads_known_assets():
     css = read_asset_bytes("assets/css/weather_page.css")
     compact_js = read_asset_bytes("assets/js/compact_daily_summary.js")
     favorites_js = read_asset_bytes("assets/js/favorites_alerts.js")
+    favorites_sw_js = read_asset_bytes("assets/js/favorites_alerts_sw.js")
     js = read_asset_bytes("assets/js/weather_page.js")
     hourly_css = read_asset_bytes("assets/css/resort_hourly.css")
     hourly_js = read_asset_bytes("assets/js/resort_hourly.js")
     assert len(css) > 100
     assert len(compact_js) > 100
     assert len(favorites_js) > 100
+    assert len(favorites_sw_js) > 50
     assert len(js) > 100
     assert len(hourly_css) > 100
     assert len(hourly_js) > 100
     assert ASSET_MIME_TYPES["assets/css/weather_page.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/compact_daily_summary.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/favorites_alerts.js"].startswith("application/javascript")
+    assert ASSET_MIME_TYPES["assets/js/favorites_alerts_sw.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
     css_text = css.decode("utf-8", errors="ignore")
     compact_js_text = compact_js.decode("utf-8", errors="ignore")
     favorites_js_text = favorites_js.decode("utf-8", errors="ignore")
+    favorites_sw_js_text = favorites_sw_js.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
@@ -49,6 +55,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".favorite-alerts-panel" in css_text
     assert ".favorite-alert-card" in css_text
     assert ".favorite-alert-rule-select" in css_text
+    assert ".favorite-alert-notification" in css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
@@ -87,12 +94,22 @@ def test_read_asset_bytes_reads_known_assets():
     assert "setResortRule" in favorites_js_text
     assert "read_alert_ids" in favorites_js_text
     assert "dismissed_alert_ids" in favorites_js_text
+    assert "notification_opt_in" in favorites_js_text
+    assert "notified_alert_ids" in favorites_js_text
+    assert "setNotificationOptIn" in favorites_js_text
+    assert "markAlertsNotified" in favorites_js_text
+    assert "notificationclick" in favorites_sw_js_text
+    assert "clients.openWindow" in favorites_sw_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "window.CLOSESNOW_FAVORITE_ALERT_STATE" in js_text
     assert "syncFavoriteAlertState();" in js_text
     assert "renderFavoriteAlertsPanel" in js_text
     assert "favorite-alerts-root" in js_text
     assert "favorite-alert-rule-select" in js_text
+    assert "favorite-alert-notification" in js_text
+    assert "Enable notifications" in js_text
+    assert "Notification.requestPermission" in js_text
+    assert "favorites_alerts_sw.js" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
     assert "renderHourlyCharts" in hourly_js_text

@@ -70,6 +70,8 @@ const appState = {
   sunTimeToggleMode: "metric",
   favoriteAlertState: null,
   newFavoriteAlerts: [],
+  favoriteAlertNotificationRegistration: null,
+  favoriteAlertNotificationRegistrationReady: false,
 };
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
@@ -762,6 +764,136 @@ const _favoriteAlertCollections = () => {
   };
 };
 
+const _favoriteAlertNotificationSummary = (state) => {
+  const notificationSupported = typeof window.Notification !== "undefined";
+  const permission = notificationSupported ? window.Notification.permission : "unsupported";
+  const optIn = Boolean(state.notification_opt_in);
+  if (!notificationSupported) {
+    return {
+      title: "Notifications unavailable",
+      copy: "This browser does not expose the Notification API, so CloseSnow will stay inbox-only.",
+      action: "",
+      tone: "muted",
+    };
+  }
+  if (permission === "denied") {
+    return {
+      title: "Notifications blocked",
+      copy: "Browser notifications are blocked for this site. The inbox remains the source of truth for favorite alerts.",
+      action: optIn ? "disable" : "",
+      tone: "warning",
+    };
+  }
+  if (!optIn || permission !== "granted") {
+    return {
+      title: "Browser notifications off",
+      copy: "Enable this optional enhancement to mirror newly generated favorite alerts while the browser supports it.",
+      action: "enable",
+      tone: "muted",
+    };
+  }
+  if (appState.favoriteAlertNotificationRegistrationReady) {
+    return {
+      title: "Browser notifications enabled",
+      copy: "New favorite alerts can appear as browser notifications and still map back to the same inbox items.",
+      action: "disable",
+      tone: "ready",
+    };
+  }
+  return {
+    title: "Browser notifications enabled (page delivery)",
+    copy: "Permission is granted, but service worker setup is unavailable. CloseSnow will still notify while this page stays open.",
+    action: "disable",
+    tone: "ready",
+  };
+};
+
+const _favoriteAlertNotificationControlsHtml = (state) => {
+  const summary = _favoriteAlertNotificationSummary(state);
+  const buttonLabel = summary.action === "enable" ? "Enable notifications" : "Turn off";
+  return `<section class='favorite-alert-notification' data-notification-tone='${summary.tone}'>
+    <div>
+      <h3>${_escapeHtml(summary.title)}</h3>
+      <p>${_escapeHtml(summary.copy)}</p>
+    </div>
+    ${summary.action
+      ? `<button type='button' class='favorite-alert-notification-btn' data-favorite-alert-notifications='${summary.action}'>${_escapeHtml(buttonLabel)}</button>`
+      : ""}
+  </section>`;
+};
+
+const registerFavoriteAlertServiceWorker = async () => {
+  if (!("serviceWorker" in navigator)) return null;
+  if (appState.favoriteAlertNotificationRegistration) return appState.favoriteAlertNotificationRegistration;
+  try {
+    const registration = await navigator.serviceWorker.register(
+      new URL("assets/js/favorites_alerts_sw.js", window.location.href).toString(),
+    );
+    appState.favoriteAlertNotificationRegistration = registration;
+    appState.favoriteAlertNotificationRegistrationReady = true;
+    return registration;
+  } catch (error) {
+    appState.favoriteAlertNotificationRegistrationReady = false;
+    return null;
+  }
+};
+
+const notifyFavoriteAlertsIfNeeded = async () => {
+  if (!favoriteAlertsApi || typeof favoriteAlertsApi.markAlertsNotified !== "function") return;
+  const state = _favoriteAlertState();
+  if (!state.notification_opt_in) return;
+  if (typeof window.Notification === "undefined" || window.Notification.permission !== "granted") return;
+  if (!Array.isArray(appState.newFavoriteAlerts) || appState.newFavoriteAlerts.length === 0) return;
+  const alreadyNotified = new Set(Array.isArray(state.notified_alert_ids) ? state.notified_alert_ids : []);
+  const pendingAlerts = appState.newFavoriteAlerts.filter((alert) => {
+    const alertId = String(alert?.id || "").trim();
+    return alertId && !alreadyNotified.has(alertId);
+  });
+  if (!pendingAlerts.length) return;
+
+  const registration = await registerFavoriteAlertServiceWorker();
+  const notifiedIds = [];
+  for (const alert of pendingAlerts) {
+    const alertId = String(alert?.id || "").trim();
+    if (!alertId) continue;
+    const title = String(alert?.title || alert?.resort_name || "Favorite alert").trim() || "Favorite alert";
+    const body = String(alert?.message || "").trim() || "A favorite resort forecast changed.";
+    const destinationUrl = alert?.resort_id
+      ? new URL(`resort/${encodeURIComponent(alert.resort_id)}`, window.location.href).toString()
+      : window.location.href;
+    try {
+      if (registration && typeof registration.showNotification === "function") {
+        await registration.showNotification(title, {
+          body,
+          tag: alertId,
+          data: { url: destinationUrl, alertId },
+        });
+      } else {
+        new window.Notification(title, {
+          body,
+          tag: alertId,
+        });
+      }
+      notifiedIds.push(alertId);
+    } catch (error) {
+      break;
+    }
+  }
+  if (!notifiedIds.length) return;
+  favoriteAlertsApi.markAlertsNotified(notifiedIds);
+  refreshFavoriteAlertStateFromStorage();
+  renderFavoriteAlertsPanel();
+};
+
+const warmFavoriteAlertNotificationRegistration = () => {
+  const state = _favoriteAlertState();
+  if (!state.notification_opt_in) return;
+  if (typeof window.Notification === "undefined" || window.Notification.permission !== "granted") return;
+  void registerFavoriteAlertServiceWorker().then(() => {
+    renderFavoriteAlertsPanel();
+  });
+};
+
 const _favoriteAlertCardHtml = (alert, read) => {
   const alertId = String(alert?.id || "").trim();
   const resortId = String(alert?.resort_id || "").trim();
@@ -872,6 +1004,7 @@ const renderFavoriteAlertsPanel = () => {
       <div class='favorite-alert-chip-row'>${chips.join("")}</div>
     </div>
     <p class='favorite-alerts-description'>Review forecast swings without leaving the homepage. Alerts stay local to this browser and never auto-mark themselves as read.</p>
+    ${_favoriteAlertNotificationControlsHtml(state)}
     <div class='favorite-alerts-grid'>
       ${_favoriteAlertSectionHtml({
         title: "Unread alerts",
@@ -907,6 +1040,7 @@ const syncFavoriteAlertState = () => {
     result && result.state ? result.state : null,
     result && Array.isArray(result.newAlerts) ? result.newAlerts : [],
   );
+  void notifyFavoriteAlertsIfNeeded();
   return result;
 };
 
@@ -2001,6 +2135,7 @@ const reloadDynamicPayloadForFilters = async () => {
   appState.reports = _payloadReports();
   appState.availableFilters = _availableFilters();
   syncFavoriteAlertState();
+  warmFavoriteAlertNotificationRegistration();
   updateFilterLabels();
 };
 
@@ -2090,6 +2225,31 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const notificationButton = event.target.closest("[data-favorite-alert-notifications]");
+    if (notificationButton && favoriteAlertsApi && typeof favoriteAlertsApi.setNotificationOptIn === "function") {
+      const action = notificationButton.getAttribute("data-favorite-alert-notifications");
+      if (action === "enable") {
+        if (typeof window.Notification === "undefined") {
+          renderFavoriteAlertsPanel();
+          return;
+        }
+        window.Notification.requestPermission().then(async (permission) => {
+          if (permission === "granted") {
+            favoriteAlertsApi.setNotificationOptIn(true);
+            await registerFavoriteAlertServiceWorker();
+          }
+          refreshFavoriteAlertStateFromStorage();
+          renderFavoriteAlertsPanel();
+        });
+        return;
+      }
+      if (action === "disable") {
+        favoriteAlertsApi.setNotificationOptIn(false);
+        refreshFavoriteAlertStateFromStorage();
+        renderFavoriteAlertsPanel();
+        return;
+      }
+    }
     const alertActionButton = event.target.closest("[data-alert-action][data-alert-id]");
     if (alertActionButton && favoriteAlertsApi) {
       const action = alertActionButton.getAttribute("data-alert-action");
@@ -2170,6 +2330,7 @@ const initialize = async () => {
     appState.reports = _payloadReports();
     appState.availableFilters = _availableFilters();
     syncFavoriteAlertState();
+    warmFavoriteAlertNotificationRegistration();
     updateFilterLabels();
     applyControlsFromQueryOrMeta();
     renderPage();

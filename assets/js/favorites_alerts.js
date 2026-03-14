@@ -105,6 +105,8 @@
     alerts: [],
     read_alert_ids: [],
     dismissed_alert_ids: [],
+    notified_alert_ids: [],
+    notification_opt_in: false,
     rules_by_resort_id: {},
   });
 
@@ -176,6 +178,8 @@
     const validAlertIds = new Set(state.alerts.map((alert) => alert.id));
     state.read_alert_ids = normalizeIdList(raw.read_alert_ids, validAlertIds);
     state.dismissed_alert_ids = normalizeIdList(raw.dismissed_alert_ids, validAlertIds);
+    state.notified_alert_ids = normalizeIdList(raw.notified_alert_ids, validAlertIds);
+    state.notification_opt_in = Boolean(raw.notification_opt_in);
     state.rules_by_resort_id = normalizeRuleMap(raw.rules_by_resort_id);
     return state;
   };
@@ -233,6 +237,22 @@
     ...state,
     read_alert_ids: updateAlertIdList(state.read_alert_ids, alertId, true),
     dismissed_alert_ids: updateAlertIdList(state.dismissed_alert_ids, alertId, true),
+  }), storage);
+
+  const markAlertsNotified = (alertIds, storage = root.localStorage) => updateState((state) => {
+    const validIds = new Set((state.alerts || []).map((alert) => alert.id));
+    return {
+      ...state,
+      notified_alert_ids: normalizeIdList(
+        state.notified_alert_ids.concat(Array.isArray(alertIds) ? alertIds : []),
+        validIds,
+      ),
+    };
+  }, storage);
+
+  const setNotificationOptIn = (enabled, storage = root.localStorage) => updateState((state) => ({
+    ...state,
+    notification_opt_in: Boolean(enabled),
   }), storage);
 
   const setResortRule = (resortId, mode, storage = root.localStorage) => updateState((state) => {
@@ -502,7 +522,9 @@
     markAlertRead,
     markAlertUnread,
     dismissAlert,
+    markAlertsNotified,
     setResortRule,
+    setNotificationOptIn,
     syncPayload,
   };
 })(typeof window !== "undefined" ? window : globalThis);
