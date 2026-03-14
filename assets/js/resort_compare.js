@@ -10,6 +10,7 @@ const compareSelectionConfig =
 const compareSummary = document.getElementById("compare-summary");
 const compareSelectedChips = document.getElementById("compare-selected-chips");
 const compareCopyBtn = document.getElementById("compare-copy-btn");
+const compareShareBtn = document.getElementById("compare-share-btn");
 const compareHomeLink = document.getElementById("compare-home-link");
 const compareMessage = document.getElementById("compare-message");
 const compareEmptyState = document.getElementById("compare-empty-state");
@@ -19,12 +20,17 @@ const compareMetrics = document.getElementById("compare-metrics");
 const COMPARE_QUERY_KEY = String(compareSelectionConfig.queryKey || compareSelectionApi.DEFAULT_QUERY_KEY || "compare").trim() || "compare";
 const COMPARE_MAX_RESORTS = Number(compareSelectionConfig.maxResorts || compareSelectionApi.DEFAULT_MAX_SELECTION || 4) || 4;
 const COMPARE_DAYS = 7;
+const COMPARE_HOURLY_HOURS = 36;
+const COMPARE_HOURLY_SUMMARY_HOURS = 24;
+const COMPARE_HOURLY_ROW_STEP = 3;
+const COMPARE_HOURLY_ROW_LIMIT = 8;
 
 const appState = {
   payload: null,
   selectedIds: [],
   reportById: new Map(),
   notice: "",
+  hourlyByResortId: new Map(),
 };
 
 const _escapeHtml = (value) => String(value || "")
@@ -51,6 +57,11 @@ const _formatTemp = (value) => {
   return Number.isInteger(num) ? String(num) : num.toFixed(1);
 };
 
+const _formatIntegerMetric = (value, suffix = "") => {
+  const num = _asFiniteNumber(value);
+  return num === null ? "?" : `${Math.round(num)}${suffix}`;
+};
+
 const _displayName = (report) => String(report?.display_name || report?.query || report?.resort_id || "").trim();
 
 const _locationLabel = (report) => (
@@ -58,6 +69,20 @@ const _locationLabel = (report) => (
     .filter(Boolean)
     .join(" . ")
 );
+
+const compareRoutePrefix = (() => {
+  const path = window.location.pathname || "";
+  const marker = "/compare";
+  const idx = path.lastIndexOf(marker);
+  if (idx < 0) return "";
+  return path.slice(0, idx);
+})();
+
+const withPrefix = (path) => {
+  const cleanPath = String(path || "").startsWith("/") ? String(path || "") : `/${String(path || "")}`;
+  if (!compareRoutePrefix) return cleanPath;
+  return `${compareRoutePrefix}${cleanPath}`;
+};
 
 const _resolveDataUrl = (rawUrl) => {
   const text = String(rawUrl || "").trim();
@@ -71,6 +96,31 @@ const _resolveDataUrl = (rawUrl) => {
     : `${pathname}/`;
   return new URL(text, `${window.location.origin}${normalizedPath}`).toString();
 };
+
+const _isDynamicApiDataUrl = () => {
+  try {
+    return new URL(_resolveDataUrl(compareContext.dataUrl)).pathname.endsWith("/api/data");
+  } catch (error) {
+    return false;
+  }
+};
+
+const _hourlyPayloadUrlFor = (resortId) => {
+  const normalizedId = String(resortId || "").trim();
+  if (!normalizedId) throw new Error("Missing resort id for hourly compare.");
+  if (_isDynamicApiDataUrl()) {
+    const endpoint = new URL(withPrefix("/api/resort-hourly"), window.location.origin);
+    endpoint.searchParams.set("resort_id", normalizedId);
+    endpoint.searchParams.set("hours", String(COMPARE_HOURLY_HOURS));
+    return endpoint.toString();
+  }
+  return new URL(withPrefix(`/resort/${encodeURIComponent(normalizedId)}/hourly.json`), window.location.origin).toString();
+};
+
+const _hourlyPageUrlFor = (resortId) => new URL(
+  withPrefix(`/resort/${encodeURIComponent(String(resortId || "").trim())}/`),
+  window.location.origin,
+).toString();
 
 const _weatherEmoji = (rawCode) => {
   const code = Number(rawCode);
@@ -208,7 +258,7 @@ const _winnerIdsFor = (reports, getter, comparator = "max") => {
     const target = comparator === "min"
       ? Math.min(...numericValues.map((entry) => entry.value))
       : Math.max(...numericValues.map((entry) => entry.value));
-    return new Set(numericValues.filter((entry) => entry.value === target).map((entry) => entry.resortId));
+    return new Set(numericValues.filter((entry) => entry.value === target).map((entry) => entry.resort_id || entry.resortId));
   });
 };
 
@@ -341,6 +391,199 @@ const _renderWeatherTable = (reports) => {
     </section>`;
 };
 
+const _hourlySeries = (payload, key) => {
+  const hourly = payload?.hourly && typeof payload.hourly === "object" ? payload.hourly : {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const rawValues = Array.isArray(hourly[key]) ? hourly[key] : [];
+  return times.map((_, index) => _asFiniteNumber(rawValues[index]));
+};
+
+const _sumFirstHours = (values, hours) => values
+  .slice(0, Math.max(0, hours))
+  .reduce((sum, value) => sum + (value || 0), 0);
+
+const _maxFirstHours = (values, hours) => {
+  const subset = values.slice(0, Math.max(0, hours)).filter((value) => value !== null);
+  return subset.length ? Math.max(...subset) : null;
+};
+
+const _firstTimeLabel = (times, values, predicate) => {
+  for (let index = 0; index < times.length; index += 1) {
+    const value = values[index];
+    if (predicate(value)) return _compactTimeLabel(times[index]);
+  }
+  return "None";
+};
+
+const _compactTimeLabel = (rawTime) => {
+  const text = String(rawTime || "").trim();
+  if (!text) return "Unknown";
+  const [datePart, timePart = ""] = text.split("T");
+  const md = datePart.length >= 10 ? datePart.slice(5) : datePart;
+  const hhmm = timePart.slice(0, 5);
+  return [md, hhmm].filter(Boolean).join(" ");
+};
+
+const _hourlyRows = (payload) => {
+  const hourly = payload?.hourly && typeof payload.hourly === "object" ? payload.hourly : {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const snowfall = _hourlySeries(payload, "snowfall");
+  const rain = _hourlySeries(payload, "rain");
+  const wind = _hourlySeries(payload, "wind_speed_10m");
+  const probability = _hourlySeries(payload, "precipitation_probability");
+  const out = [];
+  for (let index = 0; index < times.length && out.length < COMPARE_HOURLY_ROW_LIMIT; index += COMPARE_HOURLY_ROW_STEP) {
+    out.push({
+      time: times[index],
+      snowfall: snowfall[index],
+      rain: rain[index],
+      wind: wind[index],
+      probability: probability[index],
+    });
+  }
+  return out;
+};
+
+const _hourlyStateFor = (resortId) => appState.hourlyByResortId.get(String(resortId || "").trim()) || { status: "idle" };
+
+const _renderHourlyCard = (report, hourlyState) => {
+  const resortId = String(report?.resort_id || "").trim();
+  const resortLabel = _displayName(report);
+  const location = _locationLabel(report) || resortId;
+  if (hourlyState.status === "loading" || hourlyState.status === "idle") {
+    return `
+      <article class="compare-hourly-card is-loading">
+        <div class="compare-hourly-card-head">
+          <div>
+            <h3>${_escapeHtml(resortLabel)}</h3>
+            <p>${_escapeHtml(location)}</p>
+          </div>
+          <a class="compare-hourly-link" href="${_escapeHtml(_hourlyPageUrlFor(resortId))}">Hourly page</a>
+        </div>
+        <div class="compare-hourly-status">Loading hourly compare detail...</div>
+      </article>`;
+  }
+  if (hourlyState.status === "error") {
+    return `
+      <article class="compare-hourly-card is-error">
+        <div class="compare-hourly-card-head">
+          <div>
+            <h3>${_escapeHtml(resortLabel)}</h3>
+            <p>${_escapeHtml(location)}</p>
+          </div>
+          <a class="compare-hourly-link" href="${_escapeHtml(_hourlyPageUrlFor(resortId))}">Hourly page</a>
+        </div>
+        <div class="compare-hourly-status">Hourly detail unavailable for this resort right now. Daily compare remains available.</div>
+        <p class="compare-hourly-error-detail">${_escapeHtml(hourlyState.message || "Missing hourly artifact.")}</p>
+      </article>`;
+  }
+
+  const payload = hourlyState.payload;
+  const hourly = payload?.hourly && typeof payload.hourly === "object" ? payload.hourly : {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  if (!times.length) {
+    return `
+      <article class="compare-hourly-card is-error">
+        <div class="compare-hourly-card-head">
+          <div>
+            <h3>${_escapeHtml(resortLabel)}</h3>
+            <p>${_escapeHtml(location)}</p>
+          </div>
+          <a class="compare-hourly-link" href="${_escapeHtml(_hourlyPageUrlFor(resortId))}">Hourly page</a>
+        </div>
+        <div class="compare-hourly-status">No hourly rows were available for this resort.</div>
+      </article>`;
+  }
+
+  const snowfall = _hourlySeries(payload, "snowfall");
+  const rain = _hourlySeries(payload, "rain");
+  const wind = _hourlySeries(payload, "wind_speed_10m");
+  const probability = _hourlySeries(payload, "precipitation_probability");
+  const rows = _hourlyRows(payload);
+  const metaParts = [
+    `${Math.min(times.length, COMPARE_HOURLY_HOURS)}h window`,
+    String(payload?.timezone || "").trim(),
+    String(payload?.model || "").trim(),
+  ].filter(Boolean);
+  return `
+    <article class="compare-hourly-card">
+      <div class="compare-hourly-card-head">
+        <div>
+          <h3>${_escapeHtml(resortLabel)}</h3>
+          <p>${_escapeHtml(location)}</p>
+        </div>
+        <a class="compare-hourly-link" href="${_escapeHtml(_hourlyPageUrlFor(resortId))}">Hourly page</a>
+      </div>
+      <div class="compare-hourly-meta">${_escapeHtml(metaParts.join(" | "))}</div>
+      <div class="compare-hourly-stats">
+        <div class="compare-hourly-stat">
+          <strong>24h snow</strong>
+          <span>${_escapeHtml(_formatMetric(_sumFirstHours(snowfall, COMPARE_HOURLY_SUMMARY_HOURS), " cm"))}</span>
+        </div>
+        <div class="compare-hourly-stat">
+          <strong>Snow starts</strong>
+          <span>${_escapeHtml(_firstTimeLabel(times, snowfall, (value) => (value || 0) > 0.05))}</span>
+        </div>
+        <div class="compare-hourly-stat">
+          <strong>Rain starts</strong>
+          <span>${_escapeHtml(_firstTimeLabel(times, rain, (value) => (value || 0) > 0.05))}</span>
+        </div>
+        <div class="compare-hourly-stat">
+          <strong>Peak wind</strong>
+          <span>${_escapeHtml(_formatMetric(_maxFirstHours(wind, COMPARE_HOURLY_SUMMARY_HOURS), " km/h"))}</span>
+        </div>
+        <div class="compare-hourly-stat">
+          <strong>Peak precip</strong>
+          <span>${_escapeHtml(_formatIntegerMetric(_maxFirstHours(probability, COMPARE_HOURLY_SUMMARY_HOURS), "%"))}</span>
+        </div>
+      </div>
+      <div class="compare-hourly-table-wrap">
+        <table class="compare-hourly-table">
+          <thead>
+            <tr><th>Time</th><th>Snow</th><th>Rain</th><th>Wind</th><th>Precip</th></tr>
+          </thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td>${_escapeHtml(_compactTimeLabel(row.time))}</td>
+                <td>${_escapeHtml(_formatMetric(row.snowfall, " cm"))}</td>
+                <td>${_escapeHtml(_formatMetric(row.rain, " mm"))}</td>
+                <td>${_escapeHtml(_formatMetric(row.wind, " km/h"))}</td>
+                <td>${_escapeHtml(_formatIntegerMetric(row.probability, "%"))}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </article>`;
+};
+
+const _renderHourlySection = (reports) => {
+  const hourlyStates = reports.map((report) => ({ report, state: _hourlyStateFor(report.resort_id) }));
+  const loadingCount = hourlyStates.filter((entry) => entry.state.status === "loading" || entry.state.status === "idle").length;
+  const errorCount = hourlyStates.filter((entry) => entry.state.status === "error").length;
+  let noticeHtml = "";
+  if (loadingCount) {
+    noticeHtml += `<div class="compare-hourly-warning">Loading hourly detail for ${loadingCount} resort${loadingCount === 1 ? "" : "s"}.</div>`;
+  }
+  if (errorCount) {
+    noticeHtml += `<div class="compare-hourly-warning is-error">${errorCount} selected resort${errorCount === 1 ? " is" : "s are"} missing hourly detail. Remaining resorts still render.</div>`;
+  }
+  return `
+    <section class="compare-section compare-hourly-section">
+      <div class="compare-section-head">
+        <h2>Hourly Compare</h2>
+        <p>Trip-decision metrics only: snowfall timing, rain crossover, wind, and precip risk from the existing hourly resort artifacts.</p>
+      </div>
+      <div class="compare-hourly-shell">
+        ${noticeHtml}
+        <div class="compare-hourly-grid">
+          ${hourlyStates.map(({ report, state }) => _renderHourlyCard(report, state)).join("")}
+        </div>
+      </div>
+    </section>`;
+};
+
 const _renderEmptyState = (title, body) => {
   compareCards.hidden = true;
   compareCards.innerHTML = "";
@@ -354,7 +597,7 @@ const renderPage = () => {
   _renderChips();
   if (compareHomeLink) compareHomeLink.href = _buildHomeUrl();
   const reports = _selectedReports();
-  compareSummary.textContent = `${appState.selectedIds.length}/${COMPARE_MAX_RESORTS} resorts selected for side-by-side daily comparison.`;
+  compareSummary.textContent = `${appState.selectedIds.length}/${COMPARE_MAX_RESORTS} resorts selected for side-by-side daily and hourly comparison.`;
   if (reports.length === 0) {
     _renderEmptyState("Choose resorts to compare", "Add 2 to 4 resorts from the homepage compare controls, then reopen this compare page.");
     return;
@@ -368,6 +611,7 @@ const renderPage = () => {
   _renderSummaryCards(reports);
   compareMetrics.hidden = false;
   compareMetrics.innerHTML = [
+    _renderHourlySection(reports),
     _renderValueTable({
       title: "Snowfall",
       subtitle: "Strongest snowfall day for each window is highlighted in teal.",
@@ -387,17 +631,64 @@ const renderPage = () => {
   ].join("");
 };
 
-const loadPayload = async () => {
-  const response = await fetch(_resolveDataUrl(compareContext.dataUrl));
-  const payload = await response.json();
+const _fetchJson = async (url) => {
+  const response = await fetch(url);
+  const text = await response.text();
+  let payload = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch (error) {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    throw new Error("Invalid JSON response.");
+  }
   if (!response.ok) {
     throw new Error(payload && payload.error ? payload.error : `HTTP ${response.status}`);
   }
   return payload;
 };
 
+const loadPayload = async () => _fetchJson(_resolveDataUrl(compareContext.dataUrl));
+
+const loadHourlyPayload = async (resortId) => {
+  const payload = await _fetchJson(_hourlyPayloadUrlFor(resortId));
+  if (!payload || typeof payload !== "object" || !payload.hourly || !Array.isArray(payload.hourly.time)) {
+    throw new Error("Hourly detail is unavailable for this resort.");
+  }
+  return payload;
+};
+
+const ensureHourlyDataForSelection = async () => {
+  const selectedIds = _selectedReports().map((report) => String(report?.resort_id || "").trim()).filter(Boolean);
+  const missingIds = selectedIds.filter((resortId) => !_hourlyStateFor(resortId).status || _hourlyStateFor(resortId).status === "idle");
+  if (!missingIds.length) return;
+  missingIds.forEach((resortId) => {
+    appState.hourlyByResortId.set(resortId, { status: "loading" });
+  });
+  renderPage();
+  await Promise.all(missingIds.map(async (resortId) => {
+    try {
+      const payload = await loadHourlyPayload(resortId);
+      appState.hourlyByResortId.set(resortId, { status: "ready", payload });
+    } catch (error) {
+      appState.hourlyByResortId.set(resortId, {
+        status: "error",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }));
+  renderPage();
+};
+
 const syncUrl = () => {
   window.history.replaceState({}, "", _buildCompareUrl());
+};
+
+const syncSelectionAndRender = () => {
+  syncUrl();
+  renderPage();
+  void ensureHourlyDataForSelection();
 };
 
 const initialize = async () => {
@@ -412,6 +703,7 @@ const initialize = async () => {
     );
     appState.selectedIds = _parseSelection();
     renderPage();
+    void ensureHourlyDataForSelection();
   } catch (error) {
     _setNotice(error instanceof Error ? error.message : String(error));
     _renderEmptyState("Unable to load compare data", "The compare surface could not load the daily payload.");
@@ -432,8 +724,38 @@ compareCopyBtn?.addEventListener("click", async () => {
   _setNotice("Share this page URL from the address bar.");
 });
 
+compareShareBtn?.addEventListener("click", async () => {
+  const url = _buildCompareUrl();
+  if (navigator.share && typeof navigator.share === "function") {
+    try {
+      await navigator.share({
+        title: "CloseSnow resort compare",
+        text: "Open this compare view in CloseSnow.",
+        url,
+      });
+      _setNotice("Compare link shared.");
+      return;
+    } catch (error) {
+      if (error && typeof error === "object" && error.name === "AbortError") {
+        return;
+      }
+    }
+  }
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+    try {
+      await navigator.clipboard.writeText(url);
+      _setNotice("Share sheet unavailable. Compare link copied instead.");
+      return;
+    } catch (error) {
+      // Fall through to the final message below.
+    }
+  }
+  _setNotice("Share this page URL from the address bar.");
+});
+
 document.addEventListener("click", (event) => {
-  const removeButton = event.target.closest(".compare-chip-remove[data-remove-id]");
+  const target = event.target instanceof Element ? event.target : null;
+  const removeButton = target ? target.closest(".compare-chip-remove[data-remove-id]") : null;
   if (!removeButton) return;
   const result = _toggleSelection(removeButton.getAttribute("data-remove-id"));
   appState.selectedIds = Array.isArray(result.selection) ? result.selection : appState.selectedIds.slice();
@@ -442,8 +764,7 @@ document.addEventListener("click", (event) => {
   } else {
     _setNotice("");
   }
-  syncUrl();
-  renderPage();
+  syncSelectionAndRender();
 });
 
 void initialize();

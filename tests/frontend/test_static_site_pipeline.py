@@ -83,6 +83,8 @@ def test_render_compare_page(tmp_path):
     assert "window.CLOSESNOW_COMPARE_CONTEXT" in html
     assert '"dataUrl": "../data.json"' in html
     assert '"compareSelection": {"queryKey": "compare", "maxResorts": 4}' in html
+    assert 'id="compare-copy-btn"' in html
+    assert 'id="compare-share-btn"' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):

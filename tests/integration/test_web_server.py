@@ -99,8 +99,10 @@ def test_server_compare_route(monkeypatch):
         assert "window.CLOSESNOW_COMPARE_CONTEXT" in body
         assert '"dataUrl": "../api/data"' in body
         assert "../assets/css/resort_compare.css" in body
+        assert 'id="compare-share-btn"' in body
         body_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/compare", timeout=3).read().decode("utf-8")
         assert "window.CLOSESNOW_COMPARE_CONTEXT" in body_with_prefix
+        assert 'id="compare-share-btn"' in body_with_prefix
     finally:
         server.shutdown()
         server.server_close()

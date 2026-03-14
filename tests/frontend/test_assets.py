@@ -60,6 +60,9 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-grid-wrap" in css_text
     assert ".compare-cards" in compare_css_text
     assert ".compare-table" in compare_css_text
+    assert ".compare-hourly-grid" in compare_css_text
+    assert ".compare-hourly-warning" in compare_css_text
+    assert ".compare-hourly-table" in compare_css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
@@ -91,7 +94,14 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CLOSESNOW_COMPARE_CONTEXT" in compare_page_js_text
     assert "Daily Resort Compare" not in compare_page_js_text
     assert "Compare link copied." in compare_page_js_text
+    assert "Compare link shared." in compare_page_js_text
+    assert "navigator.share" in compare_page_js_text
     assert "_renderTemperatureTable" in compare_page_js_text
+    assert "_renderHourlySection" in compare_page_js_text
+    assert "_hourlyPayloadUrlFor" in compare_page_js_text
+    assert "/api/resort-hourly" in compare_page_js_text
+    assert "hourly.json" in compare_page_js_text
+    assert "Hourly page" in compare_page_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
