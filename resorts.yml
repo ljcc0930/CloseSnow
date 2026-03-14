@@ -348,7 +348,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Big Bear, CA",
     "website": "https://www.bigbearmountainresort.com/"
   },
@@ -781,7 +781,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "June Mountain, CA",
     "website": "https://www.junemountain.com/"
   },
@@ -1294,7 +1294,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Sierra-at-Tahoe, CA",
     "website": "https://www.sierraattahoe.com/"
   },
@@ -1342,7 +1342,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Snow Valley, CA",
     "website": "https://www.snow-valley.com/"
   },
