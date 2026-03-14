@@ -12,6 +12,10 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _display_label(report: Dict[str, Any]) -> str:
+    return str(report.get("display_name") or report.get("query", "")).strip()
+
+
 def _filter_meta(report: Dict[str, Any]) -> Dict[str, str]:
     raw_pass_types = report.get("pass_types")
     if isinstance(raw_pass_types, list):
@@ -72,7 +76,7 @@ def _reports_to_metric_rows(
 ) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {"query": str(report.get("query", "")), **_filter_meta(report)}
+        row: Dict[str, str] = {"query": _display_label(report), **_filter_meta(report)}
         for out_key, report_key in weekly_mapping.items():
             row[out_key] = f"{_as_float(report.get(report_key, 0.0)):.1f}"
 
@@ -121,7 +125,7 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
     rows: List[Dict[str, str]] = []
     for report in reports:
         row: Dict[str, str] = {
-            "query": str(report.get("query", "")),
+            "query": _display_label(report),
             "matched_name": str(report.get("matched_name", "")),
             **_filter_meta(report),
         }
@@ -141,7 +145,7 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
 def reports_to_weather_rows(reports: List[Dict[str, Any]], display_days: int = 14) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for report in reports:
-        row: Dict[str, str] = {"query": str(report.get("query", "")), **_filter_meta(report)}
+        row: Dict[str, str] = {"query": _display_label(report), **_filter_meta(report)}
         daily = report.get("daily", [])
         for day_idx in range(display_days):
             day = daily[day_idx] if day_idx < len(daily) else {}
@@ -156,7 +160,7 @@ def reports_to_sun_rows(reports: List[Dict[str, Any]], display_days: int = 14) -
     rows: List[Dict[str, str]] = []
     for report in reports:
         row: Dict[str, str] = {
-            "query": str(report.get("query", "")),
+            "query": _display_label(report),
             "matched_name": str(report.get("matched_name", "")),
             **_filter_meta(report),
         }

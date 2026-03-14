@@ -11,7 +11,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Arapahoe Basin, CO"
   },
   {
     "resort_id": "aspen-snowmass-co",
@@ -25,7 +26,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Aspen Snowmass, CO"
   },
   {
     "resort_id": "boyne-mountain-mi",
@@ -40,7 +42,8 @@
       "ikon",
       "indy"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Boyne Mountain, MI"
   },
   {
     "resort_id": "brighton-ut",
@@ -54,7 +57,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Brighton, UT"
   },
   {
     "resort_id": "copper-mountain-co",
@@ -68,7 +72,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Copper Mountain, CO"
   },
   {
     "resort_id": "killington-vt",
@@ -82,7 +87,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Killington, VT"
   },
   {
     "resort_id": "mammoth-mountain-ca",
@@ -96,7 +102,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Mammoth Mountain, CA"
   },
   {
     "resort_id": "mt-brighton-mi",
@@ -110,7 +117,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Mt Brighton, MI"
   },
   {
     "resort_id": "palisades-tahoe-ca",
@@ -124,7 +132,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Palisades Tahoe, CA"
   },
   {
     "resort_id": "snowbasin-ut",
@@ -138,7 +147,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Snowbasin, UT"
   },
   {
     "resort_id": "snowbird-ut",
@@ -152,7 +162,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Snowbird, UT"
   },
   {
     "resort_id": "steamboat-co",
@@ -166,7 +177,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Steamboat, CO"
   },
   {
     "resort_id": "stratton-vt",
@@ -180,7 +192,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Stratton, VT"
   },
   {
     "resort_id": "appi-resort-japan",
@@ -194,7 +207,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "APPI Resort, Japan"
   },
   {
     "resort_id": "afton-alps-mn",
@@ -208,7 +222,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Afton Alps, MN"
   },
   {
     "resort_id": "alpine-valley-oh",
@@ -222,7 +237,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Alpine Valley, OH"
   },
   {
     "resort_id": "alta-ski-area-ut",
@@ -236,7 +252,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Alta Ski Area, UT"
   },
   {
     "resort_id": "alyeska-resort-ak",
@@ -250,7 +267,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Alyeska Resort, AK"
   },
   {
     "resort_id": "arai-snow-resort-japan",
@@ -264,7 +282,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Arai Snow Resort, Japan"
   },
   {
     "resort_id": "attitash-nh",
@@ -278,7 +297,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Attitash, NH"
   },
   {
     "resort_id": "beaver-creek-co",
@@ -292,7 +312,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Beaver Creek, CO"
   },
   {
     "resort_id": "big-bear-mountain-resort-ca",
@@ -306,7 +327,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Big Bear Mountain Resort, CA"
   },
   {
     "resort_id": "big-boulder-pa",
@@ -320,7 +342,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Big Boulder, PA"
   },
   {
     "resort_id": "big-sky-resort-mt",
@@ -334,7 +357,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Big Sky Resort, MT"
   },
   {
     "resort_id": "blue-mountain-resort-pa",
@@ -348,7 +372,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Blue Mountain Resort, PA"
   },
   {
     "resort_id": "blue-mountain-on",
@@ -362,7 +387,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Blue Mountain, ON"
   },
   {
     "resort_id": "boston-mills-brandywine-oh",
@@ -376,7 +402,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Boston Mills / Brandywine, OH"
   },
   {
     "resort_id": "breckenridge-co",
@@ -390,7 +417,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Breckenridge, CO"
   },
   {
     "resort_id": "camelback-resort-pa",
@@ -404,7 +432,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Camelback Resort, PA"
   },
   {
     "resort_id": "chamonix-mont-blanc-valley-france",
@@ -418,7 +447,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Chamonix Mont-Blanc Valley, France"
   },
   {
     "resort_id": "coronet-peak-the-remarkables-mt-hutt-new-zealand",
@@ -432,7 +462,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand"
   },
   {
     "resort_id": "crested-butte-co",
@@ -446,7 +477,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Crested Butte, CO"
   },
   {
     "resort_id": "crotched-nh",
@@ -460,7 +492,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Crotched, NH"
   },
   {
     "resort_id": "crystal-mountain-wa",
@@ -474,7 +507,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Crystal Mountain, WA"
   },
   {
     "resort_id": "cypress-mountain-bc",
@@ -488,7 +522,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Cypress Mountain, BC"
   },
   {
     "resort_id": "deer-valley-resort-ut",
@@ -502,7 +537,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Deer Valley Resort, UT"
   },
   {
     "resort_id": "dolomiti-superski-italy",
@@ -516,7 +552,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Dolomiti Superski, Italy"
   },
   {
     "resort_id": "eldora-mountain-resort-co",
@@ -530,7 +567,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Eldora Mountain Resort, CO"
   },
   {
     "resort_id": "furano-ski-resort-japan",
@@ -544,7 +582,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Furano Ski Resort, Japan"
   },
   {
     "resort_id": "grandvalira-resorts-andorra-andorra",
@@ -558,7 +597,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Grandvalira Resorts Andorra, Andorra"
   },
   {
     "resort_id": "granite-peak-wi",
@@ -573,7 +613,8 @@
       "ikon",
       "indy"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Granite Peak, WI"
   },
   {
     "resort_id": "heavenly-ca",
@@ -587,7 +628,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Heavenly, CA"
   },
   {
     "resort_id": "hidden-valley-mo",
@@ -601,7 +643,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Hidden Valley, MO"
   },
   {
     "resort_id": "hidden-valley-pa",
@@ -615,7 +658,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Hidden Valley, PA"
   },
   {
     "resort_id": "hunter-ny",
@@ -629,7 +673,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Hunter, NY"
   },
   {
     "resort_id": "ischgl-austria",
@@ -643,7 +688,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Ischgl, Austria"
   },
   {
     "resort_id": "jack-frost-pa",
@@ -657,7 +703,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Jack Frost, PA"
   },
   {
     "resort_id": "jackson-hole-mountain-resort-wy",
@@ -671,7 +718,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Jackson Hole Mountain Resort, WY"
   },
   {
     "resort_id": "june-mountain-ca",
@@ -685,7 +733,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "June Mountain, CA"
   },
   {
     "resort_id": "keystone-co",
@@ -699,7 +748,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Keystone, CO"
   },
   {
     "resort_id": "killington-pico-vt",
@@ -713,7 +763,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Killington-Pico, VT"
   },
   {
     "resort_id": "kirkwood-ca",
@@ -727,7 +778,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Kirkwood, CA"
   },
   {
     "resort_id": "kitzb-hel-austria",
@@ -741,7 +793,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Kitzbühel, Austria"
   },
   {
     "resort_id": "laurel-mountain-pa",
@@ -755,7 +808,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Laurel Mountain, PA"
   },
   {
     "resort_id": "le-massif-qc",
@@ -769,7 +823,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Le Massif, QC"
   },
   {
     "resort_id": "liberty-mountain-pa",
@@ -783,7 +838,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Liberty Mountain, PA"
   },
   {
     "resort_id": "loon-mountain-nh",
@@ -797,7 +853,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Loon Mountain, NH"
   },
   {
     "resort_id": "lutsen-mountains-mn",
@@ -812,7 +869,8 @@
       "ikon",
       "indy"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Lutsen Mountains, MN"
   },
   {
     "resort_id": "mad-river-mountain-oh",
@@ -826,7 +884,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mad River Mountain, OH"
   },
   {
     "resort_id": "meg-ve-ski-area-france",
@@ -840,7 +899,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Megève Ski Area, France"
   },
   {
     "resort_id": "mona-yongpyong-south-korea",
@@ -854,7 +914,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mona YongPyong, South Korea"
   },
   {
     "resort_id": "mount-snow-vt",
@@ -868,7 +929,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mount Snow, VT"
   },
   {
     "resort_id": "mount-sunapee-nh",
@@ -882,7 +944,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mount Sunapee, NH"
   },
   {
     "resort_id": "mt-buller-australia",
@@ -896,7 +959,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mt Buller, Australia"
   },
   {
     "resort_id": "mt-bachelor-or",
@@ -910,7 +974,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mt. Bachelor, OR"
   },
   {
     "resort_id": "mt-t-japan",
@@ -924,7 +989,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Mt. T, Japan"
   },
   {
     "resort_id": "myoko-suginohara-ski-resort-japan",
@@ -938,7 +1004,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Myoko Suginohara Ski Resort, Japan"
   },
   {
     "resort_id": "nekoma-mountain-japan",
@@ -952,7 +1019,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "NEKOMA Mountain, Japan"
   },
   {
     "resort_id": "niseko-united-japan",
@@ -966,7 +1034,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Niseko United, Japan"
   },
   {
     "resort_id": "northstar-ca",
@@ -980,7 +1049,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Northstar, CA"
   },
   {
     "resort_id": "okemo-vt",
@@ -994,7 +1064,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Okemo, VT"
   },
   {
     "resort_id": "panorama-bc",
@@ -1008,7 +1079,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Panorama, BC"
   },
   {
     "resort_id": "paoli-peaks-in",
@@ -1022,7 +1094,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Paoli Peaks, IN"
   },
   {
     "resort_id": "park-city-ut",
@@ -1036,7 +1109,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Park City, UT"
   },
   {
     "resort_id": "red-mountain-bc",
@@ -1050,7 +1124,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "RED Mountain, BC"
   },
   {
     "resort_id": "revelstoke-mountain-resort-bc",
@@ -1064,7 +1139,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Revelstoke Mountain Resort, BC"
   },
   {
     "resort_id": "roundtop-mountain-pa",
@@ -1078,7 +1154,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Roundtop Mountain, PA"
   },
   {
     "resort_id": "schweitzer-id",
@@ -1092,7 +1169,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Schweitzer, ID"
   },
   {
     "resort_id": "seven-springs-pa",
@@ -1106,7 +1184,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Seven Springs, PA"
   },
   {
     "resort_id": "shiga-kogen-mountain-resort-japan",
@@ -1120,7 +1199,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Shiga Kogen Mountain Resort, Japan"
   },
   {
     "resort_id": "sierra-at-tahoe-ca",
@@ -1134,7 +1214,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Sierra-at-Tahoe, CA"
   },
   {
     "resort_id": "skibig3-ab",
@@ -1148,7 +1229,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "SkiBig3, AB"
   },
   {
     "resort_id": "snow-creek-mo",
@@ -1162,7 +1244,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Snow Creek, MO"
   },
   {
     "resort_id": "snow-valley-ca",
@@ -1176,7 +1259,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Snow Valley, CA"
   },
   {
     "resort_id": "snowriver-mi",
@@ -1191,7 +1275,8 @@
       "ikon",
       "indy"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Snowriver, MI"
   },
   {
     "resort_id": "snowshoe-wv",
@@ -1205,7 +1290,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Snowshoe, WV"
   },
   {
     "resort_id": "solitude-mountain-resort-ut",
@@ -1219,7 +1305,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Solitude Mountain Resort, UT"
   },
   {
     "resort_id": "st-moritz-switzerland",
@@ -1233,7 +1320,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "St. Moritz, Switzerland"
   },
   {
     "resort_id": "stevens-pass-wa",
@@ -1247,7 +1335,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Stevens Pass, WA"
   },
   {
     "resort_id": "stowe-vt",
@@ -1261,7 +1350,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Stowe, VT"
   },
   {
     "resort_id": "sugarbush-resort-vt",
@@ -1275,7 +1365,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Sugarbush Resort, VT"
   },
   {
     "resort_id": "sugarloaf-me",
@@ -1289,7 +1380,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Sugarloaf, ME"
   },
   {
     "resort_id": "sun-peaks-resort-bc",
@@ -1303,7 +1395,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Sun Peaks Resort, BC"
   },
   {
     "resort_id": "sun-valley-id",
@@ -1317,7 +1410,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Sun Valley, ID"
   },
   {
     "resort_id": "sunday-river-me",
@@ -1331,7 +1425,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Sunday River, ME"
   },
   {
     "resort_id": "taos-ski-valley-nm",
@@ -1345,7 +1440,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Taos Ski Valley, NM"
   },
   {
     "resort_id": "the-highlands-mi",
@@ -1359,7 +1455,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "The Highlands, MI"
   },
   {
     "resort_id": "the-summit-at-snoqualmie-wa",
@@ -1373,7 +1470,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "The Summit at Snoqualmie, WA"
   },
   {
     "resort_id": "thredbo-australia",
@@ -1387,7 +1485,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Thredbo, Australia"
   },
   {
     "resort_id": "tremblant-qc",
@@ -1401,7 +1500,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Tremblant, QC"
   },
   {
     "resort_id": "vail-co",
@@ -1415,7 +1515,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Vail, CO"
   },
   {
     "resort_id": "valle-nevado-chile",
@@ -1429,7 +1530,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Valle Nevado, Chile"
   },
   {
     "resort_id": "valle-d-aosta-italy",
@@ -1443,7 +1545,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Valle d'Aosta, Italy"
   },
   {
     "resort_id": "whistler-blackcomb-bc",
@@ -1457,7 +1560,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Whistler Blackcomb, BC"
   },
   {
     "resort_id": "whitetail-resort-pa",
@@ -1471,7 +1575,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Whitetail Resort, PA"
   },
   {
     "resort_id": "wildcat-nh",
@@ -1485,7 +1590,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Wildcat, NH"
   },
   {
     "resort_id": "wilmot-mountain-wi",
@@ -1499,7 +1605,8 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Wilmot Mountain, WI"
   },
   {
     "resort_id": "winter-park-resort-co",
@@ -1513,7 +1620,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true
+    "default_enabled": true,
+    "display_name": "Winter Park Resort, CO"
   },
   {
     "resort_id": "yunding-snow-park-china",
@@ -1527,7 +1635,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Yunding Snow Park, China"
   },
   {
     "resort_id": "zao-onsen-ski-resort-japan",
@@ -1541,7 +1650,8 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Zao Onsen Ski Resort, Japan"
   },
   {
     "resort_id": "zermatt-matterhorn-switzerland",
@@ -1555,6 +1665,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false
+    "default_enabled": false,
+    "display_name": "Zermatt Matterhorn, Switzerland"
   }
 ]

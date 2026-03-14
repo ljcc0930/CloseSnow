@@ -47,6 +47,7 @@ def test_report_transforms():
     reports = [
         {
             "query": "Snowbird, UT",
+            "display_name": "Snowbird, Utah",
             "matched_name": "Snowbird",
             "country": "US",
             "region": "west",
@@ -78,7 +79,7 @@ def test_report_transforms():
     sun_rows = reports_to_sun_rows(reports)
     temp_rows = reports_to_temp_rows(reports)
 
-    assert snow_rows[0]["query"] == "Snowbird, UT"
+    assert snow_rows[0]["query"] == "Snowbird, Utah"
     assert snow_rows[0]["week1_total_cm"] == "12.3"
     assert snow_rows[0]["day_1_cm"] == "1.0"
     assert snow_rows[0]["day_2_cm"] == ""
@@ -104,6 +105,7 @@ def test_report_transforms():
     assert sun_rows[0]["label_day_2"] == "03-05 Thu"
 
     assert temp_rows[0]["matched_name"] == "Snowbird"
+    assert temp_rows[0]["query"] == "Snowbird, Utah"
     assert temp_rows[0]["day_1_max_c"] == "-1"
     assert temp_rows[0]["day_2_above_0"] == "1"
     assert temp_rows[0]["label_day_2"] == "03-05 Thu"

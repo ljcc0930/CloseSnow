@@ -364,7 +364,7 @@ const loadHourly = async () => {
       }
     }
     if (titleEl) {
-      const resortLabel = String(payload?.query || "").trim();
+      const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
       titleEl.textContent = resortLabel ? `Hourly Forecast: ${resortLabel}` : "Hourly Forecast";
     }
     if (metaEl) {

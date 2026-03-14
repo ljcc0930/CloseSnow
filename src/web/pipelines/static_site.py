@@ -57,6 +57,7 @@ def _daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[
             return None
         return {
             "query": report.get("query", ""),
+            "display_name": report.get("display_name", report.get("query", "")),
             "daily": daily,
         }
     return None

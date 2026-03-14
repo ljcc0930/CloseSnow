@@ -122,6 +122,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
             {
                 "resort_id": "a-id",
                 "query": "A",
+                "display_name": "Alpha Resort",
                 "region": "west",
                 "country": "US",
                 "pass_types": ["ikon"],
@@ -164,6 +165,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["region"] == "west"
     assert out["reports"][0]["country_code"] == "US"
     assert out["reports"][0]["ljcc_favorite"] is True
+    assert out["reports"][0]["display_name"] == "Alpha Resort"
     assert ".cache/resorts_weather_unified.json" in seed_calls
 
 

@@ -17,6 +17,7 @@ from src.contract import SCHEMA_VERSION
 def _build_sample_report() -> Dict[str, Any]:
     return {
         "query": "Snowbird, UT",
+        "display_name": "Snowbird, Utah",
         "matched_name": "Snowbird",
         "country": "United States",
         "admin1": "Utah",

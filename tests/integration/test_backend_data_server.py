@@ -75,6 +75,7 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
         assert health["service"] == "closesnow-backend-data"
         assert resorts["count"] == 1
         assert resorts["items"][0]["resort_id"] == "snowbird-ut"
+        assert resorts["items"][0]["display_name"] == "Snowbird, UT"
     finally:
         server.shutdown()
         server.server_close()

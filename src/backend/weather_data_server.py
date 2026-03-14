@@ -57,6 +57,12 @@ def _supported_catalog(catalog: List[Dict[str, object]]) -> List[Dict[str, objec
     return out
 
 
+def _catalog_item_with_display_name(item: Dict[str, object]) -> Dict[str, object]:
+    out = dict(item)
+    out["display_name"] = str(item.get("display_name") or item.get("query") or "").strip()
+    return out
+
+
 def _available_filters(catalog: List[Dict[str, object]]) -> Dict[str, Dict[str, int]]:
     pass_type_counts: Dict[str, int] = {}
     region_counts: Dict[str, int] = {}
@@ -273,6 +279,7 @@ def _hourly_payload_for_resort(
     return {
         "resort_id": resort_id,
         "query": query,
+        "display_name": str(item.get("display_name") or query).strip(),
         "matched_name": location.name,
         "country": item.get("country"),
         "region": item.get("region"),
@@ -382,7 +389,7 @@ def make_handler(
                         },
                         "available_filters": _available_filters(catalog),
                         "count": len(items),
-                        "items": items,
+                        "items": [_catalog_item_with_display_name(item) for item in items],
                     },
                 )
                 return

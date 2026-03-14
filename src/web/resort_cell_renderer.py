@@ -27,12 +27,12 @@ def filter_attrs(row: Dict[str, str]) -> str:
 
 
 def resort_cells_html(row: Dict[str, str]) -> str:
-    query_text = html.escape(row.get("query", ""))
+    display_text = html.escape(row.get("query", ""))
     resort_id = row.get("resort_id", "").strip()
-    link_html = query_text
+    link_html = display_text
     if resort_id:
         href = f"resort/{quote(resort_id)}"
-        link_html = f"<a class='resort-link' href='{href}'>{query_text}</a>"
+        link_html = f"<a class='resort-link' href='{href}'>{display_text}</a>"
 
     button_html = ""
     if resort_id:

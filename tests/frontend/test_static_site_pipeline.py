@@ -24,7 +24,7 @@ def test_render_hourly_pages(tmp_path):
     p = tmp_path / "site" / "index.html"
     payload = {
         "reports": [
-            {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}]},
+            {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}]},
             {"resort_id": "snowbird-ut"},
             {"resort_id": "alta-ut", "query": "Alta, UT", "daily": []},
         ]
@@ -43,17 +43,19 @@ def test_render_hourly_pages(tmp_path):
     assert 'id="hourly-charts"' in html
     assert 'id="resort-daily-summary-section"' in html
     assert '"dailySummary": {' in html
+    assert '"display_name": "Snowbird, Utah"' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13"}]}]}
+    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13"}]}]}
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
         lambda **kwargs: {
             "resort_id": kwargs["resort_id"],
             "query": "Snowbird, UT",
+            "display_name": "Snowbird, Utah",
             "hours": 2,
             "hourly": {
                 "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
@@ -75,17 +77,19 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     html = outputs[0].read_text(encoding="utf-8")
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
+    assert '"display_name": "Snowbird, Utah"' in html
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13"}]}]}
+    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13"}]}]}
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
         lambda **kwargs: {
             "resort_id": kwargs["resort_id"],
             "query": "Snowbird, UT",
+            "display_name": "Snowbird, Utah",
             "hours": 2,
             "hourly": {
                 "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
@@ -114,3 +118,4 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     html = outputs[0].read_text(encoding="utf-8")
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
+    assert '"display_name": "Snowbird, Utah"' in html

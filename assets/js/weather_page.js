@@ -241,8 +241,10 @@ const _favoriteAllButtonHtml = (reports) => {
   return `<button type='button' class='favorite-btn favorite-all-btn' data-favorite-all='1' data-favorite-active='${allFavorited ? "1" : "0"}' aria-pressed='${allFavorited ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
 };
 
+const _displayName = (report) => String(report?.display_name || report?.query || "").trim();
+
 const _resortCellHtml = (report) => {
-  const text = _escapeHtml(report.query || "");
+  const text = _escapeHtml(_displayName(report));
   const resortId = String(report.resort_id || "").trim();
   const linkHtml = resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
@@ -763,7 +765,7 @@ const buildServerQueryParams = () => {
 const _rowSearchText = (report) => {
   const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(" ") : "";
   const state = String(report.admin1 || "").trim();
-  return _normalizeSearch(`${report.query || ""} ${state} ${passTypes}`);
+  return _normalizeSearch(`${_displayName(report)} ${report.query || ""} ${state} ${passTypes}`);
 };
 
 const _isDefaultResort = (report) => Boolean(report.default_resort || report.ljcc_favorite);
@@ -802,7 +804,7 @@ const _filteredReports = () => {
       const favoriteDelta = Number(_isFavoriteReport(b)) - Number(_isFavoriteReport(a));
       if (favoriteDelta !== 0) return favoriteDelta;
     }
-    if (sortBy === "name") return String(a.query || "").localeCompare(String(b.query || ""));
+    if (sortBy === "name") return _displayName(a).localeCompare(_displayName(b));
     const stateCmp = String(a.admin1 || "").localeCompare(String(b.admin1 || ""));
     if (stateCmp !== 0) return stateCmp;
     return String(a.query || "").localeCompare(String(b.query || ""));
