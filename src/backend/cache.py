@@ -104,7 +104,8 @@ class ResortCoordinateCache:
             os.makedirs(parent, exist_ok=True)
         with self._lock:
             with open(self.path, "w", encoding="utf-8") as f:
-                json.dump(self.data, f, ensure_ascii=False)
+                json.dump(self.data, f, ensure_ascii=False, indent=2)
+                f.write("\n")
             self._dirty = False
 
 

@@ -477,15 +477,15 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Chamonix Mont-Blanc Valley, France",
+    "display_name": "Chamonix Mont-Blanc, France",
     "website": "https://en.chamonix.com/chamonix-mont-blanc-valley"
   },
   {
-    "resort_id": "coronet-peak-the-remarkables-mt-hutt-new-zealand",
-    "query": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand",
-    "name": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand",
+    "resort_id": "coronet-peak-new-zealand",
+    "query": "Coronet Peak, Queenstown, New Zealand",
+    "name": "Coronet Peak",
     "city": "Queenstown-Lakes District",
-    "address": "Coronet Peak Ski Area, Coronet Peak Road, Queenstown-Lakes District, Otago, New Zealand / Aotearoa",
+    "address": "Coronet Peak, Queenstown-Lakes District, New Zealand / Aotearoa",
     "state": "",
     "country": "NZ",
     "region": "intl",
@@ -493,8 +493,40 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Coronet Peak, The Remarkables & Mt Hutt, New Zealand",
-    "website": "https://www.nzski.com/"
+    "display_name": "Coronet Peak, New Zealand",
+    "website": "https://www.coronetpeak.co.nz/"
+  },
+  {
+    "resort_id": "the-remarkables-new-zealand",
+    "query": "The Remarkables, New Zealand",
+    "name": "The Remarkables",
+    "city": "Queenstown-Lakes District",
+    "address": "The Remarkables, Queenstown-Lakes District, Otago, New Zealand / Aotearoa",
+    "state": "",
+    "country": "NZ",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false,
+    "display_name": "The Remarkables, New Zealand",
+    "website": "https://www.theremarkables.co.nz/"
+  },
+  {
+    "resort_id": "mt-hutt-new-zealand",
+    "query": "Mount Hutt, New Zealand",
+    "name": "Mt Hutt",
+    "city": "Ashburton District",
+    "address": "Mount Hutt, Ashburton District, Canterbury, New Zealand / Aotearoa",
+    "state": "",
+    "country": "NZ",
+    "region": "intl",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false,
+    "display_name": "Mt Hutt, New Zealand",
+    "website": "https://www.mthutt.co.nz/"
   },
   {
     "resort_id": "crested-butte-co",
@@ -637,7 +669,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Grandvalira Resorts Andorra, Andorra",
+    "display_name": "Grandvalira, Andorra",
     "website": "https://www.grandvalira.com/en"
   },
   {
