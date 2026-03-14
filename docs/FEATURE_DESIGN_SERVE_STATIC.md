@@ -49,11 +49,10 @@ In scope:
 
 Out of scope:
 
-- auto-building static files before serving
 - SPA rewrite/fallback routing
 - any backend/API behavior changes
 
 ## Validation
 
 - `python3 -m pytest tests/integration/test_cli.py tests/integration/test_static_server.py -q`
-- `python3 -m src.cli static --output-json site/data.json --output-html site/index.html`
+- `python3 -m src.cli static --output-dir site`

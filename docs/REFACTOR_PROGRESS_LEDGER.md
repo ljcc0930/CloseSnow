@@ -37,6 +37,41 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 20:35 (output-dir static artifact unification slice)
+
+### Scope
+- Replace `output-html` with `output-dir` for static artifact flows and move asset copying into the static/render pipelines themselves.
+
+### Changes
+- Files:
+  - `src/cli.py`
+  - `README.md`
+  - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+  - `docs/FEATURE_DESIGN_SERVE_STATIC.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+  - `tests/integration/test_cli.py`
+  - `tests/smoke/test_static_pipeline_smoke.py`
+- Behavior impact:
+  - `render` now writes `index.html`, `resort/...`, and copied assets under `--output-dir`.
+  - `static` now defaults to output-directory semantics and writes `data.json`, `index.html`, `resort/...`, and copied assets under one root.
+  - `serve-static` now stays a thin wrapper around the unified static output-directory flow.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/integration/test_cli.py tests/integration/test_static_server.py tests/smoke/test_static_pipeline_smoke.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-output-dir-test --max-workers 2`
+  - `python3 -m src.cli render --input-json site/data.json --output-dir /tmp/closesnow-render-dir-test-2`
+- Results:
+  - targeted CLI/static/smoke tests: `28 passed`
+  - static output-dir build: succeeded (`Done: /tmp/closesnow-output-dir-test/data.json`, `Done: /tmp/closesnow-output-dir-test/index.html`)
+  - render output-dir build: succeeded and copied assets under `/private/tmp/closesnow-render-dir-test-2/assets/{css,js}`
+
+### Risks / Notes
+- This changes the preferred CLI contract from file-oriented `--output-html` to directory-oriented `--output-dir`; scripts using the old flag will need to be updated.
+
+### Next Slice
+- Consider whether to keep a deprecated hidden `--output-html` compatibility alias temporarily if external automation still depends on it.
+
 ## 2026-03-13 20:10 (serve-static local preview slice)
 
 ### Scope
@@ -51,15 +86,15 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
   - `tests/integration/test_static_server.py`
 - Behavior impact:
   - CLI now supports `serve-static`, which explicitly reuses the `static` build flow before serving the output directory.
-  - `serve-static` also copies `assets/css` and `assets/js` into the served directory so the generated page is runnable without a separate manual copy step.
+  - Static artifacts now use output-directory semantics: `static` writes `index.html`, `data.json`, `resort/...`, and copied assets under one output root.
   - Local preview of generated `site/` artifacts can use directory-index routing for resort pages.
 
 ### Validation
 - Commands:
   - `python3 -m pytest tests/integration/test_cli.py tests/integration/test_static_server.py -q`
-  - `python3 -m src.cli static --output-json site/data.json --output-html site/index.html`
+  - `python3 -m src.cli static --output-dir site`
 - Results:
-  - integration CLI + static-server tests: `21 passed`
+  - integration CLI + static-server tests: `23 passed`
   - static render: succeeded (`Done: site/data.json`, `Done: site/index.html`, `Done: 18 resort hourly page(s)`)
 
 ### Risks / Notes

@@ -143,7 +143,7 @@ Pass criteria:
 ### 4.2 Render HTML from fetched payload
 
 ```bash
-python3 -m src.cli render --input-json site/data.json --output-html site/index.html
+python3 -m src.cli render --input-json site/data.json --output-dir site
 ```
 
 Pass criteria:
@@ -154,18 +154,18 @@ Pass criteria:
 ### 4.3 Validate one-shot wrapper still works
 
 ```bash
-python3 -m src.cli static --output-html index.html --max-workers 8
+python3 -m src.cli static --output-dir site --max-workers 8
 ```
 
 Pass criteria:
 
-1. Command prints `Done: .cache/static_payload.json` and `Done: index.html`.
+1. Command prints `Done: site/data.json` and `Done: site/index.html`.
 2. Exit code is 0.
 
 ### 4.4 Verify output files exist and are not empty
 
 ```bash
-ls -lh site/data.json site/index.html index.html
+ls -lh site/data.json site/index.html site/assets/css site/assets/js
 ```
 
 Pass criteria:
@@ -292,11 +292,8 @@ The GitHub Pages workflow currently builds with split static pipeline commands.
 Local equivalent:
 
 ```bash
-mkdir -p site/assets/css site/assets/js
 python3 -m src.cli fetch --output-json site/data.json --max-workers 8
-python3 -m src.cli render --input-json site/data.json --output-html site/index.html
-cp assets/css/weather_page.css site/assets/css/weather_page.css
-cp assets/js/weather_page.js site/assets/js/weather_page.js
+python3 -m src.cli render --input-json site/data.json --output-dir site
 ls -la site site/assets/css site/assets/js
 ```
 
@@ -333,8 +330,8 @@ Before push:
 2. `python3 -m pytest -q` passes.
 3. `python3 -m pytest -m smoke -q` and `python3 -m pytest -m integration -q` pass.
 4. `python3 -m src.cli fetch --output-json site/data.json --max-workers 8` passes.
-5. `python3 -m src.cli render --input-json site/data.json --output-html site/index.html` passes.
-6. `python3 -m src.cli static --output-html index.html --max-workers 8` passes.
+5. `python3 -m src.cli render --input-json site/data.json --output-dir site` passes.
+6. `python3 -m src.cli static --output-dir site --max-workers 8` passes.
 7. Dynamic server probes (`/` and `/api/data`) pass.
 8. Decoupled probes (`serve-data` + `serve-web`) pass when dynamic layer is touched.
 9. `rg -n "from src\\.web|import src\\.web" src/backend -S` returns no matches.

@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
+import shutil
 import sys
 from typing import List
 
@@ -38,8 +39,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
     p.add_argument("--max-workers", type=int, default=8)
-    p.add_argument("--output-html", default="index.html")
+    p.add_argument("--output-dir", default="site")
     return p.parse_args()
+
+
+def _copy_static_assets(output_dir: str) -> None:
+    root = Path(output_dir).resolve() / "assets"
+    for name in ("css", "js"):
+        shutil.copytree(Path("assets") / name, root / name, dirs_exist_ok=True)
 
 
 def main() -> int:
@@ -58,15 +65,17 @@ def main() -> int:
         max_workers=args.max_workers,
     )
 
-    out = render_html(args.output_html, payload)
+    output_html = str(Path(args.output_dir) / "index.html")
+    out = render_html(output_html, payload)
     hourly_pages = render_hourly_pages(
-        args.output_html,
+        output_html,
         payload,
         include_hourly_data=True,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
     )
+    _copy_static_assets(args.output_dir)
     print(f"Done: {out}")
     print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0

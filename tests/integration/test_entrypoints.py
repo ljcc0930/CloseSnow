@@ -40,7 +40,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
-        output_html="index.html",
+        output_dir="site",
     )
     captured = {}
 
@@ -51,6 +51,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     monkeypatch.setattr("src.web.weather_page_static_render.parse_args", lambda: args)
     monkeypatch.setattr("src.web.weather_page_static_render.fetch_static_payload", fake_fetch_static_payload)
     monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
+    monkeypatch.setattr("src.web.weather_page_static_render._copy_static_assets", lambda output_dir: None)
     monkeypatch.setattr(
         "src.web.weather_page_static_render.render_hourly_pages",
         lambda *args, **kwargs: [f"{args[0]}:resort/snowbird-ut/index.html"],
@@ -60,7 +61,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     assert rc == 0
     assert captured["kwargs"]["resorts"] == ["A"]
     assert captured["kwargs"]["resorts_file"] == ""
-    assert "Done: index.html" in out
+    assert "Done: site/index.html" in out
 
 
 def test_weather_data_server_entrypoint_main(monkeypatch, capsys):

@@ -27,11 +27,11 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
 
     render_args = argparse.Namespace(
         input_json=fetch_args.output_json,
-        output_html=str(tmp_path / "index.html"),
+        output_dir=str(tmp_path),
     )
     assert cli.run_render(render_args) == 0
 
-    html = Path(render_args.output_html).read_text(encoding="utf-8")
+    html = Path(render_args.output_dir, "index.html").read_text(encoding="utf-8")
     assert "<!doctype html>" in html
     assert "Snowfall" in html
     assert 'id="page-content-root"' in html

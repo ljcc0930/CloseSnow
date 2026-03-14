@@ -63,12 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_render = sub.add_parser("render", help="Render HTML from payload JSON artifact.")
     p_render.add_argument("--input-json", default="site/data.json")
-    p_render.add_argument("--output-html", default="index.html")
+    p_render.add_argument("--output-dir", default=None)
 
     p_static = sub.add_parser("static", help="Run fetch + render in one command.")
     _add_fetch_options(p_static)
-    p_static.add_argument("--output-json", default=".cache/static_payload.json")
-    p_static.add_argument("--output-html", default="index.html")
+    p_static.add_argument("--output-json", default=None)
+    p_static.add_argument("--output-dir", default="site")
     p_static.add_argument("--skip-fetch", action="store_true")
     p_static.add_argument("--skip-render", action="store_true")
 
@@ -133,6 +133,20 @@ def _relative_url(from_html_path: str, target_path: str) -> str:
     return rel
 
 
+def _index_html_for_output_dir(output_dir: str | None, *, input_json: str | None = None) -> str:
+    if output_dir:
+        return str(Path(output_dir) / "index.html")
+    if input_json:
+        return str(Path(input_json).resolve().parent / "index.html")
+    return str(Path("site") / "index.html")
+
+
+def _static_output_json(args: argparse.Namespace) -> str:
+    if getattr(args, "output_json", None):
+        return str(args.output_json)
+    return str(Path(args.output_dir) / "data.json")
+
+
 def _serve_http_server(
     host: str,
     port: int,
@@ -160,26 +174,32 @@ def run_fetch(args: argparse.Namespace) -> int:
 
 def run_render(args: argparse.Namespace) -> int:
     payload = load_payload(mode="file", source=args.input_json)
-    out = render_html(args.output_html, payload, data_url=_relative_url(args.output_html, args.input_json))
-    hourly_pages = render_hourly_pages(args.output_html, payload)
+    output_html = _index_html_for_output_dir(args.output_dir, input_json=args.input_json)
+    out = render_html(output_html, payload, data_url=_relative_url(output_html, args.input_json))
+    hourly_pages = render_hourly_pages(output_html, payload)
+    output_dir = str(Path(output_html).parent)
+    copied_assets = _copy_static_assets(output_dir)
     print(f"Done: {out}")
     print(f"Done: {len(hourly_pages)} resort hourly page(s)")
+    print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
     return 0
 
 
 def run_static(args: argparse.Namespace) -> int:
+    output_json = _static_output_json(args)
+    output_html = _index_html_for_output_dir(args.output_dir)
     payload: Dict[str, Any] | None = None
     if not args.skip_fetch:
         payload = _fetch_payload(args)
-        write_payload_json(args.output_json, payload)
-        print(f"Done: {args.output_json}")
+        write_payload_json(output_json, payload)
+        print(f"Done: {output_json}")
 
     if not args.skip_render:
         if payload is None:
-            payload = load_payload(mode="file", source=args.output_json)
-        out = render_html(args.output_html, payload, data_url=_relative_url(args.output_html, args.output_json))
+            payload = load_payload(mode="file", source=output_json)
+        out = render_html(output_html, payload, data_url=_relative_url(output_html, output_json))
         hourly_pages = render_hourly_pages(
-            args.output_html,
+            output_html,
             payload,
             include_hourly_data=True,
             cache_file=args.cache_file,
@@ -188,6 +208,8 @@ def run_static(args: argparse.Namespace) -> int:
         )
         print(f"Done: {out}")
         print(f"Done: {len(hourly_pages)} resort hourly page(s)")
+    copied_assets = _copy_static_assets(args.output_dir)
+    print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
     return 0
 
 
@@ -209,10 +231,8 @@ def _copy_static_assets(directory: str) -> List[Path]:
 
 
 def run_static_server(args: argparse.Namespace) -> int:
-    output_json, output_html = _static_outputs_for_directory(args.directory)
     static_args = argparse.Namespace(**vars(args))
-    static_args.output_json = output_json
-    static_args.output_html = output_html
+    static_args.output_dir = args.directory
     run_static(static_args)
 
     directory = Path(args.directory).resolve()
@@ -220,7 +240,7 @@ def run_static_server(args: argparse.Namespace) -> int:
         raise FileNotFoundError(f"Static directory does not exist: {directory}")
     if not directory.is_dir():
         raise NotADirectoryError(f"Static path is not a directory: {directory}")
-    copied_assets = _copy_static_assets(args.directory)
+    output_json, output_html = _static_outputs_for_directory(args.directory)
 
     handler = partial(SimpleHTTPRequestHandler, directory=str(directory))
     return _serve_http_server(
@@ -230,8 +250,8 @@ def run_static_server(args: argparse.Namespace) -> int:
         [
             f"Serving static site at http://{args.host}:{args.port}",
             f"Static root: {directory}",
+            f"Static payload: {Path(output_json).resolve()}",
             f"Static build: {Path(output_html).resolve()}",
-            f"Copied assets: {', '.join(str(path) for path in copied_assets)}",
             "Open / for index.html and /resort/<resort_id>/ for generated hourly pages.",
         ],
     )

@@ -42,10 +42,7 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 ### 1) One-shot static build (recommended)
 
 ```bash
-python3 -m src.cli static --output-json site/data.json --output-html site/index.html
-mkdir -p site/assets
-cp -R assets/css site/assets/
-cp -R assets/js site/assets/
+python3 -m src.cli static --output-dir site
 ```
 
 Open `site/index.html`.
@@ -68,10 +65,7 @@ Notes:
 
 ```bash
 python3 -m src.cli fetch --output-json site/data.json
-python3 -m src.cli render --input-json site/data.json --output-html site/index.html
-mkdir -p site/assets
-cp -R assets/css site/assets/
-cp -R assets/js site/assets/
+python3 -m src.cli render --input-json site/data.json --output-dir site
 ```
 
 Notes:
@@ -136,12 +130,13 @@ Render HTML from payload JSON artifact.
 ```bash
 python3 -m src.cli render \
   [--input-json site/data.json] \
-  [--output-html index.html]
+  [--output-dir site]
 ```
 
 Notes:
 
 - Validates payload contract before rendering
+- Writes `index.html` into `--output-dir`
 - Generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`)
 - Also writes sibling `resort/<resort_id>/hourly.json` files and points the static hourly page at `./hourly.json` by default
 
@@ -158,8 +153,8 @@ python3 -m src.cli static \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
   [--max-workers 8] \
-  [--output-json .cache/static_payload.json] \
-  [--output-html index.html] \
+  [--output-json site/data.json] \
+  [--output-dir site] \
   [--skip-fetch] \
   [--skip-render]
 ```
@@ -167,9 +162,11 @@ python3 -m src.cli static \
 Notes:
 
 - `--resort` is repeatable; when set, `--include-all-resorts` is ignored
+- Default `--output-json` resolves to `--output-dir/data.json`
+- `index.html`, `resort/...`, and `assets/...` are written under `--output-dir`
 - `--skip-fetch`: reuse existing JSON
 - `--skip-render`: refresh payload only
-- Static render writes per-resort `hourly.json` files
+- Static render writes per-resort `hourly.json` files and copies `assets/css` + `assets/js`
 
 ### `serve`
 
@@ -396,7 +393,7 @@ Build command used by workflow:
 
 ```bash
 mkdir -p site/assets
-python -m src.cli static --output-json site/data.json --output-html site/index.html --max-workers 8 --include-all-resorts
+python -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
 cp -R assets/css site/assets/
 cp -R assets/js site/assets/
 ```
