@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resort Hourly Forecast</title>
+  <title>Resort Forcast</title>
   <link rel="stylesheet" href="{{asset_prefix}}/css/resort_hourly.css" />
 </head>
 <body>
   <main>
     <a class="back-link" href="{{back_href}}">Back to Main Forecast</a>
-    <h1 id="hourly-title">Hourly Forecast</h1>
+    <h1 id="hourly-title">Resort Forcast</h1>
     <p id="resort-local-time" class="resort-local-time"></p>
     <section id="resort-daily-summary-section" class="resort-daily-summary-section" hidden>
-      <h2>Daily Summary</h2>
+      <h2>Daily forcast</h2>
       <div id="resort-daily-summary-root"></div>
     </section>
+    <p class="hourly-section-title">Hourly forcast</p>
     <div class="hourly-controls">
       <label for="hours-select">Hours</label>
       <select id="hours-select">

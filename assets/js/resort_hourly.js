@@ -424,7 +424,7 @@ const loadHourly = async () => {
     }
     if (titleEl) {
       const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
-      titleEl.textContent = resortLabel ? `Hourly Forecast: ${resortLabel}` : "Hourly Forecast";
+      titleEl.textContent = resortLabel ? `Resort Forcast: ${resortLabel}` : "Resort Forcast";
     }
     const lat = formatCoordinate(payload.resolved_latitude);
     const lon = formatCoordinate(payload.resolved_longitude);
