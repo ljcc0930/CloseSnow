@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
 
 _PAGE_SHELL_PLACEHOLDER = """
+    <section><h2>Daily Summary</h2><p class="section-loading">Loading forecast...</p></section>
     <section><h2>Snowfall</h2><p class="section-loading">Loading forecast...</p></section>
     <section><h2>Rainfall</h2><p class="section-loading">Loading forecast...</p></section>
     <section><h2>Temperature</h2><p class="section-loading">Loading forecast...</p></section>

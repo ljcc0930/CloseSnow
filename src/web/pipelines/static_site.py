@@ -66,7 +66,7 @@ def render_hourly_pages(
     index_html_path: str,
     payload: Dict[str, Any],
     *,
-    include_hourly_data: bool = False,
+    include_hourly_data: bool = True,
     hourly_hours: int = 120,
     cache_file: str = ".cache/open_meteo_cache.json",
     geocode_cache_hours: int = 24 * 30,

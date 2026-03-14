@@ -37,6 +37,42 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 16:02 (compact daily summary grid slice)
+
+### Scope
+- Add a high-density `Daily Summary` table to the main page with combined weather, temperature, snowfall, and rainfall per day while keeping static hourly pages defaulted to local `hourly.json`.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_COMPACT_DAILY_GRID_TABLE.md`
+  - `assets/js/weather_page.js`
+  - `assets/css/weather_page.css`
+  - `src/web/weather_html_renderer.py`
+  - `src/web/pipelines/static_site.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_renderers.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Main page now renders a `Daily Summary` table before the existing sections.
+  - Each compact day cell combines weather emoji, stacked high/low temperature, snowfall, and rainfall in a fixed layout.
+  - Compact day cells use snowfall color when snowfall is present, otherwise temperature color.
+  - Static hourly resort pages now default to using sibling `hourly.json` data.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py -q`
+  - `python3 -m src.cli static --output-html index.html`
+- Results:
+  - frontend asset + renderer + static-site tests: `15 passed`
+  - static render: succeeded (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`)
+
+### Risks / Notes
+- The compact summary table is browser-rendered; shell HTML only contains its loading placeholder until JS loads the payload.
+
+### Next Slice
+- Continue polish on compact-grid spacing and mobile column alignment as follow-up UI tuning.
+
 ## 2026-03-13 15:02 (favorites-only toggle sync fix)
 
 ### Scope

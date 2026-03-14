@@ -192,9 +192,9 @@ const _tempColor = (value) => {
     const g = Math.round(232 + ((255 - 232) * x));
     return `background:rgb(${r},${g},255);`;
   }
-  if (v <= 10) {
-    if (v <= 0) return "background:#FFFFFF;";
-    const x = v / 10;
+  if (v <= 20) {
+    if (v <= 4) return "background:#FFFFFF;";
+    const x = (v - 4) / 16;
     const g = Math.round(255 + ((214 - 255) * x));
     const b = Math.round(255 + ((214 - 255) * x));
     return `background:rgb(255,${g},${b});`;
@@ -264,6 +264,88 @@ const _dayLabelFor = (report, index) => {
   const label = _formatDayLabel(_dailyAt(report, index).date);
   if (label) return label;
   return index === 0 ? "today" : `day ${index + 1}`;
+};
+
+const _formatCompactValue = (value, digits = 1) => {
+  const num = _asFiniteNumber(value);
+  return num === null ? "--" : num.toFixed(digits);
+};
+
+const _formatCompactTempValue = (value) => {
+  const num = _asFiniteNumber(value);
+  if (num === null) return "--";
+  return String(Math.round(num));
+};
+
+const _formatCompactTime = (raw) => {
+  const text = String(raw || "").trim();
+  if (!text) return "--";
+  if (text.includes("T")) return text.split("T", 2)[1].slice(0, 5) || "--";
+  return text.slice(0, 5) || "--";
+};
+
+const _compactDailyCellHtml = (day) => {
+  const weatherCode = day?.weather_code;
+  const weatherEmoji = _weatherEmoji(weatherCode);
+  const highTemp = _formatCompactTempValue(day?.temperature_max_c);
+  const lowTemp = _formatCompactTempValue(day?.temperature_min_c);
+  const snowValue = _formatCompactValue(day?.snowfall_cm);
+  const rainValue = _formatCompactValue(day?.rain_mm);
+  return `
+    <div class="compact-day-card">
+      <div class="compact-row compact-row-primary">
+        <div class="compact-weather" title="${_escapeHtml(weatherCode === null || weatherCode === undefined || weatherCode === "" ? "WMO code: unknown" : `WMO code: ${weatherCode}`)}">${weatherEmoji}</div>
+        <div class="compact-temp-stack">
+          <div class="compact-temp-high">${_escapeHtml(highTemp)}</div>
+          <div class="compact-temp-low">${_escapeHtml(lowTemp)}</div>
+        </div>
+      </div>
+      <div class="compact-row compact-row-secondary">
+        <div class="compact-pair compact-snow"><span class="compact-pair-icon">❄</span><span class="compact-pair-value">${_escapeHtml(snowValue)}</span></div>
+        <div class="compact-pair compact-rain"><span class="compact-pair-icon">☔</span><span class="compact-pair-value">${_escapeHtml(rainValue)}</span></div>
+      </div>
+    </div>`;
+};
+
+const _renderCompactGridSection = (reports) => {
+  if (!reports.length) return "<section><h2>Daily Summary</h2><p>No data</p></section>";
+  const displayDays = _displayDays();
+  const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
+  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
+  const rightRows = reports.map((report) => {
+    const attrs = _filterAttrs(report);
+    const cells = Array.from({ length: displayDays }, (_, idx) => {
+      const day = _dailyAt(report, idx);
+      const snowfall = _asFiniteNumber(day?.snowfall_cm);
+      const maxTemp = _asFiniteNumber(day?.temperature_max_c);
+      const style = snowfall !== null && snowfall > 0
+        ? _snowColor(snowfall)
+        : _tempColor(maxTemp);
+      const styleAttr = style ? ` style='${style}'` : "";
+      return `<td class='compact-day-cell'${styleAttr}>${_compactDailyCellHtml(day)}</td>`;
+    }).join("");
+    return `<tr${attrs}>${cells}</tr>`;
+  }).join("");
+  return `
+    <section>
+      <h2>Daily Summary</h2>
+      <div class="compact-grid-wrap">
+        <div class="compact-grid-left-wrap" id="compact-grid-left-wrap">
+          <table class="compact-grid-left-table" id="compact-grid-left-table">
+            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+            <tbody>${leftRows}</tbody>
+          </table>
+        </div>
+        <div class="compact-grid-right-wrap" id="compact-grid-right-wrap">
+          <table class="compact-grid-right-table" id="compact-grid-right-table">
+            <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
+            <thead><tr>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+            <tbody>${rightRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </section>`;
 };
 
 const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options) => {
@@ -468,6 +550,7 @@ const _renderSunSection = (reports) => {
 };
 
 const _renderSections = (reports) => [
+  _renderCompactGridSection(reports),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
     week1: (report) => report.week1_total_snowfall_cm,
@@ -959,6 +1042,7 @@ const attachVerticalSync = (left, right) => {
 
 const attachSplitScrollSync = () => {
   [
+    [".compact-grid-left-wrap", ".compact-grid-right-wrap"],
     [".snowfall-left-wrap#snowfall-left-wrap", ".snowfall-right-wrap#snowfall-right-wrap"],
     [".snowfall-left-wrap#snowfall-left-wrap-mobile", ".snowfall-right-wrap#snowfall-right-wrap-mobile"],
     [".rain-left-wrap#rain-left-wrap", ".rain-right-wrap#rain-right-wrap"],
@@ -1001,10 +1085,10 @@ const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWi
 const autoSizeSplitTables = () => {
   if (isCompactLayout()) {
     _autoSizeMobileQueryColumn({
-      tableSelector: ".snowfall-left-wrap-mobile .snowfall-left-table",
+      tableSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
       wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile",
-      minWidth: 130,
-      maxWidth: 210,
+      minWidth: 150,
+      maxWidth: 240,
       padding: 22,
     });
     _autoSizeMobileRightColumns({
@@ -1015,17 +1099,11 @@ const autoSizeSplitTables = () => {
       minWeekWidth: 92,
       minDayWidth: 62,
     });
-    _setFixedMobileHeights(
-      ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
-      ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table",
-      ".snowfall-split-wrap.mobile-only",
-      "--snow-header-row1-h",
-    );
     _autoSizeMobileQueryColumn({
       tableSelector: ".rain-left-wrap#rain-left-wrap-mobile .rain-left-table",
       wrapSelector: ".rain-left-wrap#rain-left-wrap-mobile",
-      minWidth: 130,
-      maxWidth: 210,
+      minWidth: 150,
+      maxWidth: 240,
       padding: 22,
     });
     _autoSizeMobileRightColumns({
@@ -1036,12 +1114,6 @@ const autoSizeSplitTables = () => {
       minWeekWidth: 92,
       minDayWidth: 62,
     });
-    _setFixedMobileHeights(
-      ".rain-left-wrap#rain-left-wrap-mobile .rain-left-table",
-      ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table",
-      ".rain-split-wrap.mobile-only",
-      "--rain-header-row1-h",
-    );
     return;
   }
   _autoSizeDesktopLeftColumns({
@@ -1069,15 +1141,30 @@ const autoSizeSplitTables = () => {
     minWidth: 66,
   });
   _autoSizeQueryOnly({
+    tableSelector: ".compact-grid-left-table",
+    wrapSelector: ".compact-grid-left-wrap",
+    queryVarName: "--compact-query-w",
+  });
+  _autoSizeQueryOnly({
     tableSelector: ".temperature-left-wrap .temperature-left-table",
     wrapSelector: ".temperature-left-wrap",
     queryVarName: "--temp-query-w",
+  });
+  _autoSizeQueryOnly({
+    tableSelector: ".weather-left-wrap .weather-left-table",
+    wrapSelector: ".weather-left-wrap",
+    queryVarName: "--weather-query-w",
   });
   _stretchColumnsToWrap({
     wrapSelector: ".temperature-right-wrap",
     tableSelector: ".temperature-right-table",
     colSelector: "col.col-temp",
     minWidth: 50,
+  });
+  _autoSizeQueryOnly({
+    tableSelector: ".sun-left-wrap .sun-left-table",
+    wrapSelector: ".sun-left-wrap",
+    queryVarName: "--sun-query-w",
   });
   _stretchColumnsToWrap({
     wrapSelector: ".weather-right-wrap",
@@ -1126,6 +1213,7 @@ const syncSplitTableHeights = () => {
     ? [
       [".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table", ".snowfall-split-wrap.mobile-only", "--snow-header-row1-h"],
       [".rain-left-wrap#rain-left-wrap-mobile .rain-left-table", ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table", ".rain-split-wrap.mobile-only", "--rain-header-row1-h"],
+      [".compact-grid-left-table", ".compact-grid-right-table", ".compact-grid-wrap", "--compact-header-row1-h"],
       [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
       [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
@@ -1133,6 +1221,7 @@ const syncSplitTableHeights = () => {
     : [
       [".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table", ".snowfall-split-wrap.desktop-only", "--snow-header-row1-h"],
       [".rain-left-wrap#rain-left-wrap .rain-left-table", ".rain-right-wrap#rain-right-wrap .rain-right-table", ".rain-split-wrap.desktop-only", "--rain-header-row1-h"],
+      [".compact-grid-left-table", ".compact-grid-right-table", ".compact-grid-wrap", "--compact-header-row1-h"],
       [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
       [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
@@ -1186,6 +1275,8 @@ const observeLayoutContainers = () => {
     ".rain-right-wrap#rain-right-wrap",
     ".rain-left-wrap#rain-left-wrap-mobile",
     ".rain-right-wrap#rain-right-wrap-mobile",
+    ".compact-grid-left-wrap",
+    ".compact-grid-right-wrap",
     ".temperature-left-wrap",
     ".temperature-right-wrap",
     ".weather-left-wrap",
