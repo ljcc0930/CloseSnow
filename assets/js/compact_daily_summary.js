@@ -83,9 +83,10 @@
   };
 
   const dayLabelFor = (day, index = 0) => {
+    if (index === 0) return "today";
     const label = _formatDayLabel(day?.date);
     if (label) return label;
-    return index === 0 ? "today" : `day ${index + 1}`;
+    return `day ${index + 1}`;
   };
 
   const dayStyle = (day) => {

@@ -264,9 +264,10 @@ const _dailyAt = (report, index) => {
 };
 
 const _dayLabelFor = (report, index) => {
+  if (index === 0) return "today";
   const label = _formatDayLabel(_dailyAt(report, index).date);
   if (label) return label;
-  return index === 0 ? "today" : `day ${index + 1}`;
+  return `day ${index + 1}`;
 };
 
 const _renderCompactGridSection = (reports) => {
