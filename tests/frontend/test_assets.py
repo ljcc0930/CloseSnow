@@ -45,6 +45,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-day-cell-today-anchor" in hourly_css_text
     assert "background: #e5e7eb;" in hourly_css_text
     assert "background: #d7dde6;" in hourly_css_text
+    assert "box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;" not in hourly_css_text
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in hourly_css_text
     assert "@media (max-width: 980px)" in hourly_css_text
     assert "grid-template-columns: 1fr;" in hourly_css_text

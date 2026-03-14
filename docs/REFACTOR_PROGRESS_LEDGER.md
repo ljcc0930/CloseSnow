@@ -38,6 +38,37 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:17 (local)
+
+### Scope
+- Remove the thick vertical anchor lines on both sides of the resort timeline's `today` column while keeping the subtler header emphasis.
+
+### Changes
+- Files:
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - The `today` header and body cells no longer render the teal inset bars on their left and right edges.
+  - The slightly darker `today` header background remains in place, so the current day is still visually identifiable without the heavy separators.
+  - Frontend asset regression coverage now checks that the old double-line box-shadow string is absent from the resort hourly CSS.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 8`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+
+### Risks / Notes
+- This slice only removes the `today` anchor line styling; timeline centering, ordering, and header color treatment are unchanged.
+
+### Next Slice
+- If the `today` marker still feels too strong or too subtle after review, tune the header fill color independently from the removed line styling.
+
 ## 2026-03-13 23:25 (local)
 
 ### Scope

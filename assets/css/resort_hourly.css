@@ -107,11 +107,11 @@ h1 {
 
 .compact-day-head-today-anchor {
   background: #d7dde6;
-  box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;
+  box-shadow: none;
 }
 
 .compact-day-cell-today-anchor {
-  box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;
+  box-shadow: none;
 }
 
 .compact-day-card {
