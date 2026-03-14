@@ -190,7 +190,6 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         right_rows.append("<tr" + attrs + ">" + "".join(cells) + "</tr>")
 
     left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
-    right_group = f"<tr><th colspan='{len(day_headers)}'>daily</th></tr>"
     right_detail = f"<tr>{''.join(day_head_cells)}</tr>"
 
     return (
@@ -209,7 +208,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         "<colgroup>"
         + "".join("<col class='col-weather'>" for _ in day_headers)
         + "</colgroup>"
-        f"<thead>{right_group}{right_detail}</thead>"
+        f"<thead>{right_detail}</thead>"
         f"<tbody>{''.join(right_rows)}</tbody>"
         "</table>"
         "</div>"

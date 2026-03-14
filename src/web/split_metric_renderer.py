@@ -94,7 +94,7 @@ def render_desktop_split_metric_layout(
         "<tr>"
         f"<th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th>"
         "<th rowspan='2' class='query-col'>Resort</th>"
-        f"<th colspan='{len(weekly_headers)}'>weekly</th>"
+        f"<th colspan='{len(weekly_headers)}'>Weekly</th>"
         "</tr>"
     )
     left_detail = (
@@ -102,7 +102,7 @@ def render_desktop_split_metric_layout(
         + "".join(f"<th>{html.escape(short_label(h, weekly_suffix, daily_suffix))}</th>" for h in weekly_headers)
         + "</tr>"
     )
-    right_group = f"<tr><th colspan='{len(daily_headers)}'>daily</th></tr>"
+    right_group = f"<tr><th colspan='{len(daily_headers)}'>Daily</th></tr>"
     right_detail = (
         "<tr>"
         + "".join(
@@ -170,8 +170,8 @@ def render_mobile_split_metric_layout(
     left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     sample_row = data[0] if data else None
     right_group = (
-        f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>weekly</th>"
-        f"<th colspan='{len(daily_headers)}'>daily</th></tr>"
+        f"<tr><th class='week-group' colspan='{len(weekly_headers)}'>Weekly</th>"
+        f"<th colspan='{len(daily_headers)}'>Daily</th></tr>"
     )
     right_detail = (
         "<tr>"

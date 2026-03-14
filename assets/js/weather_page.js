@@ -354,14 +354,14 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap">
           <table class="${options.prefix}-left-table">
             <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>Weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
             <tbody>${desktopLeftRows}</tbody>
           </table>
         </div>
         <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap">
           <table class="${options.prefix}-right-table">
             <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-            <thead><tr><th colspan='${displayDays}'>daily</th></tr><tr>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+            <thead><tr><th colspan='${displayDays}'>Daily</th></tr><tr>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
             <tbody>${desktopRightRows}</tbody>
           </table>
         </div>
@@ -377,7 +377,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap-mobile">
           <table class="${options.prefix}-right-table">
             <colgroup><col class='col-week-right'><col class='col-week-right'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-            <thead><tr><th class='week-group' colspan='2'>weekly</th><th colspan='${displayDays}'>daily</th></tr><tr><th class='week-col-cell'>week 1</th><th class='week-col-cell'>week 2</th>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+            <thead><tr><th class='week-group' colspan='2'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>Week 1</th><th class='week-col-cell'>Week 2</th>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
             <tbody>${mobileRightRows}</tbody>
           </table>
         </div>
@@ -457,7 +457,7 @@ const _renderWeatherSection = (reports) => {
         <div class='weather-right-wrap' id='weather-right-wrap'>
           <table class='weather-right-table' id='weather-right-table'>
             <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-weather'>").join("")}</colgroup>
-            <thead><tr><th colspan='${displayDays}'>daily</th></tr><tr>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+            <thead><tr>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
             <tbody>${rightRows}</tbody>
           </table>
         </div>
