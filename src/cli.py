@@ -15,7 +15,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
 
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
-from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
+from src.web.pipelines import render_compare_page, render_hourly_pages, render_html, write_payload_json
 from src.web.weather_page_server import make_handler
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.backend.weather_data_server import make_handler as make_data_handler
@@ -176,6 +176,7 @@ def run_render(args: argparse.Namespace) -> int:
     payload = load_payload(mode="file", source=args.input_json)
     output_html = _index_html_for_output_dir(args.output_dir, input_json=args.input_json)
     out = render_html(output_html, payload, data_url=_relative_url(output_html, args.input_json))
+    render_compare_page(output_html, data_url=_relative_url(str(Path(output_html).parent / "compare" / "index.html"), args.input_json))
     hourly_pages = render_hourly_pages(output_html, payload)
     output_dir = str(Path(output_html).parent)
     copied_assets = _copy_static_assets(output_dir)
@@ -198,6 +199,10 @@ def run_static(args: argparse.Namespace) -> int:
         if payload is None:
             payload = load_payload(mode="file", source=output_json)
         out = render_html(output_html, payload, data_url=_relative_url(output_html, output_json))
+        render_compare_page(
+            output_html,
+            data_url=_relative_url(str(Path(output_html).parent / "compare" / "index.html"), output_json),
+        )
         hourly_pages = render_hourly_pages(
             output_html,
             payload,

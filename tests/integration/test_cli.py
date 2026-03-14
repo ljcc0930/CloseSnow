@@ -125,6 +125,7 @@ def test_run_render(monkeypatch, tmp_path, capsys):
     args = argparse.Namespace(input_json=str(tmp_path / "in.json"), output_dir=str(tmp_path / "out"))
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "from": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
+    monkeypatch.setattr("src.cli.render_compare_page", lambda *args, **kwargs: Path(args[0]).parent / "compare" / "index.html")
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_render(args)
@@ -143,6 +144,7 @@ def test_run_static_default(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": [{"query": "a", "daily": []}]})
     monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
+    monkeypatch.setattr("src.cli.render_compare_page", lambda *args, **kwargs: Path(args[0]).parent / "compare" / "index.html")
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
@@ -159,6 +161,7 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     args.skip_render = False
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
+    monkeypatch.setattr("src.cli.render_compare_page", lambda *args, **kwargs: Path(args[0]).parent / "compare" / "index.html")
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
@@ -197,6 +200,7 @@ def test_run_static_uses_output_dir_for_json_and_html(monkeypatch, tmp_path):
     monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": []})
     monkeypatch.setattr("src.cli.write_payload_json", fake_write_payload_json)
     monkeypatch.setattr("src.cli.render_html", fake_render_html)
+    monkeypatch.setattr("src.cli.render_compare_page", lambda *args, **kwargs: Path(args[0]).parent / "compare" / "index.html")
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     cli.run_static(args)
@@ -316,6 +320,7 @@ def test_run_render_uses_input_parent_when_output_dir_missing(monkeypatch, tmp_p
 
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": []})
     monkeypatch.setattr("src.cli.render_html", fake_render_html)
+    monkeypatch.setattr("src.cli.render_compare_page", lambda *args, **kwargs: Path(args[0]).parent / "compare" / "index.html")
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
 

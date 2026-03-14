@@ -146,6 +146,9 @@
       flex-wrap: wrap;
     }
     .compare-toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid #99f6e4;
       background: #fff;
       color: #115e59;
@@ -154,6 +157,7 @@
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      text-decoration: none;
     }
     .compare-toolbar-btn:hover {
       border-color: #14b8a6;

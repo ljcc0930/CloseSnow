@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from src.web.pipelines.static_site import render_hourly_pages, render_html, write_payload_json
+from src.web.pipelines.static_site import render_compare_page, render_hourly_pages, render_html, write_payload_json
 
 
 def test_write_payload_json(tmp_path):
@@ -72,6 +72,17 @@ def test_render_hourly_pages(tmp_path):
     assert '"past14dDaily": [' in html
     assert '"date": "2026-03-01"' in html
     assert '"date": "2026-03-14"' in html
+
+
+def test_render_compare_page(tmp_path):
+    index_path = tmp_path / "site" / "index.html"
+    out = render_compare_page(str(index_path))
+    assert out == tmp_path / "site" / "compare" / "index.html"
+    html = out.read_text(encoding="utf-8")
+    assert "../assets/css/resort_compare.css" in html
+    assert "window.CLOSESNOW_COMPARE_CONTEXT" in html
+    assert '"dataUrl": "../data.json"' in html
+    assert '"compareSelection": {"queryKey": "compare", "maxResorts": 4}' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):

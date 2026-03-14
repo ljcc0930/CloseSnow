@@ -6,11 +6,9 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from src.web.compare_selection_contract import COMPARE_SELECTION_BOOTSTRAP
+
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
-_COMPARE_SELECTION_BOOTSTRAP = {
-    "queryKey": "compare",
-    "maxResorts": 4,
-}
 
 _PAGE_SHELL_PLACEHOLDER = """
     <section><h2>Daily Summary</h2><p class="section-loading">Loading forecast...</p></section>
@@ -43,7 +41,7 @@ def build_html(
     page_bootstrap_json = json.dumps(
         {
             "dataUrl": data_url,
-            "compareSelection": _COMPARE_SELECTION_BOOTSTRAP,
+            "compareSelection": COMPARE_SELECTION_BOOTSTRAP,
         },
         ensure_ascii=False,
     )

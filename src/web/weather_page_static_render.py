@@ -17,7 +17,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.backend.pipelines.static_pipeline import fetch_static_payload
-from src.web.pipelines import render_hourly_pages, render_html
+from src.web.pipelines import render_compare_page, render_hourly_pages, render_html
 
 
 def parse_args() -> argparse.Namespace:
@@ -67,6 +67,7 @@ def main() -> int:
 
     output_html = str(Path(args.output_dir) / "index.html")
     out = render_html(output_html, payload)
+    render_compare_page(output_html)
     hourly_pages = render_hourly_pages(
         output_html,
         payload,

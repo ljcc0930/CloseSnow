@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
+from src.web.compare_page_renderer import render_compare_html
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_render_core import render_payload_html
 
@@ -24,6 +25,22 @@ def render_html(path: str, payload: Dict[str, Any], *, data_url: str = "./data.j
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render_payload_html(payload, data_url=data_url), encoding="utf-8")
+    return out
+
+
+def render_compare_page(index_html_path: str, *, data_url: str = "../data.json") -> Path:
+    site_root = Path(index_html_path).parent
+    out_dir = site_root / "compare"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / "index.html"
+    out.write_text(
+        render_compare_html(
+            asset_prefix="../assets",
+            home_href="../",
+            data_url=data_url,
+        ),
+        encoding="utf-8",
+    )
     return out
 
 
