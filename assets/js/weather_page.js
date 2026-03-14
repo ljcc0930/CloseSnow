@@ -284,7 +284,7 @@ const _renderEmptyTableSection = (title, message) => `
     </table>
   </section>`;
 
-const _renderCompactGridSection = (reports, emptyMessage = "No selected resorts.") => {
+const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪场") => {
   if (!reports.length) return _renderEmptyTableSection("Daily Summary", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx));
@@ -327,7 +327,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "No selected resorts.
     </section>`;
 };
 
-const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "No selected resorts.") => {
+const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "没有匹配的雪场") => {
   if (!reports.length) return _renderEmptyTableSection(title, emptyMessage);
   const displayDays = _displayDays();
   const dayLabels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
@@ -405,7 +405,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     </section>`;
 };
 
-const _renderTemperatureSection = (reports, emptyMessage = "No selected resorts.") => {
+const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪场") => {
   if (!reports.length) return _renderEmptyTableSection("Temperature", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
@@ -449,7 +449,7 @@ const _renderTemperatureSection = (reports, emptyMessage = "No selected resorts.
     </section>`;
 };
 
-const _renderWeatherSection = (reports, emptyMessage = "No selected resorts.") => {
+const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") => {
   if (!reports.length) return _renderEmptyTableSection("Weather", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
@@ -485,7 +485,7 @@ const _renderWeatherSection = (reports, emptyMessage = "No selected resorts.") =
     </section>`;
 };
 
-const _renderSunSection = (reports, emptyMessage = "No selected resorts.") => {
+const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
   if (!reports.length) return _renderEmptyTableSection("Sunrise / Sunset", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
@@ -544,7 +544,7 @@ const _renderSunSection = (reports, emptyMessage = "No selected resorts.") => {
     </section>`;
 };
 
-const _renderSections = (reports, emptyMessage = "No selected resorts.") => [
+const _renderSections = (reports, emptyMessage = "没有匹配的雪场") => [
   _renderCompactGridSection(reports, emptyMessage),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
@@ -1529,7 +1529,7 @@ const renderPage = () => {
     ? "No favorite resorts yet. Tap the heart icon to save some."
     : (appState.filterState.favoritesOnly
       ? "No favorite resorts match the current filters."
-      : "No selected resorts.");
+      : "没有匹配的雪场");
   pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
   applyLayout();
   observeLayoutContainers();

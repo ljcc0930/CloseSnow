@@ -89,7 +89,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const persistFilterState = () => {" in js_text
     assert "const _renderEmptyTableSection = (title, message) =>" in js_text
     assert 'No favorite resorts match the current filters.' in js_text
-    assert 'No selected resorts.' in js_text
+    assert '没有匹配的雪场' in js_text
     assert "const renderPagePreservingScroll = () => {" in js_text
     assert "window.scrollTo(scrollX, scrollY);" in js_text
     assert 'if (text === "today_snow") return "today_snow";' in js_text
@@ -140,7 +140,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-day-card" in css_text
     assert ".empty-state-table" in css_text
     assert ".empty-state-cell" in css_text
-    assert 'const _renderCompactGridSection = (reports, emptyMessage = "No selected resorts.") => {' in js_text
+    assert 'const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪场") => {' in js_text
     assert 'aria-label="Daily Summary unit system"' in js_text
     assert 'data-compact-summary-toggle="1"' in js_text
     assert 'const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";' in js_text
