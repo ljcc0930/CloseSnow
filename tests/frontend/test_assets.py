@@ -82,6 +82,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";' in js_text
     assert "const loadStoredFilterState = () => {" in js_text
     assert "const persistFilterState = () => {" in js_text
+    assert 'if (text === "today_snow") return "today_snow";' in js_text
+    assert 'if (text === "week_snow") return "week_snow";' in js_text
+    assert 'if (sortBy === "today_snow") {' in js_text
+    assert 'if (sortBy === "week_snow") {' in js_text
     assert "localStorage.setItem(FILTER_STORAGE_KEY" in js_text
     assert "localStorage.setItem(FAVORITES_STORAGE_KEY" in js_text
     assert "setFavoritesOnlyControls(favoritesOnlyToggle.checked);" in js_text

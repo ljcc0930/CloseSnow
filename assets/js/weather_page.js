@@ -574,7 +574,20 @@ const normalizeSortBy = (value) => {
   const text = _normalizeSearch(value);
   if (text === "name") return "name";
   if (text === "favorites") return "favorites";
+  if (text === "today_snow") return "today_snow";
+  if (text === "week_snow") return "week_snow";
   return "state";
+};
+
+const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
+const _weeklySnowfall = (report) => _asFiniteNumber(report && report.week1_total_snowfall_cm);
+
+const _compareBySnowDesc = (a, b, valueFn) => {
+  const aValue = valueFn(a);
+  const bValue = valueFn(b);
+  const aSortable = aValue === null ? Number.NEGATIVE_INFINITY : aValue;
+  const bSortable = bValue === null ? Number.NEGATIVE_INFINITY : bValue;
+  return bSortable - aSortable;
 };
 
 const loadFavoriteResortIds = () => {
@@ -804,6 +817,14 @@ const _filteredReports = () => {
     if (sortBy === "favorites") {
       const favoriteDelta = Number(_isFavoriteReport(b)) - Number(_isFavoriteReport(a));
       if (favoriteDelta !== 0) return favoriteDelta;
+    }
+    if (sortBy === "today_snow") {
+      const snowDelta = _compareBySnowDesc(a, b, (report) => _dailySnowfall(report, 0));
+      if (snowDelta !== 0) return snowDelta;
+    }
+    if (sortBy === "week_snow") {
+      const snowDelta = _compareBySnowDesc(a, b, _weeklySnowfall);
+      if (snowDelta !== 0) return snowDelta;
     }
     if (sortBy === "name") return _displayName(a).localeCompare(_displayName(b));
     const stateCmp = String(a.admin1 || "").localeCompare(String(b.admin1 || ""));
