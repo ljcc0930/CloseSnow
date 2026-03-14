@@ -21,6 +21,7 @@ def test_file_gateway_to_renderer_integration(tmp_path, valid_payload):
     assert 'id="page-content-root"' in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html
+    assert '"compareSelection"' in html
 
 
 @pytest.mark.integration

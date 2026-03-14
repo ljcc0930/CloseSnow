@@ -271,6 +271,11 @@ def test_build_html_contains_meta_sections():
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html
+    assert '"compareSelection"' in html
+    assert '"queryKey": "compare"' in html
+    assert '"maxResorts": 4' in html
+    assert 'id="compare-toolbar"' in html
+    assert 'assets/js/compare_selection.js' in html
     assert 'id="page-content-root"' in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html
