@@ -208,7 +208,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "APPI Resort, Japan"
+    "display_name": "APPI, Japan"
   },
   {
     "resort_id": "afton-alps-mn",
@@ -268,7 +268,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Alyeska Resort, AK"
+    "display_name": "Alyeska, AK"
   },
   {
     "resort_id": "arai-snow-resort-japan",
@@ -328,7 +328,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Big Bear Mountain Resort, CA"
+    "display_name": "Big Bear, CA"
   },
   {
     "resort_id": "big-boulder-pa",
@@ -358,7 +358,7 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Big Sky Resort, MT"
+    "display_name": "Big Sky, MT"
   },
   {
     "resort_id": "blue-mountain-resort-pa",
@@ -373,7 +373,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Blue Mountain Resort, PA"
+    "display_name": "Blue Mountain, PA"
   },
   {
     "resort_id": "blue-mountain-on",
@@ -433,7 +433,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Camelback Resort, PA"
+    "display_name": "Camelback, PA"
   },
   {
     "resort_id": "chamonix-mont-blanc-valley-france",
@@ -538,7 +538,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Deer Valley Resort, UT"
+    "display_name": "Deer Valley, UT"
   },
   {
     "resort_id": "dolomiti-superski-italy",
@@ -568,7 +568,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Eldora Mountain Resort, CO"
+    "display_name": "Eldora, CO"
   },
   {
     "resort_id": "furano-ski-resort-japan",
@@ -583,7 +583,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Furano Ski Resort, Japan"
+    "display_name": "Furano, Japan"
   },
   {
     "resort_id": "grandvalira-resorts-andorra-andorra",
@@ -719,7 +719,7 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Jackson Hole Mountain Resort, WY"
+    "display_name": "Jackson Hole, WY"
   },
   {
     "resort_id": "june-mountain-ca",
@@ -1005,7 +1005,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Myoko Suginohara Ski Resort, Japan"
+    "display_name": "Myoko Suginohara, Japan"
   },
   {
     "resort_id": "nekoma-mountain-japan",
@@ -1140,7 +1140,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Revelstoke Mountain Resort, BC"
+    "display_name": "Revelstoke, BC"
   },
   {
     "resort_id": "roundtop-mountain-pa",
@@ -1200,7 +1200,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Shiga Kogen Mountain Resort, Japan"
+    "display_name": "Shiga Kogen, Japan"
   },
   {
     "resort_id": "sierra-at-tahoe-ca",
@@ -1306,7 +1306,7 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Solitude Mountain Resort, UT"
+    "display_name": "Solitude, UT"
   },
   {
     "resort_id": "st-moritz-switzerland",
@@ -1366,7 +1366,7 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Sugarbush Resort, VT"
+    "display_name": "Sugarbush, VT"
   },
   {
     "resort_id": "sugarloaf-me",
@@ -1396,7 +1396,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Sun Peaks Resort, BC"
+    "display_name": "Sun Peaks, BC"
   },
   {
     "resort_id": "sun-valley-id",
@@ -1576,7 +1576,7 @@
       "epic"
     ],
     "default_enabled": false,
-    "display_name": "Whitetail Resort, PA"
+    "display_name": "Whitetail, PA"
   },
   {
     "resort_id": "wildcat-nh",
@@ -1621,7 +1621,7 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Winter Park Resort, CO"
+    "display_name": "Winter Park, CO"
   },
   {
     "resort_id": "yunding-snow-park-china",
@@ -1651,7 +1651,7 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "Zao Onsen Ski Resort, Japan"
+    "display_name": "Zao Onsen, Japan"
   },
   {
     "resort_id": "zermatt-matterhorn-switzerland",
