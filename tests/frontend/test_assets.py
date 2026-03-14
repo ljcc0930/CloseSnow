@@ -54,6 +54,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-grid-wrap" in css_text
     assert ".us-snowfall-map-section" in map_css_text
     assert ".us-snowfall-map-root" in map_css_text
+    assert ".us-snowfall-map-marker" in map_css_text
+    assert ".us-snowfall-map-popup" in map_css_text
     assert "@media (max-width: 980px)" in map_css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
@@ -76,6 +78,9 @@ def test_read_asset_bytes_reads_known_assets():
     assert "setMetric" in map_js_text
     assert "setSelectedResort" in map_js_text
     assert "destroy" in map_js_text
+    assert "next_72h" in map_js_text
+    assert "week1" in map_js_text
+    assert "Open hourly page" in map_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
     assert 'return "Today";' in compact_js_text

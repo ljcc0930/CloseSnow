@@ -287,25 +287,26 @@ const _renderUsSnowfallMapSection = () => `
         <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
         <p class="us-snowfall-map-subtitle">Preview the upcoming nationwide snowfall view without displacing the resort tables below.</p>
       </div>
-      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="metric">
-        <button type="button" class="unit-btn is-active" data-map-metric-key="today_snow" aria-pressed="true">24h</button>
-        <button type="button" class="unit-btn" data-map-metric-key="week_snow" aria-pressed="false">7d</button>
+      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="today">
+        <button type="button" class="unit-btn is-active" data-map-metric-key="today" aria-pressed="true">24h</button>
+        <button type="button" class="unit-btn" data-map-metric-key="next_72h" aria-pressed="false">72h</button>
+        <button type="button" class="unit-btn" data-map-metric-key="week1" aria-pressed="false">7d</button>
       </div>
     </div>
     <div class="us-snowfall-map-shell">
       <div class="us-snowfall-map-meta">
-        <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Map shell ready. Marker layers and page-state sync land in a follow-up slice.</p>
+        <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Loading the US snowfall map controller.</p>
         <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-10 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">10-30 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">30+ cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-5 cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">5-15 cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">15+ cm</span>
         </div>
       </div>
-      <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="img" aria-label="Snowfall map preview area">
+      <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="region" aria-label="US snowfall map">
         <div class="us-snowfall-map-placeholder">
           <span class="us-snowfall-map-placeholder-kicker">Map canvas</span>
-          <strong>Interactive snowfall map preview</strong>
-          <span>Stable DOM hooks are live. Marker rendering arrives next.</span>
+          <strong>US snowfall map</strong>
+          <span>Interactive markers and popups load after the page script initializes.</span>
         </div>
       </div>
     </div>
