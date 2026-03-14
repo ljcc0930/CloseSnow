@@ -37,6 +37,48 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 21:46 (local)
+
+### Scope
+- Add a `Past 7 days` weather strip to each resort forecast page by reusing the existing compact day-card renderer and feeding it recent history from the main payload.
+
+### Changes
+- Files:
+  - `src/web/resort_hourly_context.py`
+  - `src/web/pipelines/static_site.py`
+  - `src/web/weather_page_server.py`
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/resort_hourly.js`
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_resort_hourly_context.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/integration/test_web_server.py`
+- Behavior impact:
+  - Resort forecast pages now bootstrap the most recent 7 history rows from `past_14d_daily` alongside the existing forward-looking daily summary.
+  - The resort page renders a new `Past 7 days` compact strip above hourly content when history data is available.
+  - Static and dynamic resort pages now share one helper for building resort-page summary bootstrap context, keeping history slicing consistent across both paths.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_resort_hourly_context.py tests/frontend/test_static_site_pipeline.py tests/frontend/test_assets.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "Past 7 days|past7dDaily|resort-history-section" /tmp/closesnow-resort-history/resort -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `19 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - artifact grep: confirmed generated resort pages include the new history section and bootstrapped `past7dDaily` data
+
+### Risks / Notes
+- The skill's referenced docs `docs/FEATURE_DESIGN_SKI_WEATHER_FULL_INFO.md`, `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`, and `docs/FRONTEND_BACKEND_FLOW_ARCHITECTURE.md` are not present in the current repo; this slice used the existing docs/code paths instead.
+- The new history strip uses the same metric-only compact-card presentation as the resort page's existing `Daily forecast` strip.
+
+### Next Slice
+- Consider adding the resort-page compact-summary unit toggle to both the forward-looking and historical strips for consistency with the main page summary controls.
+
 ## 2026-03-13 21:39 (local)
 
 ### Scope

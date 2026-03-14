@@ -378,6 +378,16 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
                     "resort_id": "snowbird-ut",
                     "query": "Snowbird, UT",
                     "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 4, "temperature_min_c": -5, "snowfall_cm": 1.2, "rain_mm": 0.0}],
+                    "past_14d_daily": [
+                        {"date": "2026-03-01", "weather_code": 45},
+                        {"date": "2026-03-02", "weather_code": 3},
+                        {"date": "2026-03-03", "weather_code": 61},
+                        {"date": "2026-03-04", "weather_code": 71},
+                        {"date": "2026-03-05", "weather_code": 3},
+                        {"date": "2026-03-06", "weather_code": 1},
+                        {"date": "2026-03-07", "weather_code": 2},
+                        {"date": "2026-03-08", "weather_code": 0},
+                    ],
                 }
             ]
         },
@@ -433,7 +443,11 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
         assert 'id="resort-daily-summary-section"' in page
+        assert 'id="resort-history-section"' in page
         assert 'id="hourly-charts"' in page
+        assert '"past7dDaily": [' in page
+        assert '"date": "2026-03-01"' not in page
+        assert '"date": "2026-03-08"' in page
 
         prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")
         assert "Resort Forecast" in prefixed_page

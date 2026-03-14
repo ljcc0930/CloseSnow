@@ -24,6 +24,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.web.data_sources import load_payload
+from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
 from src.backend.pipelines.live_pipeline import run_live_payload
@@ -41,29 +42,6 @@ from src.shared.config import DEFAULT_RESORTS_FILE
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
-
-
-def _daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Dict[str, Any] | None:
-    reports = payload.get("reports")
-    if not isinstance(reports, list):
-        return None
-    for report in reports:
-        if not isinstance(report, dict):
-            continue
-        if str(report.get("resort_id", "")).strip() != resort_id:
-            continue
-        daily = report.get("daily")
-        if not isinstance(daily, list):
-            return None
-        return {
-            "query": report.get("query", ""),
-            "display_name": report.get("display_name", report.get("query", "")),
-            "website": report.get("website", ""),
-            "daily": daily,
-        }
-    return None
-
-
 def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
     hourly_context: Dict[str, Any] = {"resortId": resort_id}
     if daily_summary:
@@ -272,7 +250,7 @@ def make_handler(
                 daily_summary = None
                 try:
                     page_payload = self._load_request_payload({}, apply_server_filters=False)
-                    daily_summary = _daily_summary_context(page_payload, resort_id)
+                    daily_summary = build_resort_daily_summary_context(page_payload, resort_id)
                 except Exception:
                     daily_summary = None
                 html = _render_hourly_page_html(resort_id, daily_summary)

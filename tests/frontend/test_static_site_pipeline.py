@@ -24,7 +24,22 @@ def test_render_hourly_pages(tmp_path):
     p = tmp_path / "site" / "index.html"
     payload = {
         "reports": [
-            {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}]},
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}],
+                "past_14d_daily": [
+                    {"date": "2026-03-01", "weather_code": 3},
+                    {"date": "2026-03-02", "weather_code": 45},
+                    {"date": "2026-03-03", "weather_code": 61},
+                    {"date": "2026-03-04", "weather_code": 71},
+                    {"date": "2026-03-05", "weather_code": 3},
+                    {"date": "2026-03-06", "weather_code": 1},
+                    {"date": "2026-03-07", "weather_code": 2},
+                    {"date": "2026-03-08", "weather_code": 0},
+                ],
+            },
             {"resort_id": "snowbird-ut"},
             {"resort_id": "alta-ut", "query": "Alta, UT", "daily": []},
         ]
@@ -43,13 +58,27 @@ def test_render_hourly_pages(tmp_path):
     assert 'id="resort-local-time"' in html
     assert 'id="hourly-charts"' in html
     assert 'id="resort-daily-summary-section"' in html
+    assert 'id="resort-history-section"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"past7dDaily": [' in html
+    assert '"date": "2026-03-01"' not in html
+    assert '"date": "2026-03-08"' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13"}]}]}
+    payload = {
+        "reports": [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "daily": [{"date": "2026-03-13"}],
+                "past_14d_daily": [{"date": "2026-03-06"}, {"date": "2026-03-07"}, {"date": "2026-03-08"}],
+            }
+        ]
+    }
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
@@ -79,11 +108,22 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"past7dDaily": [' in html
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "display_name": "Snowbird, Utah", "daily": [{"date": "2026-03-13"}]}]}
+    payload = {
+        "reports": [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "daily": [{"date": "2026-03-13"}],
+                "past_14d_daily": [{"date": "2026-03-06"}, {"date": "2026-03-07"}, {"date": "2026-03-08"}],
+            }
+        ]
+    }
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
@@ -120,3 +160,4 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"past7dDaily": [' in html

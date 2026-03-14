@@ -105,11 +105,14 @@
     return `<span class="compact-pair-value" data-compact-unit-kind="${_escapeHtml(kind)}" data-compact-metric-value="${num.toFixed(6)}">${_escapeHtml(displayValue)}</span>`;
   };
 
-  const dayLabelFor = (day, index = 0) => {
-    if (index === 0) return "today";
+  const _normalizeLabelMode = (value) => (value === "calendar" ? "calendar" : "forecast");
+
+  const dayLabelFor = (day, index = 0, options = {}) => {
+    const labelMode = _normalizeLabelMode(options.labelMode);
+    if (labelMode === "forecast" && index === 0) return "today";
     const label = _formatDayLabel(day?.date);
     if (label) return label;
-    return `day ${index + 1}`;
+    return labelMode === "forecast" ? `day ${index + 1}` : "unknown";
   };
 
   const dayStyle = (day) => {
@@ -142,18 +145,23 @@
       </div>`;
   };
 
-  const renderSingleResortHtml = (daily) => {
+  const renderSingleResortHtml = (daily, options = {}) => {
     const days = Array.isArray(daily) ? daily : [];
-    if (!days.length) return "<p class='daily-summary-empty'>No forecast data</p>";
+    const labelMode = _normalizeLabelMode(options.labelMode);
+    const emptyText = String(
+      options.emptyText
+      || (labelMode === "calendar" ? "No recent history" : "No forecast data"),
+    );
+    if (!days.length) return `<p class='daily-summary-empty'>${_escapeHtml(emptyText)}</p>`;
     return `
       <div class="resort-daily-summary-wrap">
         <table class="resort-daily-summary-table">
           <colgroup>${days.map(() => "<col class='col-compact-day'>").join("")}</colgroup>
-          <thead><tr>${days.map((day, index) => `<th>${dayLabelFor(day, index).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`).join("")}</tr></thead>
+          <thead><tr>${days.map((day, index) => `<th>${dayLabelFor(day, index, options).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`).join("")}</tr></thead>
           <tbody><tr>${days.map((day) => {
             const style = dayStyle(day);
             const styleAttr = style ? ` style='${style}'` : "";
-            return `<td class='compact-day-cell'${styleAttr}>${dayCellHtml(day)}</td>`;
+            return `<td class='compact-day-cell'${styleAttr}>${dayCellHtml(day, options)}</td>`;
           }).join("")}</tr></tbody>
         </table>
       </div>`;

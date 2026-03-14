@@ -11,6 +11,8 @@ const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
 const dailySummarySection = document.getElementById("resort-daily-summary-section");
 const dailySummaryRoot = document.getElementById("resort-daily-summary-root");
+const historySection = document.getElementById("resort-history-section");
+const historyRoot = document.getElementById("resort-history-root");
 const metaEl = document.getElementById("hourly-meta");
 const errorEl = document.getElementById("hourly-error");
 const chartErrorEl = document.getElementById("hourly-chart-error");
@@ -368,6 +370,21 @@ const renderDailySummary = () => {
   dailySummarySection.hidden = false;
 };
 
+const renderPastWeekSummary = () => {
+  if (!historySection || !historyRoot || !compactDailySummary.renderSingleResortHtml) return;
+  const history = Array.isArray(dailySummary?.past7dDaily) ? dailySummary.past7dDaily : [];
+  if (!history.length) {
+    historySection.hidden = true;
+    historyRoot.innerHTML = "";
+    return;
+  }
+  historyRoot.innerHTML = compactDailySummary.renderSingleResortHtml(history, {
+    labelMode: "calendar",
+    emptyText: "No recent history",
+  });
+  historySection.hidden = false;
+};
+
 const renderHourlyTable = (payload) => {
   if (!thead || !tbody) return;
   const hourly = payload?.hourly || {};
@@ -477,4 +494,5 @@ if (hoursSelect) {
 }
 
 renderDailySummary();
+renderPastWeekSummary();
 loadHourly();

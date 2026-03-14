@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
+from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_render_core import render_payload_html
 
 _HOURLY_TEMPLATE = (
@@ -41,27 +42,6 @@ def _iter_resort_ids(payload: Dict[str, Any]) -> List[str]:
         seen.add(resort_id)
         resort_ids.append(resort_id)
     return resort_ids
-
-
-def _daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[Dict[str, Any]]:
-    reports = payload.get("reports")
-    if not isinstance(reports, list):
-        return None
-    for report in reports:
-        if not isinstance(report, dict):
-            continue
-        if str(report.get("resort_id", "")).strip() != resort_id:
-            continue
-        daily = report.get("daily")
-        if not isinstance(daily, list):
-            return None
-        return {
-            "query": report.get("query", ""),
-            "display_name": report.get("display_name", report.get("query", "")),
-            "website": report.get("website", ""),
-            "daily": daily,
-        }
-    return None
 
 
 def _build_hourly_payload(
@@ -102,7 +82,7 @@ def render_hourly_pages(
         out_dir.mkdir(parents=True, exist_ok=True)
 
         hourly_context: Dict[str, Any] = {"resortId": resort_id}
-        daily_summary = _daily_summary_context(payload, resort_id)
+        daily_summary = build_resort_daily_summary_context(payload, resort_id)
         if daily_summary:
             hourly_context["dailySummary"] = daily_summary
         if include_hourly_data:
