@@ -181,12 +181,13 @@ python3 -m src.cli serve [--host 127.0.0.1] [--port 8010] [...]
 Run the static build pipeline and then serve the output directory such as `site/`.
 
 ```bash
-python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory site]
+python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory site] [--max-workers 8]
 ```
 
 Notes:
 
 - By default this reuses the `static` workflow and writes `data.json` + `index.html` into the target directory before serving
+- It inherits the static-fetch worker default, so resort fetch/render uses `8` workers unless `--max-workers` is provided
 - It also copies repo `assets/css` and `assets/js` into `<directory>/assets/`
 - Use `--skip-fetch` or `--skip-render` to reuse existing build artifacts with the same semantics as `static`
 - Directory indexes work as expected, so generated resort pages under `site/resort/<resort_id>/` are reachable directly

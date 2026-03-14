@@ -37,6 +37,37 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 23:10 (local)
+
+### Scope
+- Lock the static CLI worker default at `8` in tests and align `serve-static` docs with the shipped default.
+
+### Changes
+- Files:
+  - `tests/integration/test_cli.py`
+  - `README.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - `static` and `serve-static` parser regression tests now explicitly assert `max_workers == 8`.
+  - The `serve-static` README usage line and notes now document the default `8` worker behavior instead of leaving it implicit.
+  - A default static build without passing `--max-workers` was rerun successfully to verify the path still works end-to-end.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/integration/test_cli.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-static-workers-default`
+- Results:
+  - compile check: passed
+  - targeted CLI integration suite: `26 passed`
+  - static build with default worker count: succeeded (`Done: /tmp/closesnow-static-workers-default/data.json`, `Done: /tmp/closesnow-static-workers-default/index.html`, `Done: 28 resort hourly page(s)`)
+
+### Risks / Notes
+- The CLI runtime default was already `8` in `src/cli.py`; this slice hardens that expectation with tests and docs rather than changing backend behavior.
+
+### Next Slice
+- If we want the same default called out everywhere, mirror the `8` worker note into any remaining legacy entrypoints outside the unified CLI docs.
+
 ## 2026-03-13 22:57 (local)
 
 ### Scope

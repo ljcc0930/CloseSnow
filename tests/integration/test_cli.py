@@ -39,6 +39,7 @@ def test_serve_static_parser_uses_build_defaults():
     args = parser.parse_args(["serve-static"])
     assert args.directory == "site"
     assert args.cache_file == ".cache/open_meteo_cache.json"
+    assert args.max_workers == 8
     assert args.skip_fetch is False
     assert args.skip_render is False
 
@@ -54,6 +55,7 @@ def test_static_parser_uses_output_dir_default():
     args = parser.parse_args(["static"])
     assert args.output_dir == "site"
     assert args.output_json is None
+    assert args.max_workers == 8
 
 
 def test_resolve_resorts_prefers_cli_resorts():
