@@ -37,6 +37,40 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:31 (local)
+
+### Scope
+- Double the resort hourly chart width so each line chart has more horizontal room for dense hour ranges.
+
+### Changes
+- Files:
+  - `assets/js/resort_hourly.js`
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Hourly chart SVGs now render on a 1440px internal canvas instead of 720px.
+  - The rendered chart element now keeps a 1440px display width by default while still honoring `min-width: 100%`, so narrow cards scroll horizontally instead of compressing the chart as aggressively.
+  - The existing local static preview at `/tmp/closesnow-resort-history` now serves the wider chart version after refresh.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "const width = 1440;|width: 1440px;|min-width: 100%;" /tmp/closesnow-resort-history/assets/js/resort_hourly.js /tmp/closesnow-resort-history/assets/css/resort_hourly.css -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed rebuilt preview assets contain the doubled chart width settings in both JS and CSS
+
+### Risks / Notes
+- Wider charts improve point spacing, but on narrower screens users will now rely more on the existing horizontal scroll inside each chart card.
+
+### Next Slice
+- Consider making chart width scale with selected hour count so `24h` stays tighter while `120h` gets the full wide treatment.
+
 ## 2026-03-13 22:22 (local)
 
 ### Scope

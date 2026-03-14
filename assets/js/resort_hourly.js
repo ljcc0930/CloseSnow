@@ -243,7 +243,7 @@ const renderMetricChartCard = (metric, times, values) => {
     return card;
   }
 
-  const width = 720;
+  const width = 1440;
   const height = 220;
   const padLeft = 44;
   const padRight = 16;
