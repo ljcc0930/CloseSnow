@@ -59,7 +59,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".us-snowfall-map-marker" in map_css_text
     assert ".us-snowfall-map-marker.is-cluster" in map_css_text
     assert ".us-snowfall-map-scope-badge" in map_css_text
+    assert ".us-snowfall-map-panel-label" in map_css_text
+    assert ".us-snowfall-map-legend-scale" in map_css_text
     assert ".us-snowfall-map-popup" in map_css_text
+    assert ".us-snowfall-map-popup-summary" in map_css_text
     assert ".us-snowfall-map-viewport" in map_css_text
     assert ".us-snowfall-map-control" in map_css_text
     assert ".us-snowfall-map-control-selected" in map_css_text
@@ -89,6 +92,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "destroy" in map_js_text
     assert "next_72h" in map_js_text
     assert "week1" in map_js_text
+    assert "Intensity guide" in map_js_text
+    assert "Open the matching hourly page for snowfall timing, wind, and precipitation detail." in map_js_text
     assert "onSelectResort" in map_js_text
     assert "Open hourly page" in map_js_text
     assert "Full US view" in map_js_text
@@ -98,13 +103,15 @@ def test_read_asset_bytes_reads_known_assets():
     assert "fit-results" in map_js_text
     assert "show-selected" in map_js_text
     assert "Dense resort clusters are grouped." in map_js_text
-    assert "No visible resorts remain in the active result set" in map_js_text
+    assert "No visible resorts remain for" in map_js_text
     assert "data-map-cluster" in map_js_text
     assert "_clusterEntries" in map_js_text
     assert "_fitTransformForEntries" in map_js_text
     assert "pointerdown" in map_js_text
     assert "wheel" in map_js_text
     assert "Basemap unavailable" in map_js_text
+    assert "Preview the upcoming nationwide snowfall view" not in js_text
+    assert "Preparing nationwide resort snowfall coverage." in js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
     assert 'return "Today";' in compact_js_text

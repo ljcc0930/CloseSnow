@@ -547,15 +547,21 @@
     const metricValue = _formatSnowfall(_metricValue(report, metricKey));
     const passTypes = _escapeHtml(_passTypesText(report));
     const stateText = state ? _escapeHtml(state.toUpperCase()) : "US";
+    const summary = resortId
+      ? "Open the matching hourly page for snowfall timing, wind, and precipitation detail."
+      : "Use the linked resort rows below for the matching forecast record.";
     const linkHtml = resortId
       ? `<a class="us-snowfall-map-popup-link" href="resort/${encodeURIComponent(resortId)}">Open hourly page</a>`
       : "";
     return `
-      <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
-      <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+      <div class="us-snowfall-map-popup-header">
+        <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+        <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
+      </div>
       <strong class="us-snowfall-map-popup-title">${header}</strong>
       <div class="us-snowfall-map-popup-metric">${metricValue}</div>
-      <div class="us-snowfall-map-popup-meta">${stateText} · ${passTypes}</div>
+      <div class="us-snowfall-map-popup-detail">${stateText} · ${passTypes}</div>
+      <div class="us-snowfall-map-popup-summary">${_escapeHtml(summary)}</div>
       ${linkHtml}
     `;
   };
@@ -569,11 +575,17 @@
 
   const _legendHtml = () => {
     const config = _metricConfig(DEFAULT_METRIC_KEY);
-    return [
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">${config.legend[0]}</span>`,
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">${config.legend[1]}</span>`,
-      `<span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">${config.legend[2]}</span>`,
-    ].join("");
+    return `
+      <div class="us-snowfall-map-panel-heading">
+        <span class="us-snowfall-map-panel-label">Intensity guide</span>
+        <p class="us-snowfall-map-panel-copy">Marker fill reflects the active snowfall range while the rest of the forecast stays available below.</p>
+      </div>
+      <div class="us-snowfall-map-legend-scale">
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">${config.legend[0]}</span>
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">${config.legend[1]}</span>
+        <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">${config.legend[2]}</span>
+      </div>
+    `;
   };
 
   const _mapStageHtml = () => `
@@ -816,28 +828,43 @@
       if (!statusElement) return;
       const metric = _metricConfig(state.metricKey);
       const visibleCount = state.visibleReports.length;
+      const renderStatusCard = (headline, detail) => {
+        statusElement.innerHTML = `
+          <strong>${_escapeHtml(headline)}</strong>
+          <span>${_escapeHtml(detail)}</span>
+        `;
+      };
       if (state.errorMessage) {
-        statusElement.textContent = `Snowfall map unavailable. ${state.errorMessage}`;
+        renderStatusCard("Interactive map unavailable.", state.errorMessage);
         return;
       }
       const interactionText = state.basemapMode === "geographic"
         ? "Drag to pan, click dense count bubbles to zoom into nearby resorts, and use Results, Selected, or Reset to recover orientation."
         : "Basemap fallback is active. Drag to pan, click dense count bubbles to zoom into nearby resorts, and use Results, Selected, or Reset to recover orientation.";
       if (!visibleCount) {
-        statusElement.textContent = `No visible resorts remain in the active result set for ${metric.label}. Adjust filters or search to restore results. ${interactionText}`;
+        renderStatusCard(
+          `No visible resorts remain for ${metric.label}.`,
+          `Adjust filters or search to restore results. ${interactionText}`,
+        );
         return;
       }
       if (!eligibleReports.length) {
-        statusElement.textContent = `Visible resorts do not currently project onto the US snowfall map for ${metric.label}. They remain available in the resort tables below. ${interactionText}`;
+        renderStatusCard(
+          `Visible resorts are outside the active US map scope for ${metric.label}.`,
+          `They remain available in the resort tables below. ${interactionText}`,
+        );
         return;
       }
       const focused = state.selectedResortId
-        ? ` Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
+        ? `Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
         : "";
       const visibilityText = eligibleReports.length === visibleCount
         ? `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"}`
         : `Showing ${eligibleReports.length} map-ready resort${eligibleReports.length === 1 ? "" : "s"} out of ${visibleCount} visible result${visibleCount === 1 ? "" : "s"}`;
-      statusElement.textContent = `${visibilityText} for ${metric.label}.${focused} ${interactionText}`;
+      renderStatusCard(
+        `${visibilityText} for ${metric.label}.`,
+        `${focused || "Select a marker to inspect the same resort record that appears in the tables below."} ${interactionText}`,
+      );
     };
 
     const renderLegend = () => {
