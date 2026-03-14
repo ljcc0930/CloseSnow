@@ -63,8 +63,10 @@ def test_render_hourly_pages(tmp_path):
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
     assert 'id="resort-local-time"' in html
     assert 'id="hourly-charts"' in html
-    assert 'id="resort-daily-summary-section"' in html
-    assert 'id="resort-history-section"' in html
+    assert 'id="resort-timeline-section"' in html
+    assert 'id="resort-daily-summary-section"' not in html
+    assert 'id="resort-history-section"' not in html
+    assert 'Past 14 days + forecast' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
     assert '"past14dDaily": [' in html

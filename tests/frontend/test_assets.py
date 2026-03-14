@@ -40,13 +40,17 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-grid-wrap" in css_text
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
-    assert ".resort-history-section" in hourly_css_text
+    assert ".resort-timeline-section" in hourly_css_text
+    assert ".compact-day-cell-phase-start" in hourly_css_text
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
+    assert "summary_phase" in compact_js_text
+    assert "summary_label" in compact_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "formatResortLocalTime" in hourly_js_text
-    assert "renderPast14DaySummary" in hourly_js_text
+    assert "renderTimelineSummary" in hourly_js_text
+    assert "buildMergedTimelineDays" in hourly_js_text
     assert "past14dDaily" in hourly_js_text

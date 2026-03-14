@@ -37,6 +37,44 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:05 (local)
+
+### Scope
+- Merge the resort page's separate forecast/history strips into one continuous `Past 14 days + forecast` timeline.
+
+### Changes
+- Files:
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/css/resort_hourly.css`
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_web_server.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort pages now render one combined compact strip instead of separate `Past 14 days` and `Daily forecast` sections.
+  - The merged strip shows history first and forecast second, with a visual phase divider at the forecast boundary.
+  - The local static preview already serving `/tmp/closesnow-resort-history` now reflects the merged timeline after refresh.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_resort_hourly_context.py tests/frontend/test_static_site_pipeline.py tests/frontend/test_assets.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `curl -sS http://127.0.0.1:8011/resort/snowbird-ut/ | rg -n "Past 14 days \\+ forecast|resort-timeline-section|compact-day-cell-phase-start|resort-daily-summary-section|resort-history-section" -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `19 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - local preview probe: confirmed the served resort page now exposes the merged `resort-timeline-section` heading and no longer includes the old split section ids
+
+### Risks / Notes
+- The merged timeline still relies on client-side rendering from the same bootstrap payload; only the page structure and compact-summary assembly changed.
+
+### Next Slice
+- Consider whether the combined timeline should get small `History` / `Forecast` badges above the divider if users need even stronger phase cues.
+
 ## 2026-03-13 21:56 (local)
 
 ### Scope

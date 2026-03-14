@@ -108,6 +108,8 @@
   const _normalizeLabelMode = (value) => (value === "calendar" ? "calendar" : "forecast");
 
   const dayLabelFor = (day, index = 0, options = {}) => {
+    const explicitLabel = String(day?.summary_label || "").trim();
+    if (explicitLabel) return explicitLabel;
     const labelMode = _normalizeLabelMode(options.labelMode);
     if (labelMode === "forecast" && index === 0) return "today";
     const label = _formatDayLabel(day?.date);
@@ -157,11 +159,23 @@
       <div class="resort-daily-summary-wrap">
         <table class="resort-daily-summary-table">
           <colgroup>${days.map(() => "<col class='col-compact-day'>").join("")}</colgroup>
-          <thead><tr>${days.map((day, index) => `<th>${dayLabelFor(day, index, options).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`).join("")}</tr></thead>
-          <tbody><tr>${days.map((day) => {
+          <thead><tr>${days.map((day, index) => {
+            const phase = String(day?.summary_phase || "").trim();
+            const prevPhase = index > 0 ? String(days[index - 1]?.summary_phase || "").trim() : "";
+            const headClasses = ["compact-day-head"];
+            if (phase) headClasses.push(`compact-day-head-${phase}`);
+            if (phase && prevPhase && phase !== prevPhase) headClasses.push("compact-day-head-phase-start");
+            return `<th class='${headClasses.join(" ")}'>${dayLabelFor(day, index, options).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`;
+          }).join("")}</tr></thead>
+          <tbody><tr>${days.map((day, index) => {
             const style = dayStyle(day);
             const styleAttr = style ? ` style='${style}'` : "";
-            return `<td class='compact-day-cell'${styleAttr}>${dayCellHtml(day, options)}</td>`;
+            const phase = String(day?.summary_phase || "").trim();
+            const prevPhase = index > 0 ? String(days[index - 1]?.summary_phase || "").trim() : "";
+            const cellClasses = ["compact-day-cell"];
+            if (phase) cellClasses.push(`compact-day-cell-${phase}`);
+            if (phase && prevPhase && phase !== prevPhase) cellClasses.push("compact-day-cell-phase-start");
+            return `<td class='${cellClasses.join(" ")}'${styleAttr}>${dayCellHtml(day, options)}</td>`;
           }).join("")}</tr></tbody>
         </table>
       </div>`;

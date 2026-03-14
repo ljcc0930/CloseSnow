@@ -448,8 +448,10 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert '"dailySummary": {' in page
         assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
-        assert 'id="resort-daily-summary-section"' in page
-        assert 'id="resort-history-section"' in page
+        assert 'id="resort-timeline-section"' in page
+        assert 'id="resort-daily-summary-section"' not in page
+        assert 'id="resort-history-section"' not in page
+        assert "Past 14 days + forecast" in page
         assert 'id="hourly-charts"' in page
         assert '"past14dDaily": [' in page
         assert '"date": "2026-03-01"' in page

@@ -50,13 +50,11 @@ h1 {
   text-decoration: underline;
 }
 
-.resort-daily-summary-section,
-.resort-history-section {
+.resort-timeline-section {
   margin: 0 0 14px;
 }
 
-.resort-daily-summary-section h2,
-.resort-history-section h2 {
+.resort-timeline-section h2 {
   margin: 0 0 8px;
   font-size: 16px;
 }
@@ -88,6 +86,14 @@ h1 {
   background: #e5e7eb;
 }
 
+.resort-daily-summary-table th.compact-day-head-history {
+  background: #e2e8f0;
+}
+
+.resort-daily-summary-table th.compact-day-head-forecast {
+  background: #dff6ef;
+}
+
 .resort-daily-summary-table td {
   background-clip: padding-box;
 }
@@ -97,6 +103,11 @@ h1 {
   height: 62px;
   min-height: 62px;
   vertical-align: top;
+}
+
+.compact-day-head-phase-start,
+.compact-day-cell-phase-start {
+  box-shadow: inset 3px 0 0 #0f766e;
 }
 
 .compact-day-card {

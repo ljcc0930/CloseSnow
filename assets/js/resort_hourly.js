@@ -9,10 +9,8 @@ const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
 const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
-const dailySummarySection = document.getElementById("resort-daily-summary-section");
-const dailySummaryRoot = document.getElementById("resort-daily-summary-root");
-const historySection = document.getElementById("resort-history-section");
-const historyRoot = document.getElementById("resort-history-root");
+const timelineSection = document.getElementById("resort-timeline-section");
+const timelineRoot = document.getElementById("resort-timeline-root");
 const metaEl = document.getElementById("hourly-meta");
 const errorEl = document.getElementById("hourly-error");
 const chartErrorEl = document.getElementById("hourly-chart-error");
@@ -358,31 +356,49 @@ const renderHourlyCharts = (payload) => {
   chartsEl.appendChild(frag);
 };
 
-const renderDailySummary = () => {
-  if (!dailySummarySection || !dailySummaryRoot || !compactDailySummary.renderSingleResortHtml) return;
-  const daily = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
-  if (!daily.length) {
-    dailySummarySection.hidden = true;
-    dailySummaryRoot.innerHTML = "";
-    return;
-  }
-  dailySummaryRoot.innerHTML = compactDailySummary.renderSingleResortHtml(daily);
-  dailySummarySection.hidden = false;
+const buildMergedTimelineDays = () => {
+  const labelFor = typeof compactDailySummary.dayLabelFor === "function"
+    ? compactDailySummary.dayLabelFor
+    : (day, index, options = {}) => {
+      const labelMode = options.labelMode === "calendar" ? "calendar" : "forecast";
+      if (labelMode === "forecast" && index === 0) return "today";
+      return String(day?.date || "");
+    };
+  const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];
+  const forecast = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
+  const merged = [];
+
+  history.forEach((day, index) => {
+    merged.push({
+      ...day,
+      summary_phase: "history",
+      summary_label: labelFor(day, index, { labelMode: "calendar" }),
+    });
+  });
+
+  forecast.forEach((day, index) => {
+    merged.push({
+      ...day,
+      summary_phase: "forecast",
+      summary_label: labelFor(day, index, { labelMode: "forecast" }),
+    });
+  });
+
+  return merged;
 };
 
-const renderPast14DaySummary = () => {
-  if (!historySection || !historyRoot || !compactDailySummary.renderSingleResortHtml) return;
-  const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];
-  if (!history.length) {
-    historySection.hidden = true;
-    historyRoot.innerHTML = "";
+const renderTimelineSummary = () => {
+  if (!timelineSection || !timelineRoot || !compactDailySummary.renderSingleResortHtml) return;
+  const merged = buildMergedTimelineDays();
+  if (!merged.length) {
+    timelineSection.hidden = true;
+    timelineRoot.innerHTML = "";
     return;
   }
-  historyRoot.innerHTML = compactDailySummary.renderSingleResortHtml(history, {
-    labelMode: "calendar",
-    emptyText: "No recent history",
+  timelineRoot.innerHTML = compactDailySummary.renderSingleResortHtml(merged, {
+    emptyText: "No forecast or recent history",
   });
-  historySection.hidden = false;
+  timelineSection.hidden = false;
 };
 
 const renderHourlyTable = (payload) => {
@@ -493,6 +509,5 @@ if (hoursSelect) {
   hoursSelect.addEventListener("change", loadHourly);
 }
 
-renderDailySummary();
-renderPast14DaySummary();
+renderTimelineSummary();
 loadHourly();
