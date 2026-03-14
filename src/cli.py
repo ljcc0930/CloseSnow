@@ -6,6 +6,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import Any, Dict, List, Tuple
 
@@ -195,6 +196,18 @@ def _static_outputs_for_directory(directory: str) -> tuple[str, str]:
     return str(root / "data.json"), str(root / "index.html")
 
 
+def _copy_static_assets(directory: str) -> List[Path]:
+    root = Path(directory).resolve()
+    assets_root = root / "assets"
+    copied: List[Path] = []
+    for name in ("css", "js"):
+        source = Path("assets") / name
+        target = assets_root / name
+        shutil.copytree(source, target, dirs_exist_ok=True)
+        copied.append(target)
+    return copied
+
+
 def run_static_server(args: argparse.Namespace) -> int:
     output_json, output_html = _static_outputs_for_directory(args.directory)
     static_args = argparse.Namespace(**vars(args))
@@ -207,6 +220,7 @@ def run_static_server(args: argparse.Namespace) -> int:
         raise FileNotFoundError(f"Static directory does not exist: {directory}")
     if not directory.is_dir():
         raise NotADirectoryError(f"Static path is not a directory: {directory}")
+    copied_assets = _copy_static_assets(args.directory)
 
     handler = partial(SimpleHTTPRequestHandler, directory=str(directory))
     return _serve_http_server(
@@ -217,6 +231,7 @@ def run_static_server(args: argparse.Namespace) -> int:
             f"Serving static site at http://{args.host}:{args.port}",
             f"Static root: {directory}",
             f"Static build: {Path(output_html).resolve()}",
+            f"Copied assets: {', '.join(str(path) for path in copied_assets)}",
             "Open / for index.html and /resort/<resort_id>/ for generated hourly pages.",
         ],
     )

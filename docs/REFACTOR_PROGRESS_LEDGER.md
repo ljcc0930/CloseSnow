@@ -51,6 +51,7 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
   - `tests/integration/test_static_server.py`
 - Behavior impact:
   - CLI now supports `serve-static`, which explicitly reuses the `static` build flow before serving the output directory.
+  - `serve-static` also copies `assets/css` and `assets/js` into the served directory so the generated page is runnable without a separate manual copy step.
   - Local preview of generated `site/` artifacts can use directory-index routing for resort pages.
 
 ### Validation

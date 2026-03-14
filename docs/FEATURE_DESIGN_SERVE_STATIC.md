@@ -31,6 +31,7 @@ Behavior:
 
 - runs the same fetch+render logic as `python3 -m src.cli static`
 - writes outputs into a user-provided directory, default `site`
+- copies repo `assets/css` and `assets/js` into `<directory>/assets`
 - serves files from that directory after the build step
 - uses Python standard library only
 - supports directory index routing so `/resort/<resort_id>/` resolves to `index.html`

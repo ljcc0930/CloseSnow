@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 import pytest
@@ -179,6 +180,10 @@ def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
         Path(run_args.output_html).parent.mkdir(parents=True, exist_ok=True)
         Path(run_args.output_html).write_text("<!doctype html>", encoding="utf-8")
 
+    def fake_copy_static_assets(directory):  # noqa: ANN001
+        captured["copied_directory"] = directory
+        return [Path(directory) / "assets" / "css", Path(directory) / "assets" / "js"]
+
     args = argparse.Namespace(
         host="127.0.0.1",
         port=8011,
@@ -194,17 +199,20 @@ def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
         skip_render=False,
     )
     monkeypatch.setattr("src.cli.run_static", fake_run_static)
+    monkeypatch.setattr("src.cli._copy_static_assets", fake_copy_static_assets)
     monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
     rc = cli.run_static_server(args)
     out = capsys.readouterr().out
     assert rc == 0
     assert captured["output_json"] == str(tmp_path / "data.json")
     assert captured["output_html"] == str(tmp_path / "index.html")
+    assert captured["copied_directory"] == str(tmp_path)
     assert captured["skip_fetch"] is False
     assert captured["skip_render"] is False
     assert calls["served"] is True
     assert calls["closed"] is True
     assert "Serving static site" in out
+    assert "Copied assets:" in out
     assert str(tmp_path.resolve()) in out
 
 
@@ -226,6 +234,27 @@ def test_run_static_server_propagates_missing_directory_when_static_skips_render
     monkeypatch.setattr("src.cli.run_static", lambda run_args: 0)
     with pytest.raises(FileNotFoundError, match="Static directory does not exist"):
         cli.run_static_server(args)
+
+
+def test_copy_static_assets_copies_css_and_js(tmp_path):
+    assets_root = tmp_path / "repo"
+    (assets_root / "assets" / "css").mkdir(parents=True)
+    (assets_root / "assets" / "js").mkdir(parents=True)
+    (assets_root / "assets" / "css" / "weather_page.css").write_text("body{}", encoding="utf-8")
+    (assets_root / "assets" / "js" / "weather_page.js").write_text("console.log('x')", encoding="utf-8")
+    output_dir = assets_root / "site"
+    output_dir.mkdir()
+
+    cwd = Path.cwd()
+    try:
+        os.chdir(assets_root)
+        copied = cli._copy_static_assets(str(output_dir))
+    finally:
+        os.chdir(cwd)
+
+    assert copied == [output_dir / "assets" / "css", output_dir / "assets" / "js"]
+    assert (output_dir / "assets" / "css" / "weather_page.css").read_text(encoding="utf-8") == "body{}"
+    assert (output_dir / "assets" / "js" / "weather_page.js").read_text(encoding="utf-8") == "console.log('x')"
 
 
 def test_run_server_boot_path(monkeypatch, capsys):

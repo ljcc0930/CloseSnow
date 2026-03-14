@@ -56,6 +56,8 @@ Or build and preview the static site locally in one command:
 python3 -m src.cli serve-static --directory site --host 127.0.0.1 --port 8011
 ```
 
+This command also copies `assets/css` and `assets/js` into `site/assets/`.
+
 Notes:
 
 - This command uses default-enabled resorts from `resorts.yml`
@@ -188,6 +190,7 @@ python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory si
 Notes:
 
 - By default this reuses the `static` workflow and writes `data.json` + `index.html` into the target directory before serving
+- It also copies repo `assets/css` and `assets/js` into `<directory>/assets/`
 - Use `--skip-fetch` or `--skip-render` to reuse existing build artifacts with the same semantics as `static`
 - Directory indexes work as expected, so generated resort pages under `site/resort/<resort_id>/` are reachable directly
 - This is a plain file server; it does not provide `/api/data` or other dynamic endpoints
