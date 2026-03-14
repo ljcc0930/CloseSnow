@@ -38,6 +38,37 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:18 (local)
+
+### Scope
+- Change the resort timeline's `today` marker from no side lines to the same subtle divider lines used by the main weather tables.
+
+### Changes
+- Files:
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - The `today` header and body cells now render matching left/right inset lines using the main table divider color `#f3f4f6`.
+  - The `today` header keeps its slightly darker background, so the current day remains visible without reintroducing the older thick teal anchors.
+  - Asset regression coverage now checks for the new thin divider box-shadow string while still rejecting the old thick teal line styling.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 8`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+
+### Risks / Notes
+- This slice only changes the visual weight/color of the `today` side markers; the timeline structure and centering behavior remain unchanged.
+
+### Next Slice
+- If the `today` marker still needs tuning, adjust the header fill and divider contrast independently now that the line weight matches the main tables.
+
 ## 2026-03-13 22:17 (local)
 
 ### Scope
