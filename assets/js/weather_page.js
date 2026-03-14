@@ -13,6 +13,7 @@ const filterMetaApplied =
     ? filterMeta.applied_filters
     : {};
 
+const favoriteAlertsRoot = document.getElementById("favorite-alerts-root");
 const pageContentRoot = document.getElementById("page-content-root");
 const reportDateEl = document.getElementById("report-date");
 const resortSearchInput = document.getElementById("resort-search-input");
@@ -37,6 +38,8 @@ const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
+const MAX_UNREAD_ALERTS = 8;
+const MAX_READ_ALERTS = 6;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const favoriteAlertsApi = window.CloseSnowFavoritesAlerts || null;
@@ -628,6 +631,267 @@ const publishFavoriteAlertState = (state, newAlerts) => {
   window.CLOSESNOW_FAVORITE_ALERT_STATE = state;
   window.CLOSESNOW_FAVORITE_ALERTS = state && Array.isArray(state.alerts) ? state.alerts : [];
   window.CLOSESNOW_NEW_FAVORITE_ALERTS = appState.newFavoriteAlerts;
+};
+
+const _defaultFavoriteAlertState = () => ({
+  alerts: [],
+  read_alert_ids: [],
+  dismissed_alert_ids: [],
+  rules_by_resort_id: {},
+});
+
+const _favoriteAlertState = () => {
+  const raw = appState.favoriteAlertState;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return _defaultFavoriteAlertState();
+  return {
+    alerts: Array.isArray(raw.alerts) ? raw.alerts.filter((alert) => alert && typeof alert === "object") : [],
+    read_alert_ids: Array.isArray(raw.read_alert_ids)
+      ? raw.read_alert_ids.map((value) => String(value || "").trim()).filter(Boolean)
+      : [],
+    dismissed_alert_ids: Array.isArray(raw.dismissed_alert_ids)
+      ? raw.dismissed_alert_ids.map((value) => String(value || "").trim()).filter(Boolean)
+      : [],
+    rules_by_resort_id: raw.rules_by_resort_id && typeof raw.rules_by_resort_id === "object" && !Array.isArray(raw.rules_by_resort_id)
+      ? raw.rules_by_resort_id
+      : {},
+  };
+};
+
+const refreshFavoriteAlertStateFromStorage = () => {
+  if (!favoriteAlertsApi || typeof favoriteAlertsApi.loadState !== "function") return null;
+  const state = favoriteAlertsApi.loadState();
+  publishFavoriteAlertState(state, []);
+  return state;
+};
+
+const _favoriteAlertRuleMode = (state, resortId) => {
+  const id = String(resortId || "").trim();
+  if (!id) return "all";
+  const rawRule = state.rules_by_resort_id[id];
+  const rawMode = rawRule && typeof rawRule === "object" && !Array.isArray(rawRule) ? rawRule.mode : rawRule;
+  const mode = _normalizeSearch(rawMode);
+  if (mode === "high_only" || mode === "mute") return mode;
+  return "all";
+};
+
+const _favoriteAlertWindowLabel = (value) => {
+  const text = _normalizeSearch(value);
+  if (text === "next_3_days") return "Next 3 days";
+  if (text === "week_1") return "Week 1";
+  if (!text) return "";
+  return text.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+};
+
+const _favoriteAlertTimeLabel = (value) => {
+  const dt = new Date(value || "");
+  if (Number.isNaN(dt.getTime())) return "Update time unavailable";
+  return dt.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const _favoriteAlertMetricSummary = (metrics) => {
+  if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) return "";
+  const parts = [];
+  const windowLabel = _favoriteAlertWindowLabel(metrics.window);
+  const unit = String(metrics.unit || "").trim().toUpperCase();
+  const delta = _asFiniteNumber(metrics.delta);
+  const current = _asFiniteNumber(metrics.current);
+  if (windowLabel) parts.push(`Window: ${windowLabel}`);
+  if (delta !== null) parts.push(`Change: ${delta > 0 ? "+" : ""}${_formatMetric(delta)} ${unit}`.trim());
+  if (current !== null) parts.push(`Now: ${_formatMetric(current)} ${unit}`.trim());
+  return parts.join(" | ");
+};
+
+const _favoriteResortSummaries = () => {
+  const reportsByResortId = {};
+  _payloadReports().forEach((report) => {
+    const resortId = String(report?.resort_id || "").trim();
+    if (resortId && !reportsByResortId[resortId]) reportsByResortId[resortId] = report;
+  });
+  return Array.from(appState.favoriteResortIds)
+    .map((resortId) => {
+      const report = reportsByResortId[resortId] || {};
+      return {
+        resortId,
+        name: _displayName(report) || resortId,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+};
+
+const _favoriteAlertCollections = () => {
+  const state = _favoriteAlertState();
+  const dismissedIds = new Set(state.dismissed_alert_ids);
+  const readIds = new Set(state.read_alert_ids);
+  const visibleAlerts = [];
+  let hiddenByRuleCount = 0;
+
+  state.alerts.forEach((alert) => {
+    const id = String(alert?.id || "").trim();
+    if (!id || dismissedIds.has(id)) return;
+    const mode = _favoriteAlertRuleMode(state, alert.resort_id);
+    const severity = _normalizeSearch(alert.severity);
+    if (mode === "mute" || (mode === "high_only" && severity !== "high")) {
+      hiddenByRuleCount += 1;
+      return;
+    }
+    visibleAlerts.push(alert);
+  });
+
+  const unreadAlerts = [];
+  const readAlerts = [];
+  visibleAlerts.forEach((alert) => {
+    const id = String(alert?.id || "").trim();
+    if (readIds.has(id)) {
+      readAlerts.push(alert);
+    } else {
+      unreadAlerts.push(alert);
+    }
+  });
+
+  return {
+    state,
+    visibleAlerts,
+    unreadAlerts,
+    readAlerts,
+    hiddenByRuleCount,
+  };
+};
+
+const _favoriteAlertCardHtml = (alert, read) => {
+  const alertId = String(alert?.id || "").trim();
+  const resortId = String(alert?.resort_id || "").trim();
+  const resortName = String(alert?.resort_name || "Favorite resort").trim() || "Favorite resort";
+  const severity = _normalizeSearch(alert?.severity) === "high" ? "high" : "medium";
+  const metricSummary = _favoriteAlertMetricSummary(alert?.metrics);
+  const resortHref = resortId ? `resort/${encodeURIComponent(resortId)}` : "";
+
+  return `<article class='favorite-alert-card' data-alert-read='${read ? "1" : "0"}' data-alert-severity='${severity}'>
+    <div class='favorite-alert-card-head'>
+      <div class='favorite-alert-card-title-wrap'>
+        <div class='favorite-alert-card-meta-row'>
+          ${resortHref ? `<a class='favorite-alert-card-resort' href='${resortHref}'>${_escapeHtml(resortName)}</a>` : `<span class='favorite-alert-card-resort'>${_escapeHtml(resortName)}</span>`}
+          <span class='favorite-alert-severity-badge' data-alert-severity='${severity}'>${severity === "high" ? "High priority" : "Medium priority"}</span>
+        </div>
+        <h3>${_escapeHtml(String(alert?.title || "Favorite alert"))}</h3>
+      </div>
+      <time class='favorite-alert-card-time'>${_escapeHtml(_favoriteAlertTimeLabel(alert?.created_at || alert?.payload_generated_at))}</time>
+    </div>
+    <p class='favorite-alert-card-message'>${_escapeHtml(String(alert?.message || ""))}</p>
+    ${metricSummary ? `<p class='favorite-alert-card-summary'>${_escapeHtml(metricSummary)}</p>` : ""}
+    <div class='favorite-alert-card-actions'>
+      <button type='button' class='favorite-alert-action-btn' data-alert-action='${read ? "unread" : "read"}' data-alert-id='${_escapeHtml(alertId)}'>${read ? "Mark unread" : "Mark read"}</button>
+      <button type='button' class='favorite-alert-action-btn favorite-alert-action-btn-secondary' data-alert-action='dismiss' data-alert-id='${_escapeHtml(alertId)}'>Dismiss</button>
+      ${resortHref ? `<a class='favorite-alert-card-link' href='${resortHref}'>Open resort</a>` : ""}
+    </div>
+  </article>`;
+};
+
+const _favoriteAlertSectionHtml = ({ title, subtitle, alerts, emptyMessage, read, limit }) => {
+  const shownAlerts = alerts.slice(0, limit);
+  const overflow = alerts.length - shownAlerts.length;
+  return `<section class='favorite-alert-section'>
+    <div class='favorite-alert-section-head'>
+      <div>
+        <h3>${_escapeHtml(title)}</h3>
+        <p>${_escapeHtml(subtitle)}</p>
+      </div>
+      <span class='favorite-alert-section-count'>${alerts.length}</span>
+    </div>
+    ${shownAlerts.length
+      ? `<div class='favorite-alert-card-list'>${shownAlerts.map((alert) => _favoriteAlertCardHtml(alert, read)).join("")}</div>`
+      : `<p class='favorite-alert-section-empty'>${_escapeHtml(emptyMessage)}</p>`}
+    ${overflow > 0 ? `<p class='favorite-alert-section-footnote'>Showing the latest ${shownAlerts.length} of ${alerts.length} alerts.</p>` : ""}
+  </section>`;
+};
+
+const _favoriteAlertControlsHtml = (state, favorites) => {
+  if (!favorites.length) {
+    return `<div class='favorite-alert-controls-empty'>Favorite a resort with the heart icon to set per-resort alert visibility.</div>`;
+  }
+  const rows = favorites.map(({ resortId, name }) => {
+    const mode = _favoriteAlertRuleMode(state, resortId);
+    return `<label class='favorite-alert-rule-row'>
+      <span class='favorite-alert-rule-name'>${_escapeHtml(name)}</span>
+      <select class='favorite-alert-rule-select' data-alert-rule-resort-id='${_escapeHtml(resortId)}'>
+        <option value='all'${mode === "all" ? " selected" : ""}>All alerts</option>
+        <option value='high_only'${mode === "high_only" ? " selected" : ""}>Major only</option>
+        <option value='mute'${mode === "mute" ? " selected" : ""}>Mute</option>
+      </select>
+    </label>`;
+  }).join("");
+
+  return `<details class='favorite-alert-controls'>
+    <summary>Alert controls</summary>
+    <div class='favorite-alert-rule-list'>${rows}</div>
+    <p class='favorite-alert-controls-copy'>Use “Major only” to hide medium-severity forecast churn, or mute a resort entirely without removing it from favorites.</p>
+  </details>`;
+};
+
+const renderFavoriteAlertsPanel = () => {
+  if (!favoriteAlertsRoot) return;
+  const favorites = _favoriteResortSummaries();
+  const {
+    state,
+    visibleAlerts,
+    unreadAlerts,
+    readAlerts,
+    hiddenByRuleCount,
+  } = _favoriteAlertCollections();
+
+  if (!favorites.length && visibleAlerts.length === 0) {
+    favoriteAlertsRoot.innerHTML = `<section class='favorite-alerts-panel favorite-alerts-panel-empty'>
+      <div class='favorite-alerts-head'>
+        <div>
+          <p class='favorite-alerts-eyebrow'>Favorite alerts</p>
+          <h2>No alerts yet</h2>
+        </div>
+      </div>
+      <p class='favorite-alerts-empty-copy'>Save a resort with the heart icon and CloseSnow will surface unread forecast changes here on the homepage.</p>
+    </section>`;
+    return;
+  }
+
+  const chips = [
+    `<span class='favorite-alert-chip favorite-alert-chip-strong'>Unread ${unreadAlerts.length}</span>`,
+    `<span class='favorite-alert-chip'>Visible ${visibleAlerts.length}</span>`,
+    `<span class='favorite-alert-chip'>Favorites ${favorites.length}</span>`,
+  ];
+  if (hiddenByRuleCount > 0) chips.push(`<span class='favorite-alert-chip'>Hidden by controls ${hiddenByRuleCount}</span>`);
+
+  favoriteAlertsRoot.innerHTML = `<section class='favorite-alerts-panel'>
+    <div class='favorite-alerts-head'>
+      <div>
+        <p class='favorite-alerts-eyebrow'>Favorite alerts</p>
+        <h2>Unread changes and alert controls</h2>
+      </div>
+      <div class='favorite-alert-chip-row'>${chips.join("")}</div>
+    </div>
+    <p class='favorite-alerts-description'>Review forecast swings without leaving the homepage. Alerts stay local to this browser and never auto-mark themselves as read.</p>
+    <div class='favorite-alerts-grid'>
+      ${_favoriteAlertSectionHtml({
+        title: "Unread alerts",
+        subtitle: "Fresh changes that still need review.",
+        alerts: unreadAlerts,
+        emptyMessage: favorites.length ? "No unread alerts right now. New forecast changes will show up here." : "Add a favorite resort to start tracking unread alerts.",
+        read: false,
+        limit: MAX_UNREAD_ALERTS,
+      })}
+      ${_favoriteAlertSectionHtml({
+        title: "Reviewed alerts",
+        subtitle: "Recent items you already checked.",
+        alerts: readAlerts,
+        emptyMessage: "Nothing marked as read yet.",
+        read: true,
+        limit: MAX_READ_ALERTS,
+      })}
+    </div>
+    ${_favoriteAlertControlsHtml(state, favorites)}
+  </section>`;
 };
 
 const syncFavoriteAlertState = () => {
@@ -1602,6 +1866,7 @@ const renderPage = () => {
     : (appState.filterState.favoritesOnly
       ? "No favorite resorts match the current filters."
       : "No resorts match the current filters.");
+  renderFavoriteAlertsPanel();
   pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
   applyLayout();
   observeLayoutContainers();
@@ -1794,6 +2059,16 @@ const bindControls = () => {
   if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
   if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);
+  document.addEventListener("change", (event) => {
+    const ruleSelect = event.target.closest(".favorite-alert-rule-select[data-alert-rule-resort-id]");
+    if (!ruleSelect || !favoriteAlertsApi || typeof favoriteAlertsApi.setResortRule !== "function") return;
+    favoriteAlertsApi.setResortRule(
+      ruleSelect.getAttribute("data-alert-rule-resort-id"),
+      ruleSelect.value,
+    );
+    refreshFavoriteAlertStateFromStorage();
+    renderFavoriteAlertsPanel();
+  });
   if (favoritesOnlyToggle) {
     favoritesOnlyToggle.addEventListener("change", () => {
       setFavoritesOnlyControls(favoritesOnlyToggle.checked);
@@ -1815,6 +2090,23 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const alertActionButton = event.target.closest("[data-alert-action][data-alert-id]");
+    if (alertActionButton && favoriteAlertsApi) {
+      const action = alertActionButton.getAttribute("data-alert-action");
+      const alertId = alertActionButton.getAttribute("data-alert-id");
+      if (action === "read" && typeof favoriteAlertsApi.markAlertRead === "function") {
+        favoriteAlertsApi.markAlertRead(alertId);
+      } else if (action === "unread" && typeof favoriteAlertsApi.markAlertUnread === "function") {
+        favoriteAlertsApi.markAlertUnread(alertId);
+      } else if (action === "dismiss" && typeof favoriteAlertsApi.dismissAlert === "function") {
+        favoriteAlertsApi.dismissAlert(alertId);
+      } else {
+        return;
+      }
+      refreshFavoriteAlertStateFromStorage();
+      renderFavoriteAlertsPanel();
+      return;
+    }
     const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
     if (favoriteAllButton) {
       event.preventDefault();
@@ -1826,6 +2118,7 @@ const bindControls = () => {
       } else {
         syncFavoriteUiInPlace(visibleReports);
       }
+      renderFavoriteAlertsPanel();
       return;
     }
     const favoriteButton = event.target.closest(".favorite-btn[data-resort-id]");
@@ -1839,6 +2132,7 @@ const bindControls = () => {
       } else {
         syncFavoriteUiInPlace(visibleReports);
       }
+      renderFavoriteAlertsPanel();
       return;
     }
     const button = event.target.closest(".unit-btn[data-unit-mode]");

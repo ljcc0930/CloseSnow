@@ -271,6 +271,7 @@ def test_build_html_contains_meta_sections():
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html
+    assert 'id="favorite-alerts-root"' in html
     assert 'id="page-content-root"' in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html

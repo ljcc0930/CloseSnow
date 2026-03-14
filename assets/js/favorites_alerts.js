@@ -2,6 +2,7 @@
   const STORAGE_KEY = "closesnow_favorite_alert_state_v1";
   const RULE_VERSION = "favorites_alert_rules_v1";
   const MAX_ALERT_ITEMS = 200;
+  const ALERT_RULE_MODES = new Set(["all", "high_only", "mute"]);
 
   const normalizeText = (value) => String(value || "").trim();
 
@@ -65,12 +66,46 @@
     return Number.isInteger(num) ? String(num) : num.toFixed(1);
   };
 
+  const normalizeRuleMode = (value) => {
+    const text = normalizeText(value).toLowerCase();
+    return ALERT_RULE_MODES.has(text) ? text : "all";
+  };
+
+  const normalizeIdList = (raw, validIds = null) => {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = new Set();
+    raw.forEach((value) => {
+      const id = normalizeText(value);
+      if (!id || seen.has(id)) return;
+      if (validIds && !validIds.has(id)) return;
+      seen.add(id);
+      out.push(id);
+    });
+    return out;
+  };
+
+  const normalizeRuleMap = (raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    Object.entries(raw).forEach(([resortId, rule]) => {
+      const normalizedResortId = normalizeText(resortId);
+      if (!normalizedResortId) return;
+      const mode = normalizeRuleMode(rule && typeof rule === "object" && !Array.isArray(rule) ? rule.mode : rule);
+      if (mode !== "all") out[normalizedResortId] = { mode };
+    });
+    return out;
+  };
+
   const defaultState = () => ({
     schema_version: STORAGE_KEY,
     rule_version: RULE_VERSION,
     updated_at: "",
     snapshots_by_resort_id: {},
     alerts: [],
+    read_alert_ids: [],
+    dismissed_alert_ids: [],
+    rules_by_resort_id: {},
   });
 
   const normalizeSnapshot = (raw) => {
@@ -138,6 +173,10 @@
     });
     const alerts = Array.isArray(raw.alerts) ? raw.alerts : [];
     state.alerts = alerts.map(normalizeAlertItem).filter(Boolean).slice(0, MAX_ALERT_ITEMS);
+    const validAlertIds = new Set(state.alerts.map((alert) => alert.id));
+    state.read_alert_ids = normalizeIdList(raw.read_alert_ids, validAlertIds);
+    state.dismissed_alert_ids = normalizeIdList(raw.dismissed_alert_ids, validAlertIds);
+    state.rules_by_resort_id = normalizeRuleMap(raw.rules_by_resort_id);
     return state;
   };
 
@@ -162,6 +201,55 @@
     }
     return normalized;
   };
+
+  const updateState = (updater, storage = root.localStorage) => {
+    const current = loadState(storage);
+    const next = updater(normalizeState(current));
+    return persistState(next || current, storage);
+  };
+
+  const updateAlertIdList = (items, alertId, active) => {
+    const id = normalizeText(alertId);
+    if (!id) return normalizeIdList(items);
+    const next = normalizeIdList(items);
+    if (active) {
+      if (next.includes(id)) return next;
+      return next.concat(id);
+    }
+    return next.filter((value) => value !== id);
+  };
+
+  const markAlertRead = (alertId, storage = root.localStorage) => updateState((state) => ({
+    ...state,
+    read_alert_ids: updateAlertIdList(state.read_alert_ids, alertId, true),
+  }), storage);
+
+  const markAlertUnread = (alertId, storage = root.localStorage) => updateState((state) => ({
+    ...state,
+    read_alert_ids: updateAlertIdList(state.read_alert_ids, alertId, false),
+  }), storage);
+
+  const dismissAlert = (alertId, storage = root.localStorage) => updateState((state) => ({
+    ...state,
+    read_alert_ids: updateAlertIdList(state.read_alert_ids, alertId, true),
+    dismissed_alert_ids: updateAlertIdList(state.dismissed_alert_ids, alertId, true),
+  }), storage);
+
+  const setResortRule = (resortId, mode, storage = root.localStorage) => updateState((state) => {
+    const id = normalizeText(resortId);
+    if (!id) return state;
+    const nextRules = { ...normalizeRuleMap(state.rules_by_resort_id) };
+    const nextMode = normalizeRuleMode(mode);
+    if (nextMode === "all") {
+      delete nextRules[id];
+    } else {
+      nextRules[id] = { mode: nextMode };
+    }
+    return {
+      ...state,
+      rules_by_resort_id: nextRules,
+    };
+  }, storage);
 
   const buildSnapshot = (report, payloadGeneratedAt = "") => {
     if (!report || typeof report !== "object") return null;
@@ -384,12 +472,18 @@
       nextSnapshots[resortId] = current;
     });
 
+    const trimmedAlerts = nextAlerts.slice(0, MAX_ALERT_ITEMS);
+    const nextAlertIds = new Set(trimmedAlerts.map((alert) => alert.id));
+
     const nextState = {
       schema_version: STORAGE_KEY,
       rule_version: RULE_VERSION,
       updated_at: payloadGeneratedAt,
       snapshots_by_resort_id: nextSnapshots,
-      alerts: nextAlerts.slice(0, MAX_ALERT_ITEMS),
+      alerts: trimmedAlerts,
+      read_alert_ids: normalizeIdList(state.read_alert_ids, nextAlertIds),
+      dismissed_alert_ids: normalizeIdList(state.dismissed_alert_ids, nextAlertIds),
+      rules_by_resort_id: normalizeRuleMap(state.rules_by_resort_id),
     };
 
     return {
@@ -405,6 +499,10 @@
     compareSnapshots,
     loadState,
     persistState,
+    markAlertRead,
+    markAlertUnread,
+    dismissAlert,
+    setResortRule,
     syncPayload,
   };
 })(typeof window !== "undefined" ? window : globalThis);
