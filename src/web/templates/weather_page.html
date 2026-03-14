@@ -24,6 +24,36 @@
       <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
     </div>
     <div class="resort-controls">
+      <div class="home-base-controls">
+        <div class="home-base-head">
+          <div>
+            <div class="home-base-title">Home Base</div>
+            <div id="home-base-summary" class="home-base-summary">Not set</div>
+          </div>
+          <button id="home-base-geolocate-btn" type="button">Use My Location</button>
+        </div>
+        <div class="home-base-lookup-row">
+          <label for="home-base-lookup-input">City or ZIP</label>
+          <input
+            id="home-base-lookup-input"
+            type="search"
+            list="home-base-lookup-list"
+            placeholder="Salt Lake City, UT or 84101"
+            autocomplete="off"
+          />
+          <datalist id="home-base-lookup-list"></datalist>
+          <button id="home-base-lookup-apply" type="button">Use Lookup</button>
+          <button id="home-base-clear" type="button">Clear</button>
+        </div>
+        <div class="home-base-manual-row">
+          <label for="home-base-lat-input">Lat</label>
+          <input id="home-base-lat-input" type="number" step="any" placeholder="40.7608" inputmode="decimal" />
+          <label for="home-base-lon-input">Lon</label>
+          <input id="home-base-lon-input" type="number" step="any" placeholder="-111.8910" inputmode="decimal" />
+          <button id="home-base-manual-apply" type="button">Use Coordinates</button>
+        </div>
+        <p id="home-base-status" class="home-base-status">Set a home base from lookup, geolocation, or coordinates.</p>
+      </div>
       <div class="resort-search">
         <label for="resort-search-input">Search Resorts</label>
         <input id="resort-search-input" type="search" placeholder="Name, state, or pass type" autocomplete="off" />
@@ -107,6 +137,7 @@
     window.CLOSESNOW_PAGE_BOOTSTRAP = {{page_bootstrap_json}};
   </script>
   <script src="assets/js/compact_daily_summary.js"></script>
+  <script src="assets/js/home_base.js"></script>
   <script src="assets/js/weather_page.js"></script>
 </body>
 </html>

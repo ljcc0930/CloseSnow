@@ -250,6 +250,11 @@ def test_build_html_contains_meta_sections():
     assert "<h2>Sunrise / Sunset</h2>" in html
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
     assert 'id="resort-search-input"' in html
+    assert 'id="home-base-summary"' in html
+    assert 'id="home-base-lookup-input"' in html
+    assert 'id="home-base-geolocate-btn"' in html
+    assert 'id="home-base-manual-apply"' in html
+    assert 'id="home-base-status"' in html
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
@@ -271,6 +276,8 @@ def test_build_html_contains_meta_sections():
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html
+    assert '"homeBaseContractVersion": 1' in html
+    assert 'assets/js/home_base.js' in html
     assert 'id="page-content-root"' in html
     assert "include_all" in html
     assert 'data-generated-utc="' in html

@@ -17,6 +17,8 @@ _PAGE_SHELL_PLACEHOLDER = """
     <section><h2>Sunrise / Sunset</h2><p class="section-loading">Loading forecast...</p></section>
 """
 
+_HOME_BASE_CONTRACT_VERSION = 1
+
 
 def build_html(
     snowfall: List[Dict[str, str]],
@@ -36,7 +38,10 @@ def build_html(
         "applied_filters": applied_filters or {},
     }
     filter_meta_json = json.dumps(filter_meta, ensure_ascii=False)
-    page_bootstrap_json = json.dumps({"dataUrl": data_url}, ensure_ascii=False)
+    page_bootstrap_json = json.dumps(
+        {"dataUrl": data_url, "homeBaseContractVersion": _HOME_BASE_CONTRACT_VERSION},
+        ensure_ascii=False,
+    )
     return (
         _PAGE_TEMPLATE.replace("{{generated_utc_iso}}", generated_utc_iso)
         .replace("{{filter_meta_json}}", filter_meta_json)
