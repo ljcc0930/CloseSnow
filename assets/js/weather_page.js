@@ -274,22 +274,19 @@ const _dayLabelFor = (report, index) => {
   return `day ${index + 1}`;
 };
 
-const _renderEmptyTableSection = (title, message) => `
-  <section>
-    <h2>${title}</h2>
-    <table class="empty-state-table" aria-label="${_escapeHtml(title)} empty state">
-      <tbody>
-        <tr><td class="empty-state-cell">${_escapeHtml(message)}</td></tr>
-      </tbody>
-    </table>
-  </section>`;
+const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => (idx === 0 ? "today" : `day ${idx + 1}`));
+
+const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
 
 const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪场") => {
-  if (!reports.length) return _renderEmptyTableSection("Daily Summary", emptyMessage);
   const displayDays = _displayDays();
-  const labels = Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx));
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
-  const rightRows = reports.map((report) => {
+  const labels = reports.length
+    ? Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx))
+    : _fallbackDayLabels(displayDays);
+  const leftRows = reports.length
+    ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("")
+    : _emptyStateRow(2, emptyMessage);
+  const rightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
@@ -298,7 +295,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪�
       return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
-  }).join("");
+  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -328,28 +325,29 @@ const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪�
 };
 
 const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "没有匹配的雪场") => {
-  if (!reports.length) return _renderEmptyTableSection(title, emptyMessage);
   const displayDays = _displayDays();
-  const dayLabels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
+  const dayLabels = reports.length
+    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
+    : _fallbackDayLabels(displayDays);
   const weeklyHeaders = ["week 1", "week 2"];
-  const desktopLeftRows = reports.map((report) => {
+  const desktopLeftRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const weeklyValues = [
       options.week1(report),
       options.week2(report),
     ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value)));
     return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}</tr>`;
-  }).join("");
-  const desktopRightRows = reports.map((report) => {
+  }).join("") : _emptyStateRow(4, emptyMessage);
+  const desktopRightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
       const value = options.daily(_dailyAt(report, idx));
       return _metricCellHtml(_formatMetric(value), kind, options.color(value));
     }).join("");
     return `<tr${attrs}>${dailyValues}</tr>`;
-  }).join("");
-  const mobileLeftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
-  const mobileRightRows = reports.map((report) => {
+  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
+  const mobileLeftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+  const mobileRightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const weeklyValues = [
       options.week1(report),
@@ -360,7 +358,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       return _metricCellHtml(_formatMetric(value), kind, options.color(value));
     });
     return `<tr${attrs}>${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
-  }).join("");
+  }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -406,11 +404,12 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
 };
 
 const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪场") => {
-  if (!reports.length) return _renderEmptyTableSection("Temperature", emptyMessage);
   const displayDays = _displayDays();
-  const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
-  const rightRows = reports.map((report) => {
+  const labels = reports.length
+    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
+    : _fallbackDayLabels(displayDays);
+  const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+  const rightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
@@ -420,7 +419,7 @@ const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪�
       ].join("");
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
-  }).join("");
+  }).join("") : _emptyStateRow(Math.max(1, displayDays * 2), emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -450,11 +449,12 @@ const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪�
 };
 
 const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") => {
-  if (!reports.length) return _renderEmptyTableSection("Weather", emptyMessage);
   const displayDays = _displayDays();
-  const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
-  const rightRows = reports.map((report) => {
+  const labels = reports.length
+    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
+    : _fallbackDayLabels(displayDays);
+  const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+  const rightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const code = _dailyAt(report, idx).weather_code;
@@ -462,7 +462,7 @@ const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") 
       return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
-  }).join("");
+  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
   return `
     <section>
       <h2>Weather</h2>
@@ -486,9 +486,10 @@ const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") 
 };
 
 const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
-  if (!reports.length) return _renderEmptyTableSection("Sunrise / Sunset", emptyMessage);
   const displayDays = _displayDays();
-  const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
+  const labels = reports.length
+    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
+    : _fallbackDayLabels(displayDays);
   const hhmm = (raw, mode = "metric") => {
     const text = String(raw || "").trim();
     if (!text) return "";
@@ -503,8 +504,8 @@ const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
     const hour12 = hour24 % 12 || 12;
     return `${hour12}:${minute} ${suffix}`;
   };
-  const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
-  const rightRows = reports.map((report) => {
+  const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+  const rightRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
@@ -515,7 +516,7 @@ const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
       return `<td data-sun-time-raw="${_escapeHtml(sunriseRaw)}">${_escapeHtml(sunrise)}</td><td data-sun-time-raw="${_escapeHtml(sunsetRaw)}">${_escapeHtml(sunset)}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
-  }).join("");
+  }).join("") : _emptyStateRow(Math.max(1, displayDays * 2), emptyMessage);
   return `
     <section>
       <div class="section-header">
