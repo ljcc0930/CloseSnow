@@ -42,8 +42,8 @@ const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
 const MAP_METRIC_STORAGE_KEY = "closesnow_us_snowfall_map_metric_v1";
-const DEFAULT_MAP_METRIC_KEY = "today_snow";
-const VALID_MAP_METRIC_KEYS = new Set(["today_snow", "week_snow"]);
+const DEFAULT_MAP_METRIC_KEY = "today";
+const VALID_MAP_METRIC_KEYS = new Set(["today", "next_72h", "week1"]);
 const MAP_SELECTION_EVENT = "closesnow:map-resort-select";
 
 const appState = {
@@ -92,8 +92,8 @@ const _isTruthyParam = (value) => {
 const _normalizeMapMetricKey = (value) => {
   const text = _normalizeSearch(value).replaceAll("-", "_");
   if (VALID_MAP_METRIC_KEYS.has(text)) return text;
-  if (text === "today") return "today_snow";
-  if (text === "week1") return "week_snow";
+  if (text === "today_snow") return "today";
+  if (text === "week_snow") return "week1";
   return DEFAULT_MAP_METRIC_KEY;
 };
 
@@ -320,8 +320,9 @@ const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" c
 
 const _renderUsSnowfallMapSection = () => {
   const activeMetricKey = _normalizeMapMetricKey(appState.map.activeMetricKey);
-  const todayActive = activeMetricKey === "today_snow";
-  const weekActive = activeMetricKey === "week_snow";
+  const todayActive = activeMetricKey === "today";
+  const next72hActive = activeMetricKey === "next_72h";
+  const weekActive = activeMetricKey === "week1";
   return `
   <section id="us-snowfall-map-section" class="us-snowfall-map-section" aria-labelledby="us-snowfall-map-title" data-map-shell="1">
     <div class="section-header us-snowfall-map-header">
@@ -329,25 +330,26 @@ const _renderUsSnowfallMapSection = () => {
         <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
         <p class="us-snowfall-map-subtitle">Preview the upcoming nationwide snowfall view without displacing the resort tables below.</p>
       </div>
-      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="${weekActive ? "imperial" : "metric"}">
-        <button type="button" class="unit-btn${todayActive ? " is-active" : ""}" data-map-metric-key="today_snow" aria-pressed="${todayActive ? "true" : "false"}">24h</button>
-        <button type="button" class="unit-btn${weekActive ? " is-active" : ""}" data-map-metric-key="week_snow" aria-pressed="${weekActive ? "true" : "false"}">7d</button>
+      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="${activeMetricKey}">
+        <button type="button" class="unit-btn${todayActive ? " is-active" : ""}" data-map-metric-key="today" aria-pressed="${todayActive ? "true" : "false"}">24h</button>
+        <button type="button" class="unit-btn${next72hActive ? " is-active" : ""}" data-map-metric-key="next_72h" aria-pressed="${next72hActive ? "true" : "false"}">72h</button>
+        <button type="button" class="unit-btn${weekActive ? " is-active" : ""}" data-map-metric-key="week1" aria-pressed="${weekActive ? "true" : "false"}">7d</button>
       </div>
     </div>
     <div class="us-snowfall-map-shell">
       <div class="us-snowfall-map-meta">
-        <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Map shell ready. Marker layers and page-state sync land in a follow-up slice.</p>
+        <p id="us-snowfall-map-status" class="us-snowfall-map-status" role="status">Loading the US snowfall map controller.</p>
         <div id="us-snowfall-map-legend" class="us-snowfall-map-legend" aria-label="Snowfall legend">
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-10 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">10-30 cm</span>
-          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">30+ cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="low">0-5 cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="mid">5-15 cm</span>
+          <span class="us-snowfall-map-legend-chip" data-map-legend-stop="high">15+ cm</span>
         </div>
       </div>
-      <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="img" aria-label="Snowfall map preview area">
+      <div id="us-snowfall-map-root" class="us-snowfall-map-root" role="region" aria-label="US snowfall map">
         <div class="us-snowfall-map-placeholder">
           <span class="us-snowfall-map-placeholder-kicker">Map canvas</span>
-          <strong>Interactive snowfall map preview</strong>
-          <span>Stable DOM hooks are live. Marker rendering arrives next.</span>
+          <strong>US snowfall map</strong>
+          <span>Interactive markers and popups load after the page script initializes.</span>
         </div>
       </div>
     </div>
@@ -1440,7 +1442,7 @@ const syncUsSnowfallMapMetricToggle = () => {
   const metricKey = _normalizeMapMetricKey(appState.map.activeMetricKey);
   const toggle = document.getElementById("us-snowfall-map-metric-toggle");
   if (!toggle) return;
-  toggle.setAttribute("data-mode", metricKey === "week_snow" ? "imperial" : "metric");
+  toggle.setAttribute("data-mode", metricKey);
   toggle.querySelectorAll("[data-map-metric-key]").forEach((button) => {
     const active = _normalizeMapMetricKey(button.getAttribute("data-map-metric-key")) === metricKey;
     button.classList.toggle("is-active", active);
