@@ -21,6 +21,8 @@ const tbody = table ? table.querySelector("tbody") : null;
 let metaState = null;
 let localTimeTimerId = null;
 let timelineAutoCentered = false;
+let lastHourlyPayload = null;
+let chartResizeRafId = null;
 
 const metricDefs = [
   { key: "snowfall", label: "snowfall (cm)", title: "Snowfall", unit: "cm", color: "#2563eb" },
@@ -211,7 +213,18 @@ const chartLinePath = (values, xForIndex, yForValue) => {
   return path.trim();
 };
 
-const renderMetricChartCard = (metric, times, values) => {
+const resolveChartWidth = () => {
+  if (!chartsEl) return 720;
+  const containerWidth = chartsEl.getBoundingClientRect().width || chartsEl.clientWidth || 720;
+  const isSingleColumn = typeof window.matchMedia === "function"
+    && window.matchMedia("(max-width: 980px)").matches;
+  const gap = 12;
+  const cardHorizontalPadding = 22;
+  const rawCardWidth = isSingleColumn ? containerWidth : ((containerWidth - gap) / 2);
+  return Math.max(320, Math.round(rawCardWidth - cardHorizontalPadding));
+};
+
+const renderMetricChartCard = (metric, times, values, chartWidth) => {
   const card = document.createElement("article");
   card.className = "chart-card";
 
@@ -243,7 +256,7 @@ const renderMetricChartCard = (metric, times, values) => {
     return card;
   }
 
-  const width = 1440;
+  const width = Math.max(320, Number(chartWidth) || 720);
   const height = 220;
   const padLeft = 44;
   const padRight = 16;
@@ -345,16 +358,33 @@ const renderMetricChartCard = (metric, times, values) => {
 
 const renderHourlyCharts = (payload) => {
   if (!chartsEl) return;
+  lastHourlyPayload = payload;
   chartsEl.innerHTML = "";
   const hourly = payload?.hourly || {};
   const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const chartWidth = resolveChartWidth();
   const frag = document.createDocumentFragment();
   metricDefs.forEach((metric) => {
     const rawValues = Array.isArray(hourly[metric.key]) ? hourly[metric.key] : [];
     const values = times.map((_, idx) => toFiniteNumber(rawValues[idx]));
-    frag.appendChild(renderMetricChartCard(metric, times, values));
+    frag.appendChild(renderMetricChartCard(metric, times, values, chartWidth));
   });
   chartsEl.appendChild(frag);
+};
+
+const rerenderChartsForResize = () => {
+  if (!lastHourlyPayload) return;
+  if (chartResizeRafId !== null) {
+    window.cancelAnimationFrame(chartResizeRafId);
+  }
+  chartResizeRafId = window.requestAnimationFrame(() => {
+    chartResizeRafId = null;
+    try {
+      renderHourlyCharts(lastHourlyPayload);
+    } catch (chartErr) {
+      setChartError(chartErr instanceof Error ? chartErr.message : String(chartErr));
+    }
+  });
 };
 
 const buildMergedTimelineDays = () => {
@@ -506,6 +536,7 @@ const loadHourly = async () => {
     setError(err instanceof Error ? err.message : String(err));
     setChartError("");
     metaState = null;
+    lastHourlyPayload = null;
     syncLocalTimeTimer();
     renderLocalTime();
     renderWebsiteLink(null);
@@ -522,6 +553,7 @@ if (refreshBtn) {
 if (hoursSelect) {
   hoursSelect.addEventListener("change", loadHourly);
 }
+window.addEventListener("resize", rerenderChartsForResize);
 
 renderTimelineSummary();
 loadHourly();

@@ -48,8 +48,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in hourly_css_text
     assert "@media (max-width: 980px)" in hourly_css_text
     assert "grid-template-columns: 1fr;" in hourly_css_text
-    assert "width: 1440px;" in hourly_css_text
-    assert "min-width: 100%;" in hourly_css_text
+    assert "width: 100%;" in hourly_css_text
+    assert "min-width: 0;" in hourly_css_text
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
@@ -67,5 +67,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "buildMergedTimelineDays" in hourly_js_text
     assert "centerTimelineOnToday" in hourly_js_text
     assert "timelineAutoCentered" in hourly_js_text
-    assert "const width = 1440;" in hourly_js_text
+    assert "const resolveChartWidth = () => {" in hourly_js_text
+    assert "window.addEventListener(\"resize\", rerenderChartsForResize);" in hourly_js_text
+    assert "lastHourlyPayload = payload;" in hourly_js_text
     assert "past14dDaily" in hourly_js_text

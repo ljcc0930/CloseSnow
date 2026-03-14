@@ -37,6 +37,40 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:47 (local)
+
+### Scope
+- Make resort hourly line charts fit their chart-card block width instead of using a fixed oversized display width.
+
+### Changes
+- Files:
+  - `assets/js/resort_hourly.js`
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Chart SVGs now render with `width: 100%` inside each chart card instead of a fixed `1440px` display width.
+  - The chart renderer now measures the current chart-grid block width and picks a matching internal SVG width so the plot geometry fits the card instead of relying on horizontal scroll.
+  - Window resizes now trigger a lightweight chart rerender so the charts continue fitting the current block width after layout changes.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "width: 100%;|min-width: 0;|const resolveChartWidth = \\(\\) => \\{|window.addEventListener\\(\\\"resize\\\", rerenderChartsForResize\\);" /tmp/closesnow-resort-history/assets/css/resort_hourly.css /tmp/closesnow-resort-history/assets/js/resort_hourly.js -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed rebuilt preview assets now use block-fitting chart width CSS and the dynamic width/resize rerender helpers
+
+### Risks / Notes
+- The charts now optimize for fitting the current block width, so very dense hour ranges trade some horizontal spacing for a no-scroll default presentation.
+
+### Next Slice
+- Consider whether the chart width heuristic should vary by selected hour count so shorter windows can look a bit more spacious while still fitting the card.
+
 ## 2026-03-13 22:39 (local)
 
 ### Scope
