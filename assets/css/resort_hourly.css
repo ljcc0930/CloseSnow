@@ -87,11 +87,11 @@ h1 {
 }
 
 .resort-daily-summary-table th.compact-day-head-history {
-  background: #e2e8f0;
+  background: #e5e7eb;
 }
 
 .resort-daily-summary-table th.compact-day-head-forecast {
-  background: #dff6ef;
+  background: #e5e7eb;
 }
 
 .resort-daily-summary-table td {
@@ -105,9 +105,13 @@ h1 {
   vertical-align: top;
 }
 
-.compact-day-head-phase-start,
-.compact-day-cell-phase-start {
-  box-shadow: inset 3px 0 0 #0f766e;
+.compact-day-head-today-anchor {
+  background: #d7dde6;
+  box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;
+}
+
+.compact-day-cell-today-anchor {
+  box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;
 }
 
 .compact-day-card {

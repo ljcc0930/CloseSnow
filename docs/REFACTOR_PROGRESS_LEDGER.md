@@ -37,6 +37,40 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:22 (local)
+
+### Scope
+- Refine the merged resort timeline styling so `today` is bracketed by symmetric vertical lines and all header cells share one base color.
+
+### Changes
+- Files:
+  - `assets/css/resort_hourly.css`
+  - `assets/js/compact_daily_summary.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - The `today` column now gets matching left/right vertical lines instead of inheriting the old one-sided phase-start divider.
+  - History and forecast header cells now use the same base header color.
+  - The `today` header cell is slightly darker than the rest to keep it visually anchored without using different phase colors.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "compact-day-head-today-anchor|compact-day-cell-today-anchor|background: #e5e7eb;|background: #d7dde6;|compact-day-head-phase-start|compact-day-cell-phase-start" /tmp/closesnow-resort-history/assets/css/resort_hourly.css /tmp/closesnow-resort-history/assets/js/compact_daily_summary.js -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed rebuilt assets now use the `today` anchor classes and updated header color values, without the old phase-start class names in the summary renderer
+
+### Risks / Notes
+- This slice changes only styling hooks and class assignment in the compact-summary renderer; the timeline order and centering behavior are unchanged.
+
+### Next Slice
+- Consider whether the `today` cell body should also get a tiny label or chip if the darker header alone is still too subtle on smaller screens.
+
 ## 2026-03-13 22:13 (local)
 
 ### Scope
