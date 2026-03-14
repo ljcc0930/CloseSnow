@@ -57,12 +57,16 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".us-snowfall-map-section" in map_css_text
     assert ".us-snowfall-map-root" in map_css_text
     assert ".us-snowfall-map-marker" in map_css_text
+    assert ".us-snowfall-map-marker.is-cluster" in map_css_text
+    assert ".us-snowfall-map-scope-badge" in map_css_text
     assert ".us-snowfall-map-panel-label" in map_css_text
     assert ".us-snowfall-map-legend-scale" in map_css_text
     assert ".us-snowfall-map-popup" in map_css_text
     assert ".us-snowfall-map-popup-summary" in map_css_text
     assert ".us-snowfall-map-viewport" in map_css_text
     assert ".us-snowfall-map-control" in map_css_text
+    assert ".us-snowfall-map-control-selected" in map_css_text
+    assert ".us-snowfall-map-control-results" in map_css_text
     assert ".us-snowfall-map-basemap" in map_css_text
     assert "@media (max-width: 980px)" in map_css_text
     assert ".hourly-charts" in hourly_css_text
@@ -94,6 +98,15 @@ def test_read_asset_bytes_reads_known_assets():
     assert "Open hourly page" in map_js_text
     assert "Full US view" in map_js_text
     assert "data-map-reset-view" in map_js_text
+    assert "data-map-show-results" in map_js_text
+    assert "data-map-show-selected" in map_js_text
+    assert "fit-results" in map_js_text
+    assert "show-selected" in map_js_text
+    assert "Dense resort clusters are grouped." in map_js_text
+    assert "No visible resorts remain for" in map_js_text
+    assert "data-map-cluster" in map_js_text
+    assert "_clusterEntries" in map_js_text
+    assert "_fitTransformForEntries" in map_js_text
     assert "pointerdown" in map_js_text
     assert "wheel" in map_js_text
     assert "Basemap unavailable" in map_js_text

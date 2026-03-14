@@ -34,6 +34,9 @@
   const MAX_SCALE = 5;
   const SCALE_STEP = 1.25;
   const DRAG_THRESHOLD_PX = 4;
+  const DENSITY_CLUSTER_THRESHOLD_PX = 34;
+  const FIT_PADDING_PX = 72;
+  const MIN_SELECTION_FOCUS_SCALE = 2;
   const GEO_REGIONS = {
     lower48: {
       label: "Lower 48",
@@ -423,6 +426,119 @@
     return "0 10px 20px rgba(30, 41, 59, 0.18)";
   };
 
+  const _clusterMarkerSize = (count) => {
+    if (count >= 12) return 46;
+    if (count >= 8) return 42;
+    if (count >= 4) return 38;
+    return 34;
+  };
+
+  const _distance = (left, right) => Math.hypot(left.x - right.x, left.y - right.y);
+
+  const _clusterThreshold = (scale) => DENSITY_CLUSTER_THRESHOLD_PX / Math.max(scale || MIN_SCALE, MIN_SCALE);
+
+  const _projectedEntries = (eligibleReports, metricKey, selectedResortId, popupResortId) => eligibleReports
+    .map((report, index) => ({
+      report,
+      index,
+      key: _selectionKey(report, index),
+      value: _metricValue(report, metricKey),
+      point: _projectReportPoint(report),
+    }))
+    .filter((entry) => entry.point)
+    .map((entry) => ({
+      ...entry,
+      highlighted: entry.key === selectedResortId || entry.key === popupResortId,
+    }))
+    .sort((left, right) => {
+      if (left.highlighted !== right.highlighted) return left.highlighted ? 1 : -1;
+      return left.value - right.value;
+    });
+
+  const _clusterEntries = (entries, scale) => {
+    const threshold = _clusterThreshold(scale);
+    const groups = [];
+    const remaining = entries.slice();
+
+    while (remaining.length) {
+      const seed = remaining.shift();
+      if (!seed) continue;
+      if (seed.highlighted) {
+        groups.push({ type: "single", entries: [seed], point: seed.point, value: seed.value });
+        continue;
+      }
+      const cluster = [seed];
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let index = remaining.length - 1; index >= 0; index -= 1) {
+          const candidate = remaining[index];
+          if (!candidate || candidate.highlighted || candidate.point.regionKey !== seed.point.regionKey) continue;
+          const closeToCluster = cluster.some((entry) => _distance(entry.point, candidate.point) <= threshold);
+          if (!closeToCluster) continue;
+          cluster.push(candidate);
+          remaining.splice(index, 1);
+          changed = true;
+        }
+      }
+      if (cluster.length === 1) {
+        groups.push({ type: "single", entries: cluster, point: cluster[0].point, value: cluster[0].value });
+        continue;
+      }
+      const point = cluster.reduce((acc, entry) => ({
+        x: acc.x + entry.point.x,
+        y: acc.y + entry.point.y,
+        regionKey: entry.point.regionKey,
+      }), { x: 0, y: 0, regionKey: cluster[0].point.regionKey });
+      groups.push({
+        type: "cluster",
+        entries: cluster,
+        point: {
+          x: point.x / cluster.length,
+          y: point.y / cluster.length,
+          regionKey: point.regionKey,
+        },
+        value: Math.max(...cluster.map((entry) => entry.value)),
+      });
+    }
+
+    return groups;
+  };
+
+  const _fitTransformForEntries = (entries, viewportWidth, viewportHeight) => {
+    if (!entries.length || !viewportWidth || !viewportHeight) {
+      return {
+        scale: MIN_SCALE,
+        translateX: 0,
+        translateY: 0,
+      };
+    }
+    const xs = entries.map((entry) => entry.point.x);
+    const ys = entries.map((entry) => entry.point.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const width = Math.max(32, maxX - minX);
+    const height = Math.max(32, maxY - minY);
+    const availableWidth = Math.max(120, viewportWidth - (FIT_PADDING_PX * 2));
+    const availableHeight = Math.max(120, viewportHeight - (FIT_PADDING_PX * 2));
+    const scale = _clamp(
+      Math.min(MAX_SCALE, Math.min(availableWidth / width, availableHeight / height)),
+      entries.length === 1 ? MIN_SELECTION_FOCUS_SCALE : MIN_SCALE,
+      MAX_SCALE,
+    );
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const viewportCenterX = viewportWidth / 2;
+    const viewportCenterY = viewportHeight / 2;
+    return {
+      scale,
+      translateX: -((centerX - viewportCenterX) * scale),
+      translateY: -((centerY - viewportCenterY) * scale),
+    };
+  };
+
   const _popupHtml = (report, metricKey) => {
     const metric = _metricConfig(metricKey);
     const resortId = _reportResortId(report);
@@ -474,10 +590,15 @@
 
   const _mapStageHtml = () => `
     <div class="us-snowfall-map-toolbar" data-map-toolbar="1">
-      <div class="us-snowfall-map-view-badge" data-map-view-badge="1">Full US view</div>
+      <div class="us-snowfall-map-toolbar-meta">
+        <div class="us-snowfall-map-view-badge" data-map-view-badge="1">Full US view</div>
+        <div class="us-snowfall-map-scope-badge" data-map-scope-badge="1">0 visible</div>
+      </div>
       <div class="us-snowfall-map-toolbar-actions">
         <button type="button" class="us-snowfall-map-control" data-map-control="zoom-in" aria-label="Zoom in">+</button>
         <button type="button" class="us-snowfall-map-control" data-map-control="zoom-out" aria-label="Zoom out">-</button>
+        <button type="button" class="us-snowfall-map-control us-snowfall-map-control-results" data-map-control="fit-results" data-map-show-results="1" aria-label="Show the current visible resort results">Results</button>
+        <button type="button" class="us-snowfall-map-control us-snowfall-map-control-selected" data-map-control="show-selected" data-map-show-selected="1" aria-label="Show the selected resort">Selected</button>
         <button type="button" class="us-snowfall-map-control us-snowfall-map-control-reset" data-map-control="reset" data-map-reset-view="1" aria-label="Reset to the full US view">Reset</button>
       </div>
     </div>
@@ -549,8 +670,11 @@
     const inlineMessage = mapRoot ? mapRoot.querySelector("[data-map-inline-message]") : null;
     const popupElement = mapRoot ? mapRoot.querySelector("[data-map-popup]") : null;
     const viewBadge = mapRoot ? mapRoot.querySelector("[data-map-view-badge]") : null;
+    const scopeBadge = mapRoot ? mapRoot.querySelector("[data-map-scope-badge]") : null;
     const zoomInButton = mapRoot ? mapRoot.querySelector('[data-map-control="zoom-in"]') : null;
     const zoomOutButton = mapRoot ? mapRoot.querySelector('[data-map-control="zoom-out"]') : null;
+    const showResultsButton = mapRoot ? mapRoot.querySelector('[data-map-control="fit-results"]') : null;
+    const showSelectedButton = mapRoot ? mapRoot.querySelector('[data-map-control="show-selected"]') : null;
     const resetButton = mapRoot ? mapRoot.querySelector('[data-map-control="reset"]') : null;
     const state = {
       destroyed: false,
@@ -567,6 +691,8 @@
       },
       drag: null,
       suppressClick: false,
+      lastProjectedEntries: [],
+      lastClusterGroups: [],
     };
 
     const emitSelectedResort = (resortId) => {
@@ -603,9 +729,28 @@
     };
 
     const syncControls = () => {
+      const selectedEntry = state.lastProjectedEntries.find((entry) => entry.key === state.selectedResortId);
       if (zoomInButton) zoomInButton.disabled = state.transform.scale >= MAX_SCALE - 0.001;
       if (zoomOutButton) zoomOutButton.disabled = state.transform.scale <= MIN_SCALE + 0.001;
+      if (showResultsButton) showResultsButton.disabled = state.lastProjectedEntries.length === 0;
+      if (showSelectedButton) showSelectedButton.disabled = !selectedEntry;
       if (resetButton) resetButton.disabled = isDefaultTransform();
+    };
+
+    const renderScopeBadge = (eligibleReports) => {
+      if (!scopeBadge) return;
+      const visibleCount = state.visibleReports.length;
+      if (!visibleCount) {
+        scopeBadge.textContent = "0 visible";
+        return;
+      }
+      if (!eligibleReports.length) {
+        scopeBadge.textContent = `${visibleCount} visible`;
+        return;
+      }
+      scopeBadge.textContent = eligibleReports.length === visibleCount
+        ? `${visibleCount} visible`
+        : `${eligibleReports.length}/${visibleCount} map-ready`;
     };
 
     const clampTransform = (nextTransform) => {
@@ -646,6 +791,7 @@
         translateX: state.transform.translateX,
         translateY: state.transform.translateY,
       });
+      render();
     };
 
     const resetView = () => {
@@ -654,6 +800,13 @@
         translateX: 0,
         translateY: 0,
       });
+      render();
+    };
+
+    const focusEntries = (entries) => {
+      if (!viewport || !entries.length) return;
+      setTransform(_fitTransformForEntries(entries, viewport.clientWidth, viewport.clientHeight));
+      render();
     };
 
     const ensureBasemap = () => {
@@ -674,6 +827,7 @@
     const renderStatus = (eligibleReports) => {
       if (!statusElement) return;
       const metric = _metricConfig(state.metricKey);
+      const visibleCount = state.visibleReports.length;
       const renderStatusCard = (headline, detail) => {
         statusElement.innerHTML = `
           <strong>${_escapeHtml(headline)}</strong>
@@ -685,23 +839,31 @@
         return;
       }
       const interactionText = state.basemapMode === "geographic"
-        ? "Drag to pan, use scroll or the +/- controls to zoom, and Reset to return to the full US view."
-        : "Basemap fallback is active. Drag to pan, use scroll or the +/- controls to zoom, and Reset to return to the full US view.";
-      if (!eligibleReports.length) {
-        const visibleCount = state.visibleReports.length;
-        const scopeText = visibleCount ? "No visible resorts" : "No resorts";
+        ? "Drag to pan, click dense count bubbles to zoom into nearby resorts, and use Results, Selected, or Reset to recover orientation."
+        : "Basemap fallback is active. Drag to pan, click dense count bubbles to zoom into nearby resorts, and use Results, Selected, or Reset to recover orientation.";
+      if (!visibleCount) {
         renderStatusCard(
-          `${scopeText} are map-ready for ${metric.label}.`,
-          `Non-US resorts and resorts without projectable coordinates stay in the tables below. ${interactionText}`,
+          `No visible resorts remain for ${metric.label}.`,
+          `Adjust filters or search to restore results. ${interactionText}`,
+        );
+        return;
+      }
+      if (!eligibleReports.length) {
+        renderStatusCard(
+          `Visible resorts are outside the active US map scope for ${metric.label}.`,
+          `They remain available in the resort tables below. ${interactionText}`,
         );
         return;
       }
       const focused = state.selectedResortId
         ? `Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
-        : "Select a marker to inspect the same resort record that appears in the tables below.";
+        : "";
+      const visibilityText = eligibleReports.length === visibleCount
+        ? `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"}`
+        : `Showing ${eligibleReports.length} map-ready resort${eligibleReports.length === 1 ? "" : "s"} out of ${visibleCount} visible result${visibleCount === 1 ? "" : "s"}`;
       renderStatusCard(
-        `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"} for ${metric.label}.`,
-        `${focused} ${interactionText}`,
+        `${visibilityText} for ${metric.label}.`,
+        `${focused || "Select a marker to inspect the same resort record that appears in the tables below."} ${interactionText}`,
       );
     };
 
@@ -750,27 +912,35 @@
       popupElement.innerHTML = _popupHtml(activeReport, state.metricKey);
     };
 
-    const renderMarkers = (eligibleReports) => {
+    const renderMarkers = (projectedEntries) => {
       if (!markerLayer) return;
       markerLayer.innerHTML = "";
-      const ranked = eligibleReports
-        .map((report, index) => ({
-          report,
-          index,
-          key: _selectionKey(report, index),
-          value: _metricValue(report, state.metricKey),
-          point: _projectReportPoint(report),
-        }))
-        .filter((entry) => entry.point)
-        .sort((left, right) => {
-          const leftSelected = left.key === state.selectedResortId || left.key === state.popupResortId;
-          const rightSelected = right.key === state.selectedResortId || right.key === state.popupResortId;
-          if (leftSelected !== rightSelected) return leftSelected ? 1 : -1;
-          return left.value - right.value;
-        });
-
-      ranked.forEach(({ report, index, key, value, point }) => {
-        const highlighted = key === state.selectedResortId || key === state.popupResortId;
+      const groups = _clusterEntries(projectedEntries, state.transform.scale);
+      state.lastClusterGroups = groups;
+      groups.forEach((group, groupIndex) => {
+        if (group.type === "cluster") {
+          const marker = doc.createElement("button");
+          marker.type = "button";
+          marker.className = "us-snowfall-map-marker is-cluster";
+          marker.setAttribute("data-map-marker", "1");
+          marker.setAttribute("data-map-cluster", "1");
+          marker.setAttribute("data-map-cluster-id", String(groupIndex));
+          marker.setAttribute("data-map-region", group.point.regionKey);
+          marker.setAttribute(
+            "aria-label",
+            `${group.entries.length} nearby resorts clustered together. Click to zoom into this dense region.`,
+          );
+          marker.style.left = `${((group.point.x / MAP_CANVAS_WIDTH) * 100).toFixed(3)}%`;
+          marker.style.top = `${((group.point.y / MAP_CANVAS_HEIGHT) * 100).toFixed(3)}%`;
+          marker.style.setProperty("--marker-size", `${_clusterMarkerSize(group.entries.length)}px`);
+          marker.style.setProperty("--marker-fill", "#0f766e");
+          marker.style.setProperty("--marker-shadow", "0 16px 30px rgba(15, 118, 110, 0.28)");
+          marker.style.setProperty("--marker-ring", "rgba(255, 255, 255, 0.96)");
+          marker.innerHTML = `<span class="us-snowfall-map-marker-value us-snowfall-map-marker-count">${group.entries.length}</span>`;
+          markerLayer.appendChild(marker);
+          return;
+        }
+        const [{ report, key, value, point, highlighted }] = group.entries;
         const marker = doc.createElement("button");
         marker.type = "button";
         marker.className = "us-snowfall-map-marker";
@@ -795,14 +965,23 @@
         renderInlineMessage("The interactive controller failed to render, but the rest of the page is still available.", "error");
         return;
       }
+      if (!state.visibleReports.length) {
+        renderInlineMessage("No visible resorts remain after the current filters or search. Broaden the list or Reset the map once results return.");
+        return;
+      }
       if (state.basemapMode !== "geographic") {
         renderInlineMessage("Basemap unavailable. Showing a scoped coordinate fallback while keeping resort markers interactive.");
         return;
       }
       if (!eligibleReports.length) {
         renderInlineMessage(
-          "No visible US resorts currently qualify for map markers. Try a broader set of resorts or switch back to the resort tables below.",
+          "No visible resorts currently fall inside the active US map scope. They remain in the resort tables below, and Results will recover the map once map-ready resorts return.",
         );
+        return;
+      }
+      const clusterCount = state.lastClusterGroups.filter((group) => group.type === "cluster").length;
+      if (clusterCount > 0) {
+        renderInlineMessage("Dense resort clusters are grouped. Click a count bubble to zoom into nearby resorts, or use Results / Selected to refocus quickly.");
         return;
       }
       hideInlineMessage();
@@ -814,7 +993,15 @@
         state.errorMessage = "";
         ensureBasemap();
         const eligibleReports = _eligibleReports(state.visibleReports);
+        const projectedEntries = _projectedEntries(
+          eligibleReports,
+          state.metricKey,
+          state.selectedResortId,
+          state.popupResortId,
+        );
+        state.lastProjectedEntries = projectedEntries;
         renderButtons();
+        renderScopeBadge(eligibleReports);
         renderLegend();
         if (section) {
           section.setAttribute("data-map-ready", "1");
@@ -825,12 +1012,14 @@
           mapRoot.setAttribute("data-map-count", String(eligibleReports.length));
         }
         renderStatus(eligibleReports);
-        renderMarkers(eligibleReports);
+        renderMarkers(projectedEntries);
         renderPopup(eligibleReports);
         renderNotes(eligibleReports);
         applyTransform();
       } catch (error) {
         state.errorMessage = "The interactive controller failed to render, but the rest of the page is still available.";
+        state.lastProjectedEntries = [];
+        state.lastClusterGroups = [];
         renderStatus([]);
         renderInlineMessage("The interactive controller failed to render, but the rest of the page is still available.", "error");
         if (popupElement) {
@@ -858,12 +1047,25 @@
         const action = _text(control.getAttribute("data-map-control"));
         if (action === "zoom-in") setScale(state.transform.scale * SCALE_STEP);
         if (action === "zoom-out") setScale(state.transform.scale / SCALE_STEP);
+        if (action === "fit-results") focusEntries(state.lastProjectedEntries);
+        if (action === "show-selected") {
+          const selectedEntry = state.lastProjectedEntries.find((entry) => entry.key === state.selectedResortId);
+          if (selectedEntry) focusEntries([selectedEntry]);
+        }
         if (action === "reset") resetView();
         return;
       }
       const marker = event.target && event.target.closest ? event.target.closest("[data-map-marker]") : null;
       if (marker) {
         event.preventDefault();
+        if (_text(marker.getAttribute("data-map-cluster")) === "1") {
+          const clusterId = Number(marker.getAttribute("data-map-cluster-id"));
+          const cluster = Number.isInteger(clusterId) ? state.lastClusterGroups[clusterId] : null;
+          if (cluster && Array.isArray(cluster.entries) && cluster.entries.length) {
+            focusEntries(cluster.entries);
+          }
+          return;
+        }
         state.popupResortId = _text(marker.getAttribute("data-resort-id"));
         state.selectedResortId = state.popupResortId;
         emitSelectedResort(state.popupResortId);
