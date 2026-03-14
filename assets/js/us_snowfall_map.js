@@ -435,11 +435,22 @@
       ? `<a class="us-snowfall-map-popup-link" href="resort/${encodeURIComponent(resortId)}">Open hourly page</a>`
       : "";
     return `
-      <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
-      <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+      <div class="us-snowfall-map-popup-header">
+        <div class="us-snowfall-map-popup-kicker">${_escapeHtml(metric.label)}</div>
+        <button type="button" class="us-snowfall-map-popup-close" data-map-popup-close="1" aria-label="Close snowfall map popup">Close</button>
+      </div>
       <strong class="us-snowfall-map-popup-title">${header}</strong>
       <div class="us-snowfall-map-popup-metric">${metricValue}</div>
-      <div class="us-snowfall-map-popup-meta">${stateText} · ${passTypes}</div>
+      <div class="us-snowfall-map-popup-meta-grid">
+        <div class="us-snowfall-map-popup-meta-item">
+          <span class="us-snowfall-map-popup-meta-label">State</span>
+          <span class="us-snowfall-map-popup-meta-value">${stateText}</span>
+        </div>
+        <div class="us-snowfall-map-popup-meta-item">
+          <span class="us-snowfall-map-popup-meta-label">Access</span>
+          <span class="us-snowfall-map-popup-meta-value">${passTypes}</span>
+        </div>
+      </div>
       ${linkHtml}
     `;
   };
