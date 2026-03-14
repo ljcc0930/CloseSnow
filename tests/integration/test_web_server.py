@@ -55,8 +55,12 @@ def test_server_api_root_and_asset(monkeypatch):
 
         asset = urllib.request.urlopen(f"{base}/assets/css/weather_page.css", timeout=3).read()
         assert asset == b"body{}"
+        map_asset = urllib.request.urlopen(f"{base}/assets/js/us_snowfall_map.js", timeout=3).read()
+        assert map_asset == b"body{}"
         asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/css/weather_page.css", timeout=3).read()
         assert asset_with_prefix == b"body{}"
+        map_asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/js/us_snowfall_map.js", timeout=3).read()
+        assert map_asset_with_prefix == b"body{}"
     finally:
         server.shutdown()
         server.server_close()

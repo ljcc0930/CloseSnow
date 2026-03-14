@@ -246,6 +246,14 @@ def test_build_html_contains_meta_sections():
     assert "Powered by" in html
     assert "https://open-meteo.com/en/docs/ecmwf-api" in html
     assert "Feature requests" in html
+    assert 'assets/css/us_snowfall_map.css' in html
+    assert 'assets/js/us_snowfall_map.js' in html
+    assert 'id="us-snowfall-map-section"' in html
+    assert 'id="us-snowfall-map-metric-toggle"' in html
+    assert 'id="us-snowfall-map-legend"' in html
+    assert 'id="us-snowfall-map-status"' in html
+    assert 'id="us-snowfall-map-root"' in html
+    assert html.index('id="us-snowfall-map-section"') < html.index("<h2>Daily Summary</h2>")
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
