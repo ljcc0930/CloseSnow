@@ -274,8 +274,18 @@ const _dayLabelFor = (report, index) => {
   return `day ${index + 1}`;
 };
 
-const _renderCompactGridSection = (reports) => {
-  if (!reports.length) return "<section><h2>Daily Summary</h2><p>No data</p></section>";
+const _renderEmptyTableSection = (title, message) => `
+  <section>
+    <h2>${title}</h2>
+    <table class="empty-state-table" aria-label="${_escapeHtml(title)} empty state">
+      <tbody>
+        <tr><td class="empty-state-cell">${_escapeHtml(message)}</td></tr>
+      </tbody>
+    </table>
+  </section>`;
+
+const _renderCompactGridSection = (reports, emptyMessage = "No selected resorts.") => {
+  if (!reports.length) return _renderEmptyTableSection("Daily Summary", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx));
   const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
@@ -317,8 +327,8 @@ const _renderCompactGridSection = (reports) => {
     </section>`;
 };
 
-const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options) => {
-  if (!reports.length) return `<section><h2>${title}</h2><p>No data</p></section>`;
+const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "No selected resorts.") => {
+  if (!reports.length) return _renderEmptyTableSection(title, emptyMessage);
   const displayDays = _displayDays();
   const dayLabels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
   const weeklyHeaders = ["week 1", "week 2"];
@@ -395,8 +405,8 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     </section>`;
 };
 
-const _renderTemperatureSection = (reports) => {
-  if (!reports.length) return "<section><h2>Temperature</h2><p>No data</p></section>";
+const _renderTemperatureSection = (reports, emptyMessage = "No selected resorts.") => {
+  if (!reports.length) return _renderEmptyTableSection("Temperature", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
   const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
@@ -439,8 +449,8 @@ const _renderTemperatureSection = (reports) => {
     </section>`;
 };
 
-const _renderWeatherSection = (reports) => {
-  if (!reports.length) return "<section><h2>Weather</h2><p>No data</p></section>";
+const _renderWeatherSection = (reports, emptyMessage = "No selected resorts.") => {
+  if (!reports.length) return _renderEmptyTableSection("Weather", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
   const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
@@ -475,8 +485,8 @@ const _renderWeatherSection = (reports) => {
     </section>`;
 };
 
-const _renderSunSection = (reports) => {
-  if (!reports.length) return "<section><h2>Sunrise / Sunset</h2><p>No data</p></section>";
+const _renderSunSection = (reports, emptyMessage = "No selected resorts.") => {
+  if (!reports.length) return _renderEmptyTableSection("Sunrise / Sunset", emptyMessage);
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
   const hhmm = (raw, mode = "metric") => {
@@ -534,25 +544,25 @@ const _renderSunSection = (reports) => {
     </section>`;
 };
 
-const _renderSections = (reports) => [
-  _renderCompactGridSection(reports),
+const _renderSections = (reports, emptyMessage = "No selected resorts.") => [
+  _renderCompactGridSection(reports, emptyMessage),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
     week1: (report) => report.week1_total_snowfall_cm,
     week2: (report) => report.week2_total_snowfall_cm,
     daily: (day) => day.snowfall_cm,
     color: _snowColor,
-  }),
+  }, emptyMessage),
   _renderPrecipSection("Rainfall", "rain", "mm", "in", reports, {
     prefix: "rain",
     week1: (report) => report.week1_total_rain_mm,
     week2: (report) => report.week2_total_rain_mm,
     daily: (day) => day.rain_mm,
     color: _rainColor,
-  }),
-  _renderTemperatureSection(reports),
-  _renderWeatherSection(reports),
-  _renderSunSection(reports),
+  }, emptyMessage),
+  _renderTemperatureSection(reports, emptyMessage),
+  _renderWeatherSection(reports, emptyMessage),
+  _renderSunSection(reports, emptyMessage),
 ].join("");
 
 const _payloadReports = () => {
@@ -1512,23 +1522,31 @@ const renderReportDate = () => {
 const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   const visibleReports = _filteredReports();
+  const totalReports = _payloadReports().length;
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
-  if (!searchAllActive && appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0) {
-    pageContentRoot.innerHTML = "<div class='page-load-error'>No favorite resorts yet. Tap the heart icon to save some.</div>";
-    syncFilterSummary(0, _payloadReports().length);
-    renderReportDate();
-    document.body.classList.remove("units-pending");
-    return;
-  }
-  pageContentRoot.innerHTML = _renderSections(visibleReports);
+  const emptyMessage = !searchAllActive && appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0
+    ? "No favorite resorts yet. Tap the heart icon to save some."
+    : (appState.filterState.favoritesOnly
+      ? "No favorite resorts match the current filters."
+      : "No selected resorts.");
+  pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
   applyLayout();
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
-  syncFilterSummary(visibleReports.length, _payloadReports().length);
+  syncFilterSummary(visibleReports.length, totalReports);
   renderReportDate();
   applyUnitModes();
   document.body.classList.remove("units-pending");
+};
+
+const renderPagePreservingScroll = () => {
+  const scrollX = window.scrollX;
+  const scrollY = window.scrollY;
+  renderPage();
+  window.requestAnimationFrame(() => {
+    window.scrollTo(scrollX, scrollY);
+  });
 };
 
 const populateCountryOptions = () => {
@@ -1681,14 +1699,14 @@ const bindControls = () => {
     if (favoriteAllButton) {
       event.preventDefault();
       toggleFavoriteVisibleReports(_filteredReports());
-      renderPage();
+      renderPagePreservingScroll();
       return;
     }
     const favoriteButton = event.target.closest(".favorite-btn[data-resort-id]");
     if (favoriteButton) {
       event.preventDefault();
       toggleFavoriteResortId(favoriteButton.getAttribute("data-resort-id"));
-      renderPage();
+      renderPagePreservingScroll();
       return;
     }
     const button = event.target.closest(".unit-btn[data-unit-mode]");
