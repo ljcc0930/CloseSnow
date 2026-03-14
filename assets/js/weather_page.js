@@ -49,7 +49,7 @@ const appState = {
     passTypes: new Set(),
     region: "",
     country: "",
-    sortBy: "state",
+    sortBy: "week_snow",
     includeDefault: true,
     searchAll: true,
     search: "",
@@ -744,7 +744,7 @@ const applyFilterStateFromControls = () => {
   );
   appState.filterState.region = _normalizeSearch(filterRegionSelect ? filterRegionSelect.value : "");
   appState.filterState.country = (filterCountrySelect ? filterCountrySelect.value : "").trim().toUpperCase();
-  appState.filterState.sortBy = normalizeSortBy(filterSortSelect ? filterSortSelect.value : "state");
+  appState.filterState.sortBy = normalizeSortBy(filterSortSelect ? filterSortSelect.value : "week_snow");
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
   appState.filterState.search = resortSearchInput ? String(resortSearchInput.value || "") : "";

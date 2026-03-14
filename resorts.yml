@@ -220,7 +220,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": true,
+    "default_enabled": false,
     "display_name": "APPI, Japan",
     "website": "https://www.appi.co.jp/en/"
   },
@@ -669,7 +669,7 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Heavenly, CA",
     "website": "https://www.skiheavenly.com/"
   },
@@ -829,7 +829,7 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Kirkwood, CA",
     "website": "https://www.kirkwood.com/"
   },
@@ -1118,7 +1118,7 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Northstar, CA",
     "website": "https://www.northstarcalifornia.com/"
   },
@@ -1423,7 +1423,7 @@
     "pass_types": [
       "epic"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Stevens Pass, WA",
     "website": "https://www.stevenspass.com/"
   },
