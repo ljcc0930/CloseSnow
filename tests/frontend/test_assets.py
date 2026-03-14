@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.web.weather_page_assets import ASSET_MIME_TYPES, asset_path, read_asset_bytes
 
 
@@ -41,6 +43,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
+    assert ".hourly-meta-issue-link" in hourly_css_text
     assert ".compact-day-head-today-anchor" in hourly_css_text
     assert ".compact-day-cell-today-anchor" in hourly_css_text
     assert "background: #e5e7eb;" in hourly_css_text
@@ -71,6 +74,13 @@ def test_read_asset_bytes_reads_known_assets():
     assert "buildMergedTimelineDays" in hourly_js_text
     assert "centerTimelineOnToday" in hourly_js_text
     assert "timelineAutoCentered" in hourly_js_text
+    assert "https://github.com/ljcc0930/CloseSnow/issues/new" in hourly_js_text
+    assert "01-coordinate-correction.yml" in hourly_js_text
+    assert "https://ljcc0930.github.io/CloseSnow" in hourly_js_text
+    assert "https://www.google.com/maps/search/?api=1&query=" in hourly_js_text
+    assert "buildCoordinateIssueUrl" in hourly_js_text
+    assert "buildCoordinateMetaFragment" in hourly_js_text
+    assert "(Wrong coordinates?)" in hourly_js_text
     assert 'return "Today";' in hourly_js_text
     assert "const resolveChartWidth = () => {" in hourly_js_text
     assert "const splitTimeLabel = (rawTime) => {" in hourly_js_text
@@ -80,3 +90,17 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const timeTspan = document.createElementNS(svgNs, \"tspan\");" in hourly_js_text
     assert "const padBottom = 42;" in hourly_js_text
     assert "past14dDaily" in hourly_js_text
+
+
+def test_coordinate_issue_template_contains_required_fields():
+    template_path = Path(__file__).resolve().parents[2] / ".github" / "ISSUE_TEMPLATE" / "01-coordinate-correction.yml"
+    template_text = template_path.read_text(encoding="utf-8")
+
+    assert "name: Coordinate correction" in template_text
+    assert "id: resort_name" in template_text
+    assert "id: resort_page" in template_text
+    assert "id: current_coordinates" in template_text
+    assert "id: current_map_link" in template_text
+    assert "id: corrected_coordinates" in template_text
+    assert "id: corrected_map_link" in template_text
+    assert "id: evidence" in template_text

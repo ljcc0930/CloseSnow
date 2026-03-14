@@ -1,0 +1,65 @@
+name: Coordinate correction
+description: Report a resort whose displayed coordinates are incorrect
+title: "[Coordinate] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when a resort page in CloseSnow points to the wrong coordinates.
+        Please include enough detail to verify the correction quickly.
+  - type: input
+    id: resort_name
+    attributes:
+      label: Resort name
+      description: Name of the resort as shown in CloseSnow
+      placeholder: Snowbird, Utah
+    validations:
+      required: true
+  - type: input
+    id: resort_page
+    attributes:
+      label: Resort page link
+      description: Link to the CloseSnow resort page where you found the bad coordinates
+      placeholder: https://ljcc0930.github.io/CloseSnow/resort/snowbird-ut/
+    validations:
+      required: true
+  - type: input
+    id: current_coordinates
+    attributes:
+      label: Incorrect coordinates currently shown
+      description: The coordinates that CloseSnow is currently displaying
+      placeholder: 40.5800, -111.6500
+    validations:
+      required: true
+  - type: input
+    id: current_map_link
+    attributes:
+      label: Google Maps link for the incorrect coordinates
+      description: Paste the Google Maps link generated from the current wrong coordinates
+      placeholder: https://www.google.com/maps/search/?api=1&query=40.580000%2C-111.650000
+    validations:
+      required: true
+  - type: input
+    id: corrected_coordinates
+    attributes:
+      label: Correct coordinates
+      description: The coordinates that CloseSnow should use instead
+      placeholder: 40.5764, -111.6548
+    validations:
+      required: true
+  - type: input
+    id: corrected_map_link
+    attributes:
+      label: Google Maps link for the corrected coordinates
+      description: Paste a Google Maps link that points to the corrected location
+      placeholder: https://www.google.com/maps/search/?api=1&query=40.576400%2C-111.654800
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or notes
+      description: Add any supporting details, such as an official resort link, trail map, or explanation of why the current coordinates are wrong
+      placeholder: The current pin lands on the wrong valley entrance. The official resort page and the corrected Maps link both point to the main base area.
+    validations:
+      required: true

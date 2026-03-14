@@ -54,6 +54,11 @@ const routePrefix = (() => {
   return path.slice(0, idx);
 })();
 
+const GITHUB_COORDINATE_ISSUE_URL = "https://github.com/ljcc0930/CloseSnow/issues/new";
+const GITHUB_COORDINATE_ISSUE_TEMPLATE = "01-coordinate-correction.yml";
+const GITHUB_PAGES_BASE_URL = "https://ljcc0930.github.io/CloseSnow";
+const GOOGLE_MAPS_SEARCH_URL = "https://www.google.com/maps/search/?api=1&query=";
+
 const withPrefix = (path) => {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   if (!routePrefix) return cleanPath;
@@ -73,6 +78,108 @@ const formatCoordinate = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
   return num.toFixed(4);
+};
+
+const formatCoordinateExact = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "";
+  return num.toFixed(6);
+};
+
+const resolveResortLabel = (payload) => String(
+  payload?.display_name
+  || payload?.query
+  || dailySummary?.display_name
+  || dailySummary?.query
+  || resortId
+  || "Unknown resort",
+).trim();
+
+const buildExternalLink = (href, label, className = "") => {
+  const url = String(href || "").trim();
+  if (!url) return null;
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  if (className) link.className = className;
+  link.textContent = label;
+  return link;
+};
+
+const appendMetaFragment = (parent, fragment) => {
+  if (!parent || !fragment) return;
+  if (parent.childNodes.length > 0) {
+    parent.appendChild(document.createTextNode(" | "));
+  }
+  parent.appendChild(fragment);
+};
+
+const buildGoogleMapsUrl = (latValue, lonValue) => {
+  const lat = formatCoordinateExact(latValue);
+  const lon = formatCoordinateExact(lonValue);
+  if (!lat || !lon) return "";
+  return `${GOOGLE_MAPS_SEARCH_URL}${encodeURIComponent(`${lat},${lon}`)}`;
+};
+
+const buildCanonicalResortPageUrl = () => {
+  if (!resortId) return `${GITHUB_PAGES_BASE_URL}/`;
+  return `${GITHUB_PAGES_BASE_URL}/resort/${encodeURIComponent(resortId)}/`;
+};
+
+const resolveIssueResortPageUrl = () => {
+  const currentUrl = String(window.location.href || "").trim();
+  if (currentUrl.startsWith(`${GITHUB_PAGES_BASE_URL}/`)) {
+    return currentUrl;
+  }
+  return buildCanonicalResortPageUrl();
+};
+
+const buildCoordinateIssueUrl = (payload, coordinatesText, mapsUrl) => {
+  const url = new URL(GITHUB_COORDINATE_ISSUE_URL);
+  const resortLabel = resolveResortLabel(payload);
+  url.searchParams.set("template", GITHUB_COORDINATE_ISSUE_TEMPLATE);
+  url.searchParams.set("title", `[Coordinate] ${resortLabel}`);
+  url.searchParams.set("resort_name", resortLabel);
+  url.searchParams.set("resort_page", resolveIssueResortPageUrl());
+  url.searchParams.set("current_coordinates", coordinatesText);
+  url.searchParams.set("current_map_link", mapsUrl);
+  return url.toString();
+};
+
+const buildCoordinateMetaFragment = (payload) => {
+  const latDisplay = formatCoordinate(payload?.resolved_latitude);
+  const lonDisplay = formatCoordinate(payload?.resolved_longitude);
+  if (!latDisplay || !lonDisplay) return null;
+  const coordinatesText = `${latDisplay}, ${lonDisplay}`;
+  const latExact = formatCoordinateExact(payload?.resolved_latitude) || latDisplay;
+  const lonExact = formatCoordinateExact(payload?.resolved_longitude) || lonDisplay;
+  const coordinatesIssueText = `${latExact}, ${lonExact}`;
+  const mapsUrl = buildGoogleMapsUrl(payload?.resolved_latitude, payload?.resolved_longitude);
+  if (!mapsUrl) return document.createTextNode(coordinatesText);
+
+  const wrapper = document.createElement("span");
+  wrapper.className = "hourly-meta-coordinate";
+
+  const mapsLink = buildExternalLink(mapsUrl, coordinatesText, "hourly-meta-link");
+  if (mapsLink) {
+    mapsLink.setAttribute("aria-label", `Open ${resolveResortLabel(payload)} coordinates in Google Maps`);
+    wrapper.appendChild(mapsLink);
+  } else {
+    wrapper.appendChild(document.createTextNode(coordinatesText));
+  }
+
+  const issueLink = buildExternalLink(
+    buildCoordinateIssueUrl(payload, coordinatesIssueText, mapsUrl),
+    "(Wrong coordinates?)",
+    "hourly-meta-issue-link",
+  );
+  if (issueLink) {
+    issueLink.setAttribute("aria-label", `Report incorrect coordinates for ${resolveResortLabel(payload)}`);
+    wrapper.appendChild(document.createTextNode(" "));
+    wrapper.appendChild(issueLink);
+  }
+  return wrapper;
 };
 
 const formatResortLocalTime = (timeZone) => {
@@ -101,15 +208,13 @@ const renderMeta = () => {
     metaEl.textContent = "";
     return;
   }
-  const parts = [
-    `${metaState.count} hours`,
-    metaState.timezone || "unknown timezone",
-  ];
-  parts.push(metaState.model || "unknown model");
-  if (metaState.coordText) {
-    parts.push(metaState.coordText);
+  metaEl.textContent = "";
+  appendMetaFragment(metaEl, document.createTextNode(`${metaState.count} hours`));
+  appendMetaFragment(metaEl, document.createTextNode(metaState.timezone || "unknown timezone"));
+  appendMetaFragment(metaEl, document.createTextNode(metaState.model || "unknown model"));
+  if (metaState.coordFragment) {
+    appendMetaFragment(metaEl, metaState.coordFragment);
   }
-  metaEl.textContent = parts.join(" | ");
 };
 
 const renderLocalTime = () => {
@@ -524,13 +629,11 @@ const loadHourly = async () => {
       const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
       titleEl.textContent = resortLabel ? `Resort Forecast: ${resortLabel}` : "Resort Forecast";
     }
-    const lat = formatCoordinate(payload.resolved_latitude);
-    const lon = formatCoordinate(payload.resolved_longitude);
     metaState = {
       timezone: String(payload.timezone || "").trim(),
       model: String(payload.model || "").trim(),
       count: Number(payload.hours) || 0,
-      coordText: lat && lon ? `${lat}, ${lon}` : "",
+      coordFragment: buildCoordinateMetaFragment(payload),
     };
     renderLocalTime();
     renderWebsiteLink(payload);

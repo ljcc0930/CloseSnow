@@ -246,6 +246,19 @@ h1 {
   font-weight: 600;
 }
 
+.hourly-meta a {
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.hourly-meta a:hover {
+  text-decoration: underline;
+}
+
+.hourly-meta-issue-link {
+  color: #b91c1c;
+}
+
 .hourly-error {
   margin: 0 0 12px;
   color: #b91c1c;
