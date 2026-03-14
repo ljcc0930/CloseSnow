@@ -253,6 +253,9 @@ def test_build_html_contains_meta_sections():
     assert 'id="us-snowfall-map-legend"' in html
     assert 'id="us-snowfall-map-status"' in html
     assert 'id="us-snowfall-map-root"' in html
+    assert 'data-map-metric-key="today"' in html
+    assert 'data-map-metric-key="next_72h"' in html
+    assert 'data-map-metric-key="week1"' in html
     assert html.index('id="us-snowfall-map-section"') < html.index("<h2>Daily Summary</h2>")
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
