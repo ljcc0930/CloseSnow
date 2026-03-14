@@ -291,9 +291,9 @@ const _renderCompactGridSection = (reports) => {
     <section>
       <div class="section-header">
         <h2>Daily Summary</h2>
-        <div class="unit-toggle unit-toggle-wide" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
-          <button type="button" class="unit-btn" data-unit-mode="metric">Metric</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
+        <div class="unit-toggle" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
+          <button type="button" class="unit-btn" data-unit-mode="metric">C/cm</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">F/in</button>
         </div>
       </div>
       <div class="compact-grid-wrap">

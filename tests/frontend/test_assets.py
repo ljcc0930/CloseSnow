@@ -136,9 +136,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";' in js_text
     assert "const syncCompactSummaryToggle = () => {" in js_text
     assert "const setCompactSummaryUnitMode = (mode) => {" in js_text
+    assert 'data-unit-mode="metric">C/cm</button>' in js_text
+    assert 'data-unit-mode="imperial">F/in</button>' in js_text
     assert "compactDailySummary.dayLabelFor" in js_text
     assert "compactDailySummary.dayStyle(day)" in js_text
     assert "compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })" in js_text
     assert "text-overflow: ellipsis;" in css_text
     assert "white-space: nowrap;" in css_text
-    assert ".unit-toggle.unit-toggle-wide .unit-btn" in css_text
