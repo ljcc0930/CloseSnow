@@ -79,6 +79,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "findLookupMatches" in home_base_js_text
     assert "resolveLookupEntry" in home_base_js_text
     assert "Salt Lake City, UT" in home_base_js_text
+    assert "ensureDistanceContext" in js_text
+    assert "home_base_distance_km" in js_text
+    assert 'if (text === "distance") return "distance";' in js_text
+    assert "filter-radius-select" in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text

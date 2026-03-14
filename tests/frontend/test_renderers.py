@@ -258,6 +258,7 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
+    assert 'id="filter-radius-select"' in html
     assert 'id="favorites-only-toggle"' in html
     assert 'id="filter-favorites-only"' in html
     assert 'name="filter-pass-type" value="ikon"' in html
@@ -269,6 +270,8 @@ def test_build_html_contains_meta_sections():
     assert "Search all resorts" in html
     assert 'id="filter-search-all" checked' in html
     assert "Default resorts" in html
+    assert '<option value="distance">Distance</option>' in html
+    assert '<option value="160">100 mi / 160 km</option>' in html
     assert '<option value="week_snow" selected>This Week\'s Snowfall</option>' in html
     assert '<option value="favorites">Favorites First</option>' in html
     assert '<option value="today_snow">Today\'s Snowfall</option>' in html
