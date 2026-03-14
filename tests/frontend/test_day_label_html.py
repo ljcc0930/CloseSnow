@@ -12,5 +12,6 @@ def test_render_day_label_html_splits_date_and_weekday():
 
 
 def test_render_day_label_html_keeps_fallback_labels_single_line():
-    assert render_day_label_html("today") == "today"
+    assert render_day_label_html("today") == "Today"
+    assert render_day_label_html("Today") == "Today"
     assert render_day_label_html("day 2") == "day 2"

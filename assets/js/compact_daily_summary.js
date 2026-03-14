@@ -111,7 +111,7 @@
     const explicitLabel = String(day?.summary_label || "").trim();
     if (explicitLabel) return explicitLabel;
     const labelMode = _normalizeLabelMode(options.labelMode);
-    if (labelMode === "forecast" && index === 0) return "today";
+    if (labelMode === "forecast" && index === 0) return "Today";
     const label = _formatDayLabel(day?.date);
     if (label) return label;
     return labelMode === "forecast" ? `day ${index + 1}` : "unknown";

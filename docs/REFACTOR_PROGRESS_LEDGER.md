@@ -38,6 +38,48 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:30 (local)
+
+### Scope
+- Capitalize all user-facing fallback day labels that previously started with lowercase `today` so they now render as `Today`.
+
+### Changes
+- Files:
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/resort_hourly.js`
+  - `assets/js/weather_page.js`
+  - `src/web/day_label_html.py`
+  - `src/web/split_metric_renderer.py`
+  - `src/web/weather_table_renderer.py`
+  - `src/web/desktop/temperature_renderer.py`
+  - `src/web/desktop/sun_renderer.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_day_label_html.py`
+  - `tests/frontend/test_renderers.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Main-page daily labels, resort timeline labels, and server-rendered fallback headers now show `Today` instead of lowercase `today`.
+  - Existing internal keys such as `today_snow` remain unchanged because they are routing/sort values, not user-facing labels.
+  - Frontend regression coverage now checks the updated JS assets and day-label rendering helpers for the capitalized fallback.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_day_label_html.py tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 8`
+  - `rg -n 'Today|today' /tmp/closesnow-resort-history/index.html /tmp/closesnow-resort-history/assets/js/weather_page.js /tmp/closesnow-resort-history/assets/js/resort_hourly.js /tmp/closesnow-resort-history/assets/js/compact_daily_summary.js -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `28 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - artifact grep: confirmed generated JS assets now emit `Today` for fallback day labels while preserving internal `today_snow` values
+
+### Risks / Notes
+- This slice only capitalizes fallback labels; explicit date strings and user-facing sort labels like `Today's Snowfall` were already correctly capitalized.
+
+### Next Slice
+- If we later want full title casing for generic fallback labels too, consider whether `day 2` should become `Day 2` in the same family of renderers.
+
 ## 2026-03-13 22:18 (local)
 
 ### Scope

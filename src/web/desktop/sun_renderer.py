@@ -31,7 +31,7 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
         if label:
             return label
         if day == 1:
-            return "today"
+            return "Today"
         return f"day {day}"
 
     left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"

@@ -55,6 +55,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
+    assert 'return "Today";' in compact_js_text
     assert "summary_phase" in compact_js_text
     assert "summary_label" in compact_js_text
     assert "summary_is_today" in compact_js_text
@@ -63,12 +64,14 @@ def test_read_asset_bytes_reads_known_assets():
     assert "compact-day-cell-phase-start" not in compact_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "No resorts match the current filters." in js_text
+    assert 'return "Today";' in js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "formatResortLocalTime" in hourly_js_text
     assert "renderTimelineSummary" in hourly_js_text
     assert "buildMergedTimelineDays" in hourly_js_text
     assert "centerTimelineOnToday" in hourly_js_text
     assert "timelineAutoCentered" in hourly_js_text
+    assert 'return "Today";' in hourly_js_text
     assert "const resolveChartWidth = () => {" in hourly_js_text
     assert "const splitTimeLabel = (rawTime) => {" in hourly_js_text
     assert "window.addEventListener(\"resize\", rerenderChartsForResize);" in hourly_js_text

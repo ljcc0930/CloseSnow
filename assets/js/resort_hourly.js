@@ -402,7 +402,7 @@ const buildMergedTimelineDays = () => {
     ? compactDailySummary.dayLabelFor
     : (day, index, options = {}) => {
       const labelMode = options.labelMode === "calendar" ? "calendar" : "forecast";
-      if (labelMode === "forecast" && index === 0) return "today";
+      if (labelMode === "forecast" && index === 0) return "Today";
       return String(day?.date || "");
     };
   const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];

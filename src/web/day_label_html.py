@@ -8,6 +8,8 @@ def render_day_label_html(label: str) -> str:
     text = (label or "").strip()
     if not text:
         return ""
+    if text.lower() == "today":
+        text = "Today"
 
     parts = text.split(None, 1)
     if len(parts) == 2 and "-" in parts[0]:

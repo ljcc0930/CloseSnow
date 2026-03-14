@@ -18,7 +18,7 @@ def short_label(name: str, weekly_suffix: str, daily_suffix: str) -> str:
     if name.startswith("day_") and name.endswith(daily_suffix):
         idx = name[len("day_"):].split("_", 1)[0]
         if idx == "1":
-            return "today"
+            return "Today"
         return f"day {idx}"
     return name
 

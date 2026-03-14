@@ -161,9 +161,9 @@ def test_renderers_fallback_to_generic_day_labels_when_dates_missing():
     temp = render_temperature_desktop_layout(
         [{"query": "A", "day_1_min_c": "-1", "day_1_max_c": "0", "day_2_min_c": "-2", "day_2_max_c": "1"}]
     )
-    assert "today" in snow
+    assert "Today" in snow
     assert "day 2" in snow
-    assert "today" in temp
+    assert "Today" in temp
     assert "day 2" in temp
 
 

@@ -268,13 +268,13 @@ const _dailyAt = (report, index) => {
 };
 
 const _dayLabelFor = (report, index) => {
-  if (index === 0) return "today";
+  if (index === 0) return "Today";
   const label = _formatDayLabel(_dailyAt(report, index).date);
   if (label) return label;
   return `day ${index + 1}`;
 };
 
-const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => (idx === 0 ? "today" : `day ${idx + 1}`));
+const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => (idx === 0 ? "Today" : `day ${idx + 1}`));
 
 const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
 

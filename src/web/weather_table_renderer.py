@@ -173,7 +173,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         idx = day_idx(header)
         label = first.get(f"label_day_{idx}", "").strip()
         if not label:
-            label = "today" if idx == 1 else f"day {idx}"
+            label = "Today" if idx == 1 else f"day {idx}"
         day_head_cells.append(f"<th>{render_day_label_html(label)}</th>")
 
     left_rows: List[str] = []
