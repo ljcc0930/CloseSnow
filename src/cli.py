@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import argparse
-from http.server import ThreadingHTTPServer
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
 import sys
@@ -69,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_static.add_argument("--output-html", default="index.html")
     p_static.add_argument("--skip-fetch", action="store_true")
     p_static.add_argument("--skip-render", action="store_true")
+
+    p_serve_static = sub.add_parser("serve-static", help="Serve generated static site files from a directory.")
+    p_serve_static.add_argument("--host", default="127.0.0.1")
+    p_serve_static.add_argument("--port", type=int, default=8011)
+    p_serve_static.add_argument("--directory", default="site")
 
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
     p_serve.add_argument("--host", default="127.0.0.1")
@@ -181,6 +187,26 @@ def run_static(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_static_server(args: argparse.Namespace) -> int:
+    directory = Path(args.directory).resolve()
+    if not directory.exists():
+        raise FileNotFoundError(f"Static directory does not exist: {directory}")
+    if not directory.is_dir():
+        raise NotADirectoryError(f"Static path is not a directory: {directory}")
+
+    handler = partial(SimpleHTTPRequestHandler, directory=str(directory))
+    return _serve_http_server(
+        args.host,
+        args.port,
+        handler,
+        [
+            f"Serving static site at http://{args.host}:{args.port}",
+            f"Static root: {directory}",
+            "Open / for index.html and /resort/<resort_id>/ for generated hourly pages.",
+        ],
+    )
+
+
 def run_server(args: argparse.Namespace) -> int:
     handler = make_handler(
         cache_file=args.cache_file,
@@ -252,6 +278,8 @@ def main() -> int:
         return run_render(args)
     if args.command == "static":
         return run_static(args)
+    if args.command == "serve-static":
+        return run_static_server(args)
     if args.command == "serve":
         return run_server(args)
     if args.command == "serve-data":

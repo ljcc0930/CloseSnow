@@ -16,6 +16,8 @@ def test_build_parser_has_all_commands():
     assert args.command == "render"
     args = parser.parse_args(["static"])
     assert args.command == "static"
+    args = parser.parse_args(["serve-static"])
+    assert args.command == "serve-static"
     args = parser.parse_args(["serve"])
     assert args.command == "serve"
     args = parser.parse_args(["serve-data"])
@@ -144,6 +146,38 @@ def test_run_static_skip_render(monkeypatch, tmp_path):
     assert rc == 0
 
 
+def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
+    calls = {"closed": False, "served": False}
+
+    class DummyServer:
+        def __init__(self, addr, handler):  # noqa: ANN001
+            assert addr == ("127.0.0.1", 8011)
+            assert callable(handler)
+
+        def serve_forever(self):
+            calls["served"] = True
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            calls["closed"] = True
+
+    args = argparse.Namespace(host="127.0.0.1", port=8011, directory=str(tmp_path))
+    monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
+    rc = cli.run_static_server(args)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert calls["served"] is True
+    assert calls["closed"] is True
+    assert "Serving static site" in out
+    assert str(tmp_path.resolve()) in out
+
+
+def test_run_static_server_requires_existing_directory(tmp_path):
+    args = argparse.Namespace(host="127.0.0.1", port=8011, directory=str(tmp_path / "missing"))
+    with pytest.raises(FileNotFoundError, match="Static directory does not exist"):
+        cli.run_static_server(args)
+
+
 def test_run_server_boot_path(monkeypatch, capsys):
     calls = {"closed": False, "served": False}
 
@@ -255,6 +289,15 @@ def test_main_dispatches_fetch(monkeypatch):
     )
     monkeypatch.setattr("src.cli.run_fetch", lambda args: 7)
     assert cli.main() == 7
+
+
+def test_main_dispatches_serve_static(monkeypatch):
+    monkeypatch.setattr(
+        "src.cli.build_parser",
+        lambda: type("P", (), {"parse_args": staticmethod(lambda: argparse.Namespace(command="serve-static"))})(),
+    )
+    monkeypatch.setattr("src.cli.run_static_server", lambda args: 8)
+    assert cli.main() == 8
 
 
 def test_main_dispatches_serve_data(monkeypatch):

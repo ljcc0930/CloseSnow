@@ -9,7 +9,7 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 
 ## Highlights
 
-- Unified CLI: `fetch`, `render`, `static`, `serve`, `serve-data`, `serve-web`
+- Unified CLI: `fetch`, `render`, `static`, `serve-static`, `serve`, `serve-data`, `serve-web`
 - Unified payload contract (`weather_payload_v1`) with validator in `src/contract/validators.py`
 - Main page sections: Snowfall, Rainfall, Temperature, Weather (emoji), Sunrise/Sunset
 - Per-resort hourly page: `/resort/<resort_id>` and hourly API `/api/resort-hourly`
@@ -49,6 +49,12 @@ cp -R assets/js site/assets/
 ```
 
 Open `site/index.html`.
+
+Or preview the generated static site locally:
+
+```bash
+python3 -m src.cli serve-static --directory site --host 127.0.0.1 --port 8011
+```
 
 Notes:
 
@@ -171,6 +177,20 @@ Coupled frontend server (`data_mode=local`).
 python3 -m src.cli serve [--host 127.0.0.1] [--port 8010] [...]
 ```
 
+### `serve-static`
+
+Serve already-generated static files from a directory such as `site/`.
+
+```bash
+python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory site]
+```
+
+Notes:
+
+- Best used after `python3 -m src.cli static --output-json site/data.json --output-html site/index.html`
+- Directory indexes work as expected, so generated resort pages under `site/resort/<resort_id>/` are reachable directly
+- This is a plain file server; it does not provide `/api/data` or other dynamic endpoints
+
 ### `serve-data`
 
 Backend API server only.
@@ -239,6 +259,13 @@ Notes:
 - `GET /resort/<resort_id>`
 - `GET /assets/css/*`
 - `GET /assets/js/*`
+
+### Static file server (`serve-static`)
+
+- `GET /`
+- `GET /data.json`
+- `GET /resort/<resort_id>/`
+- `GET /assets/*` when those files exist under the served directory
 
 ## Filter Behavior (Current)
 

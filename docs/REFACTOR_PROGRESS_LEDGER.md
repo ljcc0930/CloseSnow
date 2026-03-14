@@ -37,6 +37,36 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 20:10 (serve-static local preview slice)
+
+### Scope
+- Add a dedicated CLI command to serve generated static site artifacts from a local directory over HTTP.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_SERVE_STATIC.md`
+  - `src/cli.py`
+  - `README.md`
+  - `tests/integration/test_cli.py`
+  - `tests/integration/test_static_server.py`
+- Behavior impact:
+  - CLI now supports `serve-static` for plain static-directory preview without dynamic API/web handlers.
+  - Local preview of generated `site/` artifacts can use directory-index routing for resort pages.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/integration/test_cli.py tests/integration/test_static_server.py -q`
+  - `python3 -m src.cli static --output-json site/data.json --output-html site/index.html`
+- Results:
+  - integration CLI + static-server tests: `21 passed`
+  - static render: succeeded (`Done: site/data.json`, `Done: site/index.html`, `Done: 18 resort hourly page(s)`)
+
+### Risks / Notes
+- `serve-static` intentionally serves files only; it will not emulate `/api/data` or other dynamic endpoints outside the generated directory contents.
+
+### Next Slice
+- Consider whether `serve-static` should optionally verify `assets/` exists under the served directory and emit a friendlier warning if missing.
+
 ## 2026-03-13 19:25 (resort-page daily summary reuse slice)
 
 ### Scope
