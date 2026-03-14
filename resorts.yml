@@ -220,7 +220,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "APPI, Japan",
     "website": "https://www.appi.co.jp/en/"
   },
