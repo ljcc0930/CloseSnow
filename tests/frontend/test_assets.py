@@ -87,6 +87,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const attachSplitScrollSync = () => {" in js_text
     assert "const applyLayout = () => {" in js_text
     assert "const observeLayoutContainers = () => {" in js_text
+    assert "const _setVisibleRowViewport = ({ leftSelector, rightSelector, rowsVisible = 5 }) => {" in js_text
+    assert 'rowsVisible: 5,' in js_text
     assert ".snowfall-split-wrap.mobile-only" in js_text
     assert ".rain-split-wrap.mobile-only" in js_text
     assert "const syncSplitTableHeights = () => {" in js_text

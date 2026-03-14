@@ -1208,6 +1208,35 @@ const _syncStickySecondRowTop = (leftTable, rightTable, splitWrap, variableName)
   }
 };
 
+const _setVisibleRowViewport = ({ leftSelector, rightSelector, rowsVisible = 5 }) => {
+  const leftWrap = document.querySelector(leftSelector);
+  const rightWrap = document.querySelector(rightSelector);
+  const leftTable = leftWrap?.querySelector("table");
+  const rightTable = rightWrap?.querySelector("table");
+  if (!leftWrap || !rightWrap || !leftTable || !rightTable) return;
+
+  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
+  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
+  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
+  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
+  const visibleCount = Math.min(
+    rowsVisible,
+    leftBodyRows.length || rowsVisible,
+    rightBodyRows.length || rowsVisible,
+  );
+  if (visibleCount <= 0) return;
+
+  const leftHeadHeight = leftHeadRows.reduce((sum, row) => sum + row.offsetHeight, 0);
+  const rightHeadHeight = rightHeadRows.reduce((sum, row) => sum + row.offsetHeight, 0);
+  const leftBodyHeight = leftBodyRows.slice(0, visibleCount).reduce((sum, row) => sum + row.offsetHeight, 0);
+  const rightBodyHeight = rightBodyRows.slice(0, visibleCount).reduce((sum, row) => sum + row.offsetHeight, 0);
+  const maxHeight = Math.max(leftHeadHeight + leftBodyHeight, rightHeadHeight + rightBodyHeight);
+  if (maxHeight > 0) {
+    leftWrap.style.maxHeight = `${maxHeight}px`;
+    rightWrap.style.maxHeight = `${maxHeight}px`;
+  }
+};
+
 const syncSplitTableHeights = () => {
   const tablePairs = isCompactLayout()
     ? [
@@ -1245,6 +1274,11 @@ const syncSplitTableHeights = () => {
     _syncRowPairHeights(leftHeadRows, rightHeadRows);
     _syncRowPairHeights(leftBodyRows, rightBodyRows);
     _syncStickySecondRowTop(leftTable, rightTable, splitWrap, stickyVar);
+  });
+  _setVisibleRowViewport({
+    leftSelector: ".compact-grid-left-wrap",
+    rightSelector: ".compact-grid-right-wrap",
+    rowsVisible: 5,
   });
 };
 
