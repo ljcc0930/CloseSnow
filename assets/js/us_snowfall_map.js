@@ -28,12 +28,163 @@
     week_snow: "week1",
   };
   const MAP_SELECTION_EVENT = "closesnow:map-resort-select";
-  const US_FALLBACK_VIEW = {
-    minLatitude: 24,
-    maxLatitude: 50,
-    minLongitude: -125,
-    maxLongitude: -66,
+  const MAP_CANVAS_WIDTH = 1000;
+  const MAP_CANVAS_HEIGHT = 620;
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 5;
+  const SCALE_STEP = 1.25;
+  const DRAG_THRESHOLD_PX = 4;
+  const GEO_REGIONS = {
+    lower48: {
+      label: "Lower 48",
+      bounds: {
+        minLatitude: 24,
+        maxLatitude: 50,
+        minLongitude: -125,
+        maxLongitude: -66,
+      },
+      slot: {
+        x: 70,
+        y: 52,
+        width: 860,
+        height: 420,
+      },
+      latitudes: [30, 40, 50],
+      longitudes: [-120, -110, -100, -90, -80],
+    },
+    alaska: {
+      label: "Alaska",
+      bounds: {
+        minLatitude: 52,
+        maxLatitude: 72,
+        minLongitude: -170,
+        maxLongitude: -130,
+      },
+      slot: {
+        x: 40,
+        y: 478,
+        width: 230,
+        height: 108,
+      },
+      latitudes: [55, 65],
+      longitudes: [-165, -150, -135],
+    },
+    hawaii: {
+      label: "Hawaii",
+      bounds: {
+        minLatitude: 18.5,
+        maxLatitude: 22.5,
+        minLongitude: -161,
+        maxLongitude: -154.5,
+      },
+      slot: {
+        x: 312,
+        y: 516,
+        width: 128,
+        height: 48,
+      },
+      latitudes: [20],
+      longitudes: [-159, -157, -155],
+    },
   };
+  const LOWER48_OUTLINE = [
+    [-124.75, 48.4],
+    [-124.55, 46.4],
+    [-124.35, 44.2],
+    [-124.25, 42.1],
+    [-123.9, 40.9],
+    [-123.5, 39.7],
+    [-122.9, 38.6],
+    [-122.6, 37.8],
+    [-122.5, 36.9],
+    [-121.8, 35.8],
+    [-121.1, 35.0],
+    [-120.1, 34.6],
+    [-118.6, 34.0],
+    [-117.1, 32.6],
+    [-114.8, 32.5],
+    [-111.0, 31.3],
+    [-109.05, 31.33],
+    [-108.2, 31.8],
+    [-106.5, 31.8],
+    [-104.5, 29.8],
+    [-102.1, 29.2],
+    [-100.1, 28.9],
+    [-97.5, 25.9],
+    [-96.1, 27.1],
+    [-94.8, 28.7],
+    [-92.8, 29.2],
+    [-90.6, 29.1],
+    [-89.1, 30.2],
+    [-87.2, 30.5],
+    [-85.2, 29.9],
+    [-83.2, 29.0],
+    [-82.4, 27.4],
+    [-80.8, 24.8],
+    [-80.0, 26.6],
+    [-80.3, 28.8],
+    [-80.8, 30.7],
+    [-81.3, 31.8],
+    [-80.5, 32.9],
+    [-79.0, 33.7],
+    [-78.3, 34.8],
+    [-77.1, 35.6],
+    [-76.3, 37.1],
+    [-75.7, 38.1],
+    [-74.8, 39.6],
+    [-73.8, 40.4],
+    [-72.5, 41.0],
+    [-71.2, 41.7],
+    [-70.5, 43.0],
+    [-69.8, 44.4],
+    [-68.8, 46.0],
+    [-67.1, 47.0],
+    [-69.0, 47.3],
+    [-71.3, 45.4],
+    [-73.3, 45.0],
+    [-74.9, 44.8],
+    [-76.8, 44.9],
+    [-79.0, 43.5],
+    [-81.6, 42.3],
+    [-83.4, 41.9],
+    [-84.8, 46.0],
+    [-87.4, 47.0],
+    [-89.5, 47.7],
+    [-95.0, 49.0],
+    [-110.0, 49.0],
+    [-120.0, 49.0],
+    [-124.75, 48.4],
+  ];
+  const ALASKA_OUTLINE = [
+    [-168.0, 70.0],
+    [-162.0, 68.0],
+    [-158.0, 66.5],
+    [-154.0, 64.5],
+    [-149.0, 61.2],
+    [-145.5, 60.2],
+    [-141.0, 59.0],
+    [-138.0, 57.2],
+    [-140.0, 55.2],
+    [-146.0, 56.0],
+    [-150.0, 57.0],
+    [-154.0, 58.0],
+    [-158.5, 58.0],
+    [-161.5, 56.2],
+    [-164.5, 55.0],
+    [-168.0, 55.2],
+    [-170.0, 57.0],
+    [-168.0, 60.0],
+    [-166.0, 63.0],
+    [-165.0, 66.0],
+    [-168.0, 70.0],
+  ];
+  const HAWAII_ISLANDS = [
+    { longitude: -159.55, latitude: 22.08, rx: 7, ry: 4.6 },
+    { longitude: -158.0, latitude: 21.45, rx: 7, ry: 4.4 },
+    { longitude: -157.05, latitude: 21.12, rx: 6, ry: 3.6 },
+    { longitude: -156.55, latitude: 20.85, rx: 7.5, ry: 4.5 },
+    { longitude: -155.6, latitude: 19.65, rx: 11, ry: 7.2 },
+  ];
 
   const _element = (value) => (
     value && typeof value === "object" && typeof value.querySelector === "function" ? value : null
@@ -48,10 +199,14 @@
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+  const _svgNumber = (value) => Number(value).toFixed(2);
+
   const _asFiniteNumber = (value) => {
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   };
+
+  const _clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   const _normalizeMetricKey = (value) => {
     const raw = _text(value);
@@ -97,61 +252,154 @@
     return out;
   };
 
+  const _mapContext = (report) => (report && typeof report.map_context === "object" ? report.map_context : null);
+
+  const _regionKey = (report) => {
+    const mapContext = _mapContext(report);
+    const latitude = _asFiniteNumber(mapContext && mapContext.latitude);
+    const longitude = _asFiniteNumber(mapContext && mapContext.longitude);
+    if (latitude === null || longitude === null) return "";
+    const admin1 = _text(report && report.admin1).toLowerCase();
+    if (admin1 === "alaska") return "alaska";
+    if (admin1 === "hawaii") return "hawaii";
+    if (latitude >= 52 && longitude <= -130) return "alaska";
+    if (latitude <= 23 && longitude <= -154) return "hawaii";
+    const lower48 = GEO_REGIONS.lower48.bounds;
+    if (
+      latitude >= lower48.minLatitude
+      && latitude <= lower48.maxLatitude
+      && longitude >= lower48.minLongitude
+      && longitude <= lower48.maxLongitude
+    ) {
+      return "lower48";
+    }
+    return "";
+  };
+
   const _eligibleReports = (reports) => _normalizeReports(reports)
     .filter((report) => {
-      const mapContext = report && typeof report.map_context === "object" ? report.map_context : null;
+      const mapContext = _mapContext(report);
       if (!mapContext || mapContext.eligible !== true) return false;
-      return _asFiniteNumber(mapContext.latitude) !== null && _asFiniteNumber(mapContext.longitude) !== null;
+      return Boolean(_regionKey(report));
     });
 
   const _metricValue = (report, metricKey) => {
-    const mapContext = report && typeof report.map_context === "object" ? report.map_context : null;
+    const mapContext = _mapContext(report);
     const config = _metricConfig(metricKey);
     const amount = _asFiniteNumber(mapContext && mapContext[config.field]);
     return amount === null ? 0 : Math.max(0, amount);
   };
 
-  const _fitView = (reports) => {
-    if (!reports.length) return { ...US_FALLBACK_VIEW };
-    let minLatitude = Infinity;
-    let maxLatitude = -Infinity;
-    let minLongitude = Infinity;
-    let maxLongitude = -Infinity;
-    reports.forEach((report) => {
-      const mapContext = report.map_context || {};
-      const latitude = _asFiniteNumber(mapContext.latitude);
-      const longitude = _asFiniteNumber(mapContext.longitude);
-      if (latitude === null || longitude === null) return;
-      minLatitude = Math.min(minLatitude, latitude);
-      maxLatitude = Math.max(maxLatitude, latitude);
-      minLongitude = Math.min(minLongitude, longitude);
-      maxLongitude = Math.max(maxLongitude, longitude);
-    });
-    if (!Number.isFinite(minLatitude) || !Number.isFinite(minLongitude)) return { ...US_FALLBACK_VIEW };
-    const latitudeSpan = Math.max(5, maxLatitude - minLatitude);
-    const longitudeSpan = Math.max(8, maxLongitude - minLongitude);
+  const _projectCoordinate = (latitude, longitude, regionKey) => {
+    const region = GEO_REGIONS[regionKey];
+    if (!region) return null;
+    const { bounds, slot } = region;
+    const lonSpan = Math.max(0.0001, bounds.maxLongitude - bounds.minLongitude);
+    const latSpan = Math.max(0.0001, bounds.maxLatitude - bounds.minLatitude);
+    const xRatio = (longitude - bounds.minLongitude) / lonSpan;
+    const yRatio = 1 - ((latitude - bounds.minLatitude) / latSpan);
     return {
-      minLatitude: minLatitude - latitudeSpan * 0.18,
-      maxLatitude: maxLatitude + latitudeSpan * 0.18,
-      minLongitude: minLongitude - longitudeSpan * 0.16,
-      maxLongitude: maxLongitude + longitudeSpan * 0.16,
+      x: slot.x + (_clamp(xRatio, 0, 1) * slot.width),
+      y: slot.y + (_clamp(yRatio, 0, 1) * slot.height),
     };
   };
 
-  const _projectPoint = (report, view) => {
-    const mapContext = report.map_context || {};
-    const latitude = _asFiniteNumber(mapContext.latitude);
-    const longitude = _asFiniteNumber(mapContext.longitude);
-    if (latitude === null || longitude === null) return null;
-    const longitudeSpan = Math.max(1, view.maxLongitude - view.minLongitude);
-    const latitudeSpan = Math.max(1, view.maxLatitude - view.minLatitude);
-    const x = (longitude - view.minLongitude) / longitudeSpan;
-    const y = 1 - ((latitude - view.minLatitude) / latitudeSpan);
+  const _projectReportPoint = (report) => {
+    const mapContext = _mapContext(report);
+    const latitude = _asFiniteNumber(mapContext && mapContext.latitude);
+    const longitude = _asFiniteNumber(mapContext && mapContext.longitude);
+    const regionKey = _regionKey(report);
+    if (latitude === null || longitude === null || !regionKey) return null;
+    const point = _projectCoordinate(latitude, longitude, regionKey);
+    if (!point) return null;
     return {
-      x: Math.min(0.96, Math.max(0.04, x)),
-      y: Math.min(0.92, Math.max(0.08, y)),
+      ...point,
+      regionKey,
     };
   };
+
+  const _pathFromCoordinates = (coordinates, regionKey, closePath = true) => {
+    if (!Array.isArray(coordinates) || !coordinates.length) return "";
+    const points = coordinates
+      .map(([longitude, latitude]) => _projectCoordinate(latitude, longitude, regionKey))
+      .filter(Boolean);
+    if (!points.length) return "";
+    return points.map((point, index) => `${index === 0 ? "M" : "L"} ${_svgNumber(point.x)} ${_svgNumber(point.y)}`).join(" ")
+      + (closePath ? " Z" : "");
+  };
+
+  const _graticulePath = (regionKey) => {
+    const region = GEO_REGIONS[regionKey];
+    if (!region) return "";
+    const segments = [];
+    region.latitudes.forEach((latitude) => {
+      const left = _projectCoordinate(latitude, region.bounds.minLongitude, regionKey);
+      const right = _projectCoordinate(latitude, region.bounds.maxLongitude, regionKey);
+      if (left && right) segments.push(`M ${_svgNumber(left.x)} ${_svgNumber(left.y)} L ${_svgNumber(right.x)} ${_svgNumber(right.y)}`);
+    });
+    region.longitudes.forEach((longitude) => {
+      const top = _projectCoordinate(region.bounds.maxLatitude, longitude, regionKey);
+      const bottom = _projectCoordinate(region.bounds.minLatitude, longitude, regionKey);
+      if (top && bottom) segments.push(`M ${_svgNumber(top.x)} ${_svgNumber(top.y)} L ${_svgNumber(bottom.x)} ${_svgNumber(bottom.y)}`);
+    });
+    return segments.join(" ");
+  };
+
+  const _ellipseHtml = (longitude, latitude, regionKey, rx, ry) => {
+    const point = _projectCoordinate(latitude, longitude, regionKey);
+    if (!point) return "";
+    return `<ellipse class="us-snowfall-map-island" cx="${_svgNumber(point.x)}" cy="${_svgNumber(point.y)}" rx="${_svgNumber(rx)}" ry="${_svgNumber(ry)}"></ellipse>`;
+  };
+
+  const _regionSlotHtml = (regionKey) => {
+    const region = GEO_REGIONS[regionKey];
+    if (!region) return "";
+    const { slot, label } = region;
+    const labelX = slot.x + 14;
+    const labelY = slot.y + 20;
+    return `
+      <rect class="us-snowfall-map-slot" x="${_svgNumber(slot.x)}" y="${_svgNumber(slot.y)}" width="${_svgNumber(slot.width)}" height="${_svgNumber(slot.height)}" rx="18" ry="18"></rect>
+      <text class="us-snowfall-map-region-label" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY)}">${_escapeHtml(label)}</text>
+    `;
+  };
+
+  const _geographicBasemapHtml = () => {
+    const lower48Path = _pathFromCoordinates(LOWER48_OUTLINE, "lower48");
+    const alaskaPath = _pathFromCoordinates(ALASKA_OUTLINE, "alaska");
+    if (!lower48Path || !alaskaPath) {
+      throw new Error("Missing geographic landmass path.");
+    }
+    return `
+      <svg class="us-snowfall-map-basemap" viewBox="0 0 ${MAP_CANVAS_WIDTH} ${MAP_CANVAS_HEIGHT}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <rect class="us-snowfall-map-water" x="0" y="0" width="${MAP_CANVAS_WIDTH}" height="${MAP_CANVAS_HEIGHT}"></rect>
+        ${_regionSlotHtml("lower48")}
+        ${_regionSlotHtml("alaska")}
+        ${_regionSlotHtml("hawaii")}
+        <path class="us-snowfall-map-graticule" d="${_graticulePath("lower48")}"></path>
+        <path class="us-snowfall-map-graticule" d="${_graticulePath("alaska")}"></path>
+        <path class="us-snowfall-map-graticule" d="${_graticulePath("hawaii")}"></path>
+        <path class="us-snowfall-map-shoreline" d="${lower48Path}"></path>
+        <path class="us-snowfall-map-landmass" d="${lower48Path}"></path>
+        <path class="us-snowfall-map-shoreline" d="${alaskaPath}"></path>
+        <path class="us-snowfall-map-landmass" d="${alaskaPath}"></path>
+        ${HAWAII_ISLANDS.map((island) => _ellipseHtml(island.longitude, island.latitude, "hawaii", island.rx, island.ry)).join("")}
+      </svg>
+    `;
+  };
+
+  const _fallbackBasemapHtml = () => `
+    <svg class="us-snowfall-map-basemap is-fallback" viewBox="0 0 ${MAP_CANVAS_WIDTH} ${MAP_CANVAS_HEIGHT}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <rect class="us-snowfall-map-water" x="0" y="0" width="${MAP_CANVAS_WIDTH}" height="${MAP_CANVAS_HEIGHT}"></rect>
+      ${_regionSlotHtml("lower48")}
+      ${_regionSlotHtml("alaska")}
+      ${_regionSlotHtml("hawaii")}
+      <path class="us-snowfall-map-graticule" d="${_graticulePath("lower48")}"></path>
+      <path class="us-snowfall-map-graticule" d="${_graticulePath("alaska")}"></path>
+      <path class="us-snowfall-map-graticule" d="${_graticulePath("hawaii")}"></path>
+      <text class="us-snowfall-map-fallback-label" x="92" y="264">Basemap unavailable</text>
+      <text class="us-snowfall-map-fallback-copy" x="92" y="292">Showing a scoped coordinate frame instead of the geographic layer.</text>
+    </svg>
+  `;
 
   const _markerSize = (value) => {
     if (value >= 50) return 36;
@@ -213,13 +461,20 @@
   };
 
   const _mapStageHtml = () => `
-    <div class="us-snowfall-map-stage" data-map-stage="1">
-      <div class="us-snowfall-map-stage-accent" aria-hidden="true"></div>
-      <div class="us-snowfall-map-region-label us-snowfall-map-region-label-west" aria-hidden="true">West</div>
-      <div class="us-snowfall-map-region-label us-snowfall-map-region-label-central" aria-hidden="true">Central</div>
-      <div class="us-snowfall-map-region-label us-snowfall-map-region-label-east" aria-hidden="true">East</div>
-      <div class="us-snowfall-map-marker-layer" data-map-marker-layer="1"></div>
-      <div class="us-snowfall-map-inline-message" data-map-inline-message="1"></div>
+    <div class="us-snowfall-map-toolbar" data-map-toolbar="1">
+      <div class="us-snowfall-map-view-badge" data-map-view-badge="1">Full US view</div>
+      <div class="us-snowfall-map-toolbar-actions">
+        <button type="button" class="us-snowfall-map-control" data-map-control="zoom-in" aria-label="Zoom in">+</button>
+        <button type="button" class="us-snowfall-map-control" data-map-control="zoom-out" aria-label="Zoom out">-</button>
+        <button type="button" class="us-snowfall-map-control us-snowfall-map-control-reset" data-map-control="reset" data-map-reset-view="1" aria-label="Reset to the full US view">Reset</button>
+      </div>
+    </div>
+    <div class="us-snowfall-map-viewport" data-map-viewport="1">
+      <div class="us-snowfall-map-canvas" data-map-canvas="1">
+        <div class="us-snowfall-map-basemap-layer" data-map-basemap="1"></div>
+        <div class="us-snowfall-map-marker-layer" data-map-marker-layer="1"></div>
+      </div>
+      <div class="us-snowfall-map-inline-message" data-map-inline-message="1" hidden></div>
       <div class="us-snowfall-map-popup" data-map-popup="1" hidden></div>
     </div>
   `;
@@ -275,9 +530,16 @@
       mapRoot.setAttribute("aria-label", "US snowfall map");
     }
 
+    const viewport = mapRoot ? mapRoot.querySelector("[data-map-viewport]") : null;
+    const canvas = mapRoot ? mapRoot.querySelector("[data-map-canvas]") : null;
+    const basemapLayer = mapRoot ? mapRoot.querySelector("[data-map-basemap]") : null;
     const markerLayer = mapRoot ? mapRoot.querySelector("[data-map-marker-layer]") : null;
     const inlineMessage = mapRoot ? mapRoot.querySelector("[data-map-inline-message]") : null;
     const popupElement = mapRoot ? mapRoot.querySelector("[data-map-popup]") : null;
+    const viewBadge = mapRoot ? mapRoot.querySelector("[data-map-view-badge]") : null;
+    const zoomInButton = mapRoot ? mapRoot.querySelector('[data-map-control="zoom-in"]') : null;
+    const zoomOutButton = mapRoot ? mapRoot.querySelector('[data-map-control="zoom-out"]') : null;
+    const resetButton = mapRoot ? mapRoot.querySelector('[data-map-control="reset"]') : null;
     const state = {
       destroyed: false,
       metricKey: _normalizeMetricKey(options.metricKey),
@@ -285,6 +547,14 @@
       popupResortId: _text(options.selectedResortId),
       visibleReports: _normalizeReports(options.reports),
       errorMessage: "",
+      basemapMode: "geographic",
+      transform: {
+        scale: MIN_SCALE,
+        translateX: 0,
+        translateY: 0,
+      },
+      drag: null,
+      suppressClick: false,
     };
 
     const emitSelectedResort = (resortId) => {
@@ -305,6 +575,90 @@
       }
     };
 
+    const isDefaultTransform = () => (
+      Math.abs(state.transform.scale - MIN_SCALE) < 0.001
+      && Math.abs(state.transform.translateX) < 0.5
+      && Math.abs(state.transform.translateY) < 0.5
+    );
+
+    const updateViewBadge = () => {
+      if (!viewBadge) return;
+      if (state.basemapMode !== "geographic") {
+        viewBadge.textContent = isDefaultTransform() ? "Fallback US view" : `Fallback ${state.transform.scale.toFixed(1)}x`;
+        return;
+      }
+      viewBadge.textContent = isDefaultTransform() ? "Full US view" : `Zoom ${state.transform.scale.toFixed(1)}x`;
+    };
+
+    const syncControls = () => {
+      if (zoomInButton) zoomInButton.disabled = state.transform.scale >= MAX_SCALE - 0.001;
+      if (zoomOutButton) zoomOutButton.disabled = state.transform.scale <= MIN_SCALE + 0.001;
+      if (resetButton) resetButton.disabled = isDefaultTransform();
+    };
+
+    const clampTransform = (nextTransform) => {
+      const width = viewport ? viewport.clientWidth : 0;
+      const height = viewport ? viewport.clientHeight : 0;
+      if (!width || !height) {
+        return {
+          scale: _clamp(nextTransform.scale, MIN_SCALE, MAX_SCALE),
+          translateX: 0,
+          translateY: 0,
+        };
+      }
+      const scale = _clamp(nextTransform.scale, MIN_SCALE, MAX_SCALE);
+      const maxTranslateX = ((scale - 1) * width) / 2;
+      const maxTranslateY = ((scale - 1) * height) / 2;
+      return {
+        scale,
+        translateX: _clamp(nextTransform.translateX, -maxTranslateX, maxTranslateX),
+        translateY: _clamp(nextTransform.translateY, -maxTranslateY, maxTranslateY),
+      };
+    };
+
+    const applyTransform = () => {
+      if (!canvas) return;
+      canvas.style.transform = `translate(${state.transform.translateX}px, ${state.transform.translateY}px) scale(${state.transform.scale})`;
+      updateViewBadge();
+      syncControls();
+    };
+
+    const setTransform = (nextTransform) => {
+      state.transform = clampTransform(nextTransform);
+      applyTransform();
+    };
+
+    const setScale = (nextScale) => {
+      setTransform({
+        scale: nextScale,
+        translateX: state.transform.translateX,
+        translateY: state.transform.translateY,
+      });
+    };
+
+    const resetView = () => {
+      setTransform({
+        scale: MIN_SCALE,
+        translateX: 0,
+        translateY: 0,
+      });
+    };
+
+    const ensureBasemap = () => {
+      if (!basemapLayer || !mapRoot) return;
+      try {
+        basemapLayer.innerHTML = _geographicBasemapHtml();
+        state.basemapMode = "geographic";
+        mapRoot.setAttribute("data-map-mode", "geographic");
+      } catch (error) {
+        basemapLayer.innerHTML = _fallbackBasemapHtml();
+        state.basemapMode = "fallback";
+        mapRoot.setAttribute("data-map-mode", "fallback");
+      }
+      updateViewBadge();
+      syncControls();
+    };
+
     const renderStatus = (eligibleReports) => {
       if (!statusElement) return;
       const metric = _metricConfig(state.metricKey);
@@ -312,16 +666,19 @@
         statusElement.textContent = `Snowfall map unavailable. ${state.errorMessage}`;
         return;
       }
+      const interactionText = state.basemapMode === "geographic"
+        ? "Drag to pan, use scroll or the +/- controls to zoom, and Reset for the full US view."
+        : "Basemap fallback is active. Drag to pan, use scroll or the +/- controls to zoom, and Reset for the full US view.";
       if (!eligibleReports.length) {
         const visibleCount = state.visibleReports.length;
         const scopeText = visibleCount ? "No visible resorts" : "No resorts";
-        statusElement.textContent = `${scopeText} are map-ready for ${metric.label}. Non-US resorts and resorts without coordinates stay in the tables only.`;
+        statusElement.textContent = `${scopeText} are map-ready for ${metric.label}. Non-US resorts and resorts without projectable coordinates stay in the tables only. ${interactionText}`;
         return;
       }
       const focused = state.selectedResortId
         ? ` Focused resort: ${_displayName(eligibleReports.find((report, index) => _selectionKey(report, index) === state.selectedResortId) || { resort_id: state.selectedResortId, query: state.selectedResortId })}.`
         : "";
-      statusElement.textContent = `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"} for ${metric.label}.${focused}`;
+      statusElement.textContent = `Showing ${eligibleReports.length} US resort${eligibleReports.length === 1 ? "" : "s"} for ${metric.label}.${focused} ${interactionText}`;
     };
 
     const renderLegend = () => {
@@ -346,7 +703,7 @@
       if (!inlineMessage) return;
       inlineMessage.hidden = false;
       inlineMessage.classList.toggle("is-error", kind === "error");
-      inlineMessage.innerHTML = `<strong>${kind === "error" ? "Map offline" : "Map preview"}</strong><span>${_escapeHtml(message)}</span>`;
+      inlineMessage.innerHTML = `<strong>${kind === "error" ? "Map offline" : "Map note"}</strong><span>${_escapeHtml(message)}</span>`;
     };
 
     const hideInlineMessage = () => {
@@ -372,14 +729,15 @@
     const renderMarkers = (eligibleReports) => {
       if (!markerLayer) return;
       markerLayer.innerHTML = "";
-      const view = _fitView(eligibleReports);
       const ranked = eligibleReports
         .map((report, index) => ({
           report,
           index,
           key: _selectionKey(report, index),
           value: _metricValue(report, state.metricKey),
+          point: _projectReportPoint(report),
         }))
+        .filter((entry) => entry.point)
         .sort((left, right) => {
           const leftSelected = left.key === state.selectedResortId || left.key === state.popupResortId;
           const rightSelected = right.key === state.selectedResortId || right.key === state.popupResortId;
@@ -387,9 +745,7 @@
           return left.value - right.value;
         });
 
-      ranked.forEach(({ report, index, key, value }) => {
-        const point = _projectPoint(report, view);
-        if (!point) return;
+      ranked.forEach(({ report, index, key, value, point }) => {
         const highlighted = key === state.selectedResortId || key === state.popupResortId;
         const marker = doc.createElement("button");
         marker.type = "button";
@@ -397,9 +753,10 @@
         if (highlighted) marker.classList.add("is-selected");
         marker.setAttribute("data-map-marker", "1");
         marker.setAttribute("data-resort-id", key);
+        marker.setAttribute("data-map-region", point.regionKey);
         marker.setAttribute("aria-label", `${_displayName(report)}: ${_formatSnowfall(value)} ${_metricConfig(state.metricKey).label}`);
-        marker.style.left = `${(point.x * 100).toFixed(3)}%`;
-        marker.style.top = `${(point.y * 100).toFixed(3)}%`;
+        marker.style.left = `${((point.x / MAP_CANVAS_WIDTH) * 100).toFixed(3)}%`;
+        marker.style.top = `${((point.y / MAP_CANVAS_HEIGHT) * 100).toFixed(3)}%`;
         marker.style.setProperty("--marker-size", `${_markerSize(value)}px`);
         marker.style.setProperty("--marker-fill", _markerFill(value));
         marker.style.setProperty("--marker-shadow", _markerGlow(value, highlighted));
@@ -409,10 +766,29 @@
       });
     };
 
+    const renderNotes = (eligibleReports) => {
+      if (state.errorMessage) {
+        renderInlineMessage("The interactive controller failed to render, but the rest of the page is still available.", "error");
+        return;
+      }
+      if (state.basemapMode !== "geographic") {
+        renderInlineMessage("Basemap unavailable. Showing a scoped coordinate fallback while keeping resort markers interactive.");
+        return;
+      }
+      if (!eligibleReports.length) {
+        renderInlineMessage(
+          "No visible US resorts currently qualify for map markers. Try a broader set of resorts or switch back to the resort tables below.",
+        );
+        return;
+      }
+      hideInlineMessage();
+    };
+
     const render = () => {
       if (state.destroyed) return;
       try {
         state.errorMessage = "";
+        ensureBasemap();
         const eligibleReports = _eligibleReports(state.visibleReports);
         renderButtons();
         renderLegend();
@@ -427,13 +803,8 @@
         renderStatus(eligibleReports);
         renderMarkers(eligibleReports);
         renderPopup(eligibleReports);
-        if (!eligibleReports.length) {
-          renderInlineMessage(
-            "No visible US resorts currently qualify for map markers. Try a broader set of resorts or switch back to the resort tables below.",
-          );
-        } else {
-          hideInlineMessage();
-        }
+        renderNotes(eligibleReports);
+        applyTransform();
       } catch (error) {
         state.errorMessage = "The interactive controller failed to render, but the rest of the page is still available.";
         renderStatus([]);
@@ -453,6 +824,19 @@
     };
 
     const onMapClick = (event) => {
+      if (state.suppressClick) {
+        state.suppressClick = false;
+        return;
+      }
+      const control = event.target && event.target.closest ? event.target.closest("[data-map-control]") : null;
+      if (control) {
+        event.preventDefault();
+        const action = _text(control.getAttribute("data-map-control"));
+        if (action === "zoom-in") setScale(state.transform.scale * SCALE_STEP);
+        if (action === "zoom-out") setScale(state.transform.scale / SCALE_STEP);
+        if (action === "reset") resetView();
+        return;
+      }
       const marker = event.target && event.target.closest ? event.target.closest("[data-map-marker]") : null;
       if (marker) {
         event.preventDefault();
@@ -470,8 +854,76 @@
       }
     };
 
+    const onPointerDown = (event) => {
+      if (!viewport || state.destroyed) return;
+      if (event.button !== undefined && event.button !== 0) return;
+      if (event.target && event.target.closest && event.target.closest("[data-map-marker], [data-map-control], [data-map-popup]")) return;
+      event.preventDefault();
+      state.drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        originTranslateX: state.transform.translateX,
+        originTranslateY: state.transform.translateY,
+        moved: false,
+      };
+      if (viewport.setPointerCapture) {
+        try {
+          viewport.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // Ignore pointer capture failures.
+        }
+      }
+      viewport.classList.add("is-panning");
+    };
+
+    const onPointerMove = (event) => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      const deltaX = event.clientX - state.drag.startX;
+      const deltaY = event.clientY - state.drag.startY;
+      if (!state.drag.moved && (Math.abs(deltaX) > DRAG_THRESHOLD_PX || Math.abs(deltaY) > DRAG_THRESHOLD_PX)) {
+        state.drag.moved = true;
+        state.suppressClick = true;
+      }
+      setTransform({
+        scale: state.transform.scale,
+        translateX: state.drag.originTranslateX + deltaX,
+        translateY: state.drag.originTranslateY + deltaY,
+      });
+    };
+
+    const endPointerDrag = (event) => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      if (viewport && viewport.releasePointerCapture) {
+        try {
+          viewport.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          // Ignore pointer capture failures.
+        }
+      }
+      if (state.drag.moved && typeof rootScope.setTimeout === "function") {
+        rootScope.setTimeout(() => {
+          state.suppressClick = false;
+        }, 0);
+      }
+      if (viewport) viewport.classList.remove("is-panning");
+      state.drag = null;
+    };
+
+    const onWheel = (event) => {
+      if (!viewport || state.destroyed) return;
+      event.preventDefault();
+      const factor = event.deltaY < 0 ? SCALE_STEP : (1 / SCALE_STEP);
+      setScale(state.transform.scale * factor);
+    };
+
     if (metricToggle) metricToggle.addEventListener("click", onToggleClick);
     if (mapRoot) mapRoot.addEventListener("click", onMapClick);
+    if (viewport) viewport.addEventListener("pointerdown", onPointerDown);
+    if (viewport) viewport.addEventListener("pointermove", onPointerMove);
+    if (viewport) viewport.addEventListener("pointerup", endPointerDrag);
+    if (viewport) viewport.addEventListener("pointercancel", endPointerDrag);
+    if (viewport) viewport.addEventListener("wheel", onWheel, { passive: false });
 
     const api = {
       setVisibleReports(reports) {
@@ -497,13 +949,18 @@
       },
       resize() {
         if (state.destroyed) return;
-        render();
+        setTransform(state.transform);
       },
       destroy() {
         if (state.destroyed) return;
         state.destroyed = true;
         if (metricToggle) metricToggle.removeEventListener("click", onToggleClick);
         if (mapRoot) mapRoot.removeEventListener("click", onMapClick);
+        if (viewport) viewport.removeEventListener("pointerdown", onPointerDown);
+        if (viewport) viewport.removeEventListener("pointermove", onPointerMove);
+        if (viewport) viewport.removeEventListener("pointerup", endPointerDrag);
+        if (viewport) viewport.removeEventListener("pointercancel", endPointerDrag);
+        if (viewport) viewport.removeEventListener("wheel", onWheel);
       },
     };
 
