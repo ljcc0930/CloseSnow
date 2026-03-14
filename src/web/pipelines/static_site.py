@@ -43,6 +43,25 @@ def _iter_resort_ids(payload: Dict[str, Any]) -> List[str]:
     return resort_ids
 
 
+def _daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[Dict[str, Any]]:
+    reports = payload.get("reports")
+    if not isinstance(reports, list):
+        return None
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        if str(report.get("resort_id", "")).strip() != resort_id:
+            continue
+        daily = report.get("daily")
+        if not isinstance(daily, list):
+            return None
+        return {
+            "query": report.get("query", ""),
+            "daily": daily,
+        }
+    return None
+
+
 def _build_hourly_payload(
     *,
     resort_id: str,
@@ -81,6 +100,9 @@ def render_hourly_pages(
         out_dir.mkdir(parents=True, exist_ok=True)
 
         hourly_context: Dict[str, Any] = {"resortId": resort_id}
+        daily_summary = _daily_summary_context(payload, resort_id)
+        if daily_summary:
+            hourly_context["dailySummary"] = daily_summary
         if include_hourly_data:
             hourly_payload = _build_hourly_payload(
                 resort_id=resort_id,

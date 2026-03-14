@@ -1,10 +1,14 @@
 const context = window.CLOSESNOW_HOURLY_CONTEXT || {};
 const resortId = String(context.resortId || "").trim();
 const hourlyDataUrl = String(context.hourlyDataUrl || "").trim();
+const dailySummary = context.dailySummary && typeof context.dailySummary === "object" ? context.dailySummary : null;
+const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 
 const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
+const dailySummarySection = document.getElementById("resort-daily-summary-section");
+const dailySummaryRoot = document.getElementById("resort-daily-summary-root");
 const metaEl = document.getElementById("hourly-meta");
 const errorEl = document.getElementById("hourly-error");
 const chartErrorEl = document.getElementById("hourly-chart-error");
@@ -282,6 +286,18 @@ const renderHourlyCharts = (payload) => {
   chartsEl.appendChild(frag);
 };
 
+const renderDailySummary = () => {
+  if (!dailySummarySection || !dailySummaryRoot || !compactDailySummary.renderSingleResortHtml) return;
+  const daily = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
+  if (!daily.length) {
+    dailySummarySection.hidden = true;
+    dailySummaryRoot.innerHTML = "";
+    return;
+  }
+  dailySummaryRoot.innerHTML = compactDailySummary.renderSingleResortHtml(daily);
+  dailySummarySection.hidden = false;
+};
+
 const renderHourlyTable = (payload) => {
   if (!thead || !tbody) return;
   const hourly = payload?.hourly || {};
@@ -383,4 +399,5 @@ if (hoursSelect) {
   hoursSelect.addEventListener("change", loadHourly);
 }
 
+renderDailySummary();
 loadHourly();

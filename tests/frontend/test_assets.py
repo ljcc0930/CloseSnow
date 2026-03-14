@@ -5,10 +5,12 @@ from src.web.weather_page_assets import ASSET_MIME_TYPES, asset_path, read_asset
 
 def test_asset_path_points_to_repo_assets():
     css_path = asset_path("assets/css/weather_page.css")
+    compact_js_path = asset_path("assets/js/compact_daily_summary.js")
     js_path = asset_path("assets/js/weather_page.js")
     hourly_css_path = asset_path("assets/css/resort_hourly.css")
     hourly_js_path = asset_path("assets/js/resort_hourly.js")
     assert str(css_path).endswith("assets/css/weather_page.css")
+    assert str(compact_js_path).endswith("assets/js/compact_daily_summary.js")
     assert str(js_path).endswith("assets/js/weather_page.js")
     assert str(hourly_css_path).endswith("assets/css/resort_hourly.css")
     assert str(hourly_js_path).endswith("assets/js/resort_hourly.js")
@@ -16,24 +18,33 @@ def test_asset_path_points_to_repo_assets():
 
 def test_read_asset_bytes_reads_known_assets():
     css = read_asset_bytes("assets/css/weather_page.css")
+    compact_js = read_asset_bytes("assets/js/compact_daily_summary.js")
     js = read_asset_bytes("assets/js/weather_page.js")
     hourly_css = read_asset_bytes("assets/css/resort_hourly.css")
     hourly_js = read_asset_bytes("assets/js/resort_hourly.js")
     assert len(css) > 100
+    assert len(compact_js) > 100
     assert len(js) > 100
     assert len(hourly_css) > 100
     assert len(hourly_js) > 100
     assert ASSET_MIME_TYPES["assets/css/weather_page.css"].startswith("text/css")
+    assert ASSET_MIME_TYPES["assets/js/compact_daily_summary.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
     css_text = css.decode("utf-8", errors="ignore")
+    compact_js_text = compact_js.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
     assert ".weather-left-table .query-col" in css_text
     assert ".hourly-charts" in hourly_css_text
+    assert "window.CloseSnowCompactDailySummary" in compact_js_text
+    assert "renderSingleResortHtml" in compact_js_text
+    assert "compact-day-card" in compact_js_text
     assert "renderHourlyCharts" in hourly_js_text
+    assert "renderDailySummary();" in hourly_js_text
+    assert "dailySummary" in hourly_js_text
     assert "resolved_latitude" in hourly_js_text
     assert "history.replaceState" not in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
@@ -106,14 +117,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-grid-wrap" in css_text
     assert ".compact-day-card" in css_text
     assert "const _renderCompactGridSection = (reports) => {" in js_text
-    assert "compact-day-card" in js_text
-    assert "const snowfall = _asFiniteNumber(day?.snowfall_cm);" in js_text
-    assert "const maxTemp = _asFiniteNumber(day?.temperature_max_c);" in js_text
-    assert "snowfall !== null && snowfall > 0" in js_text
-    assert "? _snowColor(snowfall)" in js_text
-    assert ": _tempColor(maxTemp);" in js_text
-    assert "if (v <= 20) {" in js_text
-    assert 'if (v <= 4) return "background:#FFFFFF;";' in js_text
-    assert "const x = (v - 4) / 16;" in js_text
+    assert "compactDailySummary.dayLabelFor" in js_text
+    assert "compactDailySummary.dayStyle(day)" in js_text
+    assert "compactDailySummary.dayCellHtml(day)" in js_text
     assert "text-overflow: ellipsis;" in css_text
     assert "white-space: nowrap;" in css_text

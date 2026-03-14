@@ -28,6 +28,145 @@ h1 {
   font-size: 26px;
 }
 
+.resort-daily-summary-section {
+  margin: 0 0 14px;
+}
+
+.resort-daily-summary-section h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.resort-daily-summary-wrap {
+  overflow-x: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+}
+
+.resort-daily-summary-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.resort-daily-summary-table col.col-compact-day {
+  width: 98px;
+}
+
+.resort-daily-summary-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #e5e7eb;
+}
+
+.resort-daily-summary-table td {
+  background-clip: padding-box;
+}
+
+.compact-day-cell {
+  padding: 5px 8px;
+  height: 62px;
+  min-height: 62px;
+  vertical-align: top;
+}
+
+.compact-day-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  height: 100%;
+}
+
+.compact-row {
+  display: grid;
+  align-items: center;
+}
+
+.compact-row-primary {
+  grid-template-columns: 20px 1fr;
+  gap: 2px;
+  align-items: stretch;
+}
+
+.compact-row-secondary {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  align-items: center;
+}
+
+.compact-weather {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.compact-temp-stack {
+  display: grid;
+  justify-items: end;
+  line-height: 1.1;
+  gap: 1px;
+}
+
+.compact-temp-high {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.compact-temp-low {
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.compact-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  color: #334155;
+  font-weight: 600;
+}
+
+.compact-pair-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-snow .compact-pair-icon {
+  color: #2563eb;
+}
+
+.compact-rain {
+  justify-self: end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.compact-rain .compact-pair-icon {
+  color: #0f766e;
+}
+
+.daily-summary-empty {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
 .hourly-controls {
   display: flex;
   align-items: center;
@@ -186,8 +325,20 @@ th {
   font-weight: 700;
 }
 
-td:first-child,
-th:first-child {
+.hourly-table td:first-child,
+.hourly-table th:first-child {
   text-align: left;
+  font-weight: 600;
+}
+
+th .day-label-date,
+th .day-label-weekday {
+  display: block;
+  line-height: 1.15;
+}
+
+th .day-label-weekday {
+  font-size: 11px;
+  color: #475569;
   font-weight: 600;
 }

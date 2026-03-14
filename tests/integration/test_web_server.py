@@ -370,7 +370,18 @@ def test_server_requires_data_source_for_api_mode():
 
 
 def test_server_hourly_api_and_hourly_page_route(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr(
+        "src.web.weather_page_server.load_payload",
+        lambda **kwargs: {
+            "reports": [
+                {
+                    "resort_id": "snowbird-ut",
+                    "query": "Snowbird, UT",
+                    "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 4, "temperature_min_c": -5, "snowfall_cm": 1.2, "rain_mm": 0.0}],
+                }
+            ]
+        },
+    )
     monkeypatch.setattr(
         "src.web.weather_page_server._hourly_payload_for_resort",
         lambda **kwargs: {
@@ -418,7 +429,10 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert "Hourly Forecast" in page
         assert "snowbird-ut" in page
         assert "Hourly Forecast: snowbird-ut" not in page
+        assert '"dailySummary": {' in page
         assert "../assets/js/resort_hourly.js" in page
+        assert "../assets/js/compact_daily_summary.js" in page
+        assert 'id="resort-daily-summary-section"' in page
         assert 'id="hourly-charts"' in page
 
         prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")

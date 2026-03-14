@@ -37,6 +37,45 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 19:25 (resort-page daily summary reuse slice)
+
+### Scope
+- Reuse the main-page compact daily summary cell design on each resort hourly page using resort-scoped daily bootstrap data.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_RESORT_PAGE_DAILY_SUMMARY_REUSE.md`
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/weather_page.js`
+  - `assets/js/resort_hourly.js`
+  - `assets/css/resort_hourly.css`
+  - `src/web/weather_page_assets.py`
+  - `src/web/templates/weather_page.html`
+  - `src/web/templates/resort_hourly_page.html`
+  - `src/web/weather_page_server.py`
+  - `src/web/pipelines/static_site.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/integration/test_web_server.py`
+- Behavior impact:
+  - Main page and resort hourly page now share the same compact daily-cell browser renderer.
+  - Resort hourly pages render a single-resort `Daily Summary` strip above hourly charts when daily data is available.
+  - Static and dynamic resort pages both bootstrap `dailySummary` alongside hourly data.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-html index.html`
+- Results:
+  - frontend assets + static-site + integration tests: `17 passed`
+  - static render: succeeded (`Done: .cache/static_payload.json`, `Done: index.html`, `Done: 18 resort hourly page(s)`)
+
+### Risks / Notes
+- Resort-page compact summary CSS is intentionally duplicated in `resort_hourly.css` so the hourly page does not need to load the full main-page stylesheet.
+
+### Next Slice
+- Revisit whether the compact daily-summary helpers should also be reused by future single-resort summary views beyond the hourly page.
+
 ## 2026-03-13 16:02 (compact daily summary grid slice)
 
 ### Scope

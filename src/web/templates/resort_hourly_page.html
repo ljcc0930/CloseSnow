@@ -10,6 +10,10 @@
   <main>
     <a class="back-link" href="{{back_href}}">Back to Main Forecast</a>
     <h1 id="hourly-title">Hourly Forecast</h1>
+    <section id="resort-daily-summary-section" class="resort-daily-summary-section" hidden>
+      <h2>Daily Summary</h2>
+      <div id="resort-daily-summary-root"></div>
+    </section>
     <div class="hourly-controls">
       <label for="hours-select">Hours</label>
       <select id="hours-select">
@@ -34,6 +38,7 @@
   <script>
     window.CLOSESNOW_HOURLY_CONTEXT = {{hourly_context_json}};
   </script>
+  <script src="{{asset_prefix}}/js/compact_daily_summary.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly.js"></script>
 </body>
 </html>

@@ -24,9 +24,9 @@ def test_render_hourly_pages(tmp_path):
     p = tmp_path / "site" / "index.html"
     payload = {
         "reports": [
+            {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}]},
             {"resort_id": "snowbird-ut"},
-            {"resort_id": "snowbird-ut"},
-            {"resort_id": "alta-ut"},
+            {"resort_id": "alta-ut", "query": "Alta, UT", "daily": []},
         ]
     }
     outputs = render_hourly_pages(str(p), payload)
@@ -41,11 +41,13 @@ def test_render_hourly_pages(tmp_path):
     assert "Hourly Forecast: snowbird-ut" not in html
     assert '<h1 id="hourly-title">Hourly Forecast</h1>' in html
     assert 'id="hourly-charts"' in html
+    assert 'id="resort-daily-summary-section"' in html
+    assert '"dailySummary": {' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut"}]}
+    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13"}]}]}
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
@@ -72,11 +74,12 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
     assert '"hourlyDataUrl": "./hourly.json"' in html
+    assert '"dailySummary": {' in html
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     p = tmp_path / "site" / "index.html"
-    payload = {"reports": [{"resort_id": "snowbird-ut"}]}
+    payload = {"reports": [{"resort_id": "snowbird-ut", "query": "Snowbird, UT", "daily": [{"date": "2026-03-13"}]}]}
 
     monkeypatch.setattr(
         "src.web.pipelines.static_site._build_hourly_payload",
@@ -110,3 +113,4 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
     assert '"hourlyDataUrl": "./hourly.json"' in html
+    assert '"dailySummary": {' in html

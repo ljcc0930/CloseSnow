@@ -38,6 +38,7 @@ const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
+const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 
 const appState = {
   payload: null,
@@ -266,63 +267,18 @@ const _dayLabelFor = (report, index) => {
   return index === 0 ? "today" : `day ${index + 1}`;
 };
 
-const _formatCompactValue = (value, digits = 1) => {
-  const num = _asFiniteNumber(value);
-  return num === null ? "--" : num.toFixed(digits);
-};
-
-const _formatCompactTempValue = (value) => {
-  const num = _asFiniteNumber(value);
-  if (num === null) return "--";
-  return String(Math.round(num));
-};
-
-const _formatCompactTime = (raw) => {
-  const text = String(raw || "").trim();
-  if (!text) return "--";
-  if (text.includes("T")) return text.split("T", 2)[1].slice(0, 5) || "--";
-  return text.slice(0, 5) || "--";
-};
-
-const _compactDailyCellHtml = (day) => {
-  const weatherCode = day?.weather_code;
-  const weatherEmoji = _weatherEmoji(weatherCode);
-  const highTemp = _formatCompactTempValue(day?.temperature_max_c);
-  const lowTemp = _formatCompactTempValue(day?.temperature_min_c);
-  const snowValue = _formatCompactValue(day?.snowfall_cm);
-  const rainValue = _formatCompactValue(day?.rain_mm);
-  return `
-    <div class="compact-day-card">
-      <div class="compact-row compact-row-primary">
-        <div class="compact-weather" title="${_escapeHtml(weatherCode === null || weatherCode === undefined || weatherCode === "" ? "WMO code: unknown" : `WMO code: ${weatherCode}`)}">${weatherEmoji}</div>
-        <div class="compact-temp-stack">
-          <div class="compact-temp-high">${_escapeHtml(highTemp)}</div>
-          <div class="compact-temp-low">${_escapeHtml(lowTemp)}</div>
-        </div>
-      </div>
-      <div class="compact-row compact-row-secondary">
-        <div class="compact-pair compact-snow"><span class="compact-pair-icon">❄</span><span class="compact-pair-value">${_escapeHtml(snowValue)}</span></div>
-        <div class="compact-pair compact-rain"><span class="compact-pair-icon">☔</span><span class="compact-pair-value">${_escapeHtml(rainValue)}</span></div>
-      </div>
-    </div>`;
-};
-
 const _renderCompactGridSection = (reports) => {
   if (!reports.length) return "<section><h2>Daily Summary</h2><p>No data</p></section>";
   const displayDays = _displayDays();
-  const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
+  const labels = Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx));
   const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const rightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
-      const snowfall = _asFiniteNumber(day?.snowfall_cm);
-      const maxTemp = _asFiniteNumber(day?.temperature_max_c);
-      const style = snowfall !== null && snowfall > 0
-        ? _snowColor(snowfall)
-        : _tempColor(maxTemp);
+      const style = compactDailySummary.dayStyle(day);
       const styleAttr = style ? ` style='${style}'` : "";
-      return `<td class='compact-day-cell'${styleAttr}>${_compactDailyCellHtml(day)}</td>`;
+      return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day)}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
   }).join("");

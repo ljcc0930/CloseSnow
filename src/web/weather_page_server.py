@@ -43,8 +43,30 @@ _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hour
 )
 
 
-def _render_hourly_page_html(resort_id: str) -> str:
-    hourly_context_json = json.dumps({"resortId": resort_id}, ensure_ascii=False)
+def _daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Dict[str, Any] | None:
+    reports = payload.get("reports")
+    if not isinstance(reports, list):
+        return None
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        if str(report.get("resort_id", "")).strip() != resort_id:
+            continue
+        daily = report.get("daily")
+        if not isinstance(daily, list):
+            return None
+        return {
+            "query": report.get("query", ""),
+            "daily": daily,
+        }
+    return None
+
+
+def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
+    hourly_context: Dict[str, Any] = {"resortId": resort_id}
+    if daily_summary:
+        hourly_context["dailySummary"] = daily_summary
+    hourly_context_json = json.dumps(hourly_context, ensure_ascii=False)
     return (
         _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../assets")
         .replace("{{back_href}}", "../")
@@ -245,7 +267,13 @@ def make_handler(
                 if not resort_id:
                     self._write(404, b"Not Found", "text/plain; charset=utf-8")
                     return
-                html = _render_hourly_page_html(resort_id)
+                daily_summary = None
+                try:
+                    page_payload = self._load_request_payload({}, apply_server_filters=False)
+                    daily_summary = _daily_summary_context(page_payload, resort_id)
+                except Exception:
+                    daily_summary = None
+                html = _render_hourly_page_html(resort_id, daily_summary)
                 self._write(200, html.encode("utf-8"), "text/html; charset=utf-8")
                 return
 
