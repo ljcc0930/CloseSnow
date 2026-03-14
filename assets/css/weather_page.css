@@ -372,6 +372,11 @@
         transform 180ms ease,
         color 180ms ease;
     }
+    .favorite-col .favorite-btn,
+    .favorite-head .favorite-btn {
+      display: flex;
+      margin: 0 auto;
+    }
     .favorite-btn-icon {
       position: absolute;
       inset: 0;
@@ -418,13 +423,13 @@
     }
     .favorite-col,
     .favorite-head {
-      width: 22px;
-      min-width: 22px;
+      width: 28px;
+      min-width: 28px;
       text-align: center;
       padding-top: 0;
       padding-bottom: 0;
-      padding-left: 4px;
-      padding-right: 2px;
+      padding-left: 0;
+      padding-right: 0;
       line-height: 1;
     }
     .favorite-col {
@@ -440,6 +445,166 @@
     }
     .favorite-all-btn:hover {
       opacity: 1;
+    }
+    .compact-grid-wrap {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+      --compact-header-row1-h: 32px;
+      margin-top: 8px;
+    }
+    .compact-grid-left-wrap {
+      flex: 0 0 auto;
+      border-right: 3px solid #94a3b8;
+      background: #fff;
+      overflow: hidden;
+      --compact-query-w: 220px;
+    }
+    .compact-grid-right-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    .compact-grid-left-table,
+    .compact-grid-right-table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 0;
+    }
+    .compact-grid-right-table {
+      width: max-content;
+    }
+    .compact-grid-left-table col.col-favorite {
+      width: 28px;
+    }
+    .compact-grid-left-table col.col-query {
+      width: var(--compact-query-w);
+    }
+    .compact-grid-right-table col.col-compact-day {
+      width: 98px;
+    }
+    .compact-grid-left-table thead th,
+    .compact-grid-right-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .compact-grid-left-table tbody .query-col {
+      text-align: left;
+      font-weight: 600;
+      background: #fff;
+      max-width: var(--compact-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .compact-grid-left-table thead .query-col {
+      text-align: left;
+    }
+    .compact-grid-left-table td,
+    .compact-grid-right-table td {
+      background-clip: padding-box;
+    }
+    .compact-grid-left-table td,
+    .compact-grid-right-table td {
+      padding-top: 4px;
+      padding-bottom: 4px;
+      padding-left: 9px;
+      padding-right: 9px;
+    }
+    .compact-grid-left-table thead th,
+    .compact-grid-right-table thead th {
+      padding-top: 7px;
+      padding-bottom: 7px;
+    }
+    .compact-grid-left-table .favorite-col,
+    .compact-grid-left-table .favorite-head {
+      width: 28px;
+      min-width: 28px;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .compact-day-cell {
+      padding: 5px 8px;
+      height: 62px;
+      min-height: 62px;
+      vertical-align: top;
+    }
+    .compact-day-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 4px;
+      height: 100%;
+    }
+    .compact-row {
+      display: grid;
+      align-items: center;
+    }
+    .compact-row-primary {
+      grid-template-columns: 20px 1fr;
+      gap: 2px;
+      align-items: stretch;
+    }
+    .compact-row-secondary {
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      align-items: center;
+    }
+    .compact-weather {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+      font-size: 26px;
+      line-height: 1;
+    }
+    .compact-temp-stack {
+      display: grid;
+      justify-items: end;
+      line-height: 1.1;
+      gap: 1px;
+    }
+    .compact-temp-high {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .compact-temp-low {
+      font-size: 12px;
+      font-weight: 500;
+      color: #475569;
+    }
+    .compact-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      min-width: 0;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .compact-pair-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .compact-row-secondary .compact-pair {
+      color: #334155;
+      font-weight: 600;
+    }
+    .compact-rain {
+      justify-self: end;
+      justify-content: flex-end;
+      text-align: right;
+      flex-direction: row-reverse;
+    }
+    .compact-snow .compact-pair-icon {
+      color: #2563eb;
+    }
+    .compact-rain .compact-pair-icon {
+      color: #0f766e;
     }
     .desktop-only {
       display: block;
@@ -474,7 +639,7 @@
       min-width: 0;
     }
     .weather-left-table col.col-favorite {
-      width: 22px;
+      width: 28px;
     }
     .weather-left-table col.col-query {
       width: var(--weather-query-w);
@@ -534,7 +699,7 @@
       --week-col-w: 110px;
     }
     .snowfall-left-table col.col-favorite {
-      width: 22px;
+      width: 28px;
     }
     .snowfall-left-table col.col-query {
       width: var(--query-col-w);
@@ -620,7 +785,7 @@
       min-width: 0;
     }
     .rain-left-table col.col-favorite {
-      width: 22px;
+      width: 28px;
     }
     .rain-left-table col.col-query {
       width: var(--rain-query-w);
@@ -685,7 +850,7 @@
       min-width: 0;
     }
     .temperature-left-table col.col-favorite {
-      width: 22px;
+      width: 28px;
     }
     .temperature-left-table col.col-query {
       width: var(--temp-query-w);
@@ -746,7 +911,7 @@
       min-width: 0;
     }
     .sun-left-table col.col-favorite {
-      width: 22px;
+      width: 28px;
     }
     .sun-left-table col.col-query {
       width: var(--sun-query-w);
@@ -798,15 +963,11 @@
     body.mobile-simple .snowfall-left-table th,
     body.mobile-simple .snowfall-left-table td,
     body.mobile-simple .snowfall-right-table th,
-    body.mobile-simple .snowfall-right-table td {
-      height: 30px;
-      box-sizing: border-box;
-    }
+    body.mobile-simple .snowfall-right-table td,
     body.mobile-simple .rain-left-table th,
     body.mobile-simple .rain-left-table td,
     body.mobile-simple .rain-right-table th,
     body.mobile-simple .rain-right-table td {
-      height: 30px;
       box-sizing: border-box;
     }
     body.mobile-simple .plain-table {

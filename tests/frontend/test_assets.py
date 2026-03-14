@@ -75,6 +75,13 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const _autoSizeDesktopLeftColumns = ({" in js_text
     assert "const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {" in js_text
     assert "const _autoSizeMobileRightColumns = ({" in js_text
+    assert 'tableSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table"' in js_text
+    assert "minWidth: 150" in js_text
+    assert "maxWidth: 240" in js_text
+    assert 'tableSelector: ".weather-left-wrap .weather-left-table"' in js_text
+    assert 'queryVarName: "--weather-query-w"' in js_text
+    assert 'tableSelector: ".sun-left-wrap .sun-left-table"' in js_text
+    assert 'queryVarName: "--sun-query-w"' in js_text
     assert "const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stickyVar) => {" in js_text
     assert "const attachVerticalSync = (left, right) => {" in js_text
     assert "const attachSplitScrollSync = () => {" in js_text
@@ -87,6 +94,24 @@ def test_read_asset_bytes_reads_known_assets():
     assert "body.units-pending main" not in css_text
     assert ".query-col .resort-link" in css_text
     assert ".favorite-btn" in css_text
+    assert "width: 28px;" in css_text
+    assert "min-width: 28px;" in css_text
+    assert ".favorite-col .favorite-btn," in css_text
+    assert "margin: 0 auto;" in css_text
+    assert "padding-left: 0;" in css_text
+    assert "padding-right: 0;" in css_text
     assert ".resort-cell" in css_text
+    assert ".compact-grid-wrap" in css_text
+    assert ".compact-day-card" in css_text
+    assert "const _renderCompactGridSection = (reports) => {" in js_text
+    assert "compact-day-card" in js_text
+    assert "const snowfall = _asFiniteNumber(day?.snowfall_cm);" in js_text
+    assert "const maxTemp = _asFiniteNumber(day?.temperature_max_c);" in js_text
+    assert "snowfall !== null && snowfall > 0" in js_text
+    assert "? _snowColor(snowfall)" in js_text
+    assert ": _tempColor(maxTemp);" in js_text
+    assert "if (v <= 20) {" in js_text
+    assert 'if (v <= 4) return "background:#FFFFFF;";' in js_text
+    assert "const x = (v - 4) / 16;" in js_text
     assert "text-overflow: ellipsis;" in css_text
     assert "white-space: nowrap;" in css_text
