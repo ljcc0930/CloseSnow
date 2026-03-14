@@ -29,13 +29,30 @@ const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterSearchAllInput = document.getElementById("filter-search-all");
 const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");
 const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");
+const compareToolbar = document.getElementById("compare-toolbar");
 const filterPassTypeInputs = Array.from(document.querySelectorAll("input[name='filter-pass-type']"));
+
+const _positiveIntOr = (value, fallback) => {
+  const num = Number(value);
+  return Number.isInteger(num) && num > 0 ? num : fallback;
+};
+
+const compareSelectionBootstrap =
+  pageBootstrap.compareSelection && typeof pageBootstrap.compareSelection === "object" && !Array.isArray(pageBootstrap.compareSelection)
+    ? pageBootstrap.compareSelection
+    : {};
+const compareSelectionApi = window.CloseSnowCompareSelection || {};
 
 const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
 const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";
 const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
 const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
+const COMPARE_SELECTION_QUERY_KEY = String(compareSelectionBootstrap.queryKey || compareSelectionApi.DEFAULT_QUERY_KEY || "compare").trim() || "compare";
+const COMPARE_SELECTION_MAX_RESORTS = _positiveIntOr(
+  compareSelectionBootstrap.maxResorts || compareSelectionApi.DEFAULT_MAX_SELECTION,
+  4,
+);
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
@@ -46,7 +63,11 @@ const appState = {
   payload: null,
   reports: [],
   availableFilters: DEFAULT_AVAILABLE_FILTERS,
+  knownResortIds: new Set(),
+  resortNamesById: {},
   favoriteResortIds: new Set(),
+  compareResortIds: [],
+  compareMessage: "",
   filterState: {
     passTypes: new Set(),
     region: "",
@@ -245,6 +266,19 @@ const _favoriteAllButtonHtml = (reports) => {
   return `<button type='button' class='favorite-btn favorite-all-btn' data-favorite-all='1' data-favorite-active='${allFavorited ? "1" : "0"}' aria-pressed='${allFavorited ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
 };
 
+const _compareSelectionIndex = (resortId) => appState.compareResortIds.indexOf(String(resortId || "").trim());
+const _isCompareResortId = (resortId) => _compareSelectionIndex(resortId) >= 0;
+
+const _compareButtonHtml = (report) => {
+  const resortId = String(report?.resort_id || "").trim();
+  if (!resortId) return "";
+  const index = _compareSelectionIndex(resortId);
+  const active = index >= 0;
+  const text = active ? `Selected #${index + 1}` : "Compare";
+  const label = active ? "Remove resort from compare set" : "Add resort to compare set";
+  return `<button type='button' class='compare-select-btn' data-compare-resort-id='${_escapeHtml(resortId)}' data-compare-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'>${_escapeHtml(text)}</button>`;
+};
+
 const _displayName = (report) => String(report?.display_name || report?.query || "").trim();
 
 const _resortCellHtml = (report) => {
@@ -253,7 +287,8 @@ const _resortCellHtml = (report) => {
   const linkHtml = resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
-  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
+  const compareButtonHtml = _compareButtonHtml(report);
+  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div>${compareButtonHtml ? `<div class='resort-actions'>${compareButtonHtml}</div>` : ""}</div></td>`;
 };
 
 const _displayDays = () => {
@@ -571,6 +606,182 @@ const _payloadReports = () => {
   return reports.filter((report) => report && typeof report === "object");
 };
 
+const _indexKnownResorts = (reports) => {
+  (reports || []).forEach((report) => {
+    const resortId = String(report?.resort_id || "").trim();
+    if (!resortId) return;
+    appState.knownResortIds.add(resortId);
+    const label = _displayName(report);
+    if (label && !appState.resortNamesById[resortId]) {
+      appState.resortNamesById[resortId] = label;
+    }
+  });
+};
+
+const _knownCompareResortIds = () => (
+  appState.knownResortIds.size > 0
+    ? Array.from(appState.knownResortIds)
+    : Array.from(new Set(_payloadReports().map((report) => String(report?.resort_id || "").trim()).filter(Boolean)))
+);
+
+const _normalizeCompareSelection = (values) => {
+  const input = Array.isArray(values) ? values : [values];
+  const seen = new Set();
+  const out = [];
+  input.forEach((raw) => {
+    String(raw || "")
+      .split(",")
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .forEach((resortId) => {
+        if (seen.has(resortId)) return;
+        seen.add(resortId);
+        out.push(resortId);
+      });
+  });
+  return out;
+};
+
+const _sanitizeCompareSelection = (values, validResortIds = _knownCompareResortIds()) => {
+  if (typeof compareSelectionApi.sanitizeSelection === "function") {
+    const parsed = compareSelectionApi.sanitizeSelection(values, {
+      queryKey: COMPARE_SELECTION_QUERY_KEY,
+      validResortIds,
+      maxSelection: COMPARE_SELECTION_MAX_RESORTS,
+    });
+    return Array.isArray(parsed) ? parsed : [];
+  }
+  const normalized = _normalizeCompareSelection(values);
+  const validSet = new Set(_normalizeCompareSelection(validResortIds));
+  const filtered = validSet.size ? normalized.filter((resortId) => validSet.has(resortId)) : normalized;
+  return filtered.slice(0, COMPARE_SELECTION_MAX_RESORTS);
+};
+
+const _parseCompareSelectionFromLocation = (search = window.location.search) => {
+  const validResortIds = _knownCompareResortIds();
+  if (typeof compareSelectionApi.parseSelectionFromSearch === "function") {
+    const parsed = compareSelectionApi.parseSelectionFromSearch(search, {
+      queryKey: COMPARE_SELECTION_QUERY_KEY,
+      validResortIds,
+      maxSelection: COMPARE_SELECTION_MAX_RESORTS,
+    });
+    return Array.isArray(parsed) ? parsed : [];
+  }
+  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+  return _sanitizeCompareSelection(params.getAll(COMPARE_SELECTION_QUERY_KEY), validResortIds);
+};
+
+const _withCompareSelectionInParams = (params, compareResortIds) => {
+  if (typeof compareSelectionApi.withSelectionInParams === "function") {
+    return compareSelectionApi.withSelectionInParams(params, compareResortIds, {
+      queryKey: COMPARE_SELECTION_QUERY_KEY,
+      validResortIds: _knownCompareResortIds(),
+      maxSelection: COMPARE_SELECTION_MAX_RESORTS,
+    });
+  }
+  const nextParams = params instanceof URLSearchParams ? new URLSearchParams(params.toString()) : new URLSearchParams(params || "");
+  nextParams.delete(COMPARE_SELECTION_QUERY_KEY);
+  _sanitizeCompareSelection(compareResortIds).forEach((resortId) => {
+    nextParams.append(COMPARE_SELECTION_QUERY_KEY, resortId);
+  });
+  return nextParams;
+};
+
+const restoreCompareSelectionFromLocation = () => {
+  appState.compareResortIds = _parseCompareSelectionFromLocation();
+  appState.compareMessage = "";
+};
+
+const _compareDisplayName = (resortId) => String(appState.resortNamesById[String(resortId || "").trim()] || resortId || "").trim();
+
+const toggleCompareResortId = (resortId) => {
+  const current = appState.compareResortIds.slice();
+  let result;
+  if (typeof compareSelectionApi.toggleSelection === "function") {
+    result = compareSelectionApi.toggleSelection(current, resortId, {
+      queryKey: COMPARE_SELECTION_QUERY_KEY,
+      validResortIds: _knownCompareResortIds(),
+      maxSelection: COMPARE_SELECTION_MAX_RESORTS,
+    });
+  } else {
+    const normalizedId = String(resortId || "").trim();
+    const validIds = new Set(_knownCompareResortIds());
+    if (!normalizedId || (validIds.size && !validIds.has(normalizedId))) {
+      result = { selection: current, changed: false, reason: "invalid" };
+    } else if (current.includes(normalizedId)) {
+      result = { selection: current.filter((value) => value !== normalizedId), changed: true, reason: "removed" };
+    } else if (current.length >= COMPARE_SELECTION_MAX_RESORTS) {
+      result = { selection: current, changed: false, reason: "max" };
+    } else {
+      result = { selection: [...current, normalizedId], changed: true, reason: "added" };
+    }
+  }
+
+  appState.compareResortIds = _sanitizeCompareSelection(result.selection || current);
+  if (result.reason === "max") {
+    appState.compareMessage = `Compare up to ${COMPARE_SELECTION_MAX_RESORTS} resorts at a time.`;
+  } else if (result.reason === "invalid") {
+    appState.compareMessage = "Only known resort ids can be added to compare.";
+  } else {
+    appState.compareMessage = "";
+  }
+  syncUrlFromFilterState();
+};
+
+const clearCompareSelection = () => {
+  appState.compareResortIds = [];
+  appState.compareMessage = "";
+  syncUrlFromFilterState();
+};
+
+const buildCompareShareUrl = () => {
+  const url = new URL(window.location.href);
+  url.search = _withCompareSelectionInParams(new URLSearchParams(window.location.search), appState.compareResortIds).toString();
+  return url.toString();
+};
+
+const copyCompareShareUrl = async () => {
+  const url = buildCompareShareUrl();
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+    try {
+      await navigator.clipboard.writeText(url);
+      appState.compareMessage = "Compare link copied.";
+      renderCompareToolbar();
+      return;
+    } catch (error) {
+      // Fall through to the non-clipboard message below.
+    }
+  }
+  appState.compareMessage = "Share this page URL from the address bar.";
+  renderCompareToolbar();
+};
+
+const renderCompareToolbar = () => {
+  if (!compareToolbar) return;
+  const selected = appState.compareResortIds.slice();
+  if (!selected.length) {
+    compareToolbar.hidden = true;
+    compareToolbar.innerHTML = "";
+    return;
+  }
+  const chips = selected.map((resortId, index) => (
+    `<span class='compare-pill'><span>${_escapeHtml(_compareDisplayName(resortId))} <strong>#${index + 1}</strong></span><button type='button' class='compare-pill-remove' data-compare-remove-id='${_escapeHtml(resortId)}' aria-label='Remove ${_escapeHtml(_compareDisplayName(resortId))} from compare'>Remove</button></span>`
+  )).join("");
+  const note = appState.compareMessage || "Share this page URL to restore the same compare set on the static site.";
+  compareToolbar.hidden = false;
+  compareToolbar.innerHTML = `
+    <div class='compare-toolbar-head'>
+      <div class='compare-toolbar-title'>Compare selection <strong>${selected.length}/${COMPARE_SELECTION_MAX_RESORTS}</strong></div>
+      <div class='compare-toolbar-actions'>
+        <button type='button' class='compare-toolbar-btn' data-compare-copy='1'>Copy link</button>
+        <button type='button' class='compare-toolbar-btn' data-compare-clear='1'>Clear</button>
+      </div>
+    </div>
+    <div class='compare-toolbar-list'>${chips}</div>
+    <div class='compare-toolbar-note'>${_escapeHtml(note)}</div>
+  `;
+};
+
 const _deriveAvailableFiltersFromReports = (reports) => {
   const out = { pass_type: {}, region: {}, country: {} };
   reports.forEach((report) => {
@@ -837,7 +1048,14 @@ const applyFilterStateFromControls = () => {
 };
 
 const syncUrlFromFilterState = () => {
-  return false;
+  const currentSearch = String(window.location.search || "").replace(/^\?/, "");
+  const nextParams = _withCompareSelectionInParams(new URLSearchParams(window.location.search), appState.compareResortIds);
+  const nextSearch = nextParams.toString();
+  if (nextSearch === currentSearch) return false;
+  const nextUrl = new URL(window.location.href);
+  nextUrl.search = nextSearch;
+  window.history.replaceState({}, "", nextUrl.toString());
+  return true;
 };
 
 const buildServerQueryParams = () => {
@@ -1579,6 +1797,7 @@ const renderPage = () => {
   applyLayout();
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
+  renderCompareToolbar();
   syncFilterSummary(visibleReports.length, totalReports);
   renderReportDate();
   applyUnitModes();
@@ -1707,6 +1926,7 @@ const reloadDynamicPayloadForFilters = async () => {
   const payload = await loadPayload(endpoint.toString());
   appState.payload = payload;
   appState.reports = _payloadReports();
+  _indexKnownResorts(appState.reports);
   appState.availableFilters = _availableFilters();
   updateFilterLabels();
 };
@@ -1787,6 +2007,33 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const compareCopyButton = event.target.closest("[data-compare-copy='1']");
+    if (compareCopyButton) {
+      event.preventDefault();
+      void copyCompareShareUrl();
+      return;
+    }
+    const compareClearButton = event.target.closest("[data-compare-clear='1']");
+    if (compareClearButton) {
+      event.preventDefault();
+      clearCompareSelection();
+      renderPagePreservingScroll();
+      return;
+    }
+    const compareRemoveButton = event.target.closest(".compare-pill-remove[data-compare-remove-id]");
+    if (compareRemoveButton) {
+      event.preventDefault();
+      toggleCompareResortId(compareRemoveButton.getAttribute("data-compare-remove-id"));
+      renderPagePreservingScroll();
+      return;
+    }
+    const compareButton = event.target.closest(".compare-select-btn[data-compare-resort-id]");
+    if (compareButton) {
+      event.preventDefault();
+      toggleCompareResortId(compareButton.getAttribute("data-compare-resort-id"));
+      renderPagePreservingScroll();
+      return;
+    }
     const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
     if (favoriteAllButton) {
       event.preventDefault();
@@ -1844,9 +2091,11 @@ const initialize = async () => {
   try {
     appState.payload = await loadPayload();
     appState.reports = _payloadReports();
+    _indexKnownResorts(appState.reports);
     appState.availableFilters = _availableFilters();
     updateFilterLabels();
     applyControlsFromQueryOrMeta();
+    restoreCompareSelectionFromLocation();
     renderPage();
   } catch (error) {
     if (pageContentRoot) {

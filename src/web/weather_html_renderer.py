@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
+_COMPARE_SELECTION_BOOTSTRAP = {
+    "queryKey": "compare",
+    "maxResorts": 4,
+}
 
 _PAGE_SHELL_PLACEHOLDER = """
     <section><h2>Daily Summary</h2><p class="section-loading">Loading forecast...</p></section>
@@ -36,7 +40,13 @@ def build_html(
         "applied_filters": applied_filters or {},
     }
     filter_meta_json = json.dumps(filter_meta, ensure_ascii=False)
-    page_bootstrap_json = json.dumps({"dataUrl": data_url}, ensure_ascii=False)
+    page_bootstrap_json = json.dumps(
+        {
+            "dataUrl": data_url,
+            "compareSelection": _COMPARE_SELECTION_BOOTSTRAP,
+        },
+        ensure_ascii=False,
+    )
     return (
         _PAGE_TEMPLATE.replace("{{generated_utc_iso}}", generated_utc_iso)
         .replace("{{filter_meta_json}}", filter_meta_json)
