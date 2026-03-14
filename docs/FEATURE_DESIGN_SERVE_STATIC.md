@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a lightweight CLI command that serves already-generated static site artifacts from a local directory so the static output can be previewed without using the dynamic backend/frontend servers.
+Add a lightweight CLI command that explicitly reuses the existing `static` build flow and then serves the generated artifacts from a local directory.
 
 ## Problem
 
@@ -14,7 +14,7 @@ The repository already supports:
 
 But there is no first-class command for the common local workflow:
 
-1. generate `site/`
+1. generate `site/` through the existing static pipeline
 2. open it over localhost as plain files
 
 Opening `site/index.html` directly works for some flows, but a local HTTP server is the more reliable static preview path, especially for generated nested resort pages and JSON fetches.
@@ -29,7 +29,9 @@ python3 -m src.cli serve-static --directory site --host 127.0.0.1 --port 8011
 
 Behavior:
 
-- serves files from a user-provided directory, default `site`
+- runs the same fetch+render logic as `python3 -m src.cli static`
+- writes outputs into a user-provided directory, default `site`
+- serves files from that directory after the build step
 - uses Python standard library only
 - supports directory index routing so `/resort/<resort_id>/` resolves to `index.html`
 - does not expose dynamic API endpoints

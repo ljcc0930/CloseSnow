@@ -71,10 +71,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_static.add_argument("--skip-fetch", action="store_true")
     p_static.add_argument("--skip-render", action="store_true")
 
-    p_serve_static = sub.add_parser("serve-static", help="Serve generated static site files from a directory.")
+    p_serve_static = sub.add_parser("serve-static", help="Build and serve generated static site files from a directory.")
+    _add_fetch_options(p_serve_static)
     p_serve_static.add_argument("--host", default="127.0.0.1")
     p_serve_static.add_argument("--port", type=int, default=8011)
     p_serve_static.add_argument("--directory", default="site")
+    p_serve_static.add_argument("--skip-fetch", action="store_true")
+    p_serve_static.add_argument("--skip-render", action="store_true")
 
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
     p_serve.add_argument("--host", default="127.0.0.1")
@@ -187,7 +190,18 @@ def run_static(args: argparse.Namespace) -> int:
     return 0
 
 
+def _static_outputs_for_directory(directory: str) -> tuple[str, str]:
+    root = Path(directory)
+    return str(root / "data.json"), str(root / "index.html")
+
+
 def run_static_server(args: argparse.Namespace) -> int:
+    output_json, output_html = _static_outputs_for_directory(args.directory)
+    static_args = argparse.Namespace(**vars(args))
+    static_args.output_json = output_json
+    static_args.output_html = output_html
+    run_static(static_args)
+
     directory = Path(args.directory).resolve()
     if not directory.exists():
         raise FileNotFoundError(f"Static directory does not exist: {directory}")
@@ -202,6 +216,7 @@ def run_static_server(args: argparse.Namespace) -> int:
         [
             f"Serving static site at http://{args.host}:{args.port}",
             f"Static root: {directory}",
+            f"Static build: {Path(output_html).resolve()}",
             "Open / for index.html and /resort/<resort_id>/ for generated hourly pages.",
         ],
     )

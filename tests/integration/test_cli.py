@@ -33,6 +33,15 @@ def test_serve_web_parser_uses_env_default(monkeypatch):
     assert args.data_source == "https://example.test/api/data"
 
 
+def test_serve_static_parser_uses_build_defaults():
+    parser = cli.build_parser()
+    args = parser.parse_args(["serve-static"])
+    assert args.directory == "site"
+    assert args.cache_file == ".cache/open_meteo_cache.json"
+    assert args.skip_fetch is False
+    assert args.skip_render is False
+
+
 def test_resolve_resorts_prefers_cli_resorts():
     args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.yml", include_all_resorts=True)
     resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)
@@ -148,6 +157,7 @@ def test_run_static_skip_render(monkeypatch, tmp_path):
 
 def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
     calls = {"closed": False, "served": False}
+    captured = {}
 
     class DummyServer:
         def __init__(self, addr, handler):  # noqa: ANN001
@@ -161,19 +171,59 @@ def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
         def server_close(self):
             calls["closed"] = True
 
-    args = argparse.Namespace(host="127.0.0.1", port=8011, directory=str(tmp_path))
+    def fake_run_static(run_args):  # noqa: ANN001
+        captured["output_json"] = run_args.output_json
+        captured["output_html"] = run_args.output_html
+        captured["skip_fetch"] = run_args.skip_fetch
+        captured["skip_render"] = run_args.skip_render
+        Path(run_args.output_html).parent.mkdir(parents=True, exist_ok=True)
+        Path(run_args.output_html).write_text("<!doctype html>", encoding="utf-8")
+
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8011,
+        directory=str(tmp_path),
+        resort=[],
+        resorts_file="resorts.yml",
+        include_all_resorts=False,
+        cache_file=".cache/open_meteo_cache.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+        skip_fetch=False,
+        skip_render=False,
+    )
+    monkeypatch.setattr("src.cli.run_static", fake_run_static)
     monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
     rc = cli.run_static_server(args)
     out = capsys.readouterr().out
     assert rc == 0
+    assert captured["output_json"] == str(tmp_path / "data.json")
+    assert captured["output_html"] == str(tmp_path / "index.html")
+    assert captured["skip_fetch"] is False
+    assert captured["skip_render"] is False
     assert calls["served"] is True
     assert calls["closed"] is True
     assert "Serving static site" in out
     assert str(tmp_path.resolve()) in out
 
 
-def test_run_static_server_requires_existing_directory(tmp_path):
-    args = argparse.Namespace(host="127.0.0.1", port=8011, directory=str(tmp_path / "missing"))
+def test_run_static_server_propagates_missing_directory_when_static_skips_render(monkeypatch, tmp_path):
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8011,
+        directory=str(tmp_path / "missing"),
+        resort=[],
+        resorts_file="resorts.yml",
+        include_all_resorts=False,
+        cache_file=".cache/open_meteo_cache.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=8,
+        skip_fetch=True,
+        skip_render=True,
+    )
+    monkeypatch.setattr("src.cli.run_static", lambda run_args: 0)
     with pytest.raises(FileNotFoundError, match="Static directory does not exist"):
         cli.run_static_server(args)
 

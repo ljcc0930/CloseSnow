@@ -50,7 +50,7 @@ cp -R assets/js site/assets/
 
 Open `site/index.html`.
 
-Or preview the generated static site locally:
+Or build and preview the static site locally in one command:
 
 ```bash
 python3 -m src.cli serve-static --directory site --host 127.0.0.1 --port 8011
@@ -179,7 +179,7 @@ python3 -m src.cli serve [--host 127.0.0.1] [--port 8010] [...]
 
 ### `serve-static`
 
-Serve already-generated static files from a directory such as `site/`.
+Run the static build pipeline and then serve the output directory such as `site/`.
 
 ```bash
 python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory site]
@@ -187,7 +187,8 @@ python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory si
 
 Notes:
 
-- Best used after `python3 -m src.cli static --output-json site/data.json --output-html site/index.html`
+- By default this reuses the `static` workflow and writes `data.json` + `index.html` into the target directory before serving
+- Use `--skip-fetch` or `--skip-render` to reuse existing build artifacts with the same semantics as `static`
 - Directory indexes work as expected, so generated resort pages under `site/resort/<resort_id>/` are reachable directly
 - This is a plain file server; it does not provide `/api/data` or other dynamic endpoints
 
