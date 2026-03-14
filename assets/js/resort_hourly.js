@@ -172,14 +172,14 @@ const toFiniteNumber = (value) => {
   return num;
 };
 
-const formatTimeLabel = (rawTime) => {
+const splitTimeLabel = (rawTime) => {
   const text = String(rawTime || "");
-  if (!text) return "";
+  if (!text) return { dateLabel: "", timeLabel: "" };
   const [datePart, hourPart = ""] = text.split("T");
   const hourLabel = hourPart.slice(0, 5);
-  if (!datePart) return hourLabel || text;
+  if (!datePart) return { dateLabel: "", timeLabel: hourLabel || text };
   const md = datePart.length >= 10 ? datePart.slice(5) : datePart;
-  return `${md} ${hourLabel}`.trim();
+  return { dateLabel: md, timeLabel: hourLabel };
 };
 
 const chartYBounds = (metricKey, values) => {
@@ -261,7 +261,7 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
   const padLeft = 44;
   const padRight = 16;
   const padTop = 12;
-  const padBottom = 30;
+  const padBottom = 42;
   const innerW = Math.max(1, width - padLeft - padRight);
   const innerH = Math.max(1, height - padTop - padBottom);
   const ySpan = Math.max(1e-9, yBounds.max - yBounds.min);
@@ -306,12 +306,22 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
   for (let i = 0; i < xTicks; i += 1) {
     const idx = Math.round((i / Math.max(1, xTicks - 1)) * (times.length - 1));
     const x = xForIndex(idx);
+    const { dateLabel, timeLabel } = splitTimeLabel(times[idx]);
     const tick = document.createElementNS(svgNs, "text");
     tick.setAttribute("class", "chart-tick-text");
     tick.setAttribute("x", x.toFixed(2));
-    tick.setAttribute("y", String(height - 10));
+    tick.setAttribute("y", String(height - 22));
     tick.setAttribute("text-anchor", "middle");
-    tick.textContent = formatTimeLabel(times[idx]);
+    const dateTspan = document.createElementNS(svgNs, "tspan");
+    dateTspan.setAttribute("x", x.toFixed(2));
+    dateTspan.setAttribute("dy", "0");
+    dateTspan.textContent = dateLabel;
+    tick.appendChild(dateTspan);
+    const timeTspan = document.createElementNS(svgNs, "tspan");
+    timeTspan.setAttribute("x", x.toFixed(2));
+    timeTspan.setAttribute("dy", "11");
+    timeTspan.textContent = timeLabel;
+    tick.appendChild(timeTspan);
     svg.appendChild(tick);
   }
 

@@ -68,6 +68,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "centerTimelineOnToday" in hourly_js_text
     assert "timelineAutoCentered" in hourly_js_text
     assert "const resolveChartWidth = () => {" in hourly_js_text
+    assert "const splitTimeLabel = (rawTime) => {" in hourly_js_text
     assert "window.addEventListener(\"resize\", rerenderChartsForResize);" in hourly_js_text
     assert "lastHourlyPayload = payload;" in hourly_js_text
+    assert "const dateTspan = document.createElementNS(svgNs, \"tspan\");" in hourly_js_text
+    assert "const timeTspan = document.createElementNS(svgNs, \"tspan\");" in hourly_js_text
+    assert "const padBottom = 42;" in hourly_js_text
     assert "past14dDaily" in hourly_js_text

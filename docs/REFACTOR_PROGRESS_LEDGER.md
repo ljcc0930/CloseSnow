@@ -37,6 +37,39 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:57 (local)
+
+### Scope
+- Split resort hourly chart x-axis tick labels into two lines so date and time are easier to scan.
+
+### Changes
+- Files:
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Each x-axis tick now renders the date on the first line and the time on the second line using SVG `tspan` nodes.
+  - The chart bottom padding is slightly larger so the two-line labels do not crowd the axis line.
+  - The existing local static preview at `/tmp/closesnow-resort-history` now serves the two-line x-axis label version after refresh.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "const splitTimeLabel = \\(rawTime\\) => \\{|const dateTspan = document.createElementNS\\(svgNs, \\\"tspan\\\"\\);|const timeTspan = document.createElementNS\\(svgNs, \\\"tspan\\\"\\);|const padBottom = 42;" /tmp/closesnow-resort-history/assets/js/resort_hourly.js -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed rebuilt preview assets contain the two-line x-axis label helpers and increased bottom padding
+
+### Risks / Notes
+- This slice keeps the same number of x-axis ticks; it only changes their formatting from one line to two.
+
+### Next Slice
+- Consider whether the date line should switch from `MM-DD` to weekday labels on narrower screens if the two-line ticks still feel dense.
+
 ## 2026-03-13 22:47 (local)
 
 ### Scope
