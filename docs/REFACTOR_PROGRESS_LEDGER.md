@@ -37,6 +37,44 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 21:56 (local)
+
+### Scope
+- Expand the resort forecast history strip from `Past 7 days` to `Past 14 days`, matching the available `past_14d_daily` backend payload.
+
+### Changes
+- Files:
+  - `src/web/resort_hourly_context.py`
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_resort_hourly_context.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `tests/frontend/test_assets.py`
+  - `tests/integration/test_web_server.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort forecast pages now expose up to 14 history rows in bootstrap as `past14dDaily`.
+  - The resort page history section is now labeled `Past 14 days` and renders the full available recent-history window instead of truncating to 7 days.
+  - Static preview output in `/tmp/closesnow-resort-history` has been refreshed in place, so the existing local static server serves the 14-day version after reload.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_resort_hourly_context.py tests/frontend/test_static_site_pipeline.py tests/frontend/test_assets.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "Past 14 days|past14dDaily|resort-history-section" /tmp/closesnow-resort-history/resort -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `19 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - artifact grep: confirmed generated resort pages include the new 14-day history section and bootstrapped `past14dDaily` data
+
+### Risks / Notes
+- The history section still uses the same compact-card layout as the forward-looking daily strip, so the added width on smaller screens is handled by the existing horizontal scroll container.
+
+### Next Slice
+- Consider whether the resort page should visually distinguish past-history cards from forward-forecast cards beyond the section heading alone.
+
 ## 2026-03-13 21:46 (local)
 
 ### Scope

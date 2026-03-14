@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from src.backend.constants import DAYS_PER_WEEK
+from src.backend.constants import HISTORY_DAYS
 
 
 def _sorted_daily_rows(rows: Any) -> List[Dict[str, Any]]:
@@ -15,9 +15,9 @@ def _sorted_daily_rows(rows: Any) -> List[Dict[str, Any]]:
 
 def _recent_history_rows(report: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows = _sorted_daily_rows(report.get("past_14d_daily"))
-    if len(rows) <= DAYS_PER_WEEK:
+    if len(rows) <= HISTORY_DAYS:
         return rows
-    return rows[-DAYS_PER_WEEK:]
+    return rows[-HISTORY_DAYS:]
 
 
 def build_resort_daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[Dict[str, Any]]:
@@ -40,6 +40,6 @@ def build_resort_daily_summary_context(payload: Dict[str, Any], resort_id: str) 
         }
         recent_history = _recent_history_rows(report)
         if recent_history:
-            context["past7dDaily"] = recent_history
+            context["past14dDaily"] = recent_history
         return context
     return None

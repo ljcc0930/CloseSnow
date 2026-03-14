@@ -21,6 +21,12 @@ def test_build_resort_daily_summary_context_includes_recent_history():
                     {"date": "2026-03-04", "weather_code": 3},
                     {"date": "2026-03-01", "weather_code": 3},
                     {"date": "2026-03-06", "weather_code": 3},
+                    {"date": "2026-03-10", "weather_code": 3},
+                    {"date": "2026-03-12", "weather_code": 3},
+                    {"date": "2026-03-14", "weather_code": 3},
+                    {"date": "2026-03-09", "weather_code": 3},
+                    {"date": "2026-03-13", "weather_code": 3},
+                    {"date": "2026-03-11", "weather_code": 3},
                 ],
             }
         ]
@@ -30,7 +36,8 @@ def test_build_resort_daily_summary_context_includes_recent_history():
 
     assert context is not None
     assert context["display_name"] == "Snowbird, Utah"
-    assert [row["date"] for row in context["past7dDaily"]] == [
+    assert [row["date"] for row in context["past14dDaily"]] == [
+        "2026-03-01",
         "2026-03-02",
         "2026-03-03",
         "2026-03-04",
@@ -38,6 +45,12 @@ def test_build_resort_daily_summary_context_includes_recent_history():
         "2026-03-06",
         "2026-03-07",
         "2026-03-08",
+        "2026-03-09",
+        "2026-03-10",
+        "2026-03-11",
+        "2026-03-12",
+        "2026-03-13",
+        "2026-03-14",
     ]
 
 
@@ -56,4 +69,4 @@ def test_build_resort_daily_summary_context_omits_history_when_missing():
 
     assert context is not None
     assert context["daily"] == [{"date": "2026-03-13"}]
-    assert "past7dDaily" not in context
+    assert "past14dDaily" not in context

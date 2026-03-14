@@ -38,6 +38,12 @@ def test_render_hourly_pages(tmp_path):
                     {"date": "2026-03-06", "weather_code": 1},
                     {"date": "2026-03-07", "weather_code": 2},
                     {"date": "2026-03-08", "weather_code": 0},
+                    {"date": "2026-03-09", "weather_code": 3},
+                    {"date": "2026-03-10", "weather_code": 45},
+                    {"date": "2026-03-11", "weather_code": 61},
+                    {"date": "2026-03-12", "weather_code": 71},
+                    {"date": "2026-03-13", "weather_code": 3},
+                    {"date": "2026-03-14", "weather_code": 1},
                 ],
             },
             {"resort_id": "snowbird-ut"},
@@ -61,9 +67,9 @@ def test_render_hourly_pages(tmp_path):
     assert 'id="resort-history-section"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
-    assert '"past7dDaily": [' in html
-    assert '"date": "2026-03-01"' not in html
-    assert '"date": "2026-03-08"' in html
+    assert '"past14dDaily": [' in html
+    assert '"date": "2026-03-01"' in html
+    assert '"date": "2026-03-14"' in html
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):
@@ -108,7 +114,7 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
-    assert '"past7dDaily": [' in html
+    assert '"past14dDaily": [' in html
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
@@ -160,4 +166,4 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
-    assert '"past7dDaily": [' in html
+    assert '"past14dDaily": [' in html

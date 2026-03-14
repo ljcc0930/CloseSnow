@@ -48,5 +48,5 @@ def test_read_asset_bytes_reads_known_assets():
     assert "No resorts match the current filters." in js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "formatResortLocalTime" in hourly_js_text
-    assert "renderPastWeekSummary" in hourly_js_text
-    assert "past7dDaily" in hourly_js_text
+    assert "renderPast14DaySummary" in hourly_js_text
+    assert "past14dDaily" in hourly_js_text

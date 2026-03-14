@@ -370,9 +370,9 @@ const renderDailySummary = () => {
   dailySummarySection.hidden = false;
 };
 
-const renderPastWeekSummary = () => {
+const renderPast14DaySummary = () => {
   if (!historySection || !historyRoot || !compactDailySummary.renderSingleResortHtml) return;
-  const history = Array.isArray(dailySummary?.past7dDaily) ? dailySummary.past7dDaily : [];
+  const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];
   if (!history.length) {
     historySection.hidden = true;
     historyRoot.innerHTML = "";
@@ -494,5 +494,5 @@ if (hoursSelect) {
 }
 
 renderDailySummary();
-renderPastWeekSummary();
+renderPast14DaySummary();
 loadHourly();
