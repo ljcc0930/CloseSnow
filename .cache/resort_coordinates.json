@@ -1029,6 +1029,55 @@
       "longitude": -71.27369,
       "country": "United States",
       "admin1": "New Hampshire"
+    },
+    "hidden valley resort, pa": {
+      "name": "Hidden Valley Resort, 1, Craighead Road, Jefferson Township, Somerset County, Pennsylvania, 15501, United States",
+      "latitude": 40.0590277,
+      "longitude": -79.2528804,
+      "country": "United States",
+      "admin1": "Pennsylvania"
+    },
+    "mt brighton resort, mi": {
+      "name": "Mt. Brighton, Challis Road, Genoa Charter Township, Livingston County, Michigan, 48814, United States",
+      "latitude": 42.5410098,
+      "longitude": -83.8108072,
+      "country": "United States",
+      "admin1": "Michigan"
+    },
+    "vail ski resort, co": {
+      "name": "Vail, Eagle County, Colorado, 81657, United States",
+      "latitude": 39.5995318,
+      "longitude": -106.3394563,
+      "country": "United States",
+      "admin1": "Colorado"
+    },
+    "kitzski, austria": {
+      "name": "Kitzbühel",
+      "latitude": 47.44637,
+      "longitude": 12.39215,
+      "country": "Austria",
+      "admin1": "Tyrol"
+    },
+    "yong pyong resort, south korea": {
+      "name": "Pyeongchang",
+      "latitude": 37.37028,
+      "longitude": 128.39307,
+      "country": "South Korea",
+      "admin1": "Gangwon-do"
+    },
+    "mt.t, japan": {
+      "name": "Teinei",
+      "latitude": 44.18333,
+      "longitude": 143.66667,
+      "country": "Japan",
+      "admin1": "Hokkaido"
+    },
+    "sun peaks, bc": {
+      "name": "Sun Peaks",
+      "latitude": 50.8762,
+      "longitude": -119.91075,
+      "country": "Canada",
+      "admin1": "British Columbia"
     }
   }
 }

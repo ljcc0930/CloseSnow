@@ -29,6 +29,8 @@ IKON_DESTINATIONS_QUERY = (
 # Known naming differences between Ikon's destinations page and catalog/API naming.
 IKON_DESTINATION_CANONICAL_ALIASES = {
     "arai mountain": {"arai snow"},
+    "kitzb hel": {"kitzski"},
+    "mona yongpyong": {"yong pyong"},
 }
 IKON_CHECK_SUFFIX_RE = re.compile(
     r"\b(resort|ski area|ski and snowboard|ski hill|ski center|ski centre)\b$",
