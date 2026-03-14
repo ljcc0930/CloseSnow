@@ -352,9 +352,27 @@
     .query-col .resort-link:hover {
       text-decoration: underline;
     }
+    .query-col .resort-link.is-map-selected {
+      color: #0c4a6e;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
     .resort-cell {
       display: block;
       min-width: 0;
+    }
+    .resort-cell.is-map-selected {
+      position: relative;
+    }
+    .resort-cell.is-map-selected::after {
+      content: "";
+      position: absolute;
+      inset: -4px -6px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 2px rgba(14, 116, 144, 0.22);
+      background: rgba(236, 254, 255, 0.72);
+      pointer-events: none;
     }
     .resort-link-wrap {
       min-width: 0;
@@ -510,6 +528,20 @@
       max-width: var(--compact-query-w);
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .compact-grid-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .compact-grid-left-table tbody tr[data-map-selected="1"] .query-col,
+    .snowfall-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .snowfall-left-table tbody tr[data-map-selected="1"] .query-col,
+    .rain-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .rain-left-table tbody tr[data-map-selected="1"] .query-col,
+    .temperature-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .temperature-left-table tbody tr[data-map-selected="1"] .query-col,
+    .weather-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .weather-left-table tbody tr[data-map-selected="1"] .query-col,
+    .sun-left-table tbody tr[data-map-selected="1"] .favorite-col,
+    .sun-left-table tbody tr[data-map-selected="1"] .query-col {
+      background: #ecfeff;
     }
     .compact-grid-left-table thead .query-col {
       text-align: left;

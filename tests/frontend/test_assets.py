@@ -52,6 +52,8 @@ def test_read_asset_bytes_reads_known_assets():
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
     assert ".compact-grid-wrap" in css_text
+    assert ".resort-link.is-map-selected" in css_text
+    assert "tr[data-map-selected=\"1\"] .query-col" in css_text
     assert ".us-snowfall-map-section" in map_css_text
     assert ".us-snowfall-map-root" in map_css_text
     assert "@media (max-width: 980px)" in map_css_text
@@ -86,6 +88,15 @@ def test_read_asset_bytes_reads_known_assets():
     assert "compact-day-head-phase-start" not in compact_js_text
     assert "compact-day-cell-phase-start" not in compact_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
+    assert "MAP_SELECTION_EVENT" in js_text
+    assert "closesnow:map-resort-select" in js_text
+    assert "activeMetricKey" in js_text
+    assert "selectedResortId" in js_text
+    assert "controllerAvailable" in js_text
+    assert "syncSelectedResortUi" in js_text
+    assert "setUsSnowfallMapMetric" in js_text
+    assert "setUsSnowfallMapSelectedResort" in js_text
+    assert "scrollIntoView" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
     assert "renderHourlyCharts" in hourly_js_text

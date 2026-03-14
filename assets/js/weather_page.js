@@ -41,6 +41,10 @@ const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
+const MAP_METRIC_STORAGE_KEY = "closesnow_us_snowfall_map_metric_v1";
+const DEFAULT_MAP_METRIC_KEY = "today_snow";
+const VALID_MAP_METRIC_KEYS = new Set(["today_snow", "week_snow"]);
+const MAP_SELECTION_EVENT = "closesnow:map-resort-select";
 
 const appState = {
   payload: null,
@@ -64,9 +68,13 @@ const appState = {
   },
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
+  map: {
+    activeMetricKey: DEFAULT_MAP_METRIC_KEY,
+    selectedResortId: "",
+    controller: null,
+    controllerAvailable: false,
+  },
 };
-
-let usSnowfallMapController = null;
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
 const _escapeHtml = (value) => String(value || "")
@@ -79,6 +87,29 @@ const _escapeHtml = (value) => String(value || "")
 const _isTruthyParam = (value) => {
   const text = _normalizeSearch(value);
   return text === "1" || text === "true" || text === "yes" || text === "on";
+};
+
+const _normalizeMapMetricKey = (value) => {
+  const text = _normalizeSearch(value).replaceAll("-", "_");
+  if (VALID_MAP_METRIC_KEYS.has(text)) return text;
+  if (text === "today") return "today_snow";
+  if (text === "week1") return "week_snow";
+  return DEFAULT_MAP_METRIC_KEY;
+};
+
+const _selectedMapResortId = () => String(appState.map.selectedResortId || "").trim();
+
+const _isMapSelectedResortId = (resortId) => {
+  const id = String(resortId || "").trim();
+  return Boolean(id) && id === _selectedMapResortId();
+};
+
+const getStoredMapMetricKey = () => {
+  try {
+    return _normalizeMapMetricKey(localStorage.getItem(MAP_METRIC_STORAGE_KEY));
+  } catch (error) {
+    return DEFAULT_MAP_METRIC_KEY;
+  }
 };
 
 const measureTextWidth = (text, font) => {
@@ -221,12 +252,14 @@ const _metricCellHtml = (rawValue, kind, style = "", klass = "") => {
 };
 
 const _filterAttrs = (report) => {
+  const resortId = String(report.resort_id || "").trim();
   const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(",").toLowerCase() : "";
   const region = String(report.region || "").trim().toLowerCase();
   const country = String(report.country_code || report.country || "").trim().toUpperCase();
   const state = String(report.admin1 || "").trim().toUpperCase();
   const defaultResort = report.default_resort || report.ljcc_favorite ? "1" : "";
-  return ` data-pass-types='${_escapeHtml(passTypes)}' data-region='${_escapeHtml(region)}' data-country='${_escapeHtml(country)}' data-state='${_escapeHtml(state)}' data-default-resort='${_escapeHtml(defaultResort)}'`;
+  const mapSelected = _isMapSelectedResortId(resortId) ? "1" : "0";
+  return ` data-resort-id='${_escapeHtml(resortId)}' data-pass-types='${_escapeHtml(passTypes)}' data-region='${_escapeHtml(region)}' data-country='${_escapeHtml(country)}' data-state='${_escapeHtml(state)}' data-default-resort='${_escapeHtml(defaultResort)}' data-map-selected='${mapSelected}'`;
 };
 
 const _isFavoriteResortId = (resortId) => appState.favoriteResortIds.has(String(resortId || "").trim());
@@ -252,10 +285,15 @@ const _displayName = (report) => String(report?.display_name || report?.query ||
 const _resortCellHtml = (report) => {
   const text = _escapeHtml(_displayName(report));
   const resortId = String(report.resort_id || "").trim();
+  const selected = _isMapSelectedResortId(resortId);
+  const selectedAttr = selected ? " data-map-selected='1'" : " data-map-selected='0'";
+  const cellClass = selected ? "resort-cell is-map-selected" : "resort-cell";
+  const linkClass = selected ? "resort-link is-map-selected" : "resort-link";
   const linkHtml = resortId
-    ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
+    ? `<a class='${linkClass}' data-resort-id='${_escapeHtml(resortId)}'${selectedAttr} href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
-  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
+  const cellDataAttr = resortId ? ` data-resort-id='${_escapeHtml(resortId)}'` : "";
+  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='${cellClass}'${cellDataAttr}${selectedAttr}><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
 };
 
 const _displayDays = () => {
@@ -280,16 +318,20 @@ const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => 
 
 const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
 
-const _renderUsSnowfallMapSection = () => `
+const _renderUsSnowfallMapSection = () => {
+  const activeMetricKey = _normalizeMapMetricKey(appState.map.activeMetricKey);
+  const todayActive = activeMetricKey === "today_snow";
+  const weekActive = activeMetricKey === "week_snow";
+  return `
   <section id="us-snowfall-map-section" class="us-snowfall-map-section" aria-labelledby="us-snowfall-map-title" data-map-shell="1">
     <div class="section-header us-snowfall-map-header">
       <div class="us-snowfall-map-heading-wrap">
         <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
         <p class="us-snowfall-map-subtitle">Preview the upcoming nationwide snowfall view without displacing the resort tables below.</p>
       </div>
-      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="metric">
-        <button type="button" class="unit-btn is-active" data-map-metric-key="today_snow" aria-pressed="true">24h</button>
-        <button type="button" class="unit-btn" data-map-metric-key="week_snow" aria-pressed="false">7d</button>
+      <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="${weekActive ? "imperial" : "metric"}">
+        <button type="button" class="unit-btn${todayActive ? " is-active" : ""}" data-map-metric-key="today_snow" aria-pressed="${todayActive ? "true" : "false"}">24h</button>
+        <button type="button" class="unit-btn${weekActive ? " is-active" : ""}" data-map-metric-key="week_snow" aria-pressed="${weekActive ? "true" : "false"}">7d</button>
       </div>
     </div>
     <div class="us-snowfall-map-shell">
@@ -310,6 +352,7 @@ const _renderUsSnowfallMapSection = () => `
       </div>
     </div>
   </section>`;
+};
 
 const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
@@ -1380,34 +1423,151 @@ const syncSplitTableHeights = () => {
 let layoutFrame = 0;
 let layoutObserver = null;
 
+const _selectorEscape = (value) => {
+  if (window.CSS && typeof window.CSS.escape === "function") {
+    return window.CSS.escape(String(value || ""));
+  }
+  return String(value || "").replace(/["\\]/g, "\\$&");
+};
+
+const _visibleReportResortIds = (reports) => new Set(
+  (Array.isArray(reports) ? reports : [])
+    .map((report) => String(report?.resort_id || "").trim())
+    .filter(Boolean)
+);
+
+const syncUsSnowfallMapMetricToggle = () => {
+  const metricKey = _normalizeMapMetricKey(appState.map.activeMetricKey);
+  const toggle = document.getElementById("us-snowfall-map-metric-toggle");
+  if (!toggle) return;
+  toggle.setAttribute("data-mode", metricKey === "week_snow" ? "imperial" : "metric");
+  toggle.querySelectorAll("[data-map-metric-key]").forEach((button) => {
+    const active = _normalizeMapMetricKey(button.getAttribute("data-map-metric-key")) === metricKey;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+};
+
+const syncSelectedResortUi = () => {
+  const selectedResortId = _selectedMapResortId();
+  document.querySelectorAll("tr[data-resort-id]").forEach((row) => {
+    const active = selectedResortId && String(row.getAttribute("data-resort-id") || "").trim() === selectedResortId;
+    row.setAttribute("data-map-selected", active ? "1" : "0");
+  });
+  document.querySelectorAll(".resort-cell[data-resort-id], .resort-link[data-resort-id]").forEach((node) => {
+    const active = selectedResortId && String(node.getAttribute("data-resort-id") || "").trim() === selectedResortId;
+    node.setAttribute("data-map-selected", active ? "1" : "0");
+    node.classList.toggle("is-map-selected", active);
+  });
+};
+
+const _scrollSelectedResortIntoView = (resortId) => {
+  const normalized = String(resortId || "").trim();
+  if (!normalized) return;
+  const selectorValue = _selectorEscape(normalized);
+  const row = document.querySelector(`.compact-grid-left-table tbody tr[data-resort-id="${selectorValue}"]`)
+    || document.querySelector(`tr[data-resort-id="${selectorValue}"]`);
+  if (row && typeof row.scrollIntoView === "function") {
+    row.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+};
+
+const setUsSnowfallMapUnavailable = (message = "Snowfall map unavailable. Existing tables remain active.") => {
+  appState.map.controllerAvailable = false;
+  const section = document.getElementById("us-snowfall-map-section");
+  if (section) section.setAttribute("data-map-ready", "0");
+  const statusElement = document.getElementById("us-snowfall-map-status");
+  if (statusElement) statusElement.textContent = message;
+};
+
+const safeUsSnowfallMapCall = (method, ...args) => {
+  const controller = appState.map.controller;
+  if (!controller || typeof controller[method] !== "function") return false;
+  try {
+    controller[method](...args);
+    return true;
+  } catch (error) {
+    setUsSnowfallMapUnavailable();
+    appState.map.controller = null;
+    return false;
+  }
+};
+
+const setUsSnowfallMapMetric = (metricKey) => {
+  appState.map.activeMetricKey = _normalizeMapMetricKey(metricKey);
+  try {
+    localStorage.setItem(MAP_METRIC_STORAGE_KEY, appState.map.activeMetricKey);
+  } catch (error) {
+    // Ignore storage failures.
+  }
+  syncUsSnowfallMapMetricToggle();
+  safeUsSnowfallMapCall("setMetric", appState.map.activeMetricKey);
+};
+
+const setUsSnowfallMapSelectedResort = (resortId, options = {}) => {
+  const visibleReports = Array.isArray(options.visibleReports) ? options.visibleReports : _filteredReports();
+  const visibleIds = _visibleReportResortIds(visibleReports);
+  const normalized = String(resortId || "").trim();
+  const nextResortId = normalized && visibleIds.has(normalized) ? normalized : "";
+  const changed = nextResortId !== _selectedMapResortId();
+  appState.map.selectedResortId = nextResortId;
+  syncSelectedResortUi();
+  safeUsSnowfallMapCall("setSelectedResort", nextResortId);
+  if ((changed || options.forceScroll) && nextResortId && options.scrollIntoView) {
+    _scrollSelectedResortIntoView(nextResortId);
+  }
+};
+
 const destroyUsSnowfallMapController = () => {
-  if (!usSnowfallMapController || typeof usSnowfallMapController.destroy !== "function") {
-    usSnowfallMapController = null;
+  const controller = appState.map.controller;
+  if (controller && typeof controller.destroy === "function") {
+    try {
+      controller.destroy();
+    } catch (error) {
+      // Ignore scaffold cleanup failures.
+    }
+  }
+  appState.map.controller = null;
+  appState.map.controllerAvailable = false;
+};
+
+const mountUsSnowfallMapController = (visibleReports) => {
+  destroyUsSnowfallMapController();
+  const api = window.CloseSnowUsSnowfallMap;
+  if (!api || typeof api.create !== "function") {
+    setUsSnowfallMapUnavailable();
     return;
   }
   try {
-    usSnowfallMapController.destroy();
-  } catch (error) {
-    // Ignore scaffold cleanup failures.
-  }
-  usSnowfallMapController = null;
-};
-
-const mountUsSnowfallMapController = () => {
-  destroyUsSnowfallMapController();
-  const api = window.CloseSnowUsSnowfallMap;
-  if (!api || typeof api.create !== "function") return;
-  try {
-    usSnowfallMapController = api.create({
+    appState.map.controller = api.create({
       section: document.getElementById("us-snowfall-map-section"),
       metricToggle: document.getElementById("us-snowfall-map-metric-toggle"),
       statusElement: document.getElementById("us-snowfall-map-status"),
       legendElement: document.getElementById("us-snowfall-map-legend"),
       mapRoot: document.getElementById("us-snowfall-map-root"),
+      metricKey: appState.map.activeMetricKey,
+      selectedResortId: _selectedMapResortId(),
+      reports: visibleReports,
+      onSelectResort: (resortId) => {
+        setUsSnowfallMapSelectedResort(resortId, {
+          visibleReports,
+          scrollIntoView: true,
+          forceScroll: true,
+        });
+      },
     }) || null;
   } catch (error) {
-    usSnowfallMapController = null;
+    appState.map.controller = null;
   }
+  appState.map.controllerAvailable = Boolean(appState.map.controller);
+  if (!appState.map.controllerAvailable) {
+    setUsSnowfallMapUnavailable();
+    return;
+  }
+  syncUsSnowfallMapMetricToggle();
+  safeUsSnowfallMapCall("setVisibleReports", visibleReports);
+  safeUsSnowfallMapCall("setMetric", appState.map.activeMetricKey);
+  safeUsSnowfallMapCall("setSelectedResort", _selectedMapResortId());
 };
 
 const applyLayout = () => {
@@ -1418,9 +1578,7 @@ const applyLayout = () => {
     autoSizeSplitTables();
     syncSplitTableHeights();
     attachSplitScrollSync();
-    if (usSnowfallMapController && typeof usSnowfallMapController.resize === "function") {
-      usSnowfallMapController.resize();
-    }
+    safeUsSnowfallMapCall("resize");
   });
 };
 
@@ -1634,6 +1792,10 @@ const renderReportDate = () => {
 const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   const visibleReports = _filteredReports();
+  const visibleResortIds = _visibleReportResortIds(visibleReports);
+  if (!visibleResortIds.has(_selectedMapResortId())) {
+    appState.map.selectedResortId = "";
+  }
   const totalReports = _payloadReports().length;
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
@@ -1644,7 +1806,9 @@ const renderPage = () => {
       : "No resorts match the current filters.");
   destroyUsSnowfallMapController();
   pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
-  mountUsSnowfallMapController();
+  syncUsSnowfallMapMetricToggle();
+  syncSelectedResortUi();
+  mountUsSnowfallMapController(visibleReports);
   applyLayout();
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
@@ -1798,6 +1962,7 @@ const applyFiltersImmediately = async () => {
     try {
       await reloadDynamicPayloadForFilters();
     } catch (error) {
+      destroyUsSnowfallMapController();
       if (pageContentRoot) {
         pageContentRoot.innerHTML = `<div class="page-load-error">${_escapeHtml(error instanceof Error ? error.message : String(error))}</div>`;
       }
@@ -1808,6 +1973,24 @@ const applyFiltersImmediately = async () => {
 };
 
 const bindControls = () => {
+  window.addEventListener(MAP_SELECTION_EVENT, (event) => {
+    const detail = event && typeof event === "object" ? event.detail : null;
+    const resortId = detail && typeof detail === "object" ? detail.resortId : "";
+    setUsSnowfallMapSelectedResort(resortId, {
+      scrollIntoView: true,
+      forceScroll: true,
+    });
+  });
+  document.addEventListener("mouseover", (event) => {
+    const resortNode = event.target.closest("tr[data-resort-id], .resort-cell[data-resort-id], .resort-link[data-resort-id]");
+    if (!resortNode) return;
+    setUsSnowfallMapSelectedResort(resortNode.getAttribute("data-resort-id"));
+  });
+  document.addEventListener("focusin", (event) => {
+    const resortNode = event.target.closest(".resort-link[data-resort-id]");
+    if (!resortNode) return;
+    setUsSnowfallMapSelectedResort(resortNode.getAttribute("data-resort-id"));
+  });
   if (resortSearchInput) {
     resortSearchInput.addEventListener("input", () => {
       applyFiltersImmediately();
@@ -1856,6 +2039,16 @@ const bindControls = () => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
   });
   document.addEventListener("click", (event) => {
+    const mapMetricButton = event.target.closest("[data-map-metric-key]");
+    if (mapMetricButton) {
+      event.preventDefault();
+      setUsSnowfallMapMetric(mapMetricButton.getAttribute("data-map-metric-key"));
+      return;
+    }
+    const resortLink = event.target.closest(".resort-link[data-resort-id]");
+    if (resortLink) {
+      setUsSnowfallMapSelectedResort(resortLink.getAttribute("data-resort-id"));
+    }
     const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
     if (favoriteAllButton) {
       event.preventDefault();
@@ -1909,6 +2102,7 @@ const initialize = async () => {
   });
   appState.compactSummaryUnitMode = getStoredUnitMode(COMPACT_SUMMARY_UNIT_KIND);
   appState.sunTimeToggleMode = getStoredUnitMode(SUN_TIME_TOGGLE_KIND);
+  appState.map.activeMetricKey = getStoredMapMetricKey();
   appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
     appState.payload = await loadPayload();
