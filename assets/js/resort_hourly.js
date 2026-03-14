@@ -7,6 +7,7 @@ const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
+const localTimeEl = document.getElementById("resort-local-time");
 const dailySummarySection = document.getElementById("resort-daily-summary-section");
 const dailySummaryRoot = document.getElementById("resort-daily-summary-root");
 const metaEl = document.getElementById("hourly-meta");
@@ -75,10 +76,12 @@ const formatResortLocalTime = (timeZone) => {
   if (!tz) return "";
   try {
     return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
       hour12: false,
       timeZone: tz,
       timeZoneName: "short",
@@ -94,19 +97,25 @@ const renderMeta = () => {
     metaEl.textContent = "";
     return;
   }
-  const localTime = formatResortLocalTime(metaState.timezone);
   const parts = [
     `${metaState.count} hours`,
     metaState.timezone || "unknown timezone",
   ];
-  if (localTime) {
-    parts.push(`Local time ${localTime}`);
-  }
   parts.push(metaState.model || "unknown model");
   if (metaState.coordText) {
     parts.push(metaState.coordText);
   }
   metaEl.textContent = parts.join(" | ");
+};
+
+const renderLocalTime = () => {
+  if (!localTimeEl) return;
+  if (!metaState || !metaState.timezone) {
+    localTimeEl.textContent = "";
+    return;
+  }
+  const localTime = formatResortLocalTime(metaState.timezone);
+  localTimeEl.textContent = localTime ? `Local time: ${localTime}` : "";
 };
 
 const syncLocalTimeTimer = () => {
@@ -115,7 +124,7 @@ const syncLocalTimeTimer = () => {
     localTimeTimerId = null;
   }
   if (!metaState || !metaState.timezone) return;
-  localTimeTimerId = window.setInterval(renderMeta, 60 * 1000);
+  localTimeTimerId = window.setInterval(renderLocalTime, 1000);
 };
 
 const setError = (msg) => {
@@ -425,6 +434,7 @@ const loadHourly = async () => {
       count: Number(payload.hours) || 0,
       coordText: lat && lon ? `${lat}, ${lon}` : "",
     };
+    renderLocalTime();
     renderMeta();
     syncLocalTimeTimer();
     renderHourlyTable(payload);
@@ -438,6 +448,7 @@ const loadHourly = async () => {
     setChartError("");
     metaState = null;
     syncLocalTimeTimer();
+    renderLocalTime();
     renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";

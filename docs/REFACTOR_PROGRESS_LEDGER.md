@@ -37,6 +37,40 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 20:11 (local)
+
+### Scope
+- Move resort local time under the hourly page title and increase precision to seconds.
+
+### Changes
+- Files:
+  - `src/web/templates/resort_hourly_page.html`
+  - `assets/css/resort_hourly.css`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `tests/frontend/test_static_site_pipeline.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Resort hourly pages now render a dedicated local-time line directly below the title.
+  - Resort local time now includes seconds and refreshes every second.
+  - Hourly meta returns to summarizing forecast hours, timezone, model, and coordinates only.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-preview --max-workers 2`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration tests: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-preview/data.json`, `Done: /tmp/closesnow-preview/index.html`, `Done: 18 resort hourly page(s)`)
+
+### Risks / Notes
+- The local-time string still uses the viewer browser's locale for punctuation/order while pinning the resort timezone and second-level precision.
+
+### Next Slice
+- Consider whether the local-time line should use a friendlier label such as `Snowbird local time` once the title has the resolved resort display name.
+
 ## 2026-03-13 20:08 (local)
 
 ### Scope

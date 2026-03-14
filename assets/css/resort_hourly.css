@@ -28,6 +28,13 @@ h1 {
   font-size: 26px;
 }
 
+.resort-local-time {
+  margin: -4px 0 14px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .resort-daily-summary-section {
   margin: 0 0 14px;
 }

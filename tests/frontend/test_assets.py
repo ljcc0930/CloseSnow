@@ -39,6 +39,7 @@ def test_read_asset_bytes_reads_known_assets():
     js_text = js.decode("utf-8", errors="ignore")
     assert ".weather-left-table .query-col" in css_text
     assert ".hourly-charts" in hourly_css_text
+    assert ".resort-local-time" in hourly_css_text
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "compact-day-card" in compact_js_text
@@ -47,9 +48,11 @@ def test_read_asset_bytes_reads_known_assets():
     assert "dailySummary" in hourly_js_text
     assert "resolved_latitude" in hourly_js_text
     assert "const formatResortLocalTime = (timeZone) => {" in hourly_js_text
+    assert 'second: "2-digit"' in hourly_js_text
     assert 'timeZoneName: "short"' in hourly_js_text
-    assert 'parts.push(`Local time ${localTime}`);' in hourly_js_text
-    assert "localTimeTimerId = window.setInterval(renderMeta, 60 * 1000);" in hourly_js_text
+    assert 'const localTimeEl = document.getElementById("resort-local-time");' in hourly_js_text
+    assert 'localTimeEl.textContent = localTime ? `Local time: ${localTime}` : "";' in hourly_js_text
+    assert "localTimeTimerId = window.setInterval(renderLocalTime, 1000);" in hourly_js_text
     assert "history.replaceState" not in js_text
     assert "window.location.assign(currentUrl.toString())" not in js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
