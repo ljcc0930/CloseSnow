@@ -262,7 +262,7 @@ h1 {
 
 .hourly-charts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin: 0 0 14px;
 }
@@ -335,6 +335,12 @@ h1 {
   fill: #64748b;
   font-size: 10px;
   font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .hourly-charts {
+    grid-template-columns: 1fr;
+  }
 }
 
 .table-wrap {

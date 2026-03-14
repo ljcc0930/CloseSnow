@@ -37,6 +37,39 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:39 (local)
+
+### Scope
+- Cap the resort hourly chart grid at two canvases per row while keeping a single-column fallback on narrower screens.
+
+### Changes
+- Files:
+  - `assets/css/resort_hourly.css`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Desktop and wider tablet layouts now render the hourly chart cards in at most two columns.
+  - Narrower screens below `980px` fall back to a single-column chart stack.
+  - The existing local static preview at `/tmp/closesnow-resort-history` now reflects the two-column cap after refresh.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "grid-template-columns: repeat\\(2, minmax\\(0, 1fr\\)\\);|@media \\(max-width: 980px\\)|grid-template-columns: 1fr;" /tmp/closesnow-resort-history/assets/css/resort_hourly.css -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed the rebuilt preview CSS uses the fixed two-column grid plus the narrow-screen single-column media query
+
+### Risks / Notes
+- Since each chart is still intentionally wide, two-column layouts on medium-width screens may still rely on horizontal scrolling inside individual chart cards.
+
+### Next Slice
+- Consider making the chart grid switch to one column a bit earlier if the wide 1440px canvases feel too cramped on smaller tablets.
+
 ## 2026-03-13 22:31 (local)
 
 ### Scope
