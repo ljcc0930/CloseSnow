@@ -32,10 +32,39 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
    - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
    - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
 6. Automated pytest suite exists under `tests/` and is runnable via `python3 -m pytest -q`.
+7. Current Codex convention for local static preview/validation runs is `--max-workers 8`; older ledger entries that used `2` were temporary throttled runs.
 
 ---
 
 ## Completed Milestones
+
+## 2026-03-13 23:25 (local)
+
+### Scope
+- Make the Codex-facing static validation convention explicitly use `8` workers instead of the old ad-hoc `2` worker preview runs.
+
+### Changes
+- Files:
+  - `AGENTS.md`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Repository-local agent guidance now tells Codex to use `python3 -m src.cli static --output-dir ... --max-workers 8` for routine preview and validation commands.
+  - The ledger baseline now clarifies that historical `--max-workers 2` commands are not the current convention.
+  - Future local static rebuilds for this repo should default back to the CLI's normal `8` worker behavior unless a user asks to throttle it.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 8`
+- Results:
+  - compile check: passed
+  - static preview rebuild with `8` workers: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+
+### Risks / Notes
+- Recent historical entries still show the exact `2`-worker commands that were run at the time; this slice preserves that history and adds an explicit current convention instead of rewriting old records.
+
+### Next Slice
+- If more developer-facing docs start drifting, mirror the same `8`-worker convention into any new runbooks or helper scripts as they are added.
 
 ## 2026-03-13 23:10 (local)
 
