@@ -8,6 +8,7 @@ const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
 const localTimeEl = document.getElementById("resort-local-time");
+const websiteLinkEl = document.getElementById("resort-website-link");
 const dailySummarySection = document.getElementById("resort-daily-summary-section");
 const dailySummaryRoot = document.getElementById("resort-daily-summary-root");
 const metaEl = document.getElementById("hourly-meta");
@@ -116,6 +117,16 @@ const renderLocalTime = () => {
   }
   const localTime = formatResortLocalTime(metaState.timezone);
   localTimeEl.textContent = localTime ? `Local time: ${localTime}` : "";
+};
+
+const renderWebsiteLink = (payload) => {
+  if (!websiteLinkEl) return;
+  const url = String(payload?.website || dailySummary?.website || "").trim();
+  if (!url) {
+    websiteLinkEl.innerHTML = "";
+    return;
+  }
+  websiteLinkEl.innerHTML = `Official website: <a href="${url}" target="_blank" rel="noopener noreferrer">link</a>`;
 };
 
 const syncLocalTimeTimer = () => {
@@ -435,6 +446,7 @@ const loadHourly = async () => {
       coordText: lat && lon ? `${lat}, ${lon}` : "",
     };
     renderLocalTime();
+    renderWebsiteLink(payload);
     renderMeta();
     syncLocalTimeTimer();
     renderHourlyTable(payload);
@@ -449,6 +461,7 @@ const loadHourly = async () => {
     metaState = null;
     syncLocalTimeTimer();
     renderLocalTime();
+    renderWebsiteLink(null);
     renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";

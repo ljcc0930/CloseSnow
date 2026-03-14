@@ -60,6 +60,7 @@ def _supported_catalog(catalog: List[Dict[str, object]]) -> List[Dict[str, objec
 def _catalog_item_with_display_name(item: Dict[str, object]) -> Dict[str, object]:
     out = dict(item)
     out["display_name"] = str(item.get("display_name") or item.get("query") or "").strip()
+    out["website"] = str(item.get("website") or "").strip()
     return out
 
 
@@ -280,6 +281,7 @@ def _hourly_payload_for_resort(
         "resort_id": resort_id,
         "query": query,
         "display_name": str(item.get("display_name") or query).strip(),
+        "website": str(item.get("website") or "").strip(),
         "matched_name": location.name,
         "country": item.get("country"),
         "region": item.get("region"),
