@@ -1544,9 +1544,15 @@ const renderPage = () => {
 const renderPagePreservingScroll = () => {
   const scrollX = window.scrollX;
   const scrollY = window.scrollY;
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
   renderPage();
   window.requestAnimationFrame(() => {
     window.scrollTo(scrollX, scrollY);
+    window.requestAnimationFrame(() => {
+      window.scrollTo(scrollX, scrollY);
+    });
   });
 };
 

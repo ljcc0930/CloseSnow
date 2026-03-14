@@ -11,12 +11,12 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 
 - Unified CLI: `fetch`, `render`, `static`, `serve-static`, `serve`, `serve-data`, `serve-web`
 - Unified payload contract (`weather_payload_v1`) with validator in `src/contract/validators.py`
-- Main page sections: Snowfall, Rainfall, Temperature, Weather (emoji), Sunrise/Sunset
+- Main page sections: Daily Summary, Snowfall, Rainfall, Temperature, Weather (emoji), Sunrise/Sunset
 - Per-resort hourly page: `/resort/<resort_id>` and hourly API `/api/resort-hourly`
 - Main page is shell-first: lightweight `index.html` + client-side render from payload JSON
 - Frontend filters are browser-side (URL state sync, no reload)
 - Backend `/api/data` supports query-based filtering for API clients
-- Resort catalog metadata (`resorts.yml`): `resort_id`, `pass_types`, `region`, `country`, `default_enabled`
+- Resort catalog metadata (`resorts.yml`): `resort_id`, `query`, `display_name`, `website`, `pass_types`, `region`, `country`, `default_enabled`
 - Concurrent resort processing via `--max-workers`
 - Date-suffixed API cache + persistent coordinate cache
 
@@ -291,6 +291,8 @@ Catalog fields:
 - `resort_id`
 - `query`
 - `name`
+- `display_name`
+- `website`
 - `state`
 - `country`
 - `region`
@@ -311,7 +313,7 @@ If output HTML is `site/index.html`, generated artifacts include:
 - `site/data.json` (when chosen as fetch/static output JSON)
 - `site/resort/<resort_id>/index.html`
 - `site/resort/<resort_id>/hourly.json` (when hourly embedding is enabled, e.g. `src.cli static`)
-- `site/assets/css/*` and `site/assets/js/*` (copied manually from repo `assets/`)
+- `site/assets/css/*` and `site/assets/js/*` (copied automatically by `render`, `static`, and `serve-static`)
 
 ## Payload Contract (`weather_payload_v1`)
 
@@ -392,10 +394,8 @@ Triggers:
 Build command used by workflow:
 
 ```bash
-mkdir -p site/assets
 python -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
-cp -R assets/css site/assets/
-cp -R assets/js site/assets/
+touch site/.nojekyll
 ```
 
 ## Compatibility Entrypoint

@@ -91,6 +91,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'No favorite resorts match the current filters.' in js_text
     assert '没有匹配的雪场' in js_text
     assert "const renderPagePreservingScroll = () => {" in js_text
+    assert "document.activeElement.blur();" in js_text
     assert "window.scrollTo(scrollX, scrollY);" in js_text
     assert 'if (text === "today_snow") return "today_snow";' in js_text
     assert 'if (text === "week_snow") return "week_snow";' in js_text
