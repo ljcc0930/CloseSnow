@@ -162,20 +162,26 @@
           <thead><tr>${days.map((day, index) => {
             const phase = String(day?.summary_phase || "").trim();
             const prevPhase = index > 0 ? String(days[index - 1]?.summary_phase || "").trim() : "";
+            const isToday = day?.summary_is_today === true;
             const headClasses = ["compact-day-head"];
             if (phase) headClasses.push(`compact-day-head-${phase}`);
             if (phase && prevPhase && phase !== prevPhase) headClasses.push("compact-day-head-phase-start");
-            return `<th class='${headClasses.join(" ")}'>${dayLabelFor(day, index, options).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`;
+            if (isToday) headClasses.push("compact-day-head-today-anchor");
+            const todayAttr = isToday ? " data-compact-today-anchor='1'" : "";
+            return `<th class='${headClasses.join(" ")}'${todayAttr}>${dayLabelFor(day, index, options).split("\n").map((part, partIndex) => `<span class="day-label-${partIndex === 0 ? "date" : "weekday"}">${_escapeHtml(part)}</span>`).join("")}</th>`;
           }).join("")}</tr></thead>
           <tbody><tr>${days.map((day, index) => {
             const style = dayStyle(day);
             const styleAttr = style ? ` style='${style}'` : "";
             const phase = String(day?.summary_phase || "").trim();
             const prevPhase = index > 0 ? String(days[index - 1]?.summary_phase || "").trim() : "";
+            const isToday = day?.summary_is_today === true;
             const cellClasses = ["compact-day-cell"];
             if (phase) cellClasses.push(`compact-day-cell-${phase}`);
             if (phase && prevPhase && phase !== prevPhase) cellClasses.push("compact-day-cell-phase-start");
-            return `<td class='${cellClasses.join(" ")}'${styleAttr}>${dayCellHtml(day, options)}</td>`;
+            if (isToday) cellClasses.push("compact-day-cell-today-anchor");
+            const todayAttr = isToday ? " data-compact-today-anchor='1'" : "";
+            return `<td class='${cellClasses.join(" ")}'${styleAttr}${todayAttr}>${dayCellHtml(day, options)}</td>`;
           }).join("")}</tr></tbody>
         </table>
       </div>`;

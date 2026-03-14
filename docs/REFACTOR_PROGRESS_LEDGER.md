@@ -37,6 +37,40 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 22:13 (local)
+
+### Scope
+- Center the merged resort timeline on `today` by default so the forecast boundary opens near the middle of the viewport.
+
+### Changes
+- Files:
+  - `assets/js/compact_daily_summary.js`
+  - `assets/js/resort_hourly.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - The first forecast column in the merged `Past 14 days + forecast` strip now gets an explicit `today` anchor marker.
+  - On initial resort-page render, the horizontal compact-summary scroller auto-scrolls so the `today` column is centered as much as the available width allows.
+  - The auto-centering runs once per page load, so user-driven horizontal scrolling is not repeatedly overridden.
+
+### Validation
+- Commands:
+  - `python3 -m compileall src`
+  - `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-history --max-workers 2`
+  - `rg -n "centerTimelineOnToday|data-compact-today-anchor|summary_is_today" /tmp/closesnow-resort-history/assets/js/compact_daily_summary.js /tmp/closesnow-resort-history/assets/js/resort_hourly.js -S`
+- Results:
+  - compile check: passed
+  - targeted frontend/static/integration suites: `17 passed`
+  - static preview rebuild: succeeded (`Done: /tmp/closesnow-resort-history/data.json`, `Done: /tmp/closesnow-resort-history/index.html`, `Done: 28 resort hourly page(s)`)
+  - asset grep: confirmed the rebuilt preview assets contain the `today` anchor markers and auto-centering function
+
+### Risks / Notes
+- This slice validates the centering logic through rebuilt assets and tests, but it does not include a browser automation assertion for the exact pixel position after render.
+
+### Next Slice
+- Consider adding a small `today` badge or forecast-boundary marker if users need an even stronger visual cue beyond centering alone.
+
 ## 2026-03-13 22:05 (local)
 
 ### Scope

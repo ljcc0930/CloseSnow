@@ -20,6 +20,7 @@ const thead = table ? table.querySelector("thead") : null;
 const tbody = table ? table.querySelector("tbody") : null;
 let metaState = null;
 let localTimeTimerId = null;
+let timelineAutoCentered = false;
 
 const metricDefs = [
   { key: "snowfall", label: "snowfall (cm)", title: "Snowfall", unit: "cm", color: "#2563eb" },
@@ -381,10 +382,22 @@ const buildMergedTimelineDays = () => {
       ...day,
       summary_phase: "forecast",
       summary_label: labelFor(day, index, { labelMode: "forecast" }),
+      summary_is_today: index === 0,
     });
   });
 
   return merged;
+};
+
+const centerTimelineOnToday = () => {
+  if (!timelineRoot || timelineAutoCentered) return;
+  const wrap = timelineRoot.querySelector(".resort-daily-summary-wrap");
+  const todayCell = timelineRoot.querySelector("[data-compact-today-anchor='1']");
+  if (!(wrap instanceof HTMLElement) || !(todayCell instanceof HTMLElement)) return;
+  const targetLeft = todayCell.offsetLeft + (todayCell.offsetWidth / 2) - (wrap.clientWidth / 2);
+  const maxScroll = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+  wrap.scrollLeft = Math.max(0, Math.min(maxScroll, targetLeft));
+  timelineAutoCentered = true;
 };
 
 const renderTimelineSummary = () => {
@@ -399,6 +412,7 @@ const renderTimelineSummary = () => {
     emptyText: "No forecast or recent history",
   });
   timelineSection.hidden = false;
+  window.requestAnimationFrame(centerTimelineOnToday);
 };
 
 const renderHourlyTable = (payload) => {
