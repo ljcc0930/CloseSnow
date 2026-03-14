@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Optional
 
 from src.backend.constants import DAYS_PER_WEEK, FORECAST_DAYS, HISTORY_DAYS
 from src.backend.models import ResortLocation
+
+MAP_WINDOW_DAYS = 3
 
 
 def as_float_list(values: List[Any]) -> List[Optional[float]]:
@@ -41,6 +44,44 @@ def extract_hhmm(raw: Any) -> Optional[str]:
 
 def safe_sum(values: List[Optional[float]]) -> float:
     return float(sum(value for value in values if value is not None))
+
+
+def finite_float_or_none(value: Any) -> Optional[float]:
+    try:
+        number = float(value)
+    except Exception:
+        return None
+    if not math.isfinite(number):
+        return None
+    return number
+
+
+def snowfall_total(rows: List[Dict[str, Any]], days: int) -> float:
+    return safe_sum([finite_float_or_none(row.get("snowfall_cm")) for row in rows[:days]])
+
+
+def build_map_context(
+    *,
+    country_code: str,
+    resolved_latitude: Any,
+    resolved_longitude: Any,
+    daily_rows: List[Dict[str, Any]],
+    week1_total_snowfall_cm: Any,
+) -> Dict[str, Any]:
+    latitude = finite_float_or_none(resolved_latitude)
+    longitude = finite_float_or_none(resolved_longitude)
+    week1_total = finite_float_or_none(week1_total_snowfall_cm)
+    if week1_total is None:
+        week1_total = snowfall_total(daily_rows, DAYS_PER_WEEK)
+
+    return {
+        "eligible": country_code == "US" and latitude is not None and longitude is not None,
+        "latitude": latitude,
+        "longitude": longitude,
+        "today_snowfall_cm": snowfall_total(daily_rows, 1),
+        "next_72h_snowfall_cm": snowfall_total(daily_rows, MAP_WINDOW_DAYS),
+        "week1_total_snowfall_cm": float(week1_total),
+    }
 
 
 def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
