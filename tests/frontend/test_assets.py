@@ -46,6 +46,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'const _normalizeUnitMode = (value) => (value === "imperial" ? "imperial" : "metric");' in compact_js_text
     assert "const _formatCompactSnowValue = (value, unitMode) => {" in compact_js_text
     assert "const _formatCompactRainValue = (value, unitMode) => {" in compact_js_text
+    assert 'data-compact-unit-kind="' in compact_js_text
+    assert 'data-compact-metric-value="' in compact_js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "renderDailySummary();" in hourly_js_text
     assert "dailySummary" in hourly_js_text
@@ -134,10 +136,27 @@ def test_read_asset_bytes_reads_known_assets():
     assert 'aria-label="Daily Summary unit system"' in js_text
     assert 'data-compact-summary-toggle="1"' in js_text
     assert 'const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";' in js_text
+    assert 'const SUN_TIME_TOGGLE_KIND = "sun_time";' in js_text
     assert "const syncCompactSummaryToggle = () => {" in js_text
+    assert "const syncSunTimeToggle = () => {" in js_text
+    assert "const renderCompactSummaryValues = () => {" in js_text
+    assert "const renderSunTimeValues = () => {" in js_text
     assert "const setCompactSummaryUnitMode = (mode) => {" in js_text
+    assert "const setSunTimeToggleMode = (mode) => {" in js_text
+    assert 'const oppositeUnitMode = (mode) => (mode === "imperial" ? "metric" : "imperial");' in js_text
+    assert "renderCompactSummaryValues();" in js_text
+    assert "syncCompactSummaryToggle();" in js_text
+    assert "renderSunTimeValues();" in js_text
+    assert "syncSunTimeToggle();" in js_text
+    assert "setCompactSummaryUnitMode(oppositeUnitMode(appState.compactSummaryUnitMode));" in js_text
+    assert "setSunTimeToggleMode(oppositeUnitMode(appState.sunTimeToggleMode));" in js_text
+    assert "setUnitMode(kind, oppositeUnitMode(currentMode));" in js_text
     assert 'data-unit-mode="metric">C/cm</button>' in js_text
     assert 'data-unit-mode="imperial">F/in</button>' in js_text
+    assert 'data-unit-mode="metric">24h</button>' in js_text
+    assert 'data-unit-mode="imperial">12h</button>' in js_text
+    assert 'data-sun-time-toggle="1"' in js_text
+    assert 'data-sun-time-raw="' in js_text
     assert "compactDailySummary.dayLabelFor" in js_text
     assert "compactDailySummary.dayStyle(day)" in js_text
     assert "compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })" in js_text

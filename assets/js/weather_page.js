@@ -40,6 +40,7 @@ const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
+const SUN_TIME_TOGGLE_KIND = "sun_time";
 
 const appState = {
   payload: null,
@@ -62,6 +63,7 @@ const appState = {
     temp: "metric",
   },
   compactSummaryUnitMode: "metric",
+  sunTimeToggleMode: "metric",
 };
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
@@ -477,26 +479,42 @@ const _renderSunSection = (reports) => {
   if (!reports.length) return "<section><h2>Sunrise / Sunset</h2><p>No data</p></section>";
   const displayDays = _displayDays();
   const labels = Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx));
-  const hhmm = (raw) => {
+  const hhmm = (raw, mode = "metric") => {
     const text = String(raw || "").trim();
     if (!text) return "";
-    if (text.includes("T")) return text.split("T", 2)[1].slice(0, 5);
-    return text.slice(0, 5);
+    const value = text.includes("T") ? text.split("T", 2)[1].slice(0, 5) : text.slice(0, 5);
+    if (mode !== "imperial") return value;
+    const match = /^(\d{2}):(\d{2})$/.exec(value);
+    if (!match) return value;
+    const hour24 = Number(match[1]);
+    if (!Number.isFinite(hour24)) return value;
+    const minute = match[2];
+    const suffix = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minute} ${suffix}`;
   };
   const leftRows = reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("");
   const rightRows = reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
-      const sunrise = hhmm(day.sunrise_local_hhmm || day.sunrise_iso);
-      const sunset = hhmm(day.sunset_local_hhmm || day.sunset_iso);
-      return `<td>${_escapeHtml(sunrise)}</td><td>${_escapeHtml(sunset)}</td>`;
+      const sunriseRaw = hhmm(day.sunrise_local_hhmm || day.sunrise_iso);
+      const sunsetRaw = hhmm(day.sunset_local_hhmm || day.sunset_iso);
+      const sunrise = hhmm(sunriseRaw, appState.sunTimeToggleMode);
+      const sunset = hhmm(sunsetRaw, appState.sunTimeToggleMode);
+      return `<td data-sun-time-raw="${_escapeHtml(sunriseRaw)}">${_escapeHtml(sunrise)}</td><td data-sun-time-raw="${_escapeHtml(sunsetRaw)}">${_escapeHtml(sunset)}</td>`;
     }).join("");
     return `<tr${attrs}>${cells}</tr>`;
   }).join("");
   return `
     <section>
-      <h2>Sunrise / Sunset</h2>
+      <div class="section-header">
+        <h2>Sunrise / Sunset</h2>
+        <div class="unit-toggle" role="group" aria-label="Sunrise and sunset time format" data-sun-time-toggle="1" data-mode="${appState.sunTimeToggleMode}">
+          <button type="button" class="unit-btn" data-unit-mode="metric">24h</button>
+          <button type="button" class="unit-btn" data-unit-mode="imperial">12h</button>
+        </div>
+      </div>
       <div class="sun-split-wrap">
         <div class="sun-left-wrap" id="sun-left-wrap">
           <table class="sun-left-table" id="sun-left-table">
@@ -1330,6 +1348,71 @@ const syncCompactSummaryToggle = () => {
   });
 };
 
+const syncSunTimeToggle = () => {
+  document.querySelectorAll(".unit-toggle[data-sun-time-toggle='1']").forEach((toggle) => {
+    const mode = appState.sunTimeToggleMode || "metric";
+    toggle.setAttribute("data-mode", mode);
+    toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
+      button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
+    });
+  });
+};
+
+const renderCompactSummaryValues = () => {
+  const mode = appState.compactSummaryUnitMode || "metric";
+  document.querySelectorAll("[data-compact-unit-kind][data-compact-metric-value]").forEach((el) => {
+    const kind = String(el.getAttribute("data-compact-unit-kind") || "").trim();
+    const metricValue = Number(el.getAttribute("data-compact-metric-value"));
+    if (!Number.isFinite(metricValue)) return;
+    if (kind === "temp") {
+      el.textContent = mode === "imperial"
+        ? String(Math.round((metricValue * 9 / 5) + 32))
+        : String(Math.round(metricValue));
+      return;
+    }
+    if (kind === "snow") {
+      el.textContent = mode === "imperial"
+        ? (metricValue / 2.54).toFixed(1)
+        : metricValue.toFixed(1);
+      return;
+    }
+    if (kind === "rain") {
+      el.textContent = mode === "imperial"
+        ? (metricValue / 25.4).toFixed(2)
+        : metricValue.toFixed(1);
+    }
+  });
+};
+
+const renderSunTimeValues = () => {
+  const mode = appState.sunTimeToggleMode || "metric";
+  document.querySelectorAll("[data-sun-time-raw]").forEach((el) => {
+    const raw = String(el.getAttribute("data-sun-time-raw") || "").trim();
+    if (!raw) {
+      el.textContent = "";
+      return;
+    }
+    if (mode !== "imperial") {
+      el.textContent = raw;
+      return;
+    }
+    const match = /^(\d{2}):(\d{2})$/.exec(raw);
+    if (!match) {
+      el.textContent = raw;
+      return;
+    }
+    const hour24 = Number(match[1]);
+    if (!Number.isFinite(hour24)) {
+      el.textContent = raw;
+      return;
+    }
+    const minute = match[2];
+    const suffix = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 || 12;
+    el.textContent = `${hour12}:${minute} ${suffix}`;
+  });
+};
+
 const formatMeasure = (metricValue, kind, mode) => {
   if (mode === "imperial") {
     if (kind === "snow") return (metricValue / 2.54).toFixed(1);
@@ -1363,8 +1446,11 @@ const applyUnitModes = () => {
   Object.entries(appState.unitModes).forEach(([kind, mode]) => {
     renderUnitValues(kind, mode);
   });
+  renderCompactSummaryValues();
+  renderSunTimeValues();
   syncToggleButtons();
   syncCompactSummaryToggle();
+  syncSunTimeToggle();
 };
 
 const setUnitMode = (kind, mode) => {
@@ -1386,8 +1472,22 @@ const setCompactSummaryUnitMode = (mode) => {
   } catch (error) {
     // Ignore storage failures.
   }
-  renderPage();
+  renderCompactSummaryValues();
+  syncCompactSummaryToggle();
 };
+
+const setSunTimeToggleMode = (mode) => {
+  appState.sunTimeToggleMode = mode === "imperial" ? "imperial" : "metric";
+  try {
+    localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${SUN_TIME_TOGGLE_KIND}`, appState.sunTimeToggleMode);
+  } catch (error) {
+    // Ignore storage failures.
+  }
+  renderSunTimeValues();
+  syncSunTimeToggle();
+};
+
+const oppositeUnitMode = (mode) => (mode === "imperial" ? "metric" : "imperial");
 
 const renderReportDate = () => {
   if (!reportDateEl) return;
@@ -1595,14 +1695,19 @@ const bindControls = () => {
     if (!button) return;
     const compactToggle = button.closest(".unit-toggle[data-compact-summary-toggle='1']");
     if (compactToggle) {
-      setCompactSummaryUnitMode(button.getAttribute("data-unit-mode"));
+      setCompactSummaryUnitMode(oppositeUnitMode(appState.compactSummaryUnitMode));
+      return;
+    }
+    const sunTimeToggle = button.closest(".unit-toggle[data-sun-time-toggle='1']");
+    if (sunTimeToggle) {
+      setSunTimeToggleMode(oppositeUnitMode(appState.sunTimeToggleMode));
       return;
     }
     const group = button.closest(".unit-toggle[data-target-kind]");
     if (!group) return;
     const kind = group.getAttribute("data-target-kind");
-    const mode = button.getAttribute("data-unit-mode");
-    setUnitMode(kind, mode);
+    const currentMode = appState.unitModes[kind] || "metric";
+    setUnitMode(kind, oppositeUnitMode(currentMode));
   });
   window.addEventListener("resize", () => {
     applyLayout();
@@ -1614,6 +1719,7 @@ const initialize = async () => {
     appState.unitModes[kind] = getStoredUnitMode(kind);
   });
   appState.compactSummaryUnitMode = getStoredUnitMode(COMPACT_SUMMARY_UNIT_KIND);
+  appState.sunTimeToggleMode = getStoredUnitMode(SUN_TIME_TOGGLE_KIND);
   appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
     appState.payload = await loadPayload();

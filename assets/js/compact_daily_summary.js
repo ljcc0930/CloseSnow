@@ -99,6 +99,12 @@
     return String(Math.round(num));
   };
 
+  const _compactValueSpan = (kind, value, displayValue) => {
+    const num = _asFiniteNumber(value);
+    if (num === null) return `<span class="compact-pair-value">${_escapeHtml(displayValue)}</span>`;
+    return `<span class="compact-pair-value" data-compact-unit-kind="${_escapeHtml(kind)}" data-compact-metric-value="${num.toFixed(6)}">${_escapeHtml(displayValue)}</span>`;
+  };
+
   const dayLabelFor = (day, index = 0) => {
     if (index === 0) return "today";
     const label = _formatDayLabel(day?.date);
@@ -125,13 +131,13 @@
         <div class="compact-row compact-row-primary">
           <div class="compact-weather" title="${_escapeHtml(weatherCode === null || weatherCode === undefined || weatherCode === "" ? "WMO code: unknown" : `WMO code: ${weatherCode}`)}">${weatherEmoji}</div>
           <div class="compact-temp-stack">
-            <div class="compact-temp-high">${_escapeHtml(highTemp)}</div>
-            <div class="compact-temp-low">${_escapeHtml(lowTemp)}</div>
+            <div class="compact-temp-high">${_compactValueSpan("temp", day?.temperature_max_c, highTemp)}</div>
+            <div class="compact-temp-low">${_compactValueSpan("temp", day?.temperature_min_c, lowTemp)}</div>
           </div>
         </div>
         <div class="compact-row compact-row-secondary">
-          <div class="compact-pair compact-snow"><span class="compact-pair-icon">❄</span><span class="compact-pair-value">${_escapeHtml(snowValue)}</span></div>
-          <div class="compact-pair compact-rain"><span class="compact-pair-icon">☔</span><span class="compact-pair-value">${_escapeHtml(rainValue)}</span></div>
+          <div class="compact-pair compact-snow"><span class="compact-pair-icon">❄</span>${_compactValueSpan("snow", day?.snowfall_cm, snowValue)}</div>
+          <div class="compact-pair compact-rain"><span class="compact-pair-icon">☔</span>${_compactValueSpan("rain", day?.rain_mm, rainValue)}</div>
         </div>
       </div>`;
   };
