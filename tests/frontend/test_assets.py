@@ -62,6 +62,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".us-snowfall-map-panel-label" in map_css_text
     assert ".us-snowfall-map-legend-scale" in map_css_text
     assert ".us-snowfall-map-popup" in map_css_text
+    assert ".us-snowfall-map-eyebrow" in map_css_text
     assert ".us-snowfall-map-popup-summary" in map_css_text
     assert ".us-snowfall-map-viewport" in map_css_text
     assert ".us-snowfall-map-control" in map_css_text
@@ -132,6 +133,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert "setUsSnowfallMapSelectedResort" in js_text
     assert "scrollIntoView" in js_text
     assert "No resorts match the current filters." in js_text
+    assert "Preview the upcoming nationwide snowfall view" not in js_text
     assert 'return "Today";' in js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "formatResortLocalTime" in hourly_js_text

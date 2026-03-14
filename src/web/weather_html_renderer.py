@@ -12,8 +12,9 @@ _PAGE_SHELL_PLACEHOLDER = """
     <section id="us-snowfall-map-section" class="us-snowfall-map-section" aria-labelledby="us-snowfall-map-title" data-map-shell="1">
       <div class="section-header us-snowfall-map-header">
         <div class="us-snowfall-map-heading-wrap">
+          <p class="us-snowfall-map-eyebrow">National snowfall outlook</p>
           <h2 id="us-snowfall-map-title">US Snowfall Map</h2>
-          <p class="us-snowfall-map-subtitle">Scan nationwide snowfall concentration, then open the same resort records and hourly pages from one map surface.</p>
+          <p class="us-snowfall-map-subtitle">Compare map-ready US resorts across 24-hour, 72-hour, and 7-day snowfall windows, then open the same hourly forecasts from one map surface.</p>
         </div>
         <div id="us-snowfall-map-metric-toggle" class="unit-toggle us-snowfall-map-metric-toggle" role="group" aria-label="Snowfall map metric" data-map-metric-toggle="1" data-mode="today">
           <button type="button" class="unit-btn is-active" data-map-metric-key="today" aria-pressed="true">24h</button>
