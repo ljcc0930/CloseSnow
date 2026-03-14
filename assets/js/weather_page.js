@@ -278,7 +278,7 @@ const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => 
 
 const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
 
-const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪场") => {
+const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx))
@@ -324,7 +324,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪�
     </section>`;
 };
 
-const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "没有匹配的雪场") => {
+const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const dayLabels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
@@ -403,7 +403,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     </section>`;
 };
 
-const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪场") => {
+const _renderTemperatureSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
@@ -448,7 +448,7 @@ const _renderTemperatureSection = (reports, emptyMessage = "没有匹配的雪�
     </section>`;
 };
 
-const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") => {
+const _renderWeatherSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
@@ -485,7 +485,7 @@ const _renderWeatherSection = (reports, emptyMessage = "没有匹配的雪场") 
     </section>`;
 };
 
-const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
+const _renderSunSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
@@ -545,7 +545,7 @@ const _renderSunSection = (reports, emptyMessage = "没有匹配的雪场") => {
     </section>`;
 };
 
-const _renderSections = (reports, emptyMessage = "没有匹配的雪场") => [
+const _renderSections = (reports, emptyMessage = "No resorts match the current filters.") => [
   _renderCompactGridSection(reports, emptyMessage),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
@@ -671,6 +671,50 @@ const toggleFavoriteVisibleReports = (reports) => {
   });
   persistFavoriteResortIds();
 };
+
+const _favoriteButtonLabel = (active) => (active ? "Remove resort from favorites" : "Add resort to favorites");
+
+const _favoriteAllButtonLabel = (active) => (
+  active ? "Remove all visible resorts from favorites" : "Favorite all visible resorts"
+);
+
+const _syncFavoriteButtonState = (button, active) => {
+  if (!button) return;
+  button.setAttribute("data-favorite-active", active ? "1" : "0");
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.setAttribute("aria-label", _favoriteButtonLabel(active));
+};
+
+const _syncFavoriteAllButtonState = (button, active) => {
+  if (!button) return;
+  button.setAttribute("data-favorite-active", active ? "1" : "0");
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.setAttribute("aria-label", _favoriteAllButtonLabel(active));
+};
+
+const syncFavoriteButtons = () => {
+  document.querySelectorAll(".favorite-btn[data-resort-id]").forEach((button) => {
+    const resortId = String(button.getAttribute("data-resort-id") || "").trim();
+    _syncFavoriteButtonState(button, _isFavoriteResortId(resortId));
+  });
+};
+
+const syncFavoriteAllButtons = (reports) => {
+  const visibleIds = Array.from(new Set((reports || []).map((report) => String(report?.resort_id || "").trim()).filter(Boolean)));
+  const allFavorited = visibleIds.length > 0 && visibleIds.every((resortId) => _isFavoriteResortId(resortId));
+  document.querySelectorAll(".favorite-all-btn[data-favorite-all='1']").forEach((button) => {
+    _syncFavoriteAllButtonState(button, allFavorited);
+  });
+};
+
+const syncFavoriteUiInPlace = (reports) => {
+  syncFavoriteButtons();
+  syncFavoriteAllButtons(reports);
+};
+
+const favoriteInteractionNeedsFullRender = () => (
+  appState.filterState.favoritesOnly || appState.filterState.sortBy === "favorites"
+);
 
 const setFavoritesOnlyControls = (checked) => {
   const value = Boolean(checked);
@@ -1530,7 +1574,7 @@ const renderPage = () => {
     ? "No favorite resorts yet. Tap the heart icon to save some."
     : (appState.filterState.favoritesOnly
       ? "No favorite resorts match the current filters."
-      : "没有匹配的雪场");
+      : "No resorts match the current filters.");
   pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
   applyLayout();
   observeLayoutContainers();
@@ -1541,16 +1585,57 @@ const renderPage = () => {
   document.body.classList.remove("units-pending");
 };
 
+const _SCROLLABLE_WRAP_SELECTORS = [
+  ".compact-grid-left-wrap",
+  ".compact-grid-right-wrap",
+  ".snowfall-left-wrap#snowfall-left-wrap",
+  ".snowfall-right-wrap#snowfall-right-wrap",
+  ".snowfall-left-wrap#snowfall-left-wrap-mobile",
+  ".snowfall-right-wrap#snowfall-right-wrap-mobile",
+  ".rain-left-wrap#rain-left-wrap",
+  ".rain-right-wrap#rain-right-wrap",
+  ".rain-left-wrap#rain-left-wrap-mobile",
+  ".rain-right-wrap#rain-right-wrap-mobile",
+  ".temperature-left-wrap",
+  ".temperature-right-wrap",
+  ".weather-left-wrap",
+  ".weather-right-wrap",
+  ".sun-left-wrap",
+  ".sun-right-wrap",
+];
+
+const _captureWrapScrollPositions = () => _SCROLLABLE_WRAP_SELECTORS.map((selector) => {
+  const element = document.querySelector(selector);
+  if (!element) return null;
+  return {
+    selector,
+    scrollTop: element.scrollTop,
+    scrollLeft: element.scrollLeft,
+  };
+}).filter(Boolean);
+
+const _restoreWrapScrollPositions = (positions) => {
+  positions.forEach((entry) => {
+    const element = document.querySelector(entry.selector);
+    if (!element) return;
+    element.scrollTop = entry.scrollTop;
+    element.scrollLeft = entry.scrollLeft;
+  });
+};
+
 const renderPagePreservingScroll = () => {
   const scrollX = window.scrollX;
   const scrollY = window.scrollY;
+  const wrapScrollPositions = _captureWrapScrollPositions();
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur();
   }
   renderPage();
   window.requestAnimationFrame(() => {
+    _restoreWrapScrollPositions(wrapScrollPositions);
     window.scrollTo(scrollX, scrollY);
     window.requestAnimationFrame(() => {
+      _restoreWrapScrollPositions(wrapScrollPositions);
       window.scrollTo(scrollX, scrollY);
     });
   });
@@ -1705,15 +1790,25 @@ const bindControls = () => {
     const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
     if (favoriteAllButton) {
       event.preventDefault();
-      toggleFavoriteVisibleReports(_filteredReports());
-      renderPagePreservingScroll();
+      const visibleReports = _filteredReports();
+      toggleFavoriteVisibleReports(visibleReports);
+      if (favoriteInteractionNeedsFullRender()) {
+        renderPagePreservingScroll();
+      } else {
+        syncFavoriteUiInPlace(visibleReports);
+      }
       return;
     }
     const favoriteButton = event.target.closest(".favorite-btn[data-resort-id]");
     if (favoriteButton) {
       event.preventDefault();
+      const visibleReports = _filteredReports();
       toggleFavoriteResortId(favoriteButton.getAttribute("data-resort-id"));
-      renderPagePreservingScroll();
+      if (favoriteInteractionNeedsFullRender()) {
+        renderPagePreservingScroll();
+      } else {
+        syncFavoriteUiInPlace(visibleReports);
+      }
       return;
     }
     const button = event.target.closest(".unit-btn[data-unit-mode]");

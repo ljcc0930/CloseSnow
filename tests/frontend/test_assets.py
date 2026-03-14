@@ -73,6 +73,14 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const loadFavoriteResortIds = () => {" in js_text
     assert "const toggleFavoriteResortId = (resortId) => {" in js_text
     assert "const toggleFavoriteVisibleReports = (reports) => {" in js_text
+    assert "const _favoriteButtonLabel = (active) =>" in js_text
+    assert "const _favoriteAllButtonLabel = (active) => (" in js_text
+    assert "const _syncFavoriteButtonState = (button, active) => {" in js_text
+    assert "const _syncFavoriteAllButtonState = (button, active) => {" in js_text
+    assert "const syncFavoriteButtons = () => {" in js_text
+    assert "const syncFavoriteAllButtons = (reports) => {" in js_text
+    assert "const syncFavoriteUiInPlace = (reports) => {" in js_text
+    assert "const favoriteInteractionNeedsFullRender = () => (" in js_text
     assert "const setFavoritesOnlyControls = (checked) => {" in js_text
     assert 'const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");' in js_text
     assert 'const filterFavoritesOnlyInput = document.getElementById("filter-favorites-only");' in js_text
@@ -89,9 +97,13 @@ def test_read_asset_bytes_reads_known_assets():
     assert "const persistFilterState = () => {" in js_text
     assert "const _emptyStateRow = (colspan, message) =>" in js_text
     assert 'No favorite resorts match the current filters.' in js_text
-    assert '没有匹配的雪场' in js_text
+    assert 'No resorts match the current filters.' in js_text
+    assert "const _SCROLLABLE_WRAP_SELECTORS = [" in js_text
+    assert "const _captureWrapScrollPositions = () => _SCROLLABLE_WRAP_SELECTORS.map((selector) => {" in js_text
+    assert "const _restoreWrapScrollPositions = (positions) => {" in js_text
     assert "const renderPagePreservingScroll = () => {" in js_text
     assert "document.activeElement.blur();" in js_text
+    assert "_restoreWrapScrollPositions(wrapScrollPositions);" in js_text
     assert "window.scrollTo(scrollX, scrollY);" in js_text
     assert 'if (text === "today_snow") return "today_snow";' in js_text
     assert 'if (text === "week_snow") return "week_snow";' in js_text
@@ -102,6 +114,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "setFavoritesOnlyControls(favoritesOnlyToggle.checked);" in js_text
     assert "setFavoritesOnlyControls(filterFavoritesOnlyInput.checked);" in js_text
     assert 'const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all=\'1\']");' in js_text
+    assert "if (favoriteInteractionNeedsFullRender()) {" in js_text
+    assert "syncFavoriteUiInPlace(visibleReports);" in js_text
     assert "renderPagePreservingScroll();" in js_text
     assert "const autoSizeSplitTables = () => {" in js_text
     assert "wrapSelector: \".snowfall-right-wrap#snowfall-right-wrap\"" in js_text
@@ -140,7 +154,7 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".compact-grid-wrap" in css_text
     assert ".compact-day-card" in css_text
     assert ".empty-state-cell" in css_text
-    assert 'const _renderCompactGridSection = (reports, emptyMessage = "没有匹配的雪场") => {' in js_text
+    assert 'const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {' in js_text
     assert 'aria-label="Daily Summary unit system"' in js_text
     assert 'data-compact-summary-toggle="1"' in js_text
     assert 'const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";' in js_text

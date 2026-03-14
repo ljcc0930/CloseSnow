@@ -37,6 +37,36 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 
 ## Completed Milestones
 
+## 2026-03-13 21:08 (local)
+
+### Scope
+- Start moving main-page resort favorites away from unconditional full-page rerenders by adding a local DOM-sync path for safe cases.
+
+### Changes
+- Files:
+  - `docs/FEATURE_DESIGN_MAIN_PAGE_FAVORITES_LOCAL_UPDATE.md`
+  - `assets/js/weather_page.js`
+  - `tests/frontend/test_assets.py`
+  - `docs/REFACTOR_PROGRESS_LEDGER.md`
+- Behavior impact:
+  - Favorite interactions now distinguish between cases that need a full `renderPage()` and cases that can update the existing DOM in place.
+  - Single-heart toggles and `favorite all` now stay on the local-sync path when `favoritesOnly` is off and sort mode is not `Favorites First`.
+  - Filter-sensitive cases still fall back to the existing rerender path, so `favoritesOnly` and favorite-based sorting keep their current behavior.
+
+### Validation
+- Commands:
+  - `python3 -m pytest tests/frontend/test_assets.py -q`
+  - `python3 -m src.cli static --output-dir /tmp/closesnow-favorite-local-update --max-workers 4`
+- Results:
+  - targeted frontend asset tests: `2 passed`
+  - static build: succeeded (`Done: /tmp/closesnow-favorite-local-update/data.json`, `Done: /tmp/closesnow-favorite-local-update/index.html`, `Done: 24 resort hourly page(s)`)
+
+### Risks / Notes
+- This slice intentionally keeps the rerender fallback for `favoritesOnly` and `Favorites First`; it does not yet convert every favorite-related path to pure local DOM updates.
+
+### Next Slice
+- Extend the local-update path to cover more favorite-driven UI state, or add browser-level regression coverage once a browser automation tool is available in the environment.
+
 ## 2026-03-13 20:35 (local)
 
 ### Scope
