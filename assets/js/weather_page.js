@@ -35,6 +35,7 @@ const filterSummary = document.getElementById("filter-summary");
 const filterRegionSelect = document.getElementById("filter-region-select");
 const filterCountrySelect = document.getElementById("filter-country-select");
 const filterSortSelect = document.getElementById("filter-sort-select");
+const filterRadiusSelect = document.getElementById("filter-radius-select");
 const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterSearchAllInput = document.getElementById("filter-search-all");
 const favoritesOnlyToggle = document.getElementById("favorites-only-toggle");
@@ -61,11 +62,17 @@ const appState = {
   availableFilters: DEFAULT_AVAILABLE_FILTERS,
   favoriteResortIds: new Set(),
   homeBase: null,
+  distanceState: {
+    cacheKey: "",
+    availableCount: 0,
+    nearbyCount: 0,
+  },
   filterState: {
     passTypes: new Set(),
     region: "",
     country: "",
     sortBy: "week_snow",
+    distanceRadiusKm: null,
     includeDefault: true,
     searchAll: true,
     search: "",
@@ -267,7 +274,14 @@ const _resortCellHtml = (report) => {
   const linkHtml = resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
-  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
+  const distanceHtml = appState.homeBase
+    ? (
+      report.home_base_distance_available
+        ? `<div class='resort-distance'>${_escapeHtml(report.home_base_distance_mi.toFixed(1))} mi / ${_escapeHtml(report.home_base_distance_km.toFixed(1))} km</div>`
+        : "<div class='resort-distance resort-distance-unavailable'>Distance unavailable</div>"
+    )
+    : "";
+  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div>${distanceHtml}</div></td>`;
 };
 
 const _displayDays = () => {
@@ -624,10 +638,17 @@ const parsePassTypeValues = (values) => {
 const normalizeSortBy = (value) => {
   const text = _normalizeSearch(value);
   if (text === "name") return "name";
+  if (text === "distance") return "distance";
   if (text === "favorites") return "favorites";
   if (text === "today_snow") return "today_snow";
   if (text === "week_snow") return "week_snow";
   return "state";
+};
+
+const normalizeDistanceRadiusKm = (value) => {
+  const num = _asFiniteNumber(value);
+  if (num === null || num <= 0) return null;
+  return Math.round(num);
 };
 
 const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
@@ -639,6 +660,75 @@ const _compareBySnowDesc = (a, b, valueFn) => {
   const aSortable = aValue === null ? Number.NEGATIVE_INFINITY : aValue;
   const bSortable = bValue === null ? Number.NEGATIVE_INFINITY : bValue;
   return bSortable - aSortable;
+};
+
+const _radiusLabel = (radiusKm) => {
+  if (!radiusKm) return "all distances";
+  const miles = radiusKm * 0.621371;
+  return `${Math.round(miles)} mi / ${radiusKm} km`;
+};
+
+const _reportCoordinates = (report) => {
+  const latitude = _asFiniteNumber(report?.resolved_latitude ?? report?.latitude ?? report?.input_latitude);
+  const longitude = _asFiniteNumber(report?.resolved_longitude ?? report?.longitude ?? report?.input_longitude);
+  if (latitude === null || longitude === null || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return null;
+  }
+  return { latitude, longitude };
+};
+
+const _haversineDistanceKm = (latitude1, longitude1, latitude2, longitude2) => {
+  const toRadians = (value) => value * (Math.PI / 180);
+  const dLat = toRadians(latitude2 - latitude1);
+  const dLon = toRadians(longitude2 - longitude1);
+  const lat1 = toRadians(latitude1);
+  const lat2 = toRadians(latitude2);
+  const a = Math.sin(dLat / 2) ** 2
+    + (Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2);
+  return 6371 * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+};
+
+const ensureDistanceContext = () => {
+  const payloadReports = _payloadReports();
+  const homeBase = appState.homeBase;
+  const cacheKey = homeBase
+    ? `${appState.payload?.generated_at_utc || ""}:${payloadReports.length}:${homeBase.latitude}:${homeBase.longitude}:${appState.filterState.distanceRadiusKm || ""}`
+    : `${appState.payload?.generated_at_utc || ""}:${payloadReports.length}:none:${appState.filterState.distanceRadiusKm || ""}`;
+  if (appState.distanceState.cacheKey === cacheKey) return appState.distanceState;
+
+  let availableCount = 0;
+  let nearbyCount = 0;
+  payloadReports.forEach((report) => {
+    report.home_base_distance_km = null;
+    report.home_base_distance_mi = null;
+    report.home_base_distance_available = false;
+    report.home_base_within_radius = false;
+    if (!homeBase) return;
+    const coordinates = _reportCoordinates(report);
+    if (!coordinates) return;
+    const distanceKm = _haversineDistanceKm(
+      homeBase.latitude,
+      homeBase.longitude,
+      coordinates.latitude,
+      coordinates.longitude,
+    );
+    const distanceMi = distanceKm * 0.621371;
+    const withinRadius = appState.filterState.distanceRadiusKm === null
+      ? true
+      : distanceKm <= appState.filterState.distanceRadiusKm;
+    report.home_base_distance_km = Number(distanceKm.toFixed(2));
+    report.home_base_distance_mi = Number(distanceMi.toFixed(2));
+    report.home_base_distance_available = true;
+    report.home_base_within_radius = withinRadius;
+    availableCount += 1;
+    if (withinRadius) nearbyCount += 1;
+  });
+  appState.distanceState = {
+    cacheKey,
+    availableCount,
+    nearbyCount,
+  };
+  return appState.distanceState;
 };
 
 const loadFavoriteResortIds = () => {
@@ -747,6 +837,7 @@ const loadStoredFilterState = () => {
       region: _normalizeSearch(parsed.region || ""),
       country: String(parsed.country || "").trim().toUpperCase(),
       sortBy: normalizeSortBy(parsed.sortBy || ""),
+      distanceRadiusKm: normalizeDistanceRadiusKm(parsed.distanceRadiusKm),
       includeDefault: parsed.includeDefault !== false,
       searchAll: parsed.searchAll !== false,
       search: String(parsed.search || ""),
@@ -764,6 +855,7 @@ const persistFilterState = () => {
       region: appState.filterState.region,
       country: appState.filterState.country,
       sortBy: appState.filterState.sortBy,
+      distanceRadiusKm: appState.filterState.distanceRadiusKm,
       includeDefault: appState.filterState.includeDefault,
       searchAll: appState.filterState.searchAll,
       search: appState.filterState.search,
@@ -829,6 +921,7 @@ const notifyHomeBaseChanged = () => {
 const setHomeBaseState = (rawHomeBase, options = {}) => {
   const normalized = homeBaseApi && rawHomeBase ? homeBaseApi.normalizeHomeBase(rawHomeBase) : null;
   appState.homeBase = normalized;
+  appState.distanceState.cacheKey = "";
   if (homeBaseApi) {
     if (normalized) {
       const persisted = homeBaseApi.persistHomeBase(normalized);
@@ -840,6 +933,9 @@ const setHomeBaseState = (rawHomeBase, options = {}) => {
   }
   syncHomeBaseControls();
   notifyHomeBaseChanged();
+  if (options.renderPage !== false && appState.payload) {
+    renderPagePreservingScroll();
+  }
   if (options.statusMessage) {
     setHomeBaseStatus(options.statusMessage, Boolean(options.isError));
     return;
@@ -1002,6 +1098,7 @@ const applyControlsFromQueryOrMeta = () => {
   const region = urlRegion || (stored ? stored.region : metaRegion);
   const country = urlCountry || (stored ? stored.country : metaCountry);
   const sortBy = hasUrlSortBy ? urlSortBy : (stored ? stored.sortBy : metaSortBy);
+  const distanceRadiusKm = stored ? stored.distanceRadiusKm : null;
   const search = urlSearch !== null ? urlSearch : (stored ? stored.search : metaSearch);
   const searchAll = hasUrlSearchAll ? urlSearchAll : (stored ? stored.searchAll : (hasMetaSearchAll ? metaSearchAll : true));
   const includeDefault = hasUrlIncludeDefault
@@ -1013,6 +1110,7 @@ const applyControlsFromQueryOrMeta = () => {
   appState.filterState.region = region;
   appState.filterState.country = country;
   appState.filterState.sortBy = sortBy;
+  appState.filterState.distanceRadiusKm = distanceRadiusKm;
   appState.filterState.includeDefault = includeDefault;
   appState.filterState.searchAll = searchAll;
   appState.filterState.search = String(search || "");
@@ -1024,6 +1122,7 @@ const applyControlsFromQueryOrMeta = () => {
   if (filterRegionSelect) filterRegionSelect.value = region;
   if (filterCountrySelect) filterCountrySelect.value = country;
   if (filterSortSelect) filterSortSelect.value = sortBy;
+  if (filterRadiusSelect) filterRadiusSelect.value = distanceRadiusKm === null ? "" : String(distanceRadiusKm);
   if (filterIncludeAllInput) filterIncludeAllInput.checked = includeDefault;
   if (filterSearchAllInput) filterSearchAllInput.checked = searchAll;
   setFavoritesOnlyControls(favoritesOnly);
@@ -1037,6 +1136,7 @@ const applyFilterStateFromControls = () => {
   appState.filterState.region = _normalizeSearch(filterRegionSelect ? filterRegionSelect.value : "");
   appState.filterState.country = (filterCountrySelect ? filterCountrySelect.value : "").trim().toUpperCase();
   appState.filterState.sortBy = normalizeSortBy(filterSortSelect ? filterSortSelect.value : "week_snow");
+  appState.filterState.distanceRadiusKm = normalizeDistanceRadiusKm(filterRadiusSelect ? filterRadiusSelect.value : "");
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
   appState.filterState.search = resortSearchInput ? String(resortSearchInput.value || "") : "";
@@ -1078,6 +1178,7 @@ const _isDefaultResort = (report) => Boolean(report.default_resort || report.ljc
 const _isFavoriteReport = (report) => _isFavoriteResortId(report && report.resort_id);
 
 const _filteredReports = () => {
+  ensureDistanceContext();
   const keyword = _normalizeSearch(appState.filterState.search);
   const reports = _payloadReports();
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
@@ -1102,10 +1203,19 @@ const _filteredReports = () => {
       const reportCountry = String(report.country_code || report.country || "").trim().toUpperCase();
       if (reportCountry !== appState.filterState.country) return false;
     }
+    if (appState.homeBase && appState.filterState.distanceRadiusKm !== null) {
+      if (!report.home_base_distance_available) return false;
+      if (!report.home_base_within_radius) return false;
+    }
     return true;
   });
   const sortBy = appState.filterState.sortBy;
   filtered.sort((a, b) => {
+    if (sortBy === "distance") {
+      const aValue = a.home_base_distance_available ? a.home_base_distance_km : Number.POSITIVE_INFINITY;
+      const bValue = b.home_base_distance_available ? b.home_base_distance_km : Number.POSITIVE_INFINITY;
+      if (aValue !== bValue) return aValue - bValue;
+    }
     if (sortBy === "favorites") {
       const favoriteDelta = Number(_isFavoriteReport(b)) - Number(_isFavoriteReport(a));
       if (favoriteDelta !== 0) return favoriteDelta;
@@ -1128,6 +1238,7 @@ const _filteredReports = () => {
 
 const syncFilterSummary = (visibleReports, totalReports) => {
   if (!filterSummary) return;
+  ensureDistanceContext();
   const scope = totalReports > 0 ? (visibleReports === totalReports ? `${visibleReports}` : `${visibleReports}/${totalReports}`) : "0";
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
@@ -1138,6 +1249,12 @@ const syncFilterSummary = (visibleReports, totalReports) => {
     if (appState.filterState.region) parts.push(`region: ${appState.filterState.region}`);
     if (appState.filterState.country) parts.push(`country: ${appState.filterState.country}`);
     if (appState.filterState.sortBy !== "state") parts.push(`sort: ${appState.filterState.sortBy}`);
+    if (appState.homeBase && appState.filterState.distanceRadiusKm !== null) {
+      parts.push(`radius: ${_radiusLabel(appState.filterState.distanceRadiusKm)}`);
+      parts.push(`nearby: ${visibleReports}`);
+    } else if (appState.homeBase && appState.distanceState.availableCount > 0) {
+      parts.push(`distance: ${appState.distanceState.availableCount} located`);
+    }
     if (appState.filterState.includeDefault && parts.length > 0) parts.push("scope: default");
     if (!appState.filterState.searchAll) parts.push("search: filtered");
   } else {
@@ -1917,6 +2034,7 @@ const reloadDynamicPayloadForFilters = async () => {
   endpoint.search = buildServerQueryParams().toString();
   const payload = await loadPayload(endpoint.toString());
   appState.payload = payload;
+  appState.distanceState.cacheKey = "";
   appState.reports = _payloadReports();
   appState.availableFilters = _availableFilters();
   updateFilterLabels();
@@ -1927,6 +2045,7 @@ const resetFilterControls = () => {
   if (filterRegionSelect) filterRegionSelect.value = "";
   if (filterCountrySelect) filterCountrySelect.value = "";
   if (filterSortSelect) filterSortSelect.value = "week_snow";
+  if (filterRadiusSelect) filterRadiusSelect.value = "";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
   if (filterSearchAllInput) filterSearchAllInput.checked = true;
   setFavoritesOnlyControls(false);
@@ -2019,6 +2138,7 @@ const bindControls = () => {
   if (filterRegionSelect) filterRegionSelect.addEventListener("change", applyFiltersImmediately);
   if (filterCountrySelect) filterCountrySelect.addEventListener("change", applyFiltersImmediately);
   if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
+  if (filterRadiusSelect) filterRadiusSelect.addEventListener("change", applyFiltersImmediately);
   if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);
   if (favoritesOnlyToggle) {
@@ -2098,6 +2218,7 @@ const initialize = async () => {
   appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
     appState.payload = await loadPayload();
+    appState.distanceState.cacheKey = "";
     appState.reports = _payloadReports();
     appState.availableFilters = _availableFilters();
     updateFilterLabels();

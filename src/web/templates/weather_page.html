@@ -102,9 +102,20 @@
           <select id="filter-sort-select">
             <option value="state">State (A-Z)</option>
             <option value="name">Resort Name (A-Z)</option>
+            <option value="distance">Distance</option>
             <option value="favorites">Favorites First</option>
             <option value="today_snow">Today's Snowfall</option>
             <option value="week_snow" selected>This Week's Snowfall</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Nearby Radius</div>
+          <select id="filter-radius-select">
+            <option value="" selected>All distances</option>
+            <option value="40">25 mi / 40 km</option>
+            <option value="80">50 mi / 80 km</option>
+            <option value="160">100 mi / 160 km</option>
+            <option value="320">200 mi / 320 km</option>
           </select>
         </div>
         <div class="filter-group">
