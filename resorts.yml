@@ -540,7 +540,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "Crystal Mountain, WA",
     "website": "https://www.crystalmountainresort.com/"
   },
@@ -1567,7 +1567,7 @@
     "pass_types": [
       "ikon"
     ],
-    "default_enabled": false,
+    "default_enabled": true,
     "display_name": "The Summit at Snoqualmie, WA",
     "website": "https://www.summitatsnoqualmie.com/"
   },
