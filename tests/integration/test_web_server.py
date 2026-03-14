@@ -35,7 +35,11 @@ def test_server_api_root_and_asset(monkeypatch):
     }
     monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: sample_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
-    monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: b"body{}")
+    asset_bodies = {
+        "assets/css/weather_page.css": b"body{}",
+        "assets/js/favorites_alerts.js": b"window.CloseSnowFavoritesAlerts={};",
+    }
+    monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: asset_bodies.get(name, b"body{}"))
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -57,6 +61,8 @@ def test_server_api_root_and_asset(monkeypatch):
         assert asset == b"body{}"
         asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/css/weather_page.css", timeout=3).read()
         assert asset_with_prefix == b"body{}"
+        favorites_asset = urllib.request.urlopen(f"{base}/assets/js/favorites_alerts.js", timeout=3).read()
+        assert favorites_asset == b"window.CloseSnowFavoritesAlerts={};"
     finally:
         server.shutdown()
         server.server_close()

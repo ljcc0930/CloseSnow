@@ -39,6 +39,7 @@ const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
+const favoriteAlertsApi = window.CloseSnowFavoritesAlerts || null;
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
 
@@ -64,6 +65,8 @@ const appState = {
   },
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
+  favoriteAlertState: null,
+  newFavoriteAlerts: [],
 };
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
@@ -618,6 +621,30 @@ const normalizeSortBy = (value) => {
 
 const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
 const _weeklySnowfall = (report) => _asFiniteNumber(report && report.week1_total_snowfall_cm);
+
+const publishFavoriteAlertState = (state, newAlerts) => {
+  appState.favoriteAlertState = state;
+  appState.newFavoriteAlerts = Array.isArray(newAlerts) ? newAlerts : [];
+  window.CLOSESNOW_FAVORITE_ALERT_STATE = state;
+  window.CLOSESNOW_FAVORITE_ALERTS = state && Array.isArray(state.alerts) ? state.alerts : [];
+  window.CLOSESNOW_NEW_FAVORITE_ALERTS = appState.newFavoriteAlerts;
+};
+
+const syncFavoriteAlertState = () => {
+  if (!favoriteAlertsApi || typeof favoriteAlertsApi.syncPayload !== "function" || !appState.payload) {
+    publishFavoriteAlertState(null, []);
+    return null;
+  }
+  const result = favoriteAlertsApi.syncPayload({
+    payload: appState.payload,
+    favoriteResortIds: Array.from(appState.favoriteResortIds),
+  });
+  publishFavoriteAlertState(
+    result && result.state ? result.state : null,
+    result && Array.isArray(result.newAlerts) ? result.newAlerts : [],
+  );
+  return result;
+};
 
 const _compareBySnowDesc = (a, b, valueFn) => {
   const aValue = valueFn(a);
@@ -1708,6 +1735,7 @@ const reloadDynamicPayloadForFilters = async () => {
   appState.payload = payload;
   appState.reports = _payloadReports();
   appState.availableFilters = _availableFilters();
+  syncFavoriteAlertState();
   updateFilterLabels();
 };
 
@@ -1792,6 +1820,7 @@ const bindControls = () => {
       event.preventDefault();
       const visibleReports = _filteredReports();
       toggleFavoriteVisibleReports(visibleReports);
+      syncFavoriteAlertState();
       if (favoriteInteractionNeedsFullRender()) {
         renderPagePreservingScroll();
       } else {
@@ -1804,6 +1833,7 @@ const bindControls = () => {
       event.preventDefault();
       const visibleReports = _filteredReports();
       toggleFavoriteResortId(favoriteButton.getAttribute("data-resort-id"));
+      syncFavoriteAlertState();
       if (favoriteInteractionNeedsFullRender()) {
         renderPagePreservingScroll();
       } else {
@@ -1845,6 +1875,7 @@ const initialize = async () => {
     appState.payload = await loadPayload();
     appState.reports = _payloadReports();
     appState.availableFilters = _availableFilters();
+    syncFavoriteAlertState();
     updateFilterLabels();
     applyControlsFromQueryOrMeta();
     renderPage();
