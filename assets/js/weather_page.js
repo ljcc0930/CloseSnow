@@ -15,6 +15,16 @@ const filterMetaApplied =
 
 const pageContentRoot = document.getElementById("page-content-root");
 const reportDateEl = document.getElementById("report-date");
+const homeBaseSummary = document.getElementById("home-base-summary");
+const homeBaseStatus = document.getElementById("home-base-status");
+const homeBaseLookupInput = document.getElementById("home-base-lookup-input");
+const homeBaseLookupList = document.getElementById("home-base-lookup-list");
+const homeBaseLookupApply = document.getElementById("home-base-lookup-apply");
+const homeBaseGeolocateBtn = document.getElementById("home-base-geolocate-btn");
+const homeBaseClearBtn = document.getElementById("home-base-clear");
+const homeBaseLatInput = document.getElementById("home-base-lat-input");
+const homeBaseLonInput = document.getElementById("home-base-lon-input");
+const homeBaseManualApply = document.getElementById("home-base-manual-apply");
 const resortSearchInput = document.getElementById("resort-search-input");
 const resortSearchClear = document.getElementById("resort-search-clear");
 const filterOpenBtn = document.getElementById("filter-open-btn");
@@ -39,6 +49,9 @@ const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
+const homeBaseApi = window.CloseSnowHomeBase && typeof window.CloseSnowHomeBase.normalizeHomeBase === "function"
+  ? window.CloseSnowHomeBase
+  : null;
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
 
@@ -47,6 +60,7 @@ const appState = {
   reports: [],
   availableFilters: DEFAULT_AVAILABLE_FILTERS,
   favoriteResortIds: new Set(),
+  homeBase: null,
   filterState: {
     passTypes: new Set(),
     region: "",
@@ -758,6 +772,203 @@ const persistFilterState = () => {
   } catch (error) {
     // Ignore storage failures.
   }
+};
+
+const _formatCoordinateSummary = (value) => {
+  const num = _asFiniteNumber(value);
+  return num === null ? "" : num.toFixed(4);
+};
+
+const _homeBaseSourceLabel = (source) => {
+  if (source === "geolocation") return "browser geolocation";
+  if (source === "lookup") return "lookup";
+  if (source === "manual") return "manual coordinates";
+  return "custom source";
+};
+
+const _homeBaseSummaryText = (homeBase) => {
+  if (!homeBaseApi) return "Home base unavailable";
+  if (!homeBase) return "Not set";
+  return `${homeBase.label} (${_formatCoordinateSummary(homeBase.latitude)}, ${_formatCoordinateSummary(homeBase.longitude)})`;
+};
+
+const syncHomeBaseControls = () => {
+  const homeBase = appState.homeBase;
+  if (homeBaseSummary) {
+    homeBaseSummary.textContent = _homeBaseSummaryText(homeBase);
+  }
+  if (homeBaseLookupInput) {
+    homeBaseLookupInput.value = homeBase && homeBase.source === "lookup"
+      ? (homeBase.placeId ? `${homeBase.label} (${homeBase.postalCode || ""})`.replace(/\s+\(\)$/, "") : homeBase.label)
+      : "";
+  }
+  if (homeBaseLatInput) homeBaseLatInput.value = homeBase ? _formatCoordinateSummary(homeBase.latitude) : "";
+  if (homeBaseLonInput) homeBaseLonInput.value = homeBase ? _formatCoordinateSummary(homeBase.longitude) : "";
+};
+
+const setHomeBaseStatus = (message = "", isError = false) => {
+  if (!homeBaseStatus) return;
+  homeBaseStatus.textContent = message;
+  homeBaseStatus.dataset.state = isError ? "error" : (message ? "ready" : "");
+};
+
+const syncHomeBaseToUrl = () => {
+  if (!homeBaseApi || !window.history || !window.location) return;
+  const url = new URL(window.location.href);
+  homeBaseApi.writeHomeBaseToSearchParams(url.searchParams, appState.homeBase);
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+};
+
+const notifyHomeBaseChanged = () => {
+  window.CLOSESNOW_HOME_BASE_STATE = appState.homeBase;
+  window.dispatchEvent(new CustomEvent("closesnow:home-base-changed", {
+    detail: appState.homeBase,
+  }));
+};
+
+const setHomeBaseState = (rawHomeBase, options = {}) => {
+  const normalized = homeBaseApi && rawHomeBase ? homeBaseApi.normalizeHomeBase(rawHomeBase) : null;
+  appState.homeBase = normalized;
+  if (homeBaseApi) {
+    if (normalized) {
+      const persisted = homeBaseApi.persistHomeBase(normalized);
+      appState.homeBase = persisted || normalized;
+    } else {
+      homeBaseApi.clearStoredHomeBase();
+    }
+    if (options.updateUrl !== false) syncHomeBaseToUrl();
+  }
+  syncHomeBaseControls();
+  notifyHomeBaseChanged();
+  if (options.statusMessage) {
+    setHomeBaseStatus(options.statusMessage, Boolean(options.isError));
+    return;
+  }
+  if (appState.homeBase) {
+    setHomeBaseStatus(`Home base ready from ${_homeBaseSourceLabel(appState.homeBase.source)}.`, false);
+    return;
+  }
+  setHomeBaseStatus("Set a home base from lookup, geolocation, or coordinates.", false);
+};
+
+const refreshHomeBaseLookupOptions = () => {
+  if (!homeBaseApi || !homeBaseLookupList) return;
+  const matches = homeBaseApi.findLookupMatches(homeBaseLookupInput ? homeBaseLookupInput.value : "", { limit: 8 });
+  homeBaseLookupList.replaceChildren(
+    ...matches.map((entry) => {
+      const option = document.createElement("option");
+      option.value = entry.display || entry.label;
+      return option;
+    }),
+  );
+};
+
+const applyLookupHomeBase = () => {
+  if (!homeBaseApi || !homeBaseLookupInput) return;
+  const lookupText = String(homeBaseLookupInput.value || "").trim();
+  const entry = homeBaseApi.resolveLookupEntry(lookupText);
+  if (!entry) {
+    setHomeBaseStatus("No bundled lookup matched that city or ZIP. Try another entry or manual coordinates.", true);
+    return;
+  }
+  setHomeBaseState({
+    ...entry,
+    source: "lookup",
+    query: lookupText || entry.label,
+  }, {
+    statusMessage: `Home base set from lookup: ${entry.label}.`,
+  });
+  if (homeBaseLookupInput) homeBaseLookupInput.value = entry.display || entry.label;
+  refreshHomeBaseLookupOptions();
+};
+
+const applyManualHomeBase = () => {
+  const latitude = _asFiniteNumber(homeBaseLatInput ? homeBaseLatInput.value : "");
+  const longitude = _asFiniteNumber(homeBaseLonInput ? homeBaseLonInput.value : "");
+  if (latitude === null || longitude === null || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    setHomeBaseStatus("Manual coordinates must be valid latitude and longitude values.", true);
+    return;
+  }
+  setHomeBaseState({
+    source: "manual",
+    label: `Custom coordinates ${_formatCoordinateSummary(latitude)}, ${_formatCoordinateSummary(longitude)}`,
+    latitude,
+    longitude,
+    query: `${latitude},${longitude}`,
+  }, {
+    statusMessage: "Home base set from manual coordinates.",
+  });
+  refreshHomeBaseLookupOptions();
+};
+
+const applyGeolocationHomeBase = () => {
+  if (!navigator.geolocation) {
+    setHomeBaseStatus("Browser geolocation is unavailable here. Use lookup or manual coordinates instead.", true);
+    return;
+  }
+  if (homeBaseGeolocateBtn) homeBaseGeolocateBtn.disabled = true;
+  setHomeBaseStatus("Resolving browser location...", false);
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      if (homeBaseGeolocateBtn) homeBaseGeolocateBtn.disabled = false;
+      setHomeBaseState({
+        source: "geolocation",
+        label: "Current location",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        query: "Current location",
+      }, {
+        statusMessage: "Home base set from browser geolocation.",
+      });
+      refreshHomeBaseLookupOptions();
+    },
+    (error) => {
+      if (homeBaseGeolocateBtn) homeBaseGeolocateBtn.disabled = false;
+      const message = error && error.message ? error.message : "Unable to read browser geolocation.";
+      setHomeBaseStatus(message, true);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 300000,
+    },
+  );
+};
+
+const clearHomeBaseState = () => {
+  setHomeBaseState(null, {
+    statusMessage: "Home base cleared.",
+  });
+  if (homeBaseLookupInput) homeBaseLookupInput.value = "";
+  if (homeBaseLatInput) homeBaseLatInput.value = "";
+  if (homeBaseLonInput) homeBaseLonInput.value = "";
+  refreshHomeBaseLookupOptions();
+};
+
+const initializeHomeBase = () => {
+  if (!homeBaseApi) {
+    setHomeBaseStatus("Home base tools unavailable on this page build.", true);
+    return;
+  }
+  const urlHomeBase = homeBaseApi.parseHomeBaseFromQuery(window.location.search);
+  if (urlHomeBase) {
+    appState.homeBase = homeBaseApi.persistHomeBase(urlHomeBase) || urlHomeBase;
+    syncHomeBaseControls();
+    notifyHomeBaseChanged();
+    setHomeBaseStatus(`Home base restored from shared URL: ${urlHomeBase.label}.`, false);
+    refreshHomeBaseLookupOptions();
+    return;
+  }
+  appState.homeBase = homeBaseApi.loadStoredHomeBase();
+  syncHomeBaseControls();
+  notifyHomeBaseChanged();
+  setHomeBaseStatus(
+    appState.homeBase
+      ? `Home base restored from ${_homeBaseSourceLabel(appState.homeBase.source)}.`
+      : "Set a home base from lookup, geolocation, or coordinates.",
+    false,
+  );
+  refreshHomeBaseLookupOptions();
 };
 
 const applyControlsFromQueryOrMeta = () => {
@@ -1738,7 +1949,51 @@ const applyFiltersImmediately = async () => {
   renderPage();
 };
 
+const bindHomeBaseControls = () => {
+  if (homeBaseLookupInput) {
+    homeBaseLookupInput.addEventListener("input", () => {
+      refreshHomeBaseLookupOptions();
+    });
+    homeBaseLookupInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyLookupHomeBase();
+      }
+    });
+  }
+  if (homeBaseLookupApply) {
+    homeBaseLookupApply.addEventListener("click", () => {
+      applyLookupHomeBase();
+    });
+  }
+  if (homeBaseManualApply) {
+    homeBaseManualApply.addEventListener("click", () => {
+      applyManualHomeBase();
+    });
+  }
+  [homeBaseLatInput, homeBaseLonInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyManualHomeBase();
+      }
+    });
+  });
+  if (homeBaseGeolocateBtn) {
+    homeBaseGeolocateBtn.addEventListener("click", () => {
+      applyGeolocationHomeBase();
+    });
+  }
+  if (homeBaseClearBtn) {
+    homeBaseClearBtn.addEventListener("click", () => {
+      clearHomeBaseState();
+    });
+  }
+};
+
 const bindControls = () => {
+  bindHomeBaseControls();
   if (resortSearchInput) {
     resortSearchInput.addEventListener("input", () => {
       applyFiltersImmediately();
@@ -1847,6 +2102,7 @@ const initialize = async () => {
     appState.availableFilters = _availableFilters();
     updateFilterLabels();
     applyControlsFromQueryOrMeta();
+    initializeHomeBase();
     renderPage();
   } catch (error) {
     if (pageContentRoot) {

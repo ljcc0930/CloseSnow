@@ -55,6 +55,8 @@ def test_server_api_root_and_asset(monkeypatch):
 
         asset = urllib.request.urlopen(f"{base}/assets/css/weather_page.css", timeout=3).read()
         assert asset == b"body{}"
+        home_base_asset = urllib.request.urlopen(f"{base}/assets/js/home_base.js", timeout=3).read()
+        assert home_base_asset == b"body{}"
         asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/css/weather_page.css", timeout=3).read()
         assert asset_with_prefix == b"body{}"
     finally:
