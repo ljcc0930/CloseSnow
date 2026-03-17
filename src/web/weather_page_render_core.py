@@ -14,6 +14,7 @@ def render_payload_html(payload: Dict[str, Any], *, data_url: str = "./data.json
         [],
         [],
         data_url=data_url,
+        initial_payload=payload,
         available_filters=(
             payload.get("available_filters")
             if isinstance(payload.get("available_filters"), dict)

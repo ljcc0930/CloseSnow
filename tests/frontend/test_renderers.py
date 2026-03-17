@@ -270,6 +270,7 @@ def test_build_html_contains_meta_sections():
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
+    assert "window.CLOSESNOW_INITIAL_PAYLOAD = null" in html
     assert '"dataUrl": "./data.json"' in html
     assert 'id="page-content-root"' in html
     assert "include_all" in html
@@ -278,17 +279,36 @@ def test_build_html_contains_meta_sections():
 
 
 def test_render_payload_html_wires_transform_and_builder(monkeypatch):
+    captured = {}
+
+    def fake_build_html(snow, rain, weather, sun, temp, **kwargs):
+        captured["snow"] = snow
+        captured["rain"] = rain
+        captured["weather"] = weather
+        captured["sun"] = sun
+        captured["temp"] = temp
+        captured["kwargs"] = kwargs
+        return "html"
+
     monkeypatch.setattr(
         "src.web.weather_page_render_core.build_html",
-        lambda snow, rain, weather, sun, temp, **kwargs: f"html:{snow}:{rain}:{weather}:{sun}:{temp}:{kwargs['data_url']}:{bool(kwargs)}",
+        fake_build_html,
     )
+    payload = {
+        "reports": [{"query": "A"}],
+        "forecast_days": 16,
+        "available_filters": {"pass_type": {"ikon": 1}},
+        "applied_filters": {"pass_type": ["ikon"]},
+    }
     out = render_payload_html(
-        {
-            "reports": [{"query": "A"}],
-            "forecast_days": 16,
-            "available_filters": {"pass_type": {"ikon": 1}},
-            "applied_filters": {"pass_type": ["ikon"]},
-        },
+        payload,
         data_url="./x.json",
     )
-    assert out == "html:[]:[]:[]:[]:[]:./x.json:True"
+    assert out == "html"
+    assert captured["snow"] == []
+    assert captured["rain"] == []
+    assert captured["weather"] == []
+    assert captured["sun"] == []
+    assert captured["temp"] == []
+    assert captured["kwargs"]["data_url"] == "./x.json"
+    assert captured["kwargs"]["initial_payload"] == payload

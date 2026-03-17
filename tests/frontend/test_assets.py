@@ -66,8 +66,12 @@ def test_read_asset_bytes_reads_known_assets():
     assert "compact-day-head-phase-start" not in compact_js_text
     assert "compact-day-cell-phase-start" not in compact_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
+    assert "window.CLOSESNOW_INITIAL_PAYLOAD" in js_text
     assert "No resorts match the current filters." in js_text
     assert 'return "Today";' in js_text
+    assert "initialPayload || await loadPayload()" in js_text
+    assert "scheduleApplyFilters" in js_text
+    assert "getLayoutModeForWidth" in js_text
     assert "renderHourlyCharts" in hourly_js_text
     assert "formatResortLocalTime" in hourly_js_text
     assert "renderTimelineSummary" in hourly_js_text

@@ -12,6 +12,11 @@ const filterMetaApplied =
   filterMeta.applied_filters && typeof filterMeta.applied_filters === "object"
     ? filterMeta.applied_filters
     : {};
+const initialPayloadRaw = window.CLOSESNOW_INITIAL_PAYLOAD;
+const initialPayload =
+  initialPayloadRaw && typeof initialPayloadRaw === "object" && !Array.isArray(initialPayloadRaw)
+    ? initialPayloadRaw
+    : null;
 
 const pageContentRoot = document.getElementById("page-content-root");
 const reportDateEl = document.getElementById("report-date");
@@ -64,6 +69,7 @@ const appState = {
   },
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
+  layoutMode: "desktop",
 };
 
 const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
@@ -80,10 +86,16 @@ const _isTruthyParam = (value) => {
 };
 
 const measureTextWidth = (text, font) => {
+  const cache = measureTextWidth.cache || (measureTextWidth.cache = new Map());
+  const cacheKey = `${font}\u0000${text || ""}`;
+  if (cache.has(cacheKey)) return cache.get(cacheKey);
   const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
   const context = canvas.getContext("2d");
   context.font = font;
-  return context.measureText(text || "").width;
+  const width = context.measureText(text || "").width;
+  cache.set(cacheKey, width);
+  if (cache.size > 4000) cache.clear();
+  return width;
 };
 
 const _resolveBootstrapUrl = (rawUrl) => {
@@ -330,6 +342,48 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
     : _fallbackDayLabels(displayDays);
   const weeklyHeaders = ["week 1", "week 2"];
+  const favoriteAllButton = _favoriteAllButtonHtml(reports);
+  if (appState.layoutMode === "compact") {
+    const mobileLeftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+    const mobileRightRows = reports.length ? reports.map((report) => {
+      const attrs = _filterAttrs(report);
+      const weeklyValues = [
+        options.week1(report),
+        options.week2(report),
+      ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
+      const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
+        const value = options.daily(_dailyAt(report, idx));
+        return _metricCellHtml(_formatMetric(value), kind, options.color(value));
+      });
+      return `<tr${attrs}>${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
+    }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
+    return `
+      <section>
+        <div class="section-header">
+          <h2>${title}</h2>
+          <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
+            <button type="button" class="unit-btn" data-unit-mode="metric">${metricUnit}</button>
+            <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
+          </div>
+        </div>
+        <div class="${options.prefix}-split-wrap mobile-only">
+          <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap-mobile">
+            <table class="${options.prefix}-left-table">
+              <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
+              <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
+              <tbody>${mobileLeftRows}</tbody>
+            </table>
+          </div>
+          <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap-mobile">
+            <table class="${options.prefix}-right-table">
+              <colgroup><col class='col-week-right'><col class='col-week-right'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
+              <thead><tr><th class='week-group' colspan='2'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>Week 1</th><th class='week-col-cell'>Week 2</th>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+              <tbody>${mobileRightRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>`;
+  }
   const desktopLeftRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const weeklyValues = [
@@ -346,19 +400,6 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     }).join("");
     return `<tr${attrs}>${dailyValues}</tr>`;
   }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
-  const mobileLeftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
-  const mobileRightRows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const weeklyValues = [
-      options.week1(report),
-      options.week2(report),
-    ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
-    const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
-      const value = options.daily(_dailyAt(report, idx));
-      return _metricCellHtml(_formatMetric(value), kind, options.color(value));
-    });
-    return `<tr${attrs}>${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
-  }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -372,7 +413,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap">
           <table class="${options.prefix}-left-table">
             <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>Weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
+            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>Weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
             <tbody>${desktopLeftRows}</tbody>
           </table>
         </div>
@@ -381,22 +422,6 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
             <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
             <thead><tr><th colspan='${displayDays}'>Daily</th></tr><tr>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
             <tbody>${desktopRightRows}</tbody>
-          </table>
-        </div>
-      </div>
-      <div class="${options.prefix}-split-wrap mobile-only">
-        <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap-mobile">
-          <table class="${options.prefix}-left-table">
-            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
-            <tbody>${mobileLeftRows}</tbody>
-          </table>
-        </div>
-        <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap-mobile">
-          <table class="${options.prefix}-right-table">
-            <colgroup><col class='col-week-right'><col class='col-week-right'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-            <thead><tr><th class='week-group' colspan='2'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>Week 1</th><th class='week-col-cell'>Week 2</th>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${mobileRightRows}</tbody>
           </table>
         </div>
       </div>
@@ -937,11 +962,16 @@ const syncFilterSummary = (visibleReports, totalReports) => {
     : (appState.filterState.includeDefault ? `Default resorts (${scope})` : `All Epic + Ikon resorts (${scope})`);
 };
 
+const getLayoutModeForWidth = (width = window.innerWidth) => (width < MIN_DESKTOP_SNOW_3DAY_PX ? "compact" : "desktop");
+
 const updateLayoutMode = () => {
-  document.body.classList.toggle("mobile-simple", window.innerWidth < MIN_DESKTOP_SNOW_3DAY_PX);
+  const layoutMode = getLayoutModeForWidth();
+  appState.layoutMode = layoutMode;
+  document.body.classList.toggle("mobile-simple", layoutMode === "compact");
+  return layoutMode;
 };
 
-const isCompactLayout = () => document.body.classList.contains("mobile-simple");
+const isCompactLayout = () => appState.layoutMode === "compact";
 
 const _autoSizeDesktopLeftColumns = ({
   tableSelector,
@@ -1249,12 +1279,14 @@ const _clearRowHeights = (rows) => {
 
 const _syncRowPairHeights = (leftRows, rightRows) => {
   const count = Math.min(leftRows.length, rightRows.length);
+  const heights = [];
   for (let index = 0; index < count; index += 1) {
-    const leftRow = leftRows[index];
-    const rightRow = rightRows[index];
-    const targetHeight = Math.max(leftRow.offsetHeight, rightRow.offsetHeight);
-    leftRow.style.height = `${targetHeight}px`;
-    rightRow.style.height = `${targetHeight}px`;
+    heights.push(Math.max(leftRows[index].offsetHeight, rightRows[index].offsetHeight));
+  }
+  for (let index = 0; index < count; index += 1) {
+    const targetHeight = heights[index];
+    leftRows[index].style.height = `${targetHeight}px`;
+    rightRows[index].style.height = `${targetHeight}px`;
   }
 };
 
@@ -1345,6 +1377,7 @@ const syncSplitTableHeights = () => {
 
 let layoutFrame = 0;
 let layoutObserver = null;
+let dynamicPayloadAbortController = null;
 
 const applyLayout = () => {
   if (layoutFrame) cancelAnimationFrame(layoutFrame);
@@ -1575,6 +1608,7 @@ const renderPage = () => {
     : (appState.filterState.favoritesOnly
       ? "No favorite resorts match the current filters."
       : "No resorts match the current filters.");
+  updateLayoutMode();
   pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
   applyLayout();
   observeLayoutContainers();
@@ -1692,8 +1726,8 @@ const openFilterModal = () => {
   if (filterModal) filterModal.hidden = false;
 };
 
-const loadPayload = async (url = _resolvedDataUrl()) => {
-  const response = await fetch(url);
+const loadPayload = async (url = _resolvedDataUrl(), options = {}) => {
+  const response = await fetch(url, options);
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload && payload.error ? payload.error : `HTTP ${response.status}`);
@@ -1704,11 +1738,19 @@ const loadPayload = async (url = _resolvedDataUrl()) => {
 const reloadDynamicPayloadForFilters = async () => {
   const endpoint = new URL(_resolvedDataUrl());
   endpoint.search = buildServerQueryParams().toString();
-  const payload = await loadPayload(endpoint.toString());
-  appState.payload = payload;
-  appState.reports = _payloadReports();
-  appState.availableFilters = _availableFilters();
-  updateFilterLabels();
+  if (dynamicPayloadAbortController) dynamicPayloadAbortController.abort();
+  const controller = new AbortController();
+  dynamicPayloadAbortController = controller;
+  try {
+    const payload = await loadPayload(endpoint.toString(), { signal: controller.signal });
+    if (dynamicPayloadAbortController !== controller) return;
+    appState.payload = payload;
+    appState.reports = _payloadReports();
+    appState.availableFilters = _availableFilters();
+    updateFilterLabels();
+  } finally {
+    if (dynamicPayloadAbortController === controller) dynamicPayloadAbortController = null;
+  }
 };
 
 const resetFilterControls = () => {
@@ -1722,13 +1764,31 @@ const resetFilterControls = () => {
   if (resortSearchInput) resortSearchInput.value = "";
 };
 
+let scheduledFilterApplyTimeout = 0;
+
+const cancelScheduledFilterApply = () => {
+  if (!scheduledFilterApplyTimeout) return;
+  window.clearTimeout(scheduledFilterApplyTimeout);
+  scheduledFilterApplyTimeout = 0;
+};
+
+const scheduleApplyFilters = (delayMs = 120) => {
+  cancelScheduledFilterApply();
+  scheduledFilterApplyTimeout = window.setTimeout(() => {
+    scheduledFilterApplyTimeout = 0;
+    void applyFiltersImmediately();
+  }, delayMs);
+};
+
 const applyFiltersImmediately = async () => {
+  cancelScheduledFilterApply();
   applyFilterStateFromControls();
   syncUrlFromFilterState();
   if (_isDynamicApiDataUrl()) {
     try {
       await reloadDynamicPayloadForFilters();
     } catch (error) {
+      if (error && error.name === "AbortError") return;
       if (pageContentRoot) {
         pageContentRoot.innerHTML = `<div class="page-load-error">${_escapeHtml(error instanceof Error ? error.message : String(error))}</div>`;
       }
@@ -1741,7 +1801,7 @@ const applyFiltersImmediately = async () => {
 const bindControls = () => {
   if (resortSearchInput) {
     resortSearchInput.addEventListener("input", () => {
-      applyFiltersImmediately();
+      scheduleApplyFilters();
     });
   }
   if (resortSearchClear) {
@@ -1830,6 +1890,10 @@ const bindControls = () => {
     setUnitMode(kind, oppositeUnitMode(currentMode));
   });
   window.addEventListener("resize", () => {
+    if (appState.payload && getLayoutModeForWidth() !== appState.layoutMode) {
+      renderPagePreservingScroll();
+      return;
+    }
     applyLayout();
   }, { passive: true });
 };
@@ -1842,7 +1906,7 @@ const initialize = async () => {
   appState.sunTimeToggleMode = getStoredUnitMode(SUN_TIME_TOGGLE_KIND);
   appState.favoriteResortIds = new Set(loadFavoriteResortIds());
   try {
-    appState.payload = await loadPayload();
+    appState.payload = initialPayload || await loadPayload();
     appState.reports = _payloadReports();
     appState.availableFilters = _availableFilters();
     updateFilterLabels();
