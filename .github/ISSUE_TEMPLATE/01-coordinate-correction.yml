@@ -6,7 +6,10 @@ body:
     attributes:
       value: |
         Use this form when a resort page in CloseSnow points to the wrong coordinates.
-        Please include enough detail to verify the correction quickly.
+        Please include enough detail to verify the problem quickly.
+        Coordinates and map links are optional.
+        If you know the incorrect or corrected location details, include them.
+        If not, you can still submit the issue with the resort page and supporting notes.
   - type: input
     id: resort_name
     attributes:
@@ -26,40 +29,30 @@ body:
   - type: input
     id: current_coordinates
     attributes:
-      label: Incorrect coordinates currently shown
-      description: The coordinates that CloseSnow is currently displaying
+      label: Incorrect coordinates currently shown (optional)
+      description: The coordinates that CloseSnow is currently displaying, if you want to include them
       placeholder: 40.5800, -111.6500
-    validations:
-      required: true
   - type: input
     id: current_map_link
     attributes:
-      label: Google Maps link for the incorrect coordinates
-      description: Paste the Google Maps link generated from the current wrong coordinates
+      label: Google Maps link for the incorrect location (optional)
+      description: Paste the Google Maps link generated from the current wrong coordinates, if available
       placeholder: https://www.google.com/maps/search/?api=1&query=40.580000%2C-111.650000
-    validations:
-      required: true
   - type: input
     id: corrected_coordinates
     attributes:
-      label: Correct coordinates
-      description: The coordinates that CloseSnow should use instead
+      label: Correct coordinates (optional)
+      description: The coordinates that CloseSnow should use instead, if you know them
       placeholder: 40.5764, -111.6548
-    validations:
-      required: true
   - type: input
     id: corrected_map_link
     attributes:
-      label: Google Maps link for the corrected coordinates
-      description: Paste a Google Maps link that points to the corrected location
+      label: Google Maps link for the corrected location (optional)
+      description: Paste a Google Maps link that points to the corrected location, if available
       placeholder: https://www.google.com/maps/search/?api=1&query=40.576400%2C-111.654800
-    validations:
-      required: true
   - type: textarea
     id: evidence
     attributes:
-      label: Evidence or notes
-      description: Add any supporting details, such as an official resort link, trail map, or explanation of why the current coordinates are wrong
-      placeholder: The current pin lands on the wrong valley entrance. The official resort page and the corrected Maps link both point to the main base area.
-    validations:
-      required: true
+      label: Evidence or notes (optional)
+      description: Add any supporting details, such as an official resort link, trail map, nearby landmark, or explanation of why the current coordinates are wrong
+      placeholder: The current pin lands on the wrong valley entrance. The official resort page points to the main base area, but I do not have the exact replacement coordinates yet.
