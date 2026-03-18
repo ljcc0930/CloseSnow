@@ -31,7 +31,9 @@
     ],
     "default_enabled": true,
     "display_name": "Aspen Snowmass, CO",
-    "website": "https://www.aspensnowmass.com/"
+    "website": "https://www.aspensnowmass.com/",
+    "latitude": 39.2204465,
+    "longitude": -106.8615713
   },
   {
     "resort_id": "boyne-mountain-mi",
