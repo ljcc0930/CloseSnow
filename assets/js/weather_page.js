@@ -638,11 +638,30 @@ const normalizeSortBy = (value) => {
   if (text === "favorites") return "favorites";
   if (text === "today_snow") return "today_snow";
   if (text === "week_snow") return "week_snow";
+  if (text === "next_week_snow") return "next_week_snow";
+  if (text === "two_week_snow") return "two_week_snow";
   return "state";
 };
 
 const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
 const _weeklySnowfall = (report) => _asFiniteNumber(report && report.week1_total_snowfall_cm);
+const _nextWeekSnowfall = (report) => _asFiniteNumber(report && report.week2_total_snowfall_cm);
+const _twoWeekSnowfall = (report) => {
+  const week1 = _weeklySnowfall(report);
+  const week2 = _nextWeekSnowfall(report);
+  if (week1 === null && week2 === null) return null;
+  return (week1 || 0) + (week2 || 0);
+};
+
+const _sortLabel = (sortBy) => {
+  if (sortBy === "name") return "Resort Name (A-Z)";
+  if (sortBy === "favorites") return "Favorites First";
+  if (sortBy === "today_snow") return "Today's Snowfall";
+  if (sortBy === "week_snow") return "This Week's Snowfall";
+  if (sortBy === "next_week_snow") return "Next Week's Snowfall";
+  if (sortBy === "two_week_snow") return "Two-Week Snowfall";
+  return "State (A-Z)";
+};
 
 const _compareBySnowDesc = (a, b, valueFn) => {
   const aValue = valueFn(a);
@@ -932,6 +951,14 @@ const _filteredReports = () => {
       const snowDelta = _compareBySnowDesc(a, b, _weeklySnowfall);
       if (snowDelta !== 0) return snowDelta;
     }
+    if (sortBy === "next_week_snow") {
+      const snowDelta = _compareBySnowDesc(a, b, _nextWeekSnowfall);
+      if (snowDelta !== 0) return snowDelta;
+    }
+    if (sortBy === "two_week_snow") {
+      const snowDelta = _compareBySnowDesc(a, b, _twoWeekSnowfall);
+      if (snowDelta !== 0) return snowDelta;
+    }
     if (sortBy === "name") return _displayName(a).localeCompare(_displayName(b));
     const stateCmp = String(a.admin1 || "").localeCompare(String(b.admin1 || ""));
     if (stateCmp !== 0) return stateCmp;
@@ -951,7 +978,7 @@ const syncFilterSummary = (visibleReports, totalReports) => {
     if (appState.filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(appState.filterState.passTypes).join(", ")}`);
     if (appState.filterState.region) parts.push(`region: ${appState.filterState.region}`);
     if (appState.filterState.country) parts.push(`country: ${appState.filterState.country}`);
-    if (appState.filterState.sortBy !== "state") parts.push(`sort: ${appState.filterState.sortBy}`);
+    if (appState.filterState.sortBy !== "state") parts.push(`sort: ${_sortLabel(appState.filterState.sortBy)}`);
     if (appState.filterState.includeDefault && parts.length > 0) parts.push("scope: default");
     if (!appState.filterState.searchAll) parts.push("search: filtered");
   } else {

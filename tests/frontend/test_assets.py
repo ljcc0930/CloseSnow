@@ -68,6 +68,10 @@ def test_read_asset_bytes_reads_known_assets():
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "window.CLOSESNOW_INITIAL_PAYLOAD" in js_text
     assert "No resorts match the current filters." in js_text
+    assert "next_week_snow" in js_text
+    assert "two_week_snow" in js_text
+    assert "Next Week's Snowfall" in js_text
+    assert "Two-Week Snowfall" in js_text
     assert 'return "Today";' in js_text
     assert "initialPayload || await loadPayload()" in js_text
     assert "scheduleApplyFilters" in js_text
