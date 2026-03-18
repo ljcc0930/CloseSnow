@@ -13,7 +13,9 @@
     ],
     "default_enabled": true,
     "display_name": "Arapahoe Basin, CO",
-    "website": "https://www.arapahoebasin.com/"
+    "website": "https://www.arapahoebasin.com/",
+    "latitude": 39.6279102,
+    "longitude": -105.8749685
   },
   {
     "resort_id": "aspen-snowmass-co",
