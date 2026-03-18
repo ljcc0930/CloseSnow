@@ -148,3 +148,10 @@ def test_default_catalog_keeps_heavenly_coordinate_override():
     item = next(x for x in entries if x["resort_id"] == "heavenly-ca")
     assert item["latitude"] == 38.9361599
     assert item["longitude"] == -119.9389618
+
+
+def test_default_catalog_keeps_snow_valley_coordinate_override():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "snow-valley-ca")
+    assert item["latitude"] == 34.2249953
+    assert item["longitude"] == -117.0353312
