@@ -82,7 +82,9 @@
     ],
     "default_enabled": true,
     "display_name": "Copper Mountain, CO",
-    "website": "https://www.coppercolorado.com/"
+    "website": "https://www.coppercolorado.com/",
+    "latitude": 39.50665,
+    "longitude": -106.14224
   },
   {
     "resort_id": "killington-vt",
