@@ -701,6 +701,8 @@
     "name": "Heavenly Ski Resort",
     "city": "California",
     "address": "Heavenly Hills",
+    "latitude": 38.9361599,
+    "longitude": -119.9389618,
     "state": "CA",
     "country": "US",
     "region": "west",
