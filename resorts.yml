@@ -819,7 +819,9 @@
     ],
     "default_enabled": true,
     "display_name": "June Mountain, CA",
-    "website": "https://www.junemountain.com/"
+    "website": "https://www.junemountain.com/",
+    "latitude": 37.7614022,
+    "longitude": -119.0839644
   },
   {
     "resort_id": "keystone-co",
