@@ -1154,7 +1154,9 @@
     ],
     "default_enabled": true,
     "display_name": "Northstar, CA",
-    "website": "https://www.northstarcalifornia.com/"
+    "website": "https://www.northstarcalifornia.com/",
+    "latitude": 39.27505,
+    "longitude": -120.120671
   },
   {
     "resort_id": "okemo-vt",
