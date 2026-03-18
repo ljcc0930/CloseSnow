@@ -141,3 +141,10 @@ def test_default_catalog_keeps_crystal_mountain_coordinate_override():
     item = next(x for x in entries if x["resort_id"] == "crystal-mountain-wa")
     assert item["latitude"] == 46.9355117
     assert item["longitude"] == -121.4750288
+
+
+def test_default_catalog_keeps_heavenly_coordinate_override():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "heavenly-ca")
+    assert item["latitude"] == 38.9361599
+    assert item["longitude"] == -119.9389618
