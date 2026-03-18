@@ -107,11 +107,11 @@
       "admin1": "Otago"
     },
     "crystal mountain, wa": {
-      "name": "Enumclaw",
-      "latitude": 47.20427,
-      "longitude": -121.9915,
-      "country": "United States",
-      "admin1": "Washington"
+      "name": "Crystal Mountain",
+      "latitude": 46.9355117,
+      "longitude": -121.4750288,
+      "country": "US",
+      "admin1": "WA"
     },
     "cypress mountain, bc": {
       "name": "West Vancouver",

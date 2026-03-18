@@ -31,6 +31,8 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
                     "country": "US",
                     "region": "west",
                     "pass_types": ["Ikon", "ikon"],
+                    "latitude": "40.58",
+                    "longitude": -111.65,
                 }
             ]
         ),
@@ -39,6 +41,8 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
     entries = load_resort_catalog(str(p))
     assert entries[0]["query"] == "Snowbird, UT"
     assert entries[0]["pass_types"] == ["ikon"]
+    assert entries[0]["latitude"] == 40.58
+    assert entries[0]["longitude"] == -111.65
     assert read_resort_queries(str(p)) == ["Snowbird, UT"]
 
 
@@ -88,6 +92,22 @@ def test_validate_resort_catalog_reports_integrity_errors():
     assert any("invalid country" in msg for msg in errors)
     assert any("invalid region" in msg for msg in errors)
     assert any("invalid pass_types" in msg for msg in errors)
+
+
+def test_validate_resort_catalog_rejects_partial_coordinates():
+    errors = validate_resort_catalog(
+        [
+            {
+                "resort_id": "crystal-mountain-wa",
+                "query": "Crystal Mountain, WA",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+                "latitude": 46.9355,
+            }
+        ]
+    )
+    assert any("latitude and longitude must be provided together" in msg for msg in errors)
 
 
 def test_search_resort_catalog_supports_multi_term():

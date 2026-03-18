@@ -105,16 +105,21 @@ def _patch_pipeline_primitives(monkeypatch, tmp_path):
     monkeypatch.setattr("src.backend.pipeline.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
     monkeypatch.setattr("src.backend.pipeline.JsonCache", _DummyJsonCache)
     monkeypatch.setattr("src.backend.pipeline.ResortCoordinateCache", _DummyCoordCache)
-    seed_calls = []
+    seed_unified_calls = []
+    seed_catalog_calls = []
     monkeypatch.setattr(
         "src.backend.pipeline.seed_coordinate_cache_from_unified",
-        lambda cache, path: seed_calls.append(path),
+        lambda cache, path: seed_unified_calls.append(path),
     )
-    return seed_calls
+    monkeypatch.setattr(
+        "src.backend.pipeline.seed_coordinate_cache_from_catalog",
+        lambda cache, path: seed_catalog_calls.append(path),
+    )
+    return seed_unified_calls, seed_catalog_calls
 
 
 def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
-    seed_calls = _patch_pipeline_primitives(monkeypatch, tmp_path)
+    seed_unified_calls, seed_catalog_calls = _patch_pipeline_primitives(monkeypatch, tmp_path)
     captured = {}
     monkeypatch.setattr(
         "src.backend.pipeline.load_resort_catalog",
@@ -166,7 +171,8 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["country_code"] == "US"
     assert out["reports"][0]["ljcc_favorite"] is True
     assert out["reports"][0]["display_name"] == "Alpha Resort"
-    assert ".cache/resorts_weather_unified.json" in seed_calls
+    assert ".cache/resorts_weather_unified.json" in seed_unified_calls
+    assert pipeline.DEFAULT_RESORTS_FILE in seed_catalog_calls
 
 
 def test_run_pipeline_writes_outputs_when_enabled(monkeypatch, tmp_path):

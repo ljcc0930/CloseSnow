@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any, Dict, List
@@ -39,6 +40,20 @@ def _normalize_pass_types(raw: Any) -> List[str]:
     return [v for v in values if not (v in seen or seen.add(v))]
 
 
+def _to_optional_float(raw: Any) -> float | None:
+    if raw is None:
+        return None
+    if isinstance(raw, str) and not raw.strip():
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value):
+        return None
+    return value
+
+
 def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
     query = str(raw.get("query") or raw.get("name") or "").strip()
     if not query:
@@ -58,6 +73,8 @@ def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
         "region": str(raw.get("region") or "").strip().lower(),
         "pass_types": _normalize_pass_types(raw.get("pass_types")),
         "default_enabled": _to_bool(raw.get("default_enabled", True), default=True),
+        "latitude": _to_optional_float(raw.get("latitude")),
+        "longitude": _to_optional_float(raw.get("longitude")),
     }
 
 
@@ -115,6 +132,10 @@ def validate_resort_catalog(entries: List[Dict[str, Any]]) -> List[str]:
         country = str(entry.get("country", "")).strip().upper()
         region = str(entry.get("region", "")).strip().lower()
         pass_types = entry.get("pass_types", [])
+        latitude = entry.get("latitude")
+        longitude = entry.get("longitude")
+        has_latitude = latitude is not None
+        has_longitude = longitude is not None
 
         if not resort_id:
             errors.append(f"{context}: missing resort_id")
@@ -130,6 +151,13 @@ def validate_resort_catalog(entries: List[Dict[str, Any]]) -> List[str]:
             bad_pass_types = [str(p) for p in pass_types if str(p).strip().lower() not in VALID_PASS_TYPES]
             if bad_pass_types:
                 errors.append(f"{context}: invalid pass_types {bad_pass_types}")
+        if has_latitude != has_longitude:
+            errors.append(f"{context}: latitude and longitude must be provided together")
+        elif has_latitude and has_longitude:
+            if _to_optional_float(latitude) is None:
+                errors.append(f"{context}: invalid latitude '{latitude}'")
+            if _to_optional_float(longitude) is None:
+                errors.append(f"{context}: invalid longitude '{longitude}'")
 
         if resort_id:
             key = resort_id.lower()

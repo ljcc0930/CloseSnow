@@ -8,7 +8,7 @@ from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.compute import build_payload_metadata, run_pipeline_async as _run_pipeline_async, select_resorts
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
-from src.backend.io import seed_coordinate_cache_from_unified
+from src.backend.io import seed_coordinate_cache_from_catalog, seed_coordinate_cache_from_unified
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
@@ -85,6 +85,9 @@ def compute_pipeline_payload(
     seed_coordinate_cache_from_unified(coord_cache, ".cache/resorts_weather_unified.json")
     if output_json != ".cache/resorts_weather_unified.json":
         seed_coordinate_cache_from_unified(coord_cache, output_json)
+    seed_coordinate_cache_from_catalog(coord_cache, DEFAULT_RESORTS_FILE)
+    if resorts_file:
+        seed_coordinate_cache_from_catalog(coord_cache, resorts_file)
     geocode_ttl = geocode_cache_hours * 3600
     forecast_ttl = forecast_cache_hours * 3600
 

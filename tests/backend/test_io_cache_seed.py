@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import json
 
-from src.backend.io.cache_seed import seed_coordinate_cache_from_unified
+from src.backend.io.cache_seed import (
+    seed_coordinate_cache_from_catalog,
+    seed_coordinate_cache_from_entries,
+    seed_coordinate_cache_from_unified,
+)
 
 
 class _DummyCoordCache:
@@ -53,3 +57,61 @@ def test_seed_coordinate_cache_from_unified_handles_missing_or_invalid(tmp_path)
     broken.write_text("{oops", encoding="utf-8")
     seed_coordinate_cache_from_unified(cache, str(broken))
     assert cache.set_calls == []
+
+
+def test_seed_coordinate_cache_from_entries_uses_state_as_admin1():
+    cache = _DummyCoordCache()
+    seed_coordinate_cache_from_entries(
+        cache,
+        [
+            {
+                "query": "Crystal Mountain, WA",
+                "name": "Crystal Mountain",
+                "state": "WA",
+                "country": "US",
+                "latitude": 46.9355117,
+                "longitude": -121.4750288,
+            }
+        ],
+    )
+
+    assert cache.set_calls == [
+        (
+            "Crystal Mountain, WA",
+            {
+                "name": "Crystal Mountain",
+                "latitude": 46.9355117,
+                "longitude": -121.4750288,
+                "country": "US",
+                "admin1": "WA",
+            },
+        )
+    ]
+
+
+def test_seed_coordinate_cache_from_catalog_reads_catalog_coordinates(tmp_path):
+    cache = _DummyCoordCache()
+    catalog = tmp_path / "resorts.yml"
+    catalog.write_text(
+        json.dumps(
+            [
+                {
+                    "resort_id": "crystal-mountain-wa",
+                    "query": "Crystal Mountain, WA",
+                    "name": "Crystal Mountain",
+                    "country": "US",
+                    "region": "west",
+                    "pass_types": ["ikon"],
+                    "state": "WA",
+                    "latitude": 46.9355117,
+                    "longitude": -121.4750288,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    seed_coordinate_cache_from_catalog(cache, str(catalog))
+    assert len(cache.set_calls) == 1
+    assert cache.set_calls[0][0] == "Crystal Mountain, WA"
+    assert cache.set_calls[0][1]["latitude"] == 46.9355117

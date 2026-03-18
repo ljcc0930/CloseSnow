@@ -15,6 +15,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.constants import COORDINATES_CACHE_FILE
+from src.backend.io import seed_coordinate_cache_from_entries
 from src.backend.compute.payload_metadata import build_payload_metadata
 from src.backend.open_meteo import fetch_hourly_forecast, geocode
 from src.backend.pipelines.live_pipeline import run_live_payload
@@ -235,6 +236,7 @@ def _hourly_payload_for_resort(
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
     query = str(item.get("query", "")).strip()
+    seed_coordinate_cache_from_entries(coord_cache, [item])
     location = geocode(
         query,
         cache=cache,
