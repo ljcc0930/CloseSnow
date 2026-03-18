@@ -192,7 +192,9 @@
     ],
     "default_enabled": true,
     "display_name": "Steamboat, CO",
-    "website": "https://www.steamboat.com/"
+    "website": "https://www.steamboat.com/",
+    "latitude": 40.4572476,
+    "longitude": -106.80461
   },
   {
     "resort_id": "stratton-vt",
