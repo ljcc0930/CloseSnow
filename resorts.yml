@@ -48,7 +48,9 @@
     ],
     "default_enabled": true,
     "display_name": "Boyne Mountain, MI",
-    "website": "https://www.boynemountain.com/"
+    "website": "https://www.boynemountain.com/",
+    "latitude": 45.16388889,
+    "longitude": -84.93277778
   },
   {
     "resort_id": "brighton-ut",
