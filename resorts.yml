@@ -112,7 +112,9 @@
     ],
     "default_enabled": true,
     "display_name": "Mammoth Mountain, CA",
-    "website": "https://www.mammothmountain.com/"
+    "website": "https://www.mammothmountain.com/",
+    "latitude": 37.6501547,
+    "longitude": -119.037553
   },
   {
     "resort_id": "mt-brighton-mi",
