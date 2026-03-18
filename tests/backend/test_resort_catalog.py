@@ -8,6 +8,7 @@ from src.backend.resort_catalog import (
     search_resort_catalog,
     validate_resort_catalog,
 )
+from src.shared.config import DEFAULT_RESORTS_FILE
 
 
 def test_load_resort_catalog_from_txt(tmp_path):
@@ -133,3 +134,10 @@ def test_search_resort_catalog_supports_multi_term():
     ]
     assert [x["resort_id"] for x in search_resort_catalog(entries, "brighton epic")] == ["mt-brighton-mi"]
     assert [x["resort_id"] for x in search_resort_catalog(entries, "west ikon")] == ["snowbird-ut"]
+
+
+def test_default_catalog_keeps_crystal_mountain_coordinate_override():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "crystal-mountain-wa")
+    assert item["latitude"] == 46.9355117
+    assert item["longitude"] == -121.4750288
