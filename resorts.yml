@@ -1755,6 +1755,8 @@
     "name": "Winter Park Resort",
     "city": "Winter Park",
     "address": "Vasquez Ridge Drive, Winter Park, Grand County, Colorado, 80482, United States",
+    "latitude": 39.8868421,
+    "longitude": -105.7625915,
     "state": "CO",
     "country": "US",
     "region": "west",
