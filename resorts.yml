@@ -146,7 +146,9 @@
     ],
     "default_enabled": true,
     "display_name": "Palisades Tahoe, CA",
-    "website": "https://www.palisadestahoe.com/"
+    "website": "https://www.palisadestahoe.com/",
+    "latitude": 39.191058128195074,
+    "longitude": -120.2482625539726
   },
   {
     "resort_id": "snowbasin-ut",
