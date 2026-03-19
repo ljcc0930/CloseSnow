@@ -179,3 +179,23 @@ def test_default_catalog_keeps_snowmass_base_area_coordinates():
     item = next(x for x in entries if x["resort_id"] == "snowmass-co")
     assert item["latitude"] == 39.2089563
     assert item["longitude"] == -106.9499089
+
+
+def test_default_catalog_uses_official_aspen_four_mountain_urls():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    websites = {
+        x["resort_id"]: x["website"]
+        for x in entries
+        if x["resort_id"] in {
+            "aspen-mountain-co",
+            "aspen-highlands-co",
+            "buttermilk-co",
+            "snowmass-co",
+        }
+    }
+    assert websites == {
+        "aspen-mountain-co": "https://www.aspensnowmass.com/four-mountains/aspen-mountain",
+        "aspen-highlands-co": "https://www.aspensnowmass.com/four-mountains/aspen-highlands",
+        "buttermilk-co": "https://www.aspensnowmass.com/four-mountains/buttermilk",
+        "snowmass-co": "https://www.aspensnowmass.com/four-mountains/snowmass",
+    }

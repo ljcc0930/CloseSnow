@@ -31,7 +31,7 @@
     ],
     "default_enabled": true,
     "display_name": "Aspen Mountain, CO",
-    "website": "https://www.aspensnowmass.com/discover/the-resorts/aspen-mountain",
+    "website": "https://www.aspensnowmass.com/four-mountains/aspen-mountain",
     "latitude": 39.1760986,
     "longitude": -106.8292058
   },
@@ -49,7 +49,7 @@
     ],
     "default_enabled": true,
     "display_name": "Aspen Highlands, CO",
-    "website": "https://www.aspensnowmass.com/discover/the-resorts/aspen-highlands",
+    "website": "https://www.aspensnowmass.com/four-mountains/aspen-highlands",
     "latitude": 39.1553219,
     "longitude": -106.8691338
   },
@@ -67,7 +67,7 @@
     ],
     "default_enabled": true,
     "display_name": "Buttermilk, CO",
-    "website": "https://www.aspensnowmass.com/discover/the-resorts/buttermilk",
+    "website": "https://www.aspensnowmass.com/four-mountains/buttermilk",
     "latitude": 39.1928348,
     "longitude": -106.8695834
   },
@@ -85,7 +85,7 @@
     ],
     "default_enabled": true,
     "display_name": "Snowmass, CO",
-    "website": "https://www.aspensnowmass.com/discover/the-resorts/snowmass",
+    "website": "https://www.aspensnowmass.com/four-mountains/snowmass",
     "latitude": 39.2089563,
     "longitude": -106.9499089
   },
