@@ -448,6 +448,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert "snowbird-ut" in page
         assert "Resort Forecast: snowbird-ut" not in page
         assert '"dailySummary": {' in page
+        assert 'id="resort-location-link"' in page
         assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
         assert 'id="resort-timeline-section"' in page

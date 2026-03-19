@@ -50,6 +50,21 @@ h1 {
   text-decoration: underline;
 }
 
+.resort-location-link {
+  margin: -8px 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.resort-location-link a {
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.resort-location-link a:hover {
+  text-decoration: underline;
+}
+
 .resort-timeline-section {
   margin: 0 0 14px;
 }
