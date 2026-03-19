@@ -73,6 +73,8 @@ def test_render_hourly_pages(tmp_path):
     assert "Resort Forecast: snowbird-ut" not in html
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
     assert 'id="resort-local-time"' in html
+    assert 'id="resort-location-link"' in html
+    assert 'id="resort-airport-access-section"' in html
     assert 'id="hourly-charts"' in html
     assert 'id="resort-timeline-section"' in html
     assert 'id="resort-daily-summary-section"' not in html

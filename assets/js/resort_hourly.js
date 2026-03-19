@@ -9,8 +9,11 @@ const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
 const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
+const locationLinkEl = document.getElementById("resort-location-link");
 const timelineSection = document.getElementById("resort-timeline-section");
 const timelineRoot = document.getElementById("resort-timeline-root");
+const airportAccessSectionEl = document.getElementById("resort-airport-access-section");
+const airportAccessRootEl = document.getElementById("resort-airport-access-root");
 const metaEl = document.getElementById("hourly-meta");
 const errorEl = document.getElementById("hourly-error");
 const chartErrorEl = document.getElementById("hourly-chart-error");
@@ -281,6 +284,112 @@ const renderWebsiteLink = (payload) => {
     return;
   }
   websiteLinkEl.innerHTML = `Official website: <a href="${url}" target="_blank" rel="noopener noreferrer">link</a>`;
+};
+
+const renderResortLocationLink = (payload) => {
+  if (!locationLinkEl) return;
+  const mapsUrl = buildGoogleMapsUrl(payload?.input_latitude, payload?.input_longitude);
+  if (!mapsUrl) {
+    locationLinkEl.textContent = "";
+    return;
+  }
+  locationLinkEl.textContent = "";
+  locationLinkEl.appendChild(document.createTextNode("Resort location: "));
+  const mapsLink = buildExternalLink(mapsUrl, "View on Google Maps", "resort-location-map-link");
+  if (!mapsLink) return;
+  mapsLink.setAttribute("aria-label", `Open ${resolveResortLabel(payload)} location in Google Maps`);
+  locationLinkEl.appendChild(mapsLink);
+};
+
+const resolveNearbyAirportSource = (payload) => {
+  if (payload && Array.isArray(payload.nearby_airports)) {
+    return { list: payload.nearby_airports, source: "payload" };
+  }
+  if (Array.isArray(dailySummary?.nearbyAirports)) {
+    return { list: dailySummary.nearbyAirports, source: "summary" };
+  }
+  return { list: null, source: "missing" };
+};
+
+const normalizeNearbyAirport = (item) => {
+  if (!item || typeof item !== "object") return null;
+  const iataCode = String(item.iata_code || "").trim().toUpperCase();
+  const displayName = String(item.display_name || "").trim();
+  const locationLabel = String(item.location_label || "").trim();
+  const rawDistance = Number(item.distance_miles);
+  const distanceMiles = Number.isFinite(rawDistance) ? rawDistance : null;
+  if (!displayName) return null;
+  return {
+    iataCode: iataCode || "---",
+    displayName,
+    locationLabel,
+    distanceMiles,
+  };
+};
+
+const renderNearbyAirports = (payload) => {
+  if (!airportAccessSectionEl || !airportAccessRootEl) return;
+  const resolved = resolveNearbyAirportSource(payload);
+  airportAccessRootEl.textContent = "";
+
+  if (resolved.list === null) {
+    const empty = document.createElement("p");
+    empty.className = "resort-airport-access-empty";
+    empty.textContent = "Nearby airport data unavailable.";
+    airportAccessRootEl.appendChild(empty);
+    airportAccessSectionEl.hidden = false;
+    return;
+  }
+
+  const airports = resolved.list
+    .map((item) => normalizeNearbyAirport(item))
+    .filter((item) => item !== null);
+
+  if (!airports.length) {
+    const empty = document.createElement("p");
+    empty.className = "resort-airport-access-empty";
+    empty.textContent = "No nearby airports found within roughly 250 miles.";
+    airportAccessRootEl.appendChild(empty);
+    airportAccessSectionEl.hidden = false;
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "resort-airport-access-list";
+  airports.forEach((airport) => {
+    const card = document.createElement("article");
+    card.className = "resort-airport-access-card";
+
+    const head = document.createElement("p");
+    head.className = "resort-airport-access-card-head";
+
+    const code = document.createElement("span");
+    code.className = "resort-airport-access-code";
+    code.textContent = airport.iataCode;
+    head.appendChild(code);
+
+    if (airport.distanceMiles !== null) {
+      const distance = document.createElement("span");
+      distance.className = "resort-airport-access-distance";
+      distance.textContent = `${Math.round(airport.distanceMiles)} mi`;
+      head.appendChild(distance);
+    }
+
+    const name = document.createElement("p");
+    name.className = "resort-airport-access-name";
+    name.textContent = airport.displayName;
+
+    const location = document.createElement("p");
+    location.className = "resort-airport-access-location";
+    location.textContent = airport.locationLabel || "Location unavailable";
+
+    card.appendChild(head);
+    card.appendChild(name);
+    card.appendChild(location);
+    list.appendChild(card);
+  });
+  airportAccessRootEl.appendChild(list);
+  airportAccessSectionEl.hidden = false;
 };
 
 const syncLocalTimeTimer = () => {
@@ -683,6 +792,8 @@ const loadHourly = async () => {
     };
     renderLocalTime();
     renderWebsiteLink(payload);
+    renderResortLocationLink(payload);
+    renderNearbyAirports(payload);
     renderMeta();
     syncLocalTimeTimer();
     renderHourlyTable(payload);
@@ -699,6 +810,8 @@ const loadHourly = async () => {
     syncLocalTimeTimer();
     renderLocalTime();
     renderWebsiteLink(null);
+    renderResortLocationLink(null);
+    renderNearbyAirports(null);
     renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";
@@ -715,4 +828,5 @@ if (hoursSelect) {
 window.addEventListener("resize", rerenderChartsForResize);
 
 renderTimelineSummary();
+renderNearbyAirports(null);
 loadHourly();
