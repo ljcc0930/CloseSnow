@@ -36,6 +36,78 @@
     "longitude": -106.8615713
   },
   {
+    "resort_id": "aspen-mountain-co",
+    "query": "Aspen Mountain, CO",
+    "name": "Aspen Mountain",
+    "city": "Aspen",
+    "address": "Aspen Mountain, Aspen, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Aspen Mountain, CO",
+    "website": "https://www.aspensnowmass.com/discover/the-resorts/aspen-mountain",
+    "latitude": 39.1760986,
+    "longitude": -106.8292058
+  },
+  {
+    "resort_id": "aspen-highlands-co",
+    "query": "Aspen Highlands, CO",
+    "name": "Aspen Highlands",
+    "city": "Aspen",
+    "address": "Aspen Highlands, Aspen, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Aspen Highlands, CO",
+    "website": "https://www.aspensnowmass.com/discover/the-resorts/aspen-highlands",
+    "latitude": 39.1553219,
+    "longitude": -106.8691338
+  },
+  {
+    "resort_id": "buttermilk-co",
+    "query": "Buttermilk, CO",
+    "name": "Buttermilk",
+    "city": "Aspen",
+    "address": "Buttermilk Mountain, Aspen, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Buttermilk, CO",
+    "website": "https://www.aspensnowmass.com/discover/the-resorts/buttermilk",
+    "latitude": 39.1928348,
+    "longitude": -106.8695834
+  },
+  {
+    "resort_id": "snowmass-co",
+    "query": "Snowmass, CO",
+    "name": "Snowmass",
+    "city": "Snowmass Village",
+    "address": "Snowmass, Snowmass Village, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Snowmass, CO",
+    "website": "https://www.aspensnowmass.com/discover/the-resorts/snowmass",
+    "latitude": 39.2130418,
+    "longitude": -106.9378207
+  },
+  {
     "resort_id": "boyne-mountain-mi",
     "query": "Boyne Mountain Resort, MI",
     "name": "Boyne Mountain Resort",
