@@ -34,6 +34,7 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
                 "state": "WA",
                 "country": "US",
                 "region": "west",
+                "subregion": "west-coast",
                 "pass_types": ["ikon"],
                 "latitude": 46.9355117,
                 "longitude": -121.4750288,

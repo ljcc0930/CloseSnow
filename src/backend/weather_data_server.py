@@ -31,11 +31,11 @@ def _append_common_headers(handler: BaseHTTPRequestHandler, allow_origin: str) -
     handler.send_header("Access-Control-Allow-Headers", "Content-Type")
 
 
-def _split_query_values(values: List[str]) -> List[str]:
+def _split_query_values(values: List[str], *, to_upper: bool = False) -> List[str]:
     out: List[str] = []
     for raw in values:
         for part in raw.split(","):
-            val = part.strip().lower()
+            val = part.strip().upper() if to_upper else part.strip().lower()
             if val:
                 out.append(val)
     seen = set()
@@ -68,11 +68,15 @@ def _catalog_item_with_display_name(item: Dict[str, object]) -> Dict[str, object
 def _available_filters(catalog: List[Dict[str, object]]) -> Dict[str, Dict[str, int]]:
     pass_type_counts: Dict[str, int] = {}
     region_counts: Dict[str, int] = {}
+    subregion_counts: Dict[str, int] = {}
     country_counts: Dict[str, int] = {}
     for item in catalog:
         region = str(item.get("region", "")).strip().lower()
         if region:
             region_counts[region] = region_counts.get(region, 0) + 1
+        subregion = str(item.get("subregion", "")).strip().lower()
+        if subregion:
+            subregion_counts[subregion] = subregion_counts.get(subregion, 0) + 1
         country = str(item.get("country", "")).strip().upper()
         if country:
             country_counts[country] = country_counts.get(country, 0) + 1
@@ -83,6 +87,7 @@ def _available_filters(catalog: List[Dict[str, object]]) -> Dict[str, Dict[str, 
     return {
         "pass_type": pass_type_counts,
         "region": region_counts,
+        "subregion": subregion_counts,
         "country": country_counts,
     }
 
@@ -92,7 +97,8 @@ def _apply_catalog_filters(
     *,
     pass_types: List[str],
     region: str,
-    country: str,
+    subregions: List[str],
+    countries: List[str],
     search: str,
 ) -> List[Dict[str, object]]:
     items = search_resort_catalog(catalog, search)
@@ -108,9 +114,12 @@ def _apply_catalog_filters(
     if region:
         want = region.lower()
         items = [item for item in items if str(item.get("region", "")).strip().lower() == want]
-    if country:
-        want_country = country.upper()
-        items = [item for item in items if str(item.get("country", "")).strip().upper() == want_country]
+    if subregions:
+        allowed_subregions = set(subregions)
+        items = [item for item in items if str(item.get("subregion", "")).strip().lower() in allowed_subregions]
+    if countries:
+        allowed_countries = set(countries)
+        items = [item for item in items if str(item.get("country", "")).strip().upper() in allowed_countries]
     return items
 
 
@@ -130,7 +139,8 @@ def _default_applied_filters() -> Dict[str, object]:
     return {
         "pass_type": [],
         "region": "",
-        "country": "",
+        "subregion": [],
+        "country": [],
         "search": "",
         "search_all": True,
         "include_default": True,
@@ -142,7 +152,8 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
     resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
     pass_types = _split_query_values(qs.get("pass_type", []))
     region = (qs.get("region", [""])[0] or "").strip().lower()
-    country = (qs.get("country", [""])[0] or "").strip().upper()
+    subregions = _split_query_values(qs.get("subregion", []))
+    countries = _split_query_values(qs.get("country", []), to_upper=True)
     search_text = (qs.get("search", [""])[0] or "").strip()
     has_search_all = "search_all" in qs
     search_all = _to_bool_flag((qs.get("search_all", [""])[0] or "")) if has_search_all else True
@@ -152,7 +163,8 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
     applied = {
         "pass_type": pass_types,
         "region": region,
-        "country": country,
+        "subregion": subregions,
+        "country": countries,
         "search": search_text,
         "search_all": search_all,
         "include_default": include_default,
@@ -162,7 +174,7 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
     catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
     available = _available_filters(catalog)
     has_filters = bool(
-        pass_types or region or country or search_text or include_all or has_include_default or has_search_all
+        pass_types or region or subregions or countries or search_text or include_all or has_include_default or has_search_all
     )
     if not has_filters:
         applied["search_all"] = True
@@ -180,17 +192,19 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
             default_catalog,
             pass_types=pass_types,
             region=region,
-            country=country,
+            subregions=subregions,
+            countries=countries,
             search=search_text,
         )
-    elif include_all and not (pass_types or region or country or search_text):
+    elif include_all and not (pass_types or region or subregions or countries or search_text):
         filtered_catalog = list(catalog)
     else:
         filtered_catalog = _apply_catalog_filters(
             catalog,
             pass_types=pass_types,
             region=region,
-            country=country,
+            subregions=subregions,
+            countries=countries,
             search=search_text,
         )
 
@@ -286,8 +300,9 @@ def _hourly_payload_for_resort(
         "website": str(item.get("website") or "").strip(),
         "matched_name": location.name,
         "country": item.get("country"),
-        "region": item.get("region"),
-        "pass_types": item.get("pass_types", []),
+                "region": item.get("region"),
+                "subregion": item.get("subregion"),
+                "pass_types": item.get("pass_types", []),
         "timezone": forecast.get("timezone"),
         "model": "ecmwf_ifs025",
         "input_latitude": location.latitude,
@@ -372,12 +387,14 @@ def make_handler(
                     return
                 pass_types = _split_query_values(qs.get("pass_type", []))
                 region = (qs.get("region", [""])[0] or "").strip().lower()
-                country = (qs.get("country", [""])[0] or "").strip().upper()
+                subregions = _split_query_values(qs.get("subregion", []))
+                countries = _split_query_values(qs.get("country", []), to_upper=True)
                 items = _apply_catalog_filters(
                     catalog,
                     pass_types=pass_types,
                     region=region,
-                    country=country,
+                    subregions=subregions,
+                    countries=countries,
                     search=search_text,
                 )
                 self._write_json(
@@ -388,7 +405,8 @@ def make_handler(
                         "applied_filters": {
                             "pass_type": pass_types,
                             "region": region,
-                            "country": country,
+                            "subregion": subregions,
+                            "country": countries,
                             "search_all": True,
                             "include_default": False,
                             "include_all": False,

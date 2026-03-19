@@ -46,6 +46,7 @@ def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadat
         report["resort_id"] = str(meta.get("resort_id", "")).strip()
         report["pass_types"] = list(meta.get("pass_types") or [])
         report["region"] = str(meta.get("region", "")).strip().lower()
+        report["subregion"] = str(meta.get("subregion", "")).strip().lower()
         report["default_resort"] = bool(meta.get("default_enabled", False))
         report["ljcc_favorite"] = report["default_resort"]
         report["display_name"] = str(meta.get("display_name") or query).strip()
