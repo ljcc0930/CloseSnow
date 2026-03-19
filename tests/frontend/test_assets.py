@@ -87,8 +87,14 @@ def test_read_asset_bytes_reads_known_assets():
     assert "https://ljcc0930.github.io/CloseSnow" in hourly_js_text
     assert "https://www.google.com/maps/search/?api=1&query=" in hourly_js_text
     assert "buildCoordinateIssueUrl" in hourly_js_text
+    assert "buildCoordinateEntryFragment" in hourly_js_text
     assert "buildCoordinateMetaFragment" in hourly_js_text
+    assert '"Resort coords"' in hourly_js_text
+    assert '"Forecast grid"' in hourly_js_text
+    assert "payload?.input_latitude" in hourly_js_text
+    assert "payload?.input_longitude" in hourly_js_text
     assert "(Wrong coordinates?)" in hourly_js_text
+    assert ".hourly-meta-coordinate-label" in hourly_css_text
     assert 'return "Today";' in hourly_js_text
     assert "const resolveChartWidth = () => {" in hourly_js_text
     assert "const splitTimeLabel = (rawTime) => {" in hourly_js_text

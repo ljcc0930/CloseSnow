@@ -79,6 +79,8 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
 
     assert payload is not None
     assert payload["matched_name"] == "Crystal Mountain"
+    assert payload["input_latitude"] == 46.9355117
+    assert payload["input_longitude"] == -121.4750288
     assert payload["resolved_latitude"] == 46.9355117
     assert payload["resolved_longitude"] == -121.4750288
     assert coord_cache.saved is True

@@ -290,6 +290,8 @@ def _hourly_payload_for_resort(
         "pass_types": item.get("pass_types", []),
         "timezone": forecast.get("timezone"),
         "model": "ecmwf_ifs025",
+        "input_latitude": location.latitude,
+        "input_longitude": location.longitude,
         "resolved_latitude": forecast.get("latitude"),
         "resolved_longitude": forecast.get("longitude"),
         "hours": n,
