@@ -40,3 +40,5 @@ tmp_*.idx
 # Keep docs and source scripts tracked
 !README.md
 !*.py
+!src/backend/data/
+!src/backend/data/*.json
