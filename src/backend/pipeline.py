@@ -4,6 +4,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
+from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog as load_airport_catalog_airports
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.compute import build_payload_metadata, run_pipeline_async as _run_pipeline_async, select_resorts
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
@@ -65,6 +66,28 @@ def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadat
             report["admin1"] = str(meta.get("state", "")).strip()
 
 
+def _to_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _enrich_reports_with_nearby_airports(reports: List[Dict[str, Any]], airports: List[Dict[str, Any]]) -> None:
+    for report in reports:
+        lat = _to_float(report.get("input_latitude"))
+        lon = _to_float(report.get("input_longitude"))
+        if lat is None or lon is None:
+            report["nearby_airports"] = []
+            continue
+        report["nearby_airports"] = find_nearby_airports(
+            resort_latitude=lat,
+            resort_longitude=lon,
+            airports=airports,
+            radius_miles=250.0,
+        )
+
+
 def compute_pipeline_payload(
     resorts: Optional[List[str]] = None,
     resorts_file: str = DEFAULT_RESORTS_FILE,
@@ -111,6 +134,11 @@ def compute_pipeline_payload(
     failed: List[Dict[str, str]] = async_result["failed"]
     catalog_index = _catalog_metadata_by_query([resorts_file, DEFAULT_RESORTS_FILE])
     _enrich_reports_with_catalog_metadata(reports, catalog_index)
+    try:
+        airports = load_airport_catalog_airports()
+    except Exception:
+        airports = []
+    _enrich_reports_with_nearby_airports(reports, airports)
 
     out = build_payload_metadata(
         cache_path=cache_path,

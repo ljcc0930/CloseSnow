@@ -229,3 +229,61 @@ def test_run_pipeline_uses_default_resorts_when_empty(monkeypatch, tmp_path):
 
     pipeline.run_pipeline(resorts=[], resorts_file="", use_default_resorts=False, write_outputs=False)
     assert captured["selected"] == ["D1", "D2"]
+
+
+def test_run_pipeline_enriches_nearby_airports(monkeypatch, tmp_path):
+    _patch_pipeline_primitives(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        "src.backend.pipeline.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "region": "west",
+                "country": "US",
+                "pass_types": ["ikon"],
+                "default_enabled": True,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "src.backend.pipeline.load_airport_catalog_airports",
+        lambda: [
+            {
+                "airport_id": "slc-salt-lake-city",
+                "iata_code": "SLC",
+                "display_name": "Salt Lake City International Airport",
+                "location_label": "Salt Lake City, UT, US",
+                "latitude": 40.7884,
+                "longitude": -111.9778,
+            }
+        ],
+    )
+
+    async def fake_run_pipeline_async(**kwargs):  # noqa: ANN001
+        return {
+            "reports": [
+                {
+                    "query": "Snowbird, UT",
+                    "daily": [],
+                    "input_latitude": 40.5764,
+                    "input_longitude": -111.6549,
+                }
+            ],
+            "failed": [],
+        }
+
+    monkeypatch.setattr("src.backend.pipeline._run_pipeline_async", fake_run_pipeline_async)
+    monkeypatch.setattr("src.backend.pipeline.validate_weather_payload_v1", lambda payload: None)
+
+    out = pipeline.run_pipeline(
+        resorts=["Snowbird, UT"],
+        resorts_file="",
+        use_default_resorts=False,
+        write_outputs=False,
+    )
+    nearby = out["reports"][0]["nearby_airports"]
+    assert len(nearby) == 1
+    assert nearby[0]["iata_code"] == "SLC"
+    assert nearby[0]["distance_miles"] > 0

@@ -74,6 +74,83 @@ h1 {
   font-size: 16px;
 }
 
+.resort-airport-access-section {
+  margin: 0 0 14px;
+}
+
+.resort-airport-access-section h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.resort-airport-access-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.resort-airport-access-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+  padding: 10px 12px;
+}
+
+.resort-airport-access-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.resort-airport-access-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resort-airport-access-distance {
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.resort-airport-access-name {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resort-airport-access-location {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resort-airport-access-empty {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .resort-daily-summary-wrap {
   overflow-x: auto;
   border: 1px solid #d1d5db;
@@ -370,7 +447,17 @@ h1 {
   font-weight: 600;
 }
 
+@media (max-width: 1200px) {
+  .resort-airport-access-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
+  .resort-airport-access-list {
+    grid-template-columns: 1fr;
+  }
+
   .hourly-charts {
     grid-template-columns: 1fr;
   }

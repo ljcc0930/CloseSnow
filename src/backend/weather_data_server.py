@@ -14,6 +14,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
+from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
 from src.backend.constants import COORDINATES_CACHE_FILE
 from src.backend.io import seed_coordinate_cache_from_entries
 from src.backend.compute.payload_metadata import build_payload_metadata
@@ -272,6 +273,16 @@ def _hourly_payload_for_resort(
     )
     cache.save()
     coord_cache.save()
+    try:
+        airports = load_airport_catalog()
+    except Exception:
+        airports = []
+    nearby_airports = find_nearby_airports(
+        resort_latitude=location.latitude,
+        resort_longitude=location.longitude,
+        airports=airports,
+        radius_miles=250.0,
+    )
 
     hourly = forecast.get("hourly", {}) if isinstance(forecast, dict) else {}
     times = list(hourly.get("time", []))
@@ -309,6 +320,7 @@ def _hourly_payload_for_resort(
         "input_longitude": location.longitude,
         "resolved_latitude": forecast.get("latitude"),
         "resolved_longitude": forecast.get("longitude"),
+        "nearby_airports": nearby_airports,
         "hours": n,
         "hourly": trimmed_hourly,
     }

@@ -43,6 +43,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert ".hourly-charts" in hourly_css_text
     assert ".resort-local-time" in hourly_css_text
     assert ".resort-location-link" in hourly_css_text
+    assert ".resort-airport-access-section" in hourly_css_text
+    assert ".resort-airport-access-list" in hourly_css_text
     assert ".resort-timeline-section" in hourly_css_text
     assert ".hourly-meta-issue-link" in hourly_css_text
     assert ".compact-day-head-today-anchor" in hourly_css_text
@@ -51,6 +53,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "background: #d7dde6;" in hourly_css_text
     assert "box-shadow: inset 1px 0 0 #f3f4f6, inset -1px 0 0 #f3f4f6;" in hourly_css_text
     assert "box-shadow: inset 3px 0 0 #0f766e, inset -3px 0 0 #0f766e;" not in hourly_css_text
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in hourly_css_text
+    assert "@media (max-width: 1200px)" in hourly_css_text
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in hourly_css_text
     assert "@media (max-width: 980px)" in hourly_css_text
     assert "grid-template-columns: 1fr;" in hourly_css_text
@@ -96,8 +100,12 @@ def test_read_asset_bytes_reads_known_assets():
     assert "buildCoordinateEntryFragment" in hourly_js_text
     assert "buildCoordinateMetaFragment" in hourly_js_text
     assert "renderResortLocationLink" in hourly_js_text
+    assert "renderNearbyAirports" in hourly_js_text
     assert '"Resort location: "' in hourly_js_text
     assert '"View on Google Maps"' in hourly_js_text
+    assert "payload.nearby_airports" in hourly_js_text
+    assert "dailySummary?.nearbyAirports" in hourly_js_text
+    assert "No nearby airports found within roughly 250 miles." in hourly_js_text
     assert '"Resort coords"' in hourly_js_text
     assert '"Forecast grid"' in hourly_js_text
     assert "payload?.input_latitude" in hourly_js_text
