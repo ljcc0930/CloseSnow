@@ -9,6 +9,7 @@ const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
 const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
+const locationLinkEl = document.getElementById("resort-location-link");
 const timelineSection = document.getElementById("resort-timeline-section");
 const timelineRoot = document.getElementById("resort-timeline-root");
 const metaEl = document.getElementById("hourly-meta");
@@ -281,6 +282,21 @@ const renderWebsiteLink = (payload) => {
     return;
   }
   websiteLinkEl.innerHTML = `Official website: <a href="${url}" target="_blank" rel="noopener noreferrer">link</a>`;
+};
+
+const renderResortLocationLink = (payload) => {
+  if (!locationLinkEl) return;
+  const mapsUrl = buildGoogleMapsUrl(payload?.input_latitude, payload?.input_longitude);
+  if (!mapsUrl) {
+    locationLinkEl.textContent = "";
+    return;
+  }
+  locationLinkEl.textContent = "";
+  locationLinkEl.appendChild(document.createTextNode("Resort location: "));
+  const mapsLink = buildExternalLink(mapsUrl, "View on Google Maps", "resort-location-map-link");
+  if (!mapsLink) return;
+  mapsLink.setAttribute("aria-label", `Open ${resolveResortLabel(payload)} location in Google Maps`);
+  locationLinkEl.appendChild(mapsLink);
 };
 
 const syncLocalTimeTimer = () => {
@@ -683,6 +699,7 @@ const loadHourly = async () => {
     };
     renderLocalTime();
     renderWebsiteLink(payload);
+    renderResortLocationLink(payload);
     renderMeta();
     syncLocalTimeTimer();
     renderHourlyTable(payload);
@@ -699,6 +716,7 @@ const loadHourly = async () => {
     syncLocalTimeTimer();
     renderLocalTime();
     renderWebsiteLink(null);
+    renderResortLocationLink(null);
     renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";
