@@ -129,6 +129,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
                 "query": "A",
                 "display_name": "Alpha Resort",
                 "region": "west",
+                "subregion": "rockies",
                 "country": "US",
                 "country_name": "United States",
                 "pass_types": ["ikon"],
@@ -173,6 +174,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["resort_id"] == "a-id"
     assert out["reports"][0]["pass_types"] == ["ikon"]
     assert out["reports"][0]["region"] == "west"
+    assert out["reports"][0]["subregion"] == "rockies"
     assert out["reports"][0]["country_code"] == "US"
     assert out["reports"][0]["country_name"] == "United States"
     assert out["reports"][0]["state_name"] == "Utah"

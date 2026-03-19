@@ -67,8 +67,11 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
         assert payload["schema_version"] == valid_payload["schema_version"]
         assert payload["available_filters"]["pass_type"]["ikon"] == 1
         assert payload["available_filters"]["pass_type"]["epic"] == 1
+        assert "subregion" in payload["available_filters"]
         assert "indy" not in payload["available_filters"]["pass_type"]
         assert payload["applied_filters"]["pass_type"] == []
+        assert payload["applied_filters"]["subregion"] == []
+        assert payload["applied_filters"]["country"] == []
         assert payload["applied_filters"]["search_all"] is True
         assert payload["applied_filters"]["include_all"] is False
         assert health["ok"] is True
@@ -140,7 +143,7 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
         assert captured["resorts_file"] == ""
         assert payload["applied_filters"]["pass_type"] == ["epic"]
         assert payload["applied_filters"]["region"] == "east"
-        assert payload["applied_filters"]["country"] == "US"
+        assert payload["applied_filters"]["country"] == ["US"]
         assert payload["applied_filters"]["search_all"] is True
         assert payload["applied_filters"]["include_all"] is False
     finally:

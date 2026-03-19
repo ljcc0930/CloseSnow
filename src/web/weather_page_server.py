@@ -91,7 +91,7 @@ def _hourly_endpoint_from_data_source(base_url: str) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, "/api/resort-hourly", "", ""))
 
 
-_SERVER_FILTER_QUERY_KEYS = ("pass_type", "region", "country", "search", "include_all", "include_default", "search_all")
+_SERVER_FILTER_QUERY_KEYS = ("pass_type", "region", "subregion", "country", "search", "include_all", "include_default", "search_all")
 
 
 def _qs_without_server_filters(qs: Dict[str, List[str]]) -> Dict[str, List[str]]:
@@ -167,7 +167,7 @@ def make_handler(
                     catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
                     payload["available_filters"] = _available_filters(catalog)
                 except Exception:
-                    payload["available_filters"] = {"pass_type": {}, "region": {}, "country": {}}
+                    payload["available_filters"] = {"pass_type": {}, "region": {}, "subregion": {}, "country": {}}
             if "applied_filters" not in payload:
                 payload["applied_filters"] = _default_applied_filters()
             return payload

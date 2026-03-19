@@ -16,7 +16,7 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 - Main page is shell-first: lightweight `index.html` + client-side render from payload JSON
 - Frontend filters are browser-side (URL state sync, no reload)
 - Backend `/api/data` supports query-based filtering for API clients
-- Resort catalog metadata (`resorts.yml`): `resort_id`, `query`, `display_name`, `website`, `pass_types`, `region`, `country`, `default_enabled`
+- Resort catalog metadata (`resorts.yml`): `resort_id`, `query`, `display_name`, `website`, `pass_types`, `region`, `subregion`, `country`, `default_enabled`
 - Concurrent resort processing via `--max-workers`
 - Date-suffixed API cache + persistent coordinate cache
 
@@ -234,7 +234,8 @@ Notes:
 - `resort` (repeatable)
 - `pass_type` (repeatable or comma-separated)
 - `region` (`west|east|intl`)
-- `country` (ISO-2)
+- `subregion` (repeatable or comma-separated: `rockies|west-coast|midwest|mid-atlantic|northeast|europe|asia|australia-new-zealand|south-america`)
+- `country` (repeatable or comma-separated ISO-2)
 - `search` (free text)
 - `search_all` (`1|true|yes|on`)
 - `include_default` (`1|true|yes|on`)
@@ -244,7 +245,8 @@ Notes:
 
 - `pass_type` (repeatable or comma-separated)
 - `region`
-- `country`
+- `subregion` (repeatable or comma-separated)
+- `country` (repeatable or comma-separated ISO-2)
 - `search`
 
 `/api/resort-hourly` query parameters:
@@ -279,7 +281,7 @@ Notes:
 - `/api/data` still supports server-side filtering for API clients
 - `Default resorts only` checked means `include_default=1` (show only `default_enabled=true`)
 - `Favorites only` and `Favorites First` are frontend-only behaviors on the main page
-- Search keyword + `search_all=1` ignores pass/region/country/default scope filters
+- Search keyword + `search_all=1` ignores pass/region/subregion/country/default scope filters
 
 This keeps static and dynamic page behavior aligned.
 
@@ -297,6 +299,7 @@ Catalog fields:
 - `state`
 - `country`
 - `region`
+- `subregion` (`rockies|west-coast|midwest|mid-atlantic|northeast|europe|asia|australia-new-zealand|south-america`)
 - `pass_types` (`ikon|epic|indy`)
 - `default_enabled`
 

@@ -15,7 +15,8 @@
     "display_name": "Arapahoe Basin, CO",
     "website": "https://www.arapahoebasin.com/",
     "latitude": 39.6279102,
-    "longitude": -105.8749685
+    "longitude": -105.8749685,
+    "subregion": "rockies"
   },
   {
     "resort_id": "aspen-mountain-co",
@@ -33,7 +34,8 @@
     "display_name": "Aspen Mountain, CO",
     "website": "https://www.aspensnowmass.com/four-mountains/aspen-mountain",
     "latitude": 39.1760986,
-    "longitude": -106.8292058
+    "longitude": -106.8292058,
+    "subregion": "rockies"
   },
   {
     "resort_id": "aspen-highlands-co",
@@ -51,7 +53,8 @@
     "display_name": "Aspen Highlands, CO",
     "website": "https://www.aspensnowmass.com/four-mountains/aspen-highlands",
     "latitude": 39.1553219,
-    "longitude": -106.8691338
+    "longitude": -106.8691338,
+    "subregion": "rockies"
   },
   {
     "resort_id": "buttermilk-co",
@@ -69,7 +72,8 @@
     "display_name": "Buttermilk, CO",
     "website": "https://www.aspensnowmass.com/four-mountains/buttermilk",
     "latitude": 39.1928348,
-    "longitude": -106.8695834
+    "longitude": -106.8695834,
+    "subregion": "rockies"
   },
   {
     "resort_id": "snowmass-co",
@@ -87,7 +91,8 @@
     "display_name": "Snowmass, CO",
     "website": "https://www.aspensnowmass.com/four-mountains/snowmass",
     "latitude": 39.2089563,
-    "longitude": -106.9499089
+    "longitude": -106.9499089,
+    "subregion": "rockies"
   },
   {
     "resort_id": "boyne-mountain-mi",
@@ -106,7 +111,8 @@
     "display_name": "Boyne Mountain, MI",
     "website": "https://www.boynemountain.com/",
     "latitude": 45.16388889,
-    "longitude": -84.93277778
+    "longitude": -84.93277778,
+    "subregion": "midwest"
   },
   {
     "resort_id": "brighton-ut",
@@ -122,7 +128,8 @@
     ],
     "default_enabled": true,
     "display_name": "Brighton, UT",
-    "website": "https://www.brightonresort.com/"
+    "website": "https://www.brightonresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "copper-mountain-co",
@@ -140,7 +147,8 @@
     "display_name": "Copper Mountain, CO",
     "website": "https://www.coppercolorado.com/",
     "latitude": 39.50665,
-    "longitude": -106.14224
+    "longitude": -106.14224,
+    "subregion": "rockies"
   },
   {
     "resort_id": "killington-vt",
@@ -156,7 +164,8 @@
     ],
     "default_enabled": true,
     "display_name": "Killington, VT",
-    "website": "https://www.killington.com/"
+    "website": "https://www.killington.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "mammoth-mountain-ca",
@@ -174,7 +183,8 @@
     "display_name": "Mammoth Mountain, CA",
     "website": "https://www.mammothmountain.com/",
     "latitude": 37.6501547,
-    "longitude": -119.037553
+    "longitude": -119.037553,
+    "subregion": "west-coast"
   },
   {
     "resort_id": "mt-brighton-mi",
@@ -192,7 +202,8 @@
     ],
     "default_enabled": true,
     "display_name": "Mt Brighton, MI",
-    "website": "https://www.mtbrighton.com/"
+    "website": "https://www.mtbrighton.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "palisades-tahoe-ca",
@@ -210,7 +221,8 @@
     "display_name": "Palisades Tahoe, CA",
     "website": "https://www.palisadestahoe.com/",
     "latitude": 39.191058128195074,
-    "longitude": -120.2482625539726
+    "longitude": -120.2482625539726,
+    "subregion": "west-coast"
   },
   {
     "resort_id": "snowbasin-ut",
@@ -226,7 +238,8 @@
     ],
     "default_enabled": true,
     "display_name": "Snowbasin, UT",
-    "website": "https://www.snowbasin.com/"
+    "website": "https://www.snowbasin.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "snowbird-ut",
@@ -242,7 +255,8 @@
     ],
     "default_enabled": true,
     "display_name": "Snowbird, UT",
-    "website": "https://www.snowbird.com/"
+    "website": "https://www.snowbird.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "steamboat-co",
@@ -260,7 +274,8 @@
     "display_name": "Steamboat, CO",
     "website": "https://www.steamboat.com/",
     "latitude": 40.4572476,
-    "longitude": -106.80461
+    "longitude": -106.80461,
+    "subregion": "rockies"
   },
   {
     "resort_id": "stratton-vt",
@@ -276,7 +291,8 @@
     ],
     "default_enabled": true,
     "display_name": "Stratton, VT",
-    "website": "https://www.stratton.com/"
+    "website": "https://www.stratton.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "appi-resort-japan",
@@ -292,7 +308,8 @@
     ],
     "default_enabled": false,
     "display_name": "APPI, Japan",
-    "website": "https://www.appi.co.jp/en/"
+    "website": "https://www.appi.co.jp/en/",
+    "subregion": "asia"
   },
   {
     "resort_id": "afton-alps-mn",
@@ -308,7 +325,8 @@
     ],
     "default_enabled": false,
     "display_name": "Afton Alps, MN",
-    "website": "https://www.aftonalps.com/"
+    "website": "https://www.aftonalps.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "alpine-valley-oh",
@@ -324,7 +342,8 @@
     ],
     "default_enabled": false,
     "display_name": "Alpine Valley, OH",
-    "website": "https://www.alpinevalleyohio.com/"
+    "website": "https://www.alpinevalleyohio.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "alta-ski-area-ut",
@@ -340,7 +359,8 @@
     ],
     "default_enabled": false,
     "display_name": "Alta Ski Area, UT",
-    "website": "https://www.alta.com/"
+    "website": "https://www.alta.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "alyeska-resort-ak",
@@ -356,7 +376,8 @@
     ],
     "default_enabled": false,
     "display_name": "Alyeska, AK",
-    "website": "https://www.alyeskaresort.com/"
+    "website": "https://www.alyeskaresort.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "arai-snow-resort-japan",
@@ -372,7 +393,8 @@
     ],
     "default_enabled": false,
     "display_name": "Arai Snow Resort, Japan",
-    "website": "https://www.lottehotel.com/arai-resort/en.html"
+    "website": "https://www.lottehotel.com/arai-resort/en.html",
+    "subregion": "asia"
   },
   {
     "resort_id": "attitash-nh",
@@ -388,7 +410,8 @@
     ],
     "default_enabled": false,
     "display_name": "Attitash, NH",
-    "website": "https://www.attitash.com/"
+    "website": "https://www.attitash.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "beaver-creek-co",
@@ -404,7 +427,8 @@
     ],
     "default_enabled": false,
     "display_name": "Beaver Creek, CO",
-    "website": "https://www.beavercreek.com/"
+    "website": "https://www.beavercreek.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "big-bear-mountain-resort-ca",
@@ -420,7 +444,8 @@
     ],
     "default_enabled": true,
     "display_name": "Big Bear, CA",
-    "website": "https://www.bigbearmountainresort.com/"
+    "website": "https://www.bigbearmountainresort.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "big-boulder-pa",
@@ -436,7 +461,8 @@
     ],
     "default_enabled": false,
     "display_name": "Big Boulder, PA",
-    "website": "https://www.jfbb.com/"
+    "website": "https://www.jfbb.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "big-sky-resort-mt",
@@ -452,7 +478,8 @@
     ],
     "default_enabled": true,
     "display_name": "Big Sky, MT",
-    "website": "https://bigskyresort.com/"
+    "website": "https://bigskyresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "blue-mountain-resort-pa",
@@ -468,7 +495,8 @@
     ],
     "default_enabled": false,
     "display_name": "Blue Mountain, PA",
-    "website": "https://www.skibluemt.com/"
+    "website": "https://www.skibluemt.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "blue-mountain-on",
@@ -484,7 +512,8 @@
     ],
     "default_enabled": false,
     "display_name": "Blue Mountain, ON",
-    "website": "https://www.bluemountain.ca/"
+    "website": "https://www.bluemountain.ca/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "boston-mills-brandywine-oh",
@@ -500,7 +529,8 @@
     ],
     "default_enabled": false,
     "display_name": "Boston Mills / Brandywine, OH",
-    "website": "https://www.bmbw.com/"
+    "website": "https://www.bmbw.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "breckenridge-co",
@@ -516,7 +546,8 @@
     ],
     "default_enabled": false,
     "display_name": "Breckenridge, CO",
-    "website": "https://www.breckenridge.com/"
+    "website": "https://www.breckenridge.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "camelback-resort-pa",
@@ -532,7 +563,8 @@
     ],
     "default_enabled": false,
     "display_name": "Camelback, PA",
-    "website": "https://www.camelbackresort.com/"
+    "website": "https://www.camelbackresort.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "chamonix-mont-blanc-valley-france",
@@ -548,7 +580,8 @@
     ],
     "default_enabled": false,
     "display_name": "Chamonix Mont-Blanc, France",
-    "website": "https://en.chamonix.com/chamonix-mont-blanc-valley"
+    "website": "https://en.chamonix.com/chamonix-mont-blanc-valley",
+    "subregion": "europe"
   },
   {
     "resort_id": "coronet-peak-new-zealand",
@@ -564,7 +597,8 @@
     ],
     "default_enabled": false,
     "display_name": "Coronet Peak, New Zealand",
-    "website": "https://www.coronetpeak.co.nz/"
+    "website": "https://www.coronetpeak.co.nz/",
+    "subregion": "australia-new-zealand"
   },
   {
     "resort_id": "the-remarkables-new-zealand",
@@ -580,7 +614,8 @@
     ],
     "default_enabled": false,
     "display_name": "The Remarkables, New Zealand",
-    "website": "https://www.theremarkables.co.nz/"
+    "website": "https://www.theremarkables.co.nz/",
+    "subregion": "australia-new-zealand"
   },
   {
     "resort_id": "mt-hutt-new-zealand",
@@ -596,7 +631,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mt Hutt, New Zealand",
-    "website": "https://www.mthutt.co.nz/"
+    "website": "https://www.mthutt.co.nz/",
+    "subregion": "australia-new-zealand"
   },
   {
     "resort_id": "crested-butte-co",
@@ -612,7 +648,8 @@
     ],
     "default_enabled": false,
     "display_name": "Crested Butte, CO",
-    "website": "https://www.skicb.com/"
+    "website": "https://www.skicb.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "crotched-nh",
@@ -628,7 +665,8 @@
     ],
     "default_enabled": false,
     "display_name": "Crotched, NH",
-    "website": "https://www.crotchedmtn.com/"
+    "website": "https://www.crotchedmtn.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "crystal-mountain-wa",
@@ -646,7 +684,8 @@
     ],
     "default_enabled": true,
     "display_name": "Crystal Mountain, WA",
-    "website": "https://www.crystalmountainresort.com/"
+    "website": "https://www.crystalmountainresort.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "cypress-mountain-bc",
@@ -662,7 +701,8 @@
     ],
     "default_enabled": false,
     "display_name": "Cypress Mountain, BC",
-    "website": "https://www.cypressmountain.com/"
+    "website": "https://www.cypressmountain.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "deer-valley-resort-ut",
@@ -678,7 +718,8 @@
     ],
     "default_enabled": false,
     "display_name": "Deer Valley, UT",
-    "website": "https://www.deervalley.com/"
+    "website": "https://www.deervalley.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "dolomiti-superski-italy",
@@ -694,7 +735,8 @@
     ],
     "default_enabled": false,
     "display_name": "Dolomiti Superski, Italy",
-    "website": "https://www.dolomitisuperski.com/en"
+    "website": "https://www.dolomitisuperski.com/en",
+    "subregion": "europe"
   },
   {
     "resort_id": "eldora-mountain-resort-co",
@@ -710,7 +752,8 @@
     ],
     "default_enabled": false,
     "display_name": "Eldora, CO",
-    "website": "https://www.eldora.com/"
+    "website": "https://www.eldora.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "furano-ski-resort-japan",
@@ -726,7 +769,8 @@
     ],
     "default_enabled": false,
     "display_name": "Furano, Japan",
-    "website": "https://www.princehotels.com/shinfurano/experience/furano-ski-area/"
+    "website": "https://www.princehotels.com/shinfurano/experience/furano-ski-area/",
+    "subregion": "asia"
   },
   {
     "resort_id": "grandvalira-resorts-andorra-andorra",
@@ -742,7 +786,8 @@
     ],
     "default_enabled": false,
     "display_name": "Grandvalira, Andorra",
-    "website": "https://www.grandvalira.com/en"
+    "website": "https://www.grandvalira.com/en",
+    "subregion": "europe"
   },
   {
     "resort_id": "granite-peak-wi",
@@ -759,7 +804,8 @@
     ],
     "default_enabled": false,
     "display_name": "Granite Peak, WI",
-    "website": "https://www.skigranitepeak.com/"
+    "website": "https://www.skigranitepeak.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "heavenly-ca",
@@ -777,7 +823,8 @@
     ],
     "default_enabled": true,
     "display_name": "Heavenly, CA",
-    "website": "https://www.skiheavenly.com/"
+    "website": "https://www.skiheavenly.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "hidden-valley-mo",
@@ -793,7 +840,8 @@
     ],
     "default_enabled": false,
     "display_name": "Hidden Valley, MO",
-    "website": "https://www.hiddenvalleyski.com/"
+    "website": "https://www.hiddenvalleyski.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "hidden-valley-pa",
@@ -809,7 +857,8 @@
     ],
     "default_enabled": false,
     "display_name": "Hidden Valley, PA",
-    "website": "https://www.hiddenvalleyresort.com/"
+    "website": "https://www.hiddenvalleyresort.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "hunter-ny",
@@ -825,7 +874,8 @@
     ],
     "default_enabled": false,
     "display_name": "Hunter, NY",
-    "website": "https://www.huntermtn.com/"
+    "website": "https://www.huntermtn.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "ischgl-austria",
@@ -841,7 +891,8 @@
     ],
     "default_enabled": false,
     "display_name": "Ischgl, Austria",
-    "website": "https://www.ischgl.com/en"
+    "website": "https://www.ischgl.com/en",
+    "subregion": "europe"
   },
   {
     "resort_id": "jack-frost-pa",
@@ -857,7 +908,8 @@
     ],
     "default_enabled": false,
     "display_name": "Jack Frost, PA",
-    "website": "https://www.jfbb.com/"
+    "website": "https://www.jfbb.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "jackson-hole-mountain-resort-wy",
@@ -873,7 +925,8 @@
     ],
     "default_enabled": true,
     "display_name": "Jackson Hole, WY",
-    "website": "https://www.jacksonhole.com/"
+    "website": "https://www.jacksonhole.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "june-mountain-ca",
@@ -891,7 +944,8 @@
     "display_name": "June Mountain, CA",
     "website": "https://www.junemountain.com/",
     "latitude": 37.7614022,
-    "longitude": -119.0839644
+    "longitude": -119.0839644,
+    "subregion": "west-coast"
   },
   {
     "resort_id": "keystone-co",
@@ -907,7 +961,8 @@
     ],
     "default_enabled": false,
     "display_name": "Keystone, CO",
-    "website": "https://www.keystoneresort.com/"
+    "website": "https://www.keystoneresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "killington-pico-vt",
@@ -923,7 +978,8 @@
     ],
     "default_enabled": false,
     "display_name": "Killington-Pico, VT",
-    "website": "https://www.picomountain.com/"
+    "website": "https://www.picomountain.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "kirkwood-ca",
@@ -939,7 +995,8 @@
     ],
     "default_enabled": true,
     "display_name": "Kirkwood, CA",
-    "website": "https://www.kirkwood.com/"
+    "website": "https://www.kirkwood.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "kitzb-hel-austria",
@@ -955,7 +1012,8 @@
     ],
     "default_enabled": false,
     "display_name": "Kitzbühel, Austria",
-    "website": "https://www.kitzski.at/en/"
+    "website": "https://www.kitzski.at/en/",
+    "subregion": "europe"
   },
   {
     "resort_id": "laurel-mountain-pa",
@@ -971,7 +1029,8 @@
     ],
     "default_enabled": false,
     "display_name": "Laurel Mountain, PA",
-    "website": "https://www.laurelmountainski.com/"
+    "website": "https://www.laurelmountainski.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "le-massif-qc",
@@ -987,7 +1046,8 @@
     ],
     "default_enabled": false,
     "display_name": "Le Massif, QC",
-    "website": "https://www.lemassif.com/en"
+    "website": "https://www.lemassif.com/en",
+    "subregion": "northeast"
   },
   {
     "resort_id": "liberty-mountain-pa",
@@ -1003,7 +1063,8 @@
     ],
     "default_enabled": false,
     "display_name": "Liberty Mountain, PA",
-    "website": "https://www.libertymountainresort.com/home.aspx"
+    "website": "https://www.libertymountainresort.com/home.aspx",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "loon-mountain-nh",
@@ -1019,7 +1080,8 @@
     ],
     "default_enabled": false,
     "display_name": "Loon Mountain, NH",
-    "website": "https://www.loonmtn.com/"
+    "website": "https://www.loonmtn.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "lutsen-mountains-mn",
@@ -1036,7 +1098,8 @@
     ],
     "default_enabled": false,
     "display_name": "Lutsen Mountains, MN",
-    "website": "https://www.lutsen.com/"
+    "website": "https://www.lutsen.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "mad-river-mountain-oh",
@@ -1052,7 +1115,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mad River Mountain, OH",
-    "website": "https://www.skimadriver.com/"
+    "website": "https://www.skimadriver.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "meg-ve-ski-area-france",
@@ -1068,7 +1132,8 @@
     ],
     "default_enabled": false,
     "display_name": "Megève Ski Area, France",
-    "website": "https://www.megeve.com/en/winter/ski-area"
+    "website": "https://www.megeve.com/en/winter/ski-area",
+    "subregion": "europe"
   },
   {
     "resort_id": "mona-yongpyong-south-korea",
@@ -1084,7 +1149,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mona YongPyong, South Korea",
-    "website": "https://www.yongpyong.co.kr/eng/"
+    "website": "https://www.yongpyong.co.kr/eng/",
+    "subregion": "asia"
   },
   {
     "resort_id": "mount-snow-vt",
@@ -1100,7 +1166,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mount Snow, VT",
-    "website": "https://www.mountsnow.com/"
+    "website": "https://www.mountsnow.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "mount-sunapee-nh",
@@ -1116,7 +1183,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mount Sunapee, NH",
-    "website": "https://www.mountsunapee.com/"
+    "website": "https://www.mountsunapee.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "mt-buller-australia",
@@ -1132,7 +1200,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mt Buller, Australia",
-    "website": "https://www.mtbuller.com.au/"
+    "website": "https://www.mtbuller.com.au/",
+    "subregion": "australia-new-zealand"
   },
   {
     "resort_id": "mt-bachelor-or",
@@ -1148,7 +1217,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mt. Bachelor, OR",
-    "website": "https://www.mtbachelor.com/"
+    "website": "https://www.mtbachelor.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "mt-t-japan",
@@ -1164,7 +1234,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mt. T, Japan",
-    "website": "https://tanigawadake-joch.com/en/mt-t/"
+    "website": "https://tanigawadake-joch.com/en/mt-t/",
+    "subregion": "asia"
   },
   {
     "resort_id": "myoko-suginohara-ski-resort-japan",
@@ -1180,7 +1251,8 @@
     ],
     "default_enabled": false,
     "display_name": "Myoko Suginohara, Japan",
-    "website": "https://www.princehotels.com/en/ski/myoko_kogen/"
+    "website": "https://www.princehotels.com/en/ski/myoko_kogen/",
+    "subregion": "asia"
   },
   {
     "resort_id": "nekoma-mountain-japan",
@@ -1196,7 +1268,8 @@
     ],
     "default_enabled": false,
     "display_name": "NEKOMA Mountain, Japan",
-    "website": "https://www.nekoma.co.jp/en/"
+    "website": "https://www.nekoma.co.jp/en/",
+    "subregion": "asia"
   },
   {
     "resort_id": "niseko-united-japan",
@@ -1212,7 +1285,8 @@
     ],
     "default_enabled": false,
     "display_name": "Niseko United, Japan",
-    "website": "https://www.niseko.ne.jp/en/"
+    "website": "https://www.niseko.ne.jp/en/",
+    "subregion": "asia"
   },
   {
     "resort_id": "northstar-ca",
@@ -1230,7 +1304,8 @@
     "display_name": "Northstar, CA",
     "website": "https://www.northstarcalifornia.com/",
     "latitude": 39.27505,
-    "longitude": -120.120671
+    "longitude": -120.120671,
+    "subregion": "west-coast"
   },
   {
     "resort_id": "okemo-vt",
@@ -1246,7 +1321,8 @@
     ],
     "default_enabled": false,
     "display_name": "Okemo, VT",
-    "website": "https://www.okemo.com/"
+    "website": "https://www.okemo.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "panorama-bc",
@@ -1262,7 +1338,8 @@
     ],
     "default_enabled": false,
     "display_name": "Panorama, BC",
-    "website": "https://www.panoramaresort.com/"
+    "website": "https://www.panoramaresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "paoli-peaks-in",
@@ -1278,7 +1355,8 @@
     ],
     "default_enabled": false,
     "display_name": "Paoli Peaks, IN",
-    "website": "https://www.paolipeaks.com/"
+    "website": "https://www.paolipeaks.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "park-city-ut",
@@ -1294,7 +1372,8 @@
     ],
     "default_enabled": false,
     "display_name": "Park City, UT",
-    "website": "https://www.parkcitymountain.com/"
+    "website": "https://www.parkcitymountain.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "red-mountain-bc",
@@ -1310,7 +1389,8 @@
     ],
     "default_enabled": false,
     "display_name": "RED Mountain, BC",
-    "website": "https://www.redresort.com/"
+    "website": "https://www.redresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "revelstoke-mountain-resort-bc",
@@ -1326,7 +1406,8 @@
     ],
     "default_enabled": false,
     "display_name": "Revelstoke, BC",
-    "website": "https://www.revelstokemountainresort.com/"
+    "website": "https://www.revelstokemountainresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "roundtop-mountain-pa",
@@ -1342,7 +1423,8 @@
     ],
     "default_enabled": false,
     "display_name": "Roundtop Mountain, PA",
-    "website": "https://www.skiroundtop.com/"
+    "website": "https://www.skiroundtop.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "schweitzer-id",
@@ -1358,7 +1440,8 @@
     ],
     "default_enabled": false,
     "display_name": "Schweitzer, ID",
-    "website": "https://www.schweitzer.com/"
+    "website": "https://www.schweitzer.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "seven-springs-pa",
@@ -1374,7 +1457,8 @@
     ],
     "default_enabled": false,
     "display_name": "Seven Springs, PA",
-    "website": "https://www.7springs.com/"
+    "website": "https://www.7springs.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "shiga-kogen-mountain-resort-japan",
@@ -1390,7 +1474,8 @@
     ],
     "default_enabled": false,
     "display_name": "Shiga Kogen, Japan",
-    "website": "https://www.shigakogen-ski.com/english/"
+    "website": "https://www.shigakogen-ski.com/english/",
+    "subregion": "asia"
   },
   {
     "resort_id": "sierra-at-tahoe-ca",
@@ -1408,7 +1493,8 @@
     ],
     "default_enabled": true,
     "display_name": "Sierra-at-Tahoe, CA",
-    "website": "https://www.sierraattahoe.com/"
+    "website": "https://www.sierraattahoe.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "sunshine-village-ab",
@@ -1426,7 +1512,8 @@
     ],
     "default_enabled": false,
     "display_name": "Sunshine Village, AB",
-    "website": "https://www.skibanff.com/"
+    "website": "https://www.skibanff.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "lake-louise-ab",
@@ -1444,7 +1531,8 @@
     ],
     "default_enabled": false,
     "display_name": "Lake Louise, AB",
-    "website": "https://www.skilouise.com/"
+    "website": "https://www.skilouise.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "mt-norquay-ab",
@@ -1462,7 +1550,8 @@
     ],
     "default_enabled": false,
     "display_name": "Mt Norquay, AB",
-    "website": "https://www.banffnorquay.com/"
+    "website": "https://www.banffnorquay.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "snow-creek-mo",
@@ -1478,7 +1567,8 @@
     ],
     "default_enabled": false,
     "display_name": "Snow Creek, MO",
-    "website": "https://www.skisnowcreek.com/"
+    "website": "https://www.skisnowcreek.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "snow-valley-ca",
@@ -1496,7 +1586,8 @@
     ],
     "default_enabled": true,
     "display_name": "Snow Valley, CA",
-    "website": "https://www.snow-valley.com/"
+    "website": "https://www.snow-valley.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "snowriver-mi",
@@ -1513,7 +1604,8 @@
     ],
     "default_enabled": false,
     "display_name": "Snowriver, MI",
-    "website": "https://www.snowriver.com/"
+    "website": "https://www.snowriver.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "snowshoe-wv",
@@ -1529,7 +1621,8 @@
     ],
     "default_enabled": false,
     "display_name": "Snowshoe, WV",
-    "website": "https://www.snowshoemtn.com/"
+    "website": "https://www.snowshoemtn.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "solitude-mountain-resort-ut",
@@ -1545,7 +1638,8 @@
     ],
     "default_enabled": true,
     "display_name": "Solitude, UT",
-    "website": "https://www.solitudemountain.com/"
+    "website": "https://www.solitudemountain.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "st-moritz-switzerland",
@@ -1561,7 +1655,8 @@
     ],
     "default_enabled": false,
     "display_name": "St. Moritz, Switzerland",
-    "website": "https://www.stmoritz.com/en/"
+    "website": "https://www.stmoritz.com/en/",
+    "subregion": "europe"
   },
   {
     "resort_id": "stevens-pass-wa",
@@ -1577,7 +1672,8 @@
     ],
     "default_enabled": true,
     "display_name": "Stevens Pass, WA",
-    "website": "https://www.stevenspass.com/"
+    "website": "https://www.stevenspass.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "stowe-vt",
@@ -1593,7 +1689,8 @@
     ],
     "default_enabled": false,
     "display_name": "Stowe, VT",
-    "website": "https://www.stowe.com/"
+    "website": "https://www.stowe.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "sugarbush-resort-vt",
@@ -1609,7 +1706,8 @@
     ],
     "default_enabled": true,
     "display_name": "Sugarbush, VT",
-    "website": "https://www.sugarbush.com/"
+    "website": "https://www.sugarbush.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "sugarloaf-me",
@@ -1625,7 +1723,8 @@
     ],
     "default_enabled": false,
     "display_name": "Sugarloaf, ME",
-    "website": "https://www.sugarloaf.com/"
+    "website": "https://www.sugarloaf.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "sun-peaks-resort-bc",
@@ -1641,7 +1740,8 @@
     ],
     "default_enabled": false,
     "display_name": "Sun Peaks, BC",
-    "website": "https://www.sunpeaksresort.com/"
+    "website": "https://www.sunpeaksresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "sun-valley-id",
@@ -1657,7 +1757,8 @@
     ],
     "default_enabled": false,
     "display_name": "Sun Valley, ID",
-    "website": "https://www.sunvalley.com/"
+    "website": "https://www.sunvalley.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "sunday-river-me",
@@ -1673,7 +1774,8 @@
     ],
     "default_enabled": false,
     "display_name": "Sunday River, ME",
-    "website": "https://www.sundayriver.com/"
+    "website": "https://www.sundayriver.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "taos-ski-valley-nm",
@@ -1689,7 +1791,8 @@
     ],
     "default_enabled": false,
     "display_name": "Taos Ski Valley, NM",
-    "website": "https://www.skitaos.com/"
+    "website": "https://www.skitaos.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "the-highlands-mi",
@@ -1705,7 +1808,8 @@
     ],
     "default_enabled": false,
     "display_name": "The Highlands, MI",
-    "website": "https://www.highlandsharborsprings.com/"
+    "website": "https://www.highlandsharborsprings.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "the-summit-at-snoqualmie-wa",
@@ -1721,7 +1825,8 @@
     ],
     "default_enabled": true,
     "display_name": "The Summit at Snoqualmie, WA",
-    "website": "https://www.summitatsnoqualmie.com/"
+    "website": "https://www.summitatsnoqualmie.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "thredbo-australia",
@@ -1737,7 +1842,8 @@
     ],
     "default_enabled": false,
     "display_name": "Thredbo, Australia",
-    "website": "https://www.thredbo.com.au/"
+    "website": "https://www.thredbo.com.au/",
+    "subregion": "australia-new-zealand"
   },
   {
     "resort_id": "tremblant-qc",
@@ -1753,7 +1859,8 @@
     ],
     "default_enabled": false,
     "display_name": "Tremblant, QC",
-    "website": "https://www.tremblant.ca/"
+    "website": "https://www.tremblant.ca/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "vail-co",
@@ -1769,7 +1876,8 @@
     ],
     "default_enabled": false,
     "display_name": "Vail, CO",
-    "website": "https://www.vail.com/"
+    "website": "https://www.vail.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "valle-nevado-chile",
@@ -1785,7 +1893,8 @@
     ],
     "default_enabled": false,
     "display_name": "Valle Nevado, Chile",
-    "website": "https://www.vallenevado.com/en/"
+    "website": "https://www.vallenevado.com/en/",
+    "subregion": "south-america"
   },
   {
     "resort_id": "valle-d-aosta-italy",
@@ -1801,7 +1910,8 @@
     ],
     "default_enabled": false,
     "display_name": "Valle d'Aosta, Italy",
-    "website": "https://www.aostavalley.com/en/"
+    "website": "https://www.aostavalley.com/en/",
+    "subregion": "europe"
   },
   {
     "resort_id": "whistler-blackcomb-bc",
@@ -1817,7 +1927,8 @@
     ],
     "default_enabled": false,
     "display_name": "Whistler Blackcomb, BC",
-    "website": "https://www.whistlerblackcomb.com/"
+    "website": "https://www.whistlerblackcomb.com/",
+    "subregion": "west-coast"
   },
   {
     "resort_id": "whitetail-resort-pa",
@@ -1833,7 +1944,8 @@
     ],
     "default_enabled": false,
     "display_name": "Whitetail, PA",
-    "website": "https://www.skiwhitetail.com/"
+    "website": "https://www.skiwhitetail.com/",
+    "subregion": "mid-atlantic"
   },
   {
     "resort_id": "wildcat-nh",
@@ -1849,7 +1961,8 @@
     ],
     "default_enabled": false,
     "display_name": "Wildcat, NH",
-    "website": "https://www.skiwildcat.com/"
+    "website": "https://www.skiwildcat.com/",
+    "subregion": "northeast"
   },
   {
     "resort_id": "wilmot-mountain-wi",
@@ -1865,7 +1978,8 @@
     ],
     "default_enabled": false,
     "display_name": "Wilmot Mountain, WI",
-    "website": "https://www.wilmotmountain.com/"
+    "website": "https://www.wilmotmountain.com/",
+    "subregion": "midwest"
   },
   {
     "resort_id": "winter-park-resort-co",
@@ -1883,7 +1997,8 @@
     ],
     "default_enabled": true,
     "display_name": "Winter Park, CO",
-    "website": "https://www.winterparkresort.com/"
+    "website": "https://www.winterparkresort.com/",
+    "subregion": "rockies"
   },
   {
     "resort_id": "yunding-snow-park-china",
@@ -1899,7 +2014,8 @@
     ],
     "default_enabled": false,
     "display_name": "Yunding Snow Park, China",
-    "website": "https://www.ysgsnow.com/"
+    "website": "https://www.ysgsnow.com/",
+    "subregion": "asia"
   },
   {
     "resort_id": "zao-onsen-ski-resort-japan",
@@ -1915,7 +2031,8 @@
     ],
     "default_enabled": false,
     "display_name": "Zao Onsen, Japan",
-    "website": "https://www.zao-spa.or.jp/english/ski/"
+    "website": "https://www.zao-spa.or.jp/english/ski/",
+    "subregion": "asia"
   },
   {
     "resort_id": "zermatt-matterhorn-switzerland",
@@ -1931,6 +2048,7 @@
     ],
     "default_enabled": false,
     "display_name": "Zermatt Matterhorn, Switzerland",
-    "website": "https://www.matterhornparadise.ch/en"
+    "website": "https://www.matterhornparadise.ch/en",
+    "subregion": "europe"
   }
 ]
