@@ -1411,11 +1411,13 @@
     "website": "https://www.sierraattahoe.com/"
   },
   {
-    "resort_id": "skibig3-ab",
-    "query": "SkiBig3, AB",
-    "name": "SkiBig3",
+    "resort_id": "sunshine-village-ab",
+    "query": "Sunshine Village, AB",
+    "name": "Sunshine Village",
     "city": "Banff",
-    "address": "Banff Explorer, Block 2 Lane, Downtown District, Banff, Alberta, T1L 1C3, Canada",
+    "address": "Sunshine Village, Banff National Park, Alberta, Canada",
+    "latitude": 51.07861,
+    "longitude": -115.78222,
     "state": "AB",
     "country": "CA",
     "region": "west",
@@ -1423,8 +1425,44 @@
       "ikon"
     ],
     "default_enabled": false,
-    "display_name": "SkiBig3, AB",
-    "website": "https://www.skibig3.com/"
+    "display_name": "Sunshine Village, AB",
+    "website": "https://www.skibanff.com/sunshine-village/"
+  },
+  {
+    "resort_id": "lake-louise-ab",
+    "query": "Lake Louise, AB",
+    "name": "Lake Louise Ski Resort",
+    "city": "Lake Louise",
+    "address": "1 Whitehorn Road, Lake Louise, Banff National Park, Alberta, Canada",
+    "latitude": 51.44194,
+    "longitude": -116.16056,
+    "state": "AB",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false,
+    "display_name": "Lake Louise, AB",
+    "website": "https://www.skilouise.com/"
+  },
+  {
+    "resort_id": "mt-norquay-ab",
+    "query": "Mt Norquay, AB",
+    "name": "Mt Norquay",
+    "city": "Banff",
+    "address": "Norquay Road, Banff, Banff National Park, Alberta, Canada",
+    "latitude": 51.2044,
+    "longitude": -115.5997,
+    "state": "AB",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false,
+    "display_name": "Mt Norquay, AB",
+    "website": "https://www.banffnorquay.com/"
   },
   {
     "resort_id": "snow-creek-mo",

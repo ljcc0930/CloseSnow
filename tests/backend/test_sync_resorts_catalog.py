@@ -61,7 +61,6 @@ def test_validate_ikon_destinations_coverage_reports_missing_names():
     assert len(errors) == 1
     assert "Winter Park Resort" in errors[0]
 
-
 def test_merge_entries_skips_aspen_snowmass_aggregate():
     existing = [
         {
@@ -90,3 +89,33 @@ def test_merge_entries_skips_aspen_snowmass_aggregate():
     merged = sync_catalog.merge_entries(existing, sources)
     assert all(entry["resort_id"] != "aspen-snowmass-co" for entry in merged)
     assert any(entry["resort_id"] == "snowmass-co" for entry in merged)
+
+
+def test_merge_entries_skips_skibig3_aggregate():
+    existing = [
+        {
+            "resort_id": "sunshine-village-ab",
+            "query": "Sunshine Village, AB",
+            "name": "Sunshine Village",
+            "state": "AB",
+            "country": "CA",
+            "region": "west",
+            "pass_types": ["ikon"],
+            "default_enabled": False,
+        },
+    ]
+
+    sources = [
+        sync_catalog.CatalogResort(
+            query="SkiBig3, AB",
+            name="SkiBig3",
+            state="AB",
+            country="CA",
+            region="west",
+            pass_type="ikon",
+        )
+    ]
+
+    merged = sync_catalog.merge_entries(existing, sources)
+    assert all(entry["resort_id"] != "skibig3-ab" for entry in merged)
+    assert any(entry["resort_id"] == "sunshine-village-ab" for entry in merged)

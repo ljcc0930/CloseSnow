@@ -36,7 +36,7 @@ IKON_CHECK_SUFFIX_RE = re.compile(
     r"\b(resort|ski area|ski and snowboard|ski hill|ski center|ski centre)\b$",
     flags=re.IGNORECASE,
 )
-IKON_AGGREGATE_QUERIES = {"aspen snowmass, co"}
+IKON_AGGREGATE_QUERIES = {"aspen snowmass, co", "skibig3, ab"}
 
 US_WEST = {
     "AK",
