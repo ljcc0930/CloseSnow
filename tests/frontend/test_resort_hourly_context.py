@@ -11,6 +11,17 @@ def test_build_resort_daily_summary_context_includes_recent_history():
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
                 "website": "https://example.com/snowbird",
+                "nearby_airports": [
+                    {
+                        "airport_id": "slc-salt-lake-city",
+                        "iata_code": "SLC",
+                        "display_name": "Salt Lake City International Airport",
+                        "location_label": "Salt Lake City, UT, US",
+                        "latitude": 40.7884,
+                        "longitude": -111.9778,
+                        "distance_miles": 22.4,
+                    }
+                ],
                 "daily": [{"date": "2026-03-13"}],
                 "past_14d_daily": [
                     {"date": "2026-03-08", "weather_code": 3},
@@ -36,6 +47,7 @@ def test_build_resort_daily_summary_context_includes_recent_history():
 
     assert context is not None
     assert context["display_name"] == "Snowbird, Utah"
+    assert context["nearbyAirports"][0]["iata_code"] == "SLC"
     assert [row["date"] for row in context["past14dDaily"]] == [
         "2026-03-01",
         "2026-03-02",
