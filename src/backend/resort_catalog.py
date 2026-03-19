@@ -9,6 +9,92 @@ from typing import Any, Dict, List
 VALID_PASS_TYPES = {"ikon", "epic", "indy"}
 VALID_REGIONS = {"east", "west", "intl"}
 
+_US_STATE_NAMES = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+    "DC": "District of Columbia",
+}
+
+_CANADA_PROVINCE_NAMES = {
+    "AB": "Alberta",
+    "BC": "British Columbia",
+    "MB": "Manitoba",
+    "NB": "New Brunswick",
+    "NL": "Newfoundland and Labrador",
+    "NS": "Nova Scotia",
+    "NT": "Northwest Territories",
+    "NU": "Nunavut",
+    "ON": "Ontario",
+    "PE": "Prince Edward Island",
+    "QC": "Quebec",
+    "SK": "Saskatchewan",
+    "YT": "Yukon",
+}
+
+_COUNTRY_ALIASES = {
+    "US": ["United States", "United States of America", "USA", "America"],
+    "CA": ["Canada"],
+    "JP": ["Japan"],
+    "FR": ["France"],
+    "IT": ["Italy"],
+    "CH": ["Switzerland"],
+    "AT": ["Austria"],
+    "KR": ["South Korea", "Korea"],
+    "CN": ["China"],
+    "NZ": ["New Zealand"],
+    "AU": ["Australia"],
+    "AD": ["Andorra"],
+    "CL": ["Chile"],
+}
+
 
 def _slugify(value: str) -> str:
     lowered = value.strip().lower()
@@ -54,6 +140,47 @@ def _to_optional_float(raw: Any) -> float | None:
     return value
 
 
+def _dedupe_terms(values: List[str]) -> List[str]:
+    seen = set()
+    out: List[str] = []
+    for raw in values:
+        text = str(raw).strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return out
+
+
+def _normalize_search_terms(raw: Any) -> List[str]:
+    if isinstance(raw, list):
+        values = [str(v).strip() for v in raw if str(v).strip()]
+    elif isinstance(raw, str):
+        values = [raw.strip()] if raw.strip() else []
+    else:
+        values = []
+    return _dedupe_terms(values)
+
+
+def _state_full_name(country: str, state: str) -> str:
+    country_key = (country or "").strip().upper()
+    state_key = (state or "").strip().upper()
+    if not state_key:
+        return ""
+    if country_key == "US":
+        return _US_STATE_NAMES.get(state_key, "")
+    if country_key == "CA":
+        return _CANADA_PROVINCE_NAMES.get(state_key, "")
+    return ""
+
+
+def _country_aliases(country: str) -> List[str]:
+    return list(_COUNTRY_ALIASES.get((country or "").strip().upper(), []))
+
+
 def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
     query = str(raw.get("query") or raw.get("name") or "").strip()
     if not query:
@@ -62,14 +189,32 @@ def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
     resort_id = str(raw.get("resort_id") or raw.get("id") or _slugify(query)).strip()
     if not resort_id:
         resort_id = _slugify(query)
+    state = str(raw.get("state") or raw.get("admin1") or "").strip()
+    country = str(raw.get("country") or "").strip().upper()
+    city = str(raw.get("city") or "").strip()
+    address = str(raw.get("address") or "").strip()
+    state_name = _state_full_name(country, state)
+    country_aliases = _country_aliases(country)
+    country_name = country_aliases[0] if country_aliases else ""
+    search_terms = _dedupe_terms(
+        _normalize_search_terms(raw.get("search_terms"))
+        + [state_name]
+        + country_aliases
+        + [city, address]
+    )
     return {
         "resort_id": resort_id,
         "query": query,
         "name": name,
         "display_name": str(raw.get("display_name") or query).strip(),
         "website": str(raw.get("website") or "").strip(),
-        "state": str(raw.get("state") or raw.get("admin1") or "").strip(),
-        "country": str(raw.get("country") or "").strip(),
+        "state": state,
+        "state_name": state_name,
+        "country": country,
+        "country_name": country_name,
+        "city": city,
+        "address": address,
+        "search_terms": search_terms,
         "region": str(raw.get("region") or "").strip().lower(),
         "pass_types": _normalize_pass_types(raw.get("pass_types")),
         "default_enabled": _to_bool(raw.get("default_enabled", True), default=True),
@@ -183,16 +328,29 @@ def search_resort_catalog(entries: List[Dict[str, Any]], search: str) -> List[Di
         return list(entries)
 
     def searchable_text(entry: Dict[str, Any]) -> str:
+        state = str(entry.get("state", "")).strip()
+        country = str(entry.get("country", "")).strip().upper()
+        state_name = str(entry.get("state_name", "")).strip() or _state_full_name(country, state)
+        country_name = str(entry.get("country_name", "")).strip()
+        country_aliases = _country_aliases(country)
+        if not country_name and country_aliases:
+            country_name = country_aliases[0]
         parts = [
             str(entry.get("resort_id", "")),
             str(entry.get("query", "")),
             str(entry.get("name", "")),
             str(entry.get("display_name", "")),
             str(entry.get("website", "")),
-            str(entry.get("state", "")),
-            str(entry.get("country", "")),
+            state,
+            state_name,
+            country,
+            country_name,
+            str(entry.get("city", "")),
+            str(entry.get("address", "")),
             str(entry.get("region", "")),
             " ".join(str(v) for v in entry.get("pass_types", [])),
+            " ".join(country_aliases),
+            " ".join(str(v) for v in entry.get("search_terms", [])),
         ]
         return " ".join(parts).lower()
 
