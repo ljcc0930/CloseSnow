@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from src.backend.resort_catalog import (
     load_resort_catalog,
@@ -167,3 +168,14 @@ def test_default_catalog_splits_aspen_four_mountains_without_aggregate_row():
         "buttermilk-co",
         "snowmass-co",
     }.issubset(resort_ids)
+
+
+def test_default_catalog_keeps_snowmass_base_area_coordinates():
+    raw_entries = json.loads(Path(DEFAULT_RESORTS_FILE).read_text(encoding="utf-8"))
+    raw_item = next(x for x in raw_entries if x["resort_id"] == "snowmass-co")
+    assert raw_item["address"] == "120 Lower Carriage Way, Snowmass Village, CO 81615"
+
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "snowmass-co")
+    assert item["latitude"] == 39.2089563
+    assert item["longitude"] == -106.9499089

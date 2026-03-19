@@ -76,7 +76,7 @@
     "query": "Snowmass, CO",
     "name": "Snowmass",
     "city": "Snowmass Village",
-    "address": "Snowmass, Snowmass Village, Pitkin County, Colorado, United States",
+    "address": "120 Lower Carriage Way, Snowmass Village, CO 81615",
     "state": "CO",
     "country": "US",
     "region": "west",
@@ -86,8 +86,8 @@
     "default_enabled": true,
     "display_name": "Snowmass, CO",
     "website": "https://www.aspensnowmass.com/discover/the-resorts/snowmass",
-    "latitude": 39.2130418,
-    "longitude": -106.9378207
+    "latitude": 39.2089563,
+    "longitude": -106.9499089
   },
   {
     "resort_id": "boyne-mountain-mi",
