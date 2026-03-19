@@ -155,3 +155,15 @@ def test_default_catalog_keeps_snow_valley_coordinate_override():
     item = next(x for x in entries if x["resort_id"] == "snow-valley-ca")
     assert item["latitude"] == 34.2249953
     assert item["longitude"] == -117.0353312
+
+
+def test_default_catalog_splits_aspen_four_mountains_without_aggregate_row():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    resort_ids = {x["resort_id"] for x in entries}
+    assert "aspen-snowmass-co" not in resort_ids
+    assert {
+        "aspen-mountain-co",
+        "aspen-highlands-co",
+        "buttermilk-co",
+        "snowmass-co",
+    }.issubset(resort_ids)

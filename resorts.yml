@@ -18,24 +18,6 @@
     "longitude": -105.8749685
   },
   {
-    "resort_id": "aspen-snowmass-co",
-    "query": "Aspen Snowmass, CO",
-    "name": "Aspen Snowmass",
-    "city": "Snowmass Village",
-    "address": "Expresso, Snowmass Village, Pitkin County, Colorado, 81615, United States",
-    "state": "CO",
-    "country": "US",
-    "region": "west",
-    "pass_types": [
-      "ikon"
-    ],
-    "default_enabled": true,
-    "display_name": "Aspen Snowmass, CO",
-    "website": "https://www.aspensnowmass.com/",
-    "latitude": 39.2204465,
-    "longitude": -106.8615713
-  },
-  {
     "resort_id": "aspen-mountain-co",
     "query": "Aspen Mountain, CO",
     "name": "Aspen Mountain",
