@@ -18,11 +18,11 @@
     "longitude": -105.8749685
   },
   {
-    "resort_id": "aspen-snowmass-co",
-    "query": "Aspen Snowmass, CO",
-    "name": "Aspen Snowmass",
-    "city": "Snowmass Village",
-    "address": "Expresso, Snowmass Village, Pitkin County, Colorado, 81615, United States",
+    "resort_id": "aspen-mountain-co",
+    "query": "Aspen Mountain, CO",
+    "name": "Aspen Mountain",
+    "city": "Aspen",
+    "address": "Aspen Mountain, Aspen, Pitkin County, Colorado, United States",
     "state": "CO",
     "country": "US",
     "region": "west",
@@ -30,10 +30,64 @@
       "ikon"
     ],
     "default_enabled": true,
-    "display_name": "Aspen Snowmass, CO",
-    "website": "https://www.aspensnowmass.com/",
-    "latitude": 39.2204465,
-    "longitude": -106.8615713
+    "display_name": "Aspen Mountain, CO",
+    "website": "https://www.aspensnowmass.com/four-mountains/aspen-mountain",
+    "latitude": 39.1760986,
+    "longitude": -106.8292058
+  },
+  {
+    "resort_id": "aspen-highlands-co",
+    "query": "Aspen Highlands, CO",
+    "name": "Aspen Highlands",
+    "city": "Aspen",
+    "address": "Aspen Highlands, Aspen, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Aspen Highlands, CO",
+    "website": "https://www.aspensnowmass.com/four-mountains/aspen-highlands",
+    "latitude": 39.1553219,
+    "longitude": -106.8691338
+  },
+  {
+    "resort_id": "buttermilk-co",
+    "query": "Buttermilk, CO",
+    "name": "Buttermilk",
+    "city": "Aspen",
+    "address": "Buttermilk Mountain, Aspen, Pitkin County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Buttermilk, CO",
+    "website": "https://www.aspensnowmass.com/four-mountains/buttermilk",
+    "latitude": 39.1928348,
+    "longitude": -106.8695834
+  },
+  {
+    "resort_id": "snowmass-co",
+    "query": "Snowmass, CO",
+    "name": "Snowmass",
+    "city": "Snowmass Village",
+    "address": "120 Lower Carriage Way, Snowmass Village, CO 81615",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": true,
+    "display_name": "Snowmass, CO",
+    "website": "https://www.aspensnowmass.com/four-mountains/snowmass",
+    "latitude": 39.2089563,
+    "longitude": -106.9499089
   },
   {
     "resort_id": "boyne-mountain-mi",

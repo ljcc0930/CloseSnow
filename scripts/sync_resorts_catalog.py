@@ -36,6 +36,7 @@ IKON_CHECK_SUFFIX_RE = re.compile(
     r"\b(resort|ski area|ski and snowboard|ski hill|ski center|ski centre)\b$",
     flags=re.IGNORECASE,
 )
+IKON_AGGREGATE_QUERIES = {"aspen snowmass, co"}
 
 US_WEST = {
     "AK",
@@ -603,6 +604,8 @@ def merge_entries(existing: List[Dict[str, Any]], sources: Iterable[CatalogResor
     for src in sources:
         canonical = dedupe_key(src.name, src.state, src.country)
         query_key = src.query.lower()
+        if query_key in IKON_AGGREGATE_QUERIES:
+            continue
         match_key = query_key
         if canonical and canonical in merged_by_canonical:
             match_key = merged_by_canonical[canonical]

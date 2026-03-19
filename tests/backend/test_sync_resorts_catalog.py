@@ -60,3 +60,33 @@ def test_validate_ikon_destinations_coverage_reports_missing_names():
 
     assert len(errors) == 1
     assert "Winter Park Resort" in errors[0]
+
+
+def test_merge_entries_skips_aspen_snowmass_aggregate():
+    existing = [
+        {
+            "resort_id": "snowmass-co",
+            "query": "Snowmass, CO",
+            "name": "Snowmass",
+            "state": "CO",
+            "country": "US",
+            "region": "west",
+            "pass_types": ["ikon"],
+            "default_enabled": True,
+        },
+    ]
+
+    sources = [
+        sync_catalog.CatalogResort(
+            query="Aspen Snowmass, CO",
+            name="Aspen Snowmass",
+            state="CO",
+            country="US",
+            region="west",
+            pass_type="ikon",
+        )
+    ]
+
+    merged = sync_catalog.merge_entries(existing, sources)
+    assert all(entry["resort_id"] != "aspen-snowmass-co" for entry in merged)
+    assert any(entry["resort_id"] == "snowmass-co" for entry in merged)

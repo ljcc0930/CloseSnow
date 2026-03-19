@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from src.backend.resort_catalog import (
     load_resort_catalog,
@@ -227,3 +228,46 @@ def test_default_catalog_keeps_snow_valley_coordinate_override():
     item = next(x for x in entries if x["resort_id"] == "snow-valley-ca")
     assert item["latitude"] == 34.2249953
     assert item["longitude"] == -117.0353312
+
+
+def test_default_catalog_splits_aspen_four_mountains_without_aggregate_row():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    resort_ids = {x["resort_id"] for x in entries}
+    assert "aspen-snowmass-co" not in resort_ids
+    assert {
+        "aspen-mountain-co",
+        "aspen-highlands-co",
+        "buttermilk-co",
+        "snowmass-co",
+    }.issubset(resort_ids)
+
+
+def test_default_catalog_keeps_snowmass_base_area_coordinates():
+    raw_entries = json.loads(Path(DEFAULT_RESORTS_FILE).read_text(encoding="utf-8"))
+    raw_item = next(x for x in raw_entries if x["resort_id"] == "snowmass-co")
+    assert raw_item["address"] == "120 Lower Carriage Way, Snowmass Village, CO 81615"
+
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "snowmass-co")
+    assert item["latitude"] == 39.2089563
+    assert item["longitude"] == -106.9499089
+
+
+def test_default_catalog_uses_official_aspen_four_mountain_urls():
+    entries = load_resort_catalog(DEFAULT_RESORTS_FILE)
+    websites = {
+        x["resort_id"]: x["website"]
+        for x in entries
+        if x["resort_id"] in {
+            "aspen-mountain-co",
+            "aspen-highlands-co",
+            "buttermilk-co",
+            "snowmass-co",
+        }
+    }
+    assert websites == {
+        "aspen-mountain-co": "https://www.aspensnowmass.com/four-mountains/aspen-mountain",
+        "aspen-highlands-co": "https://www.aspensnowmass.com/four-mountains/aspen-highlands",
+        "buttermilk-co": "https://www.aspensnowmass.com/four-mountains/buttermilk",
+        "snowmass-co": "https://www.aspensnowmass.com/four-mountains/snowmass",
+    }
