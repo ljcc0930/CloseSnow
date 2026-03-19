@@ -13,7 +13,9 @@
     ],
     "default_enabled": true,
     "display_name": "Arapahoe Basin, CO",
-    "website": "https://www.arapahoebasin.com/"
+    "website": "https://www.arapahoebasin.com/",
+    "latitude": 39.6279102,
+    "longitude": -105.8749685
   },
   {
     "resort_id": "aspen-snowmass-co",
@@ -29,7 +31,9 @@
     ],
     "default_enabled": true,
     "display_name": "Aspen Snowmass, CO",
-    "website": "https://www.aspensnowmass.com/"
+    "website": "https://www.aspensnowmass.com/",
+    "latitude": 39.2204465,
+    "longitude": -106.8615713
   },
   {
     "resort_id": "boyne-mountain-mi",
@@ -46,7 +50,9 @@
     ],
     "default_enabled": true,
     "display_name": "Boyne Mountain, MI",
-    "website": "https://www.boynemountain.com/"
+    "website": "https://www.boynemountain.com/",
+    "latitude": 45.16388889,
+    "longitude": -84.93277778
   },
   {
     "resort_id": "brighton-ut",
@@ -78,7 +84,9 @@
     ],
     "default_enabled": true,
     "display_name": "Copper Mountain, CO",
-    "website": "https://www.coppercolorado.com/"
+    "website": "https://www.coppercolorado.com/",
+    "latitude": 39.50665,
+    "longitude": -106.14224
   },
   {
     "resort_id": "killington-vt",
@@ -110,7 +118,9 @@
     ],
     "default_enabled": true,
     "display_name": "Mammoth Mountain, CA",
-    "website": "https://www.mammothmountain.com/"
+    "website": "https://www.mammothmountain.com/",
+    "latitude": 37.6501547,
+    "longitude": -119.037553
   },
   {
     "resort_id": "mt-brighton-mi",
@@ -118,6 +128,8 @@
     "name": "Mt Brighton Resort",
     "city": "Genoa Charter Township",
     "address": "Mt. Brighton, Challis Road, Genoa Charter Township, Livingston County, Michigan, 48814, United States",
+    "latitude": 42.5410098,
+    "longitude": -83.8108072,
     "state": "MI",
     "country": "US",
     "region": "east",
@@ -142,7 +154,9 @@
     ],
     "default_enabled": true,
     "display_name": "Palisades Tahoe, CA",
-    "website": "https://www.palisadestahoe.com/"
+    "website": "https://www.palisadestahoe.com/",
+    "latitude": 39.191058128195074,
+    "longitude": -120.2482625539726
   },
   {
     "resort_id": "snowbasin-ut",
@@ -190,7 +204,9 @@
     ],
     "default_enabled": true,
     "display_name": "Steamboat, CO",
-    "website": "https://www.steamboat.com/"
+    "website": "https://www.steamboat.com/",
+    "latitude": 40.4572476,
+    "longitude": -106.80461
   },
   {
     "resort_id": "stratton-vt",
@@ -697,6 +713,8 @@
     "name": "Heavenly Ski Resort",
     "city": "California",
     "address": "Heavenly Hills",
+    "latitude": 38.9361599,
+    "longitude": -119.9389618,
     "state": "CA",
     "country": "US",
     "region": "west",
@@ -817,7 +835,9 @@
     ],
     "default_enabled": true,
     "display_name": "June Mountain, CA",
-    "website": "https://www.junemountain.com/"
+    "website": "https://www.junemountain.com/",
+    "latitude": 37.7614022,
+    "longitude": -119.0839644
   },
   {
     "resort_id": "keystone-co",
@@ -1154,7 +1174,9 @@
     ],
     "default_enabled": true,
     "display_name": "Northstar, CA",
-    "website": "https://www.northstarcalifornia.com/"
+    "website": "https://www.northstarcalifornia.com/",
+    "latitude": 39.27505,
+    "longitude": -120.120671
   },
   {
     "resort_id": "okemo-vt",
@@ -1322,6 +1344,8 @@
     "name": "Sierra-at-Tahoe",
     "city": "Phillips",
     "address": "Sierra-At-Tahoe Road, Phillips Park, Phillips, El Dorado County, California, 96155, United States",
+    "latitude": 38.8004276,
+    "longitude": -120.0808279,
     "state": "CA",
     "country": "US",
     "region": "west",
@@ -1370,6 +1394,8 @@
     "name": "Snow Valley",
     "city": "San Bernardino County",
     "address": "Snow Valley Mountain Resort, Rim of the World Highway, San Bernardino County, California, 92341, United States",
+    "latitude": 34.2249953,
+    "longitude": -117.0353312,
     "state": "CA",
     "country": "US",
     "region": "west",
@@ -1755,6 +1781,8 @@
     "name": "Winter Park Resort",
     "city": "Winter Park",
     "address": "Vasquez Ridge Drive, Winter Park, Grand County, Colorado, 80482, United States",
+    "latitude": 39.8868421,
+    "longitude": -105.7625915,
     "state": "CO",
     "country": "US",
     "region": "west",
