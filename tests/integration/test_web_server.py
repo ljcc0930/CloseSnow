@@ -377,6 +377,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
                 {
                     "resort_id": "snowbird-ut",
                     "query": "Snowbird, UT",
+                    "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
                     "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 4, "temperature_min_c": -5, "snowfall_cm": 1.2, "rain_mm": 0.0}],
                     "past_14d_daily": [
                         {"date": "2026-03-01", "weather_code": 45},
@@ -404,6 +405,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
             "resort_id": kwargs["resort_id"],
             "query": "Snowbird, UT",
             "timezone": "America/Denver",
+            "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
             "hours": 2,
             "hourly": {
                 "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
@@ -432,6 +434,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
             .decode("utf-8")
         )
         assert hourly["resort_id"] == "snowbird-ut"
+        assert hourly["nearby_airports"][0]["iata_code"] == "SLC"
         assert len(hourly["hourly"]["time"]) == 2
 
         hourly_with_prefix = json.loads(
@@ -446,6 +449,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert "snowbird-ut" in page
         assert "Resort Forecast: snowbird-ut" not in page
         assert '"dailySummary": {' in page
+        assert '"nearbyAirports": [' in page
         assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
         assert 'id="resort-timeline-section"' in page

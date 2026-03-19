@@ -28,6 +28,17 @@ def test_render_hourly_pages(tmp_path):
                 "resort_id": "snowbird-ut",
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
+                "nearby_airports": [
+                    {
+                        "airport_id": "slc-salt-lake-city",
+                        "iata_code": "SLC",
+                        "display_name": "Salt Lake City International Airport",
+                        "location_label": "Salt Lake City, UT, US",
+                        "latitude": 40.7884,
+                        "longitude": -111.9778,
+                        "distance_miles": 22.4,
+                    }
+                ],
                 "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}],
                 "past_14d_daily": [
                     {"date": "2026-03-01", "weather_code": 3},
@@ -69,6 +80,8 @@ def test_render_hourly_pages(tmp_path):
     assert 'Past 14 days + forecast' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"nearbyAirports": [' in html
+    assert '"iata_code": "SLC"' in html
     assert '"past14dDaily": [' in html
     assert '"date": "2026-03-01"' in html
     assert '"date": "2026-03-14"' in html
@@ -82,6 +95,7 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
                 "resort_id": "snowbird-ut",
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
+                "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
                 "daily": [{"date": "2026-03-13"}],
                 "past_14d_daily": [{"date": "2026-03-06"}, {"date": "2026-03-07"}, {"date": "2026-03-08"}],
             }
@@ -116,6 +130,7 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"nearbyAirports": [' in html
     assert '"past14dDaily": [' in html
 
 
@@ -127,6 +142,7 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
                 "resort_id": "snowbird-ut",
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
+                "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
                 "daily": [{"date": "2026-03-13"}],
                 "past_14d_daily": [{"date": "2026-03-06"}, {"date": "2026-03-07"}, {"date": "2026-03-08"}],
             }
@@ -168,4 +184,5 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     assert '"hourlyDataUrl": "./hourly.json"' in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
+    assert '"nearbyAirports": [' in html
     assert '"past14dDaily": [' in html

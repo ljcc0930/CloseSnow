@@ -38,6 +38,9 @@ def build_resort_daily_summary_context(payload: Dict[str, Any], resort_id: str) 
             "website": report.get("website", ""),
             "daily": daily,
         }
+        nearby_airports = report.get("nearby_airports")
+        if isinstance(nearby_airports, list):
+            context["nearbyAirports"] = [item for item in nearby_airports if isinstance(item, dict)]
         recent_history = _recent_history_rows(report)
         if recent_history:
             context["past14dDaily"] = recent_history

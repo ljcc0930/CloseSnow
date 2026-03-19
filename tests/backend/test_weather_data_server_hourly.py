@@ -44,6 +44,19 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
     monkeypatch.setattr("src.backend.weather_data_server.JsonCache", lambda path: _DummyJsonCache())
     coord_cache = _DummyCoordCache()
     monkeypatch.setattr("src.backend.weather_data_server.ResortCoordinateCache", lambda path: coord_cache)
+    monkeypatch.setattr(
+        "src.backend.weather_data_server.load_airport_catalog",
+        lambda: [
+            {
+                "airport_id": "sea-seattle-tacoma",
+                "iata_code": "SEA",
+                "display_name": "Seattle-Tacoma International Airport",
+                "location_label": "Seattle, WA, US",
+                "latitude": 47.450249,
+                "longitude": -122.308817,
+            }
+        ],
+    )
 
     def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
         assert query == "Crystal Mountain, WA"
@@ -83,4 +96,5 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
     assert payload["input_longitude"] == -121.4750288
     assert payload["resolved_latitude"] == 46.9355117
     assert payload["resolved_longitude"] == -121.4750288
+    assert payload["nearby_airports"][0]["iata_code"] == "SEA"
     assert coord_cache.saved is True
