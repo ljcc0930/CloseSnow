@@ -255,6 +255,11 @@ h1 {
   text-decoration: underline;
 }
 
+.hourly-meta-coordinate-label {
+  color: #0f172a;
+  font-weight: 700;
+}
+
 .hourly-meta-issue-link {
   color: #b91c1c;
 }

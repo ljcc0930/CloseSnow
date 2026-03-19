@@ -147,28 +147,46 @@ const buildCoordinateIssueUrl = (payload, coordinatesText, mapsUrl) => {
   return url.toString();
 };
 
-const buildCoordinateMetaFragment = (payload) => {
-  const latDisplay = formatCoordinate(payload?.resolved_latitude);
-  const lonDisplay = formatCoordinate(payload?.resolved_longitude);
+const buildCoordinateEntryFragment = ({
+  payload,
+  latValue,
+  lonValue,
+  label,
+  ariaLabel,
+  includeIssueLink = false,
+}) => {
+  const latDisplay = formatCoordinate(latValue);
+  const lonDisplay = formatCoordinate(lonValue);
   if (!latDisplay || !lonDisplay) return null;
-  const coordinatesText = `${latDisplay}, ${lonDisplay}`;
-  const latExact = formatCoordinateExact(payload?.resolved_latitude) || latDisplay;
-  const lonExact = formatCoordinateExact(payload?.resolved_longitude) || lonDisplay;
-  const coordinatesIssueText = `${latExact}, ${lonExact}`;
-  const mapsUrl = buildGoogleMapsUrl(payload?.resolved_latitude, payload?.resolved_longitude);
-  if (!mapsUrl) return document.createTextNode(coordinatesText);
 
+  const coordinatesText = `${latDisplay}, ${lonDisplay}`;
+  const mapsUrl = buildGoogleMapsUrl(latValue, lonValue);
   const wrapper = document.createElement("span");
-  wrapper.className = "hourly-meta-coordinate";
+  wrapper.className = "hourly-meta-coordinate-entry";
+
+  const labelEl = document.createElement("span");
+  labelEl.className = "hourly-meta-coordinate-label";
+  labelEl.textContent = `${label}: `;
+  wrapper.appendChild(labelEl);
+
+  if (!mapsUrl) {
+    wrapper.appendChild(document.createTextNode(coordinatesText));
+    return wrapper;
+  }
 
   const mapsLink = buildExternalLink(mapsUrl, coordinatesText, "hourly-meta-link");
   if (mapsLink) {
-    mapsLink.setAttribute("aria-label", `Open ${resolveResortLabel(payload)} coordinates in Google Maps`);
+    mapsLink.setAttribute("aria-label", `${ariaLabel} in Google Maps`);
     wrapper.appendChild(mapsLink);
   } else {
     wrapper.appendChild(document.createTextNode(coordinatesText));
   }
 
+  if (!includeIssueLink) return wrapper;
+
+  const latExact = formatCoordinateExact(latValue) || latDisplay;
+  const lonExact = formatCoordinateExact(lonValue) || lonDisplay;
+  const coordinatesIssueText = `${latExact}, ${lonExact}`;
   const issueLink = buildExternalLink(
     buildCoordinateIssueUrl(payload, coordinatesIssueText, mapsUrl),
     "(Wrong coordinates?)",
@@ -179,6 +197,34 @@ const buildCoordinateMetaFragment = (payload) => {
     wrapper.appendChild(document.createTextNode(" "));
     wrapper.appendChild(issueLink);
   }
+  return wrapper;
+};
+
+const buildCoordinateMetaFragment = (payload) => {
+  const resortCoords = buildCoordinateEntryFragment({
+    payload,
+    latValue: payload?.input_latitude,
+    lonValue: payload?.input_longitude,
+    label: "Resort coords",
+    ariaLabel: `Open ${resolveResortLabel(payload)} resort coordinates`,
+    includeIssueLink: true,
+  });
+  const forecastCoords = buildCoordinateEntryFragment({
+    payload,
+    latValue: payload?.resolved_latitude,
+    lonValue: payload?.resolved_longitude,
+    label: "Forecast grid",
+    ariaLabel: `Open ${resolveResortLabel(payload)} forecast grid coordinates`,
+  });
+  if (!resortCoords && !forecastCoords) return null;
+  if (!resortCoords) return forecastCoords;
+  if (!forecastCoords) return resortCoords;
+
+  const wrapper = document.createElement("span");
+  wrapper.className = "hourly-meta-coordinate";
+  wrapper.appendChild(resortCoords);
+  wrapper.appendChild(document.createTextNode(" | "));
+  wrapper.appendChild(forecastCoords);
   return wrapper;
 };
 
