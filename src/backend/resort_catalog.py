@@ -8,6 +8,17 @@ from typing import Any, Dict, List
 
 VALID_PASS_TYPES = {"ikon", "epic", "indy"}
 VALID_REGIONS = {"east", "west", "intl"}
+VALID_SUBREGIONS = {
+    "rockies",
+    "west-coast",
+    "midwest",
+    "mid-atlantic",
+    "northeast",
+    "europe",
+    "asia",
+    "australia-new-zealand",
+    "south-america",
+}
 
 _US_STATE_NAMES = {
     "AL": "Alabama",
@@ -216,6 +227,7 @@ def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
         "address": address,
         "search_terms": search_terms,
         "region": str(raw.get("region") or "").strip().lower(),
+        "subregion": _slugify(str(raw.get("subregion") or "")),
         "pass_types": _normalize_pass_types(raw.get("pass_types")),
         "default_enabled": _to_bool(raw.get("default_enabled", True), default=True),
         "latitude": _to_optional_float(raw.get("latitude")),
@@ -276,6 +288,7 @@ def validate_resort_catalog(entries: List[Dict[str, Any]]) -> List[str]:
         query = str(entry.get("query", "")).strip()
         country = str(entry.get("country", "")).strip().upper()
         region = str(entry.get("region", "")).strip().lower()
+        subregion = _slugify(str(entry.get("subregion", "")))
         pass_types = entry.get("pass_types", [])
         latitude = entry.get("latitude")
         longitude = entry.get("longitude")
@@ -290,6 +303,8 @@ def validate_resort_catalog(entries: List[Dict[str, Any]]) -> List[str]:
             errors.append(f"{context}: invalid country '{country}'")
         if region not in VALID_REGIONS:
             errors.append(f"{context}: invalid region '{region}'")
+        if subregion not in VALID_SUBREGIONS:
+            errors.append(f"{context}: invalid subregion '{subregion}'")
         if not isinstance(pass_types, list) or not pass_types:
             errors.append(f"{context}: missing pass_types")
         else:
@@ -348,6 +363,7 @@ def search_resort_catalog(entries: List[Dict[str, Any]], search: str) -> List[Di
             str(entry.get("city", "")),
             str(entry.get("address", "")),
             str(entry.get("region", "")),
+            str(entry.get("subregion", "")),
             " ".join(str(v) for v in entry.get("pass_types", [])),
             " ".join(country_aliases),
             " ".join(str(v) for v in entry.get("search_terms", [])),

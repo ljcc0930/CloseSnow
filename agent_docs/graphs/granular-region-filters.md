@@ -10,12 +10,12 @@
 - The catalog keeps legacy coarse `region` values (`west|east|intl`) for compatibility and adds a new explicit `subregion` field for the homepage filter contract.
 - `subregion` is curated per resort rather than derived only from `state` or `country`.
 - Region and country filters become checkbox-based multiselect controls.
-- Sort remains single-choice, but the modal should stop using a dropdown for it.
+- Sort remains single-choice and stays a dropdown.
 - Dynamic API mode must continue to work when the homepage refetches `/api/data` after filter changes.
 
 ## Atomic Requests
 - `granular-region-filters-01-subregion-contract`: Add the subregion catalog taxonomy and multi-value filter contract.
-- `granular-region-filters-02-multiselect-filter-ui`: Replace homepage dropdown filters with checkbox/radio controls that consume the new contract.
+- `granular-region-filters-02-multiselect-filter-ui`: Replace homepage region and country dropdown filters with multiselect controls while keeping sort as a dropdown.
 
 ## Dependency Graph
 - `granular-region-filters-01-subregion-contract` -> `granular-region-filters-02-multiselect-filter-ui`

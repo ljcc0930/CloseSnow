@@ -27,8 +27,8 @@ const filterModal = document.getElementById("filter-modal");
 const filterResetBtn = document.getElementById("filter-reset-btn");
 const filterCloseBtn = document.getElementById("filter-close-btn");
 const filterSummary = document.getElementById("filter-summary");
-const filterRegionSelect = document.getElementById("filter-region-select");
-const filterCountrySelect = document.getElementById("filter-country-select");
+const filterRegionOptions = document.getElementById("filter-region-options");
+const filterCountryOptions = document.getElementById("filter-country-options");
 const filterSortSelect = document.getElementById("filter-sort-select");
 const filterIncludeAllInput = document.getElementById("filter-include-all");
 const filterSearchAllInput = document.getElementById("filter-search-all");
@@ -40,7 +40,18 @@ const UNIT_STORAGE_KEY_PREFIX = "closesnow_unit_mode_";
 const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";
 const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";
 const VALID_UNIT_KINDS = new Set(["snow", "rain", "temp"]);
-const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, country: {} };
+const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, subregion: {}, country: {} };
+const SUBREGION_OPTIONS = [
+  { value: "rockies", label: "Rockies" },
+  { value: "west-coast", label: "West Coast" },
+  { value: "midwest", label: "Midwest" },
+  { value: "mid-atlantic", label: "Mid-Atlantic" },
+  { value: "northeast", label: "Northeast" },
+  { value: "europe", label: "Europe" },
+  { value: "asia", label: "Asia" },
+  { value: "australia-new-zealand", label: "Australia / New Zealand" },
+  { value: "south-america", label: "South America" },
+];
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
@@ -54,8 +65,8 @@ const appState = {
   favoriteResortIds: new Set(),
   filterState: {
     passTypes: new Set(),
-    region: "",
-    country: "",
+    subregions: new Set(),
+    countries: new Set(),
     sortBy: "week_snow",
     includeDefault: true,
     searchAll: true,
@@ -597,10 +608,12 @@ const _payloadReports = () => {
 };
 
 const _deriveAvailableFiltersFromReports = (reports) => {
-  const out = { pass_type: {}, region: {}, country: {} };
+  const out = { pass_type: {}, region: {}, subregion: {}, country: {} };
   reports.forEach((report) => {
     const region = _normalizeSearch(report.region);
     if (region) out.region[region] = (out.region[region] || 0) + 1;
+    const subregion = _normalizeSearch(report.subregion);
+    if (subregion) out.subregion[subregion] = (out.subregion[subregion] || 0) + 1;
     const country = String(report.country_code || report.country || "").trim().toUpperCase();
     if (country) out.country[country] = (out.country[country] || 0) + 1;
     const passTypes = Array.isArray(report.pass_types) ? report.pass_types : [];
@@ -618,6 +631,7 @@ const _availableFilters = () => {
     return {
       pass_type: meta.pass_type && typeof meta.pass_type === "object" ? meta.pass_type : {},
       region: meta.region && typeof meta.region === "object" ? meta.region : {},
+      subregion: meta.subregion && typeof meta.subregion === "object" ? meta.subregion : {},
       country: meta.country && typeof meta.country === "object" ? meta.country : {},
     };
   }
@@ -628,6 +642,26 @@ const parsePassTypeValues = (values) => {
   const out = [];
   values.forEach((raw) => {
     String(raw || "").split(",").map((value) => _normalizeSearch(value)).filter(Boolean).forEach((value) => out.push(value));
+  });
+  return Array.from(new Set(out));
+};
+
+const parseSubregionValues = (values) => {
+  const out = [];
+  values.forEach((raw) => {
+    String(raw || "").split(",").map((value) => _normalizeSearch(value)).filter(Boolean).forEach((value) => out.push(value));
+  });
+  return Array.from(new Set(out));
+};
+
+const parseCountryValues = (values) => {
+  const out = [];
+  values.forEach((raw) => {
+    String(raw || "")
+      .split(",")
+      .map((value) => String(value || "").trim().toUpperCase())
+      .filter((value) => /^[A-Z]{2}$/.test(value))
+      .forEach((value) => out.push(value));
   });
   return Array.from(new Set(out));
 };
@@ -661,6 +695,25 @@ const _sortLabel = (sortBy) => {
   if (sortBy === "next_week_snow") return "Next Week's Snowfall";
   if (sortBy === "two_week_snow") return "Two-Week Snowfall";
   return "State (A-Z)";
+};
+
+const _subregionLabel = (value) => {
+  const hit = SUBREGION_OPTIONS.find((option) => option.value === _normalizeSearch(value));
+  return hit ? hit.label : String(value || "");
+};
+
+const _countryLabel = (value) => {
+  const code = String(value || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return code;
+  try {
+    if (typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function") {
+      const display = new Intl.DisplayNames(["en"], { type: "region" });
+      return display.of(code) || code;
+    }
+  } catch (error) {
+    // Fallback to ISO code when display name lookup is unavailable.
+  }
+  return code;
 };
 
 const _compareBySnowDesc = (a, b, valueFn) => {
@@ -774,8 +827,8 @@ const loadStoredFilterState = () => {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     return {
       passTypes: parsePassTypeValues(Array.isArray(parsed.passTypes) ? parsed.passTypes : []),
-      region: _normalizeSearch(parsed.region || ""),
-      country: String(parsed.country || "").trim().toUpperCase(),
+      subregions: parseSubregionValues(Array.isArray(parsed.subregions) ? parsed.subregions : (parsed.subregion ? [parsed.subregion] : [])),
+      countries: parseCountryValues(Array.isArray(parsed.countries) ? parsed.countries : (parsed.country ? [parsed.country] : [])),
       sortBy: normalizeSortBy(parsed.sortBy || ""),
       includeDefault: parsed.includeDefault !== false,
       searchAll: parsed.searchAll !== false,
@@ -791,8 +844,8 @@ const persistFilterState = () => {
   try {
     localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
       passTypes: Array.from(appState.filterState.passTypes).sort(),
-      region: appState.filterState.region,
-      country: appState.filterState.country,
+      subregions: Array.from(appState.filterState.subregions).sort(),
+      countries: Array.from(appState.filterState.countries).sort(),
       sortBy: appState.filterState.sortBy,
       includeDefault: appState.filterState.includeDefault,
       searchAll: appState.filterState.searchAll,
@@ -807,8 +860,8 @@ const persistFilterState = () => {
 const applyControlsFromQueryOrMeta = () => {
   const params = new URLSearchParams(window.location.search);
   const urlPassTypes = parsePassTypeValues(params.getAll("pass_type"));
-  const urlRegion = _normalizeSearch(params.get("region") || "");
-  const urlCountry = (params.get("country") || "").trim().toUpperCase();
+  const urlSubregions = parseSubregionValues(params.getAll("subregion"));
+  const urlCountries = parseCountryValues(params.getAll("country"));
   const hasUrlSortBy = params.has("sort_by");
   const urlSortBy = normalizeSortBy(params.get("sort_by") || "");
   const urlSearch = params.get("search");
@@ -820,8 +873,16 @@ const applyControlsFromQueryOrMeta = () => {
   const urlIncludeAll = _isTruthyParam(params.get("include_all") || "");
 
   const metaPassTypes = parsePassTypeValues(Array.isArray(filterMetaApplied.pass_type) ? filterMetaApplied.pass_type : []);
-  const metaRegion = _normalizeSearch(filterMetaApplied.region || "");
-  const metaCountry = String(filterMetaApplied.country || "").trim().toUpperCase();
+  const metaSubregions = parseSubregionValues(
+    Array.isArray(filterMetaApplied.subregion)
+      ? filterMetaApplied.subregion
+      : (filterMetaApplied.subregion ? [filterMetaApplied.subregion] : [])
+  );
+  const metaCountries = parseCountryValues(
+    Array.isArray(filterMetaApplied.country)
+      ? filterMetaApplied.country
+      : (filterMetaApplied.country ? [filterMetaApplied.country] : [])
+  );
   const metaSortBy = normalizeSortBy(filterMetaApplied.sort_by || "");
   const metaSearch = String(filterMetaApplied.search || "");
   const hasMetaSearchAll = Object.prototype.hasOwnProperty.call(filterMetaApplied, "search_all");
@@ -832,8 +893,8 @@ const applyControlsFromQueryOrMeta = () => {
   const stored = loadStoredFilterState();
 
   const passTypes = urlPassTypes.length > 0 ? urlPassTypes : (stored ? stored.passTypes : metaPassTypes);
-  const region = urlRegion || (stored ? stored.region : metaRegion);
-  const country = urlCountry || (stored ? stored.country : metaCountry);
+  const subregions = urlSubregions.length > 0 ? urlSubregions : (stored ? stored.subregions : metaSubregions);
+  const countries = urlCountries.length > 0 ? urlCountries : (stored ? stored.countries : metaCountries);
   const sortBy = hasUrlSortBy ? urlSortBy : (stored ? stored.sortBy : metaSortBy);
   const search = urlSearch !== null ? urlSearch : (stored ? stored.search : metaSearch);
   const searchAll = hasUrlSearchAll ? urlSearchAll : (stored ? stored.searchAll : (hasMetaSearchAll ? metaSearchAll : true));
@@ -843,8 +904,8 @@ const applyControlsFromQueryOrMeta = () => {
   const favoritesOnly = stored ? stored.favoritesOnly : false;
 
   appState.filterState.passTypes = new Set(passTypes);
-  appState.filterState.region = region;
-  appState.filterState.country = country;
+  appState.filterState.subregions = new Set(subregions);
+  appState.filterState.countries = new Set(countries);
   appState.filterState.sortBy = sortBy;
   appState.filterState.includeDefault = includeDefault;
   appState.filterState.searchAll = searchAll;
@@ -854,8 +915,16 @@ const applyControlsFromQueryOrMeta = () => {
   filterPassTypeInputs.forEach((input) => {
     input.checked = appState.filterState.passTypes.has(_normalizeSearch(input.value));
   });
-  if (filterRegionSelect) filterRegionSelect.value = region;
-  if (filterCountrySelect) filterCountrySelect.value = country;
+  if (filterRegionOptions) {
+    filterRegionOptions.querySelectorAll("input[name='filter-subregion']").forEach((input) => {
+      input.checked = appState.filterState.subregions.has(_normalizeSearch(input.value));
+    });
+  }
+  if (filterCountryOptions) {
+    filterCountryOptions.querySelectorAll("input[name='filter-country']").forEach((input) => {
+      input.checked = appState.filterState.countries.has(String(input.value || "").trim().toUpperCase());
+    });
+  }
   if (filterSortSelect) filterSortSelect.value = sortBy;
   if (filterIncludeAllInput) filterIncludeAllInput.checked = includeDefault;
   if (filterSearchAllInput) filterSearchAllInput.checked = searchAll;
@@ -867,8 +936,16 @@ const applyFilterStateFromControls = () => {
   appState.filterState.passTypes = new Set(
     filterPassTypeInputs.map((input) => _normalizeSearch(input.value)).filter((value, index) => filterPassTypeInputs[index].checked)
   );
-  appState.filterState.region = _normalizeSearch(filterRegionSelect ? filterRegionSelect.value : "");
-  appState.filterState.country = (filterCountrySelect ? filterCountrySelect.value : "").trim().toUpperCase();
+  const selectedSubregions = filterRegionOptions
+    ? Array.from(filterRegionOptions.querySelectorAll("input[name='filter-subregion']:checked")).map((input) => _normalizeSearch(input.value))
+    : [];
+  const selectedCountries = filterCountryOptions
+    ? Array.from(filterCountryOptions.querySelectorAll("input[name='filter-country']:checked"))
+      .map((input) => String(input.value || "").trim().toUpperCase())
+      .filter((value) => /^[A-Z]{2}$/.test(value))
+    : [];
+  appState.filterState.subregions = new Set(selectedSubregions);
+  appState.filterState.countries = new Set(selectedCountries);
   appState.filterState.sortBy = normalizeSortBy(filterSortSelect ? filterSortSelect.value : "week_snow");
   appState.filterState.includeDefault = filterIncludeAllInput ? Boolean(filterIncludeAllInput.checked) : true;
   appState.filterState.searchAll = filterSearchAllInput ? Boolean(filterSearchAllInput.checked) : true;
@@ -889,8 +966,12 @@ const buildServerQueryParams = () => {
   Array.from(appState.filterState.passTypes).sort().forEach((passType) => {
     if (passType) params.append("pass_type", passType);
   });
-  if (appState.filterState.region) params.set("region", appState.filterState.region);
-  if (appState.filterState.country) params.set("country", appState.filterState.country);
+  Array.from(appState.filterState.subregions).sort().forEach((subregion) => {
+    if (subregion) params.append("subregion", subregion);
+  });
+  Array.from(appState.filterState.countries).sort().forEach((country) => {
+    if (country) params.append("country", country);
+  });
   if (appState.filterState.search) params.set("search", appState.filterState.search);
   params.set("search_all", appState.filterState.searchAll ? "1" : "0");
   if (appState.filterState.includeDefault) {
@@ -938,10 +1019,13 @@ const _filteredReports = () => {
       }
       if (!matchesPass) return false;
     }
-    if (appState.filterState.region && _normalizeSearch(report.region) !== appState.filterState.region) return false;
-    if (appState.filterState.country) {
+    if (appState.filterState.subregions.size > 0) {
+      const reportSubregion = _normalizeSearch(report.subregion || report.region);
+      if (!appState.filterState.subregions.has(reportSubregion)) return false;
+    }
+    if (appState.filterState.countries.size > 0) {
       const reportCountry = String(report.country_code || report.country || "").trim().toUpperCase();
-      if (reportCountry !== appState.filterState.country) return false;
+      if (!appState.filterState.countries.has(reportCountry)) return false;
     }
     return true;
   });
@@ -984,8 +1068,12 @@ const syncFilterSummary = (visibleReports, totalReports) => {
   if (!searchAllActive) {
     if (appState.filterState.favoritesOnly) parts.push("favorites only");
     if (appState.filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(appState.filterState.passTypes).join(", ")}`);
-    if (appState.filterState.region) parts.push(`region: ${appState.filterState.region}`);
-    if (appState.filterState.country) parts.push(`country: ${appState.filterState.country}`);
+    if (appState.filterState.subregions.size > 0) {
+      parts.push(`region: ${Array.from(appState.filterState.subregions).map((value) => _subregionLabel(value)).join(", ")}`);
+    }
+    if (appState.filterState.countries.size > 0) {
+      parts.push(`country: ${Array.from(appState.filterState.countries).map((value) => _countryLabel(value)).join(", ")}`);
+    }
     if (appState.filterState.sortBy !== "state") parts.push(`sort: ${_sortLabel(appState.filterState.sortBy)}`);
     if (appState.filterState.includeDefault && parts.length > 0) parts.push("scope: default");
     if (!appState.filterState.searchAll) parts.push("search: filtered");
@@ -1710,25 +1798,33 @@ const renderPagePreservingScroll = () => {
   });
 };
 
-const populateCountryOptions = () => {
-  if (!filterCountrySelect) return;
-  const selected = appState.filterState.country;
+const renderSubregionOptions = () => {
+  if (!filterRegionOptions) return;
+  const selected = appState.filterState.subregions;
+  const counts = appState.availableFilters.subregion || {};
+  const rows = SUBREGION_OPTIONS
+    .filter((option) => Number(counts[option.value] || 0) > 0 || selected.has(option.value))
+    .map((option) => {
+      const count = Number(counts[option.value] || 0);
+      const checked = selected.has(option.value) ? " checked" : "";
+      const countHtml = count > 0 ? ` <span class=\"filter-count\">(${count})</span>` : "";
+      return `<label><input type=\"checkbox\" name=\"filter-subregion\" value=\"${option.value}\"${checked} /> ${option.label}${countHtml}</label>`;
+    });
+  filterRegionOptions.innerHTML = rows.length > 0 ? rows.join("") : "<div class='filter-option-empty'>No region filters available.</div>";
+};
+
+const renderCountryOptions = () => {
+  if (!filterCountryOptions) return;
+  const selected = appState.filterState.countries;
   const counts = appState.availableFilters.country || {};
-  filterCountrySelect.innerHTML = "";
-  const allOption = document.createElement("option");
-  allOption.value = "";
-  allOption.textContent = "All";
-  filterCountrySelect.appendChild(allOption);
-  Object.entries(counts)
+  const rows = Object.entries(counts)
     .filter(([code, count]) => /^[A-Z]{2}$/.test(code) && Number(count) > 0)
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .forEach(([code, count]) => {
-      const option = document.createElement("option");
-      option.value = code;
-      option.textContent = `${code} (${count})`;
-      filterCountrySelect.appendChild(option);
+    .map(([code, count]) => {
+      const checked = selected.has(code) ? " checked" : "";
+      return `<label><input type=\"checkbox\" name=\"filter-country\" value=\"${code}\"${checked} /> ${_countryLabel(code)} <span class=\"filter-count\">(${count})</span></label>`;
     });
-  if (selected) filterCountrySelect.value = selected;
+  filterCountryOptions.innerHTML = rows.length > 0 ? rows.join("") : "<div class='filter-option-empty'>No country filters available.</div>";
 };
 
 const updateFilterLabels = () => {
@@ -1737,20 +1833,8 @@ const updateFilterLabels = () => {
     const count = Number((appState.availableFilters.pass_type || {})[key] || 0);
     el.textContent = count > 0 ? `(${count})` : "";
   });
-  if (filterRegionSelect) {
-    Array.from(filterRegionSelect.options).forEach((option) => {
-      const value = _normalizeSearch(option.value || "");
-      const baseLabel = option.getAttribute("data-base-label") || option.textContent.replace(/\s+\(\d+\)$/, "");
-      option.setAttribute("data-base-label", baseLabel);
-      if (!value) {
-        option.textContent = baseLabel;
-        return;
-      }
-      const count = Number((appState.availableFilters.region || {})[value] || 0);
-      option.textContent = count > 0 ? `${baseLabel} (${count})` : baseLabel;
-    });
-  }
-  populateCountryOptions();
+  renderSubregionOptions();
+  renderCountryOptions();
 };
 
 const closeFilterModal = () => {
@@ -1790,8 +1874,12 @@ const reloadDynamicPayloadForFilters = async () => {
 
 const resetFilterControls = () => {
   filterPassTypeInputs.forEach((input) => { input.checked = false; });
-  if (filterRegionSelect) filterRegionSelect.value = "";
-  if (filterCountrySelect) filterCountrySelect.value = "";
+  if (filterRegionOptions) {
+    filterRegionOptions.querySelectorAll("input[name='filter-subregion']").forEach((input) => { input.checked = false; });
+  }
+  if (filterCountryOptions) {
+    filterCountryOptions.querySelectorAll("input[name='filter-country']").forEach((input) => { input.checked = false; });
+  }
   if (filterSortSelect) filterSortSelect.value = "week_snow";
   if (filterIncludeAllInput) filterIncludeAllInput.checked = true;
   if (filterSearchAllInput) filterSearchAllInput.checked = true;
@@ -1856,8 +1944,8 @@ const bindControls = () => {
   filterPassTypeInputs.forEach((input) => {
     input.addEventListener("change", applyFiltersImmediately);
   });
-  if (filterRegionSelect) filterRegionSelect.addEventListener("change", applyFiltersImmediately);
-  if (filterCountrySelect) filterCountrySelect.addEventListener("change", applyFiltersImmediately);
+  if (filterRegionOptions) filterRegionOptions.addEventListener("change", applyFiltersImmediately);
+  if (filterCountryOptions) filterCountryOptions.addEventListener("change", applyFiltersImmediately);
   if (filterSortSelect) filterSortSelect.addEventListener("change", applyFiltersImmediately);
   if (filterIncludeAllInput) filterIncludeAllInput.addEventListener("change", applyFiltersImmediately);
   if (filterSearchAllInput) filterSearchAllInput.addEventListener("change", applyFiltersImmediately);

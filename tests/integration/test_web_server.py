@@ -161,7 +161,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
     server, thread, base = _serve_once(handler)
     try:
         urllib.request.urlopen(
-            f"{base}/api/data?resort=A&resort=B&pass_type=ikon&region=west&country=US&search=snow&include_all=1&search_all=0",
+            f"{base}/api/data?resort=A&resort=B&pass_type=ikon&region=west&subregion=rockies&country=US&search=snow&include_all=1&search_all=0",
             timeout=3,
         ).read()
         assert calls["mode"] == "api"
@@ -169,6 +169,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
         assert "resort=B" in calls["source"]
         assert "pass_type=ikon" in calls["source"]
         assert "region=west" in calls["source"]
+        assert "subregion=rockies" in calls["source"]
         assert "country=US" in calls["source"]
         assert "search=snow" in calls["source"]
         assert "include_all=1" in calls["source"]
@@ -216,7 +217,7 @@ def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
     server, thread, base = _serve_once(handler)
     try:
         body = urllib.request.urlopen(
-            f"{base}/?pass_type=ikon&region=west&country=US&search=snow&include_default=0&search_all=0",
+            f"{base}/?pass_type=ikon&region=west&subregion=rockies&country=US&search=snow&include_default=0&search_all=0",
             timeout=3,
         ).read()
         assert body.decode("utf-8") == "<html>ok</html>"
@@ -266,13 +267,14 @@ def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
     server, thread, base = _serve_once(handler)
     try:
         urllib.request.urlopen(
-            f"{base}/?resort=A&pass_type=ikon&region=west&country=US&search=snow&include_all=1&search_all=0",
+            f"{base}/?resort=A&pass_type=ikon&region=west&subregion=rockies&country=US&search=snow&include_all=1&search_all=0",
             timeout=3,
         ).read()
         assert calls["mode"] == "api"
         assert "resort=A" in calls["source"]
         assert "pass_type=ikon" not in calls["source"]
         assert "region=west" not in calls["source"]
+        assert "subregion=rockies" not in calls["source"]
         assert "country=US" not in calls["source"]
         assert "search=snow" not in calls["source"]
         assert "include_all=1" not in calls["source"]

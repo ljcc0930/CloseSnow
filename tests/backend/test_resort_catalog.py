@@ -34,6 +34,7 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
                     "state": "UT",
                     "country": "US",
                     "region": "west",
+                    "subregion": "rockies",
                     "pass_types": ["Ikon", "ikon"],
                     "latitude": "40.58",
                     "longitude": -111.65,
@@ -51,6 +52,7 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
     assert entries[0]["address"] == "Snowbird, Salt Lake County, Utah, United States"
     assert entries[0]["state_name"] == "Utah"
     assert entries[0]["country_name"] == "United States"
+    assert entries[0]["subregion"] == "rockies"
     assert "utah" in [x.lower() for x in entries[0]["search_terms"]]
     assert "united states" in [x.lower() for x in entries[0]["search_terms"]]
     assert read_resort_queries(str(p)) == ["Snowbird, UT"]
@@ -61,12 +63,20 @@ def test_read_resort_queries_respects_default_enabled(tmp_path):
     p.write_text(
         json.dumps(
             [
-                {"resort_id": "snowbird-ut", "query": "Snowbird, UT", "country": "US", "region": "west", "pass_types": ["ikon"]},
+                {
+                    "resort_id": "snowbird-ut",
+                    "query": "Snowbird, UT",
+                    "country": "US",
+                    "region": "west",
+                    "subregion": "rockies",
+                    "pass_types": ["ikon"],
+                },
                 {
                     "resort_id": "alpental-wa",
                     "query": "Alpental, WA",
                     "country": "US",
                     "region": "west",
+                    "subregion": "west-coast",
                     "pass_types": ["indy"],
                     "default_enabled": False,
                 },
@@ -86,6 +96,7 @@ def test_validate_resort_catalog_reports_integrity_errors():
                 "query": "Snowbird, UT",
                 "country": "US",
                 "region": "west",
+                "subregion": "rockies",
                 "pass_types": ["ikon"],
             },
             {
@@ -93,6 +104,7 @@ def test_validate_resort_catalog_reports_integrity_errors():
                 "query": "Snowbird, UT",
                 "country": "USA",
                 "region": "bad-region",
+                "subregion": "bad-subregion",
                 "pass_types": ["unknown"],
             },
         ]
@@ -101,6 +113,7 @@ def test_validate_resort_catalog_reports_integrity_errors():
     assert any("duplicate query" in msg for msg in errors)
     assert any("invalid country" in msg for msg in errors)
     assert any("invalid region" in msg for msg in errors)
+    assert any("invalid subregion" in msg for msg in errors)
     assert any("invalid pass_types" in msg for msg in errors)
 
 
@@ -112,6 +125,7 @@ def test_validate_resort_catalog_rejects_partial_coordinates():
                 "query": "Crystal Mountain, WA",
                 "country": "US",
                 "region": "west",
+                "subregion": "west-coast",
                 "pass_types": ["ikon"],
                 "latitude": 46.9355,
             }
@@ -129,6 +143,7 @@ def test_search_resort_catalog_supports_multi_term():
             "state": "UT",
             "country": "US",
             "region": "west",
+            "subregion": "rockies",
             "pass_types": ["ikon"],
         },
         {
@@ -138,6 +153,7 @@ def test_search_resort_catalog_supports_multi_term():
             "state": "MI",
             "country": "US",
             "region": "east",
+            "subregion": "midwest",
             "pass_types": ["epic"],
         },
     ]
@@ -158,6 +174,7 @@ def test_search_resort_catalog_supports_long_form_locations_and_city_address():
             "country": "US",
             "country_name": "United States",
             "region": "west",
+            "subregion": "rockies",
             "pass_types": ["ikon"],
             "search_terms": ["Colorado", "United States", "Summit County"],
         },
@@ -172,6 +189,7 @@ def test_search_resort_catalog_supports_long_form_locations_and_city_address():
             "country": "US",
             "country_name": "United States",
             "region": "west",
+            "subregion": "rockies",
             "pass_types": ["ikon"],
             "search_terms": ["Colorado", "United States", "Steamboat Springs"],
         },
@@ -186,6 +204,7 @@ def test_search_resort_catalog_supports_long_form_locations_and_city_address():
             "country": "CA",
             "country_name": "Canada",
             "region": "west",
+            "subregion": "west-coast",
             "pass_types": ["epic"],
             "search_terms": ["British Columbia", "Canada", "Whistler Resort Municipality"],
         },

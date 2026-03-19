@@ -164,6 +164,46 @@
       align-items: center;
       gap: 6px;
     }
+    .filter-option-grid {
+      display: grid;
+      gap: 6px;
+      max-height: 170px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .filter-option-list {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+    .filter-option-grid label {
+      align-items: center;
+      justify-content: flex-start;
+      line-height: 1.2;
+    }
+    .filter-option-grid .filter-count {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .filter-option-empty {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .filter-group select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 13px;
+      color: #1f2937;
+    }
     .filter-group label span[data-pass-count] {
       color: #64748b;
       font-size: 12px;
@@ -179,15 +219,6 @@
     .filter-include-all-label {
       font-weight: 600;
       color: #0f172a;
-    }
-    .filter-group select {
-      width: 100%;
-      padding: 7px 9px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      background: #fff;
-      font-size: 13px;
-      color: #1f2937;
     }
     .filter-actions {
       display: flex;

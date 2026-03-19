@@ -48,26 +48,6 @@
       <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
         <h3 id="filter-title">Resort Filters</h3>
         <div class="filter-group">
-          <div class="filter-group-title">Pass Type</div>
-          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon <span data-pass-count="ikon"></span></label>
-          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic <span data-pass-count="epic"></span></label>
-        </div>
-        <div class="filter-group">
-          <div class="filter-group-title">Region</div>
-          <select id="filter-region-select">
-            <option value="">All</option>
-            <option value="west">West</option>
-            <option value="east">East</option>
-            <option value="intl">Intl</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <div class="filter-group-title">Country</div>
-          <select id="filter-country-select">
-            <option value="">All</option>
-          </select>
-        </div>
-        <div class="filter-group">
           <div class="filter-group-title">Sort By</div>
           <select id="filter-sort-select">
             <option value="state">State (A-Z)</option>
@@ -81,15 +61,28 @@
         </div>
         <div class="filter-group">
           <label class="filter-include-all-label">
+            <input type="checkbox" id="filter-include-all" checked />
+            Default resorts only
+          </label>
+        </div>
+        <div class="filter-group">
+          <label class="filter-include-all-label">
             <input type="checkbox" id="filter-favorites-only" />
             Favorites only
           </label>
         </div>
         <div class="filter-group">
-          <label class="filter-include-all-label">
-            <input type="checkbox" id="filter-include-all" checked />
-            Default resorts only
-          </label>
+          <div class="filter-group-title">Pass Type</div>
+          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon <span data-pass-count="ikon"></span></label>
+          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic <span data-pass-count="epic"></span></label>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Region</div>
+          <div id="filter-region-options" class="filter-option-grid filter-option-list" role="group" aria-label="Region filters"></div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Country</div>
+          <div id="filter-country-options" class="filter-option-grid filter-option-list" role="group" aria-label="Country filters"></div>
         </div>
         <div class="filter-actions">
           <button id="filter-reset-btn" type="button">Reset</button>

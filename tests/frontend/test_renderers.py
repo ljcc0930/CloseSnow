@@ -253,6 +253,15 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
+    assert '<option value="state">State (A-Z)</option>' in html
+    assert '<option value="week_snow" selected>This Week\'s Snowfall</option>' in html
+    assert 'id="filter-region-options"' in html
+    assert 'id="filter-country-options"' in html
+    assert html.index('id="filter-sort-select"') < html.index('id="filter-include-all"')
+    assert html.index('id="filter-include-all"') < html.index('id="filter-favorites-only"')
+    assert html.index('id="filter-favorites-only"') < html.index('name="filter-pass-type" value="ikon"')
+    assert html.index('id="filter-sort-select"') < html.index('name="filter-pass-type" value="ikon"')
+    assert html.index('id="filter-sort-select"') < html.index('id="filter-region-options"')
     assert 'id="favorites-only-toggle"' in html
     assert 'id="filter-favorites-only"' in html
     assert 'name="filter-pass-type" value="ikon"' in html
@@ -264,7 +273,6 @@ def test_build_html_contains_meta_sections():
     assert "Search all resorts" in html
     assert 'id="filter-search-all" checked' in html
     assert "Default resorts" in html
-    assert '<option value="week_snow" selected>This Week\'s Snowfall</option>' in html
     assert '<option value="next_week_snow">Next Week\'s Snowfall</option>' in html
     assert '<option value="two_week_snow">Two-Week Snowfall</option>' in html
     assert '<option value="favorites">Favorites First</option>' in html
