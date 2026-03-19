@@ -252,7 +252,11 @@ def test_build_html_contains_meta_sections():
     assert 'id="resort-search-input"' in html
     assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
-    assert 'id="filter-sort-select"' in html
+    assert 'id="filter-sort-options"' in html
+    assert 'name="filter-sort-by" value="state"' in html
+    assert 'name="filter-sort-by" value="week_snow" checked' in html
+    assert 'id="filter-region-options"' in html
+    assert 'id="filter-country-options"' in html
     assert 'id="favorites-only-toggle"' in html
     assert 'id="filter-favorites-only"' in html
     assert 'name="filter-pass-type" value="ikon"' in html
@@ -264,11 +268,10 @@ def test_build_html_contains_meta_sections():
     assert "Search all resorts" in html
     assert 'id="filter-search-all" checked' in html
     assert "Default resorts" in html
-    assert '<option value="week_snow" selected>This Week\'s Snowfall</option>' in html
-    assert '<option value="next_week_snow">Next Week\'s Snowfall</option>' in html
-    assert '<option value="two_week_snow">Two-Week Snowfall</option>' in html
-    assert '<option value="favorites">Favorites First</option>' in html
-    assert '<option value="today_snow">Today\'s Snowfall</option>' in html
+    assert 'name="filter-sort-by" value="next_week_snow"' in html
+    assert 'name="filter-sort-by" value="two_week_snow"' in html
+    assert 'name="filter-sort-by" value="favorites"' in html
+    assert 'name="filter-sort-by" value="today_snow"' in html
     assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html

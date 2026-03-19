@@ -54,30 +54,23 @@
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Region</div>
-          <select id="filter-region-select">
-            <option value="">All</option>
-            <option value="west">West</option>
-            <option value="east">East</option>
-            <option value="intl">Intl</option>
-          </select>
+          <div id="filter-region-options" class="filter-option-grid" role="group" aria-label="Region filters"></div>
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Country</div>
-          <select id="filter-country-select">
-            <option value="">All</option>
-          </select>
+          <div id="filter-country-options" class="filter-option-grid" role="group" aria-label="Country filters"></div>
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Sort By</div>
-          <select id="filter-sort-select">
-            <option value="state">State (A-Z)</option>
-            <option value="name">Resort Name (A-Z)</option>
-            <option value="favorites">Favorites First</option>
-            <option value="today_snow">Today's Snowfall</option>
-            <option value="week_snow" selected>This Week's Snowfall</option>
-            <option value="next_week_snow">Next Week's Snowfall</option>
-            <option value="two_week_snow">Two-Week Snowfall</option>
-          </select>
+          <div id="filter-sort-options" class="filter-option-grid filter-sort-grid" role="radiogroup" aria-label="Sort resorts">
+            <label><input type="radio" name="filter-sort-by" value="state" /> State (A-Z)</label>
+            <label><input type="radio" name="filter-sort-by" value="name" /> Resort Name (A-Z)</label>
+            <label><input type="radio" name="filter-sort-by" value="favorites" /> Favorites First</label>
+            <label><input type="radio" name="filter-sort-by" value="today_snow" /> Today's Snowfall</label>
+            <label><input type="radio" name="filter-sort-by" value="week_snow" checked /> This Week's Snowfall</label>
+            <label><input type="radio" name="filter-sort-by" value="next_week_snow" /> Next Week's Snowfall</label>
+            <label><input type="radio" name="filter-sort-by" value="two_week_snow" /> Two-Week Snowfall</label>
+          </div>
         </div>
         <div class="filter-group">
           <label class="filter-include-all-label">
