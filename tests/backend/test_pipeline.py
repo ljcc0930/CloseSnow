@@ -130,8 +130,13 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
                 "display_name": "Alpha Resort",
                 "region": "west",
                 "country": "US",
+                "country_name": "United States",
                 "pass_types": ["ikon"],
                 "state": "UT",
+                "state_name": "Utah",
+                "city": "Salt Lake County",
+                "address": "Salt Lake County, Utah, United States",
+                "search_terms": ["Utah", "United States", "Salt Lake County"],
                 "default_enabled": True,
             }
         ],
@@ -169,6 +174,11 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     assert out["reports"][0]["pass_types"] == ["ikon"]
     assert out["reports"][0]["region"] == "west"
     assert out["reports"][0]["country_code"] == "US"
+    assert out["reports"][0]["country_name"] == "United States"
+    assert out["reports"][0]["state_name"] == "Utah"
+    assert out["reports"][0]["city"] == "Salt Lake County"
+    assert out["reports"][0]["address"] == "Salt Lake County, Utah, United States"
+    assert out["reports"][0]["search_terms"] == ["Utah", "United States", "Salt Lake County"]
     assert out["reports"][0]["ljcc_favorite"] is True
     assert out["reports"][0]["display_name"] == "Alpha Resort"
     assert ".cache/resorts_weather_unified.json" in seed_unified_calls

@@ -334,6 +334,66 @@ def test_backend_data_server_search_all_ignores_filters(monkeypatch, valid_paylo
         thread.join(timeout=3)
 
 
+def test_backend_data_server_search_supports_long_form_locations(monkeypatch, valid_payload):
+    calls = []
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        calls.append(kwargs)
+        return valid_payload
+
+    monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr(
+        "src.backend.weather_data_server.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "arapahoe-basin-co",
+                "query": "Arapahoe Basin, CO",
+                "name": "Arapahoe Basin",
+                "city": "Summit County",
+                "address": "Arapahoe Basin, Summit County, Colorado, United States",
+                "state": "CO",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+                "default_enabled": False,
+            },
+            {
+                "resort_id": "whistler-blackcomb-bc",
+                "query": "Whistler Blackcomb, BC",
+                "name": "Whistler Blackcomb",
+                "city": "Whistler Resort Municipality",
+                "address": "Whistler Resort Municipality, British Columbia, Canada",
+                "state": "BC",
+                "country": "CA",
+                "region": "west",
+                "pass_types": ["epic"],
+                "default_enabled": False,
+            },
+        ],
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        urllib.request.urlopen(f"{base}/api/data?search=colorado&search_all=1&include_all=1", timeout=3).read()
+        assert calls[-1]["resorts"] == ["Arapahoe Basin, CO"]
+
+        urllib.request.urlopen(f"{base}/api/data?search=canada&search_all=1&include_all=1", timeout=3).read()
+        assert calls[-1]["resorts"] == ["Whistler Blackcomb, BC"]
+
+        urllib.request.urlopen(f"{base}/api/data?search=summit+county&search_all=1&include_all=1", timeout=3).read()
+        assert calls[-1]["resorts"] == ["Arapahoe Basin, CO"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
 def test_backend_data_server_hourly_endpoint(monkeypatch):
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", lambda **kwargs: {"reports": []})
 

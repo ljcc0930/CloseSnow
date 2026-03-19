@@ -904,7 +904,15 @@ const buildServerQueryParams = () => {
 const _rowSearchText = (report) => {
   const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(" ") : "";
   const state = String(report.admin1 || "").trim();
-  return _normalizeSearch(`${_displayName(report)} ${report.query || ""} ${state} ${passTypes}`);
+  const stateName = String(report.state_name || "").trim();
+  const countryCode = String(report.country_code || report.country || "").trim();
+  const countryName = String(report.country_name || "").trim();
+  const city = String(report.city || "").trim();
+  const address = String(report.address || "").trim();
+  const searchTerms = Array.isArray(report.search_terms) ? report.search_terms.join(" ") : "";
+  return _normalizeSearch(
+    `${_displayName(report)} ${report.query || ""} ${state} ${stateName} ${countryCode} ${countryName} ${city} ${address} ${passTypes} ${searchTerms}`
+  );
 };
 
 const _isDefaultResort = (report) => Boolean(report.default_resort || report.ljcc_favorite);

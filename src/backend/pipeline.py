@@ -50,6 +50,11 @@ def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadat
         report["ljcc_favorite"] = report["default_resort"]
         report["display_name"] = str(meta.get("display_name") or query).strip()
         report["website"] = str(meta.get("website") or "").strip()
+        report["state_name"] = str(meta.get("state_name") or "").strip()
+        report["country_name"] = str(meta.get("country_name") or "").strip()
+        report["city"] = str(meta.get("city") or "").strip()
+        report["address"] = str(meta.get("address") or "").strip()
+        report["search_terms"] = list(meta.get("search_terms") or [])
         country_code = str(meta.get("country", "")).strip().upper()
         if country_code:
             report["country_code"] = country_code
