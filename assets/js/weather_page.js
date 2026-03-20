@@ -546,8 +546,8 @@ const _renderSunSection = (reports, emptyMessage = "No resorts match the current
     const hour12 = hour24 % 12 || 12;
     return `${hour12}:${minute} ${suffix}`;
   };
-  const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
-  const rightRows = reports.length ? reports.map((report) => {
+  const totalColumns = 2 + (displayDays * 2);
+  const rows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
@@ -557,8 +557,8 @@ const _renderSunSection = (reports, emptyMessage = "No resorts match the current
       const sunset = hhmm(sunsetRaw, appState.sunTimeToggleMode);
       return `<td data-sun-time-raw="${_escapeHtml(sunriseRaw)}">${_escapeHtml(sunrise)}</td><td data-sun-time-raw="${_escapeHtml(sunsetRaw)}">${_escapeHtml(sunset)}</td>`;
     }).join("");
-    return `<tr${attrs}>${cells}</tr>`;
-  }).join("") : _emptyStateRow(Math.max(1, displayDays * 2), emptyMessage);
+    return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
+  }).join("") : _emptyStateRow(totalColumns, emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -568,21 +568,19 @@ const _renderSunSection = (reports, emptyMessage = "No resorts match the current
           <button type="button" class="unit-btn" data-unit-mode="imperial">12h</button>
         </div>
       </div>
-      <div class="sun-split-wrap">
-        <div class="sun-left-wrap" id="sun-left-wrap">
-          <table class="sun-left-table" id="sun-left-table">
-            <colgroup><col class="col-favorite"><col class="col-query"></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
-            <tbody>${leftRows}</tbody>
-          </table>
-        </div>
-        <div class="sun-right-wrap" id="sun-right-wrap">
-          <table class="sun-right-table" id="sun-right-table">
-            <colgroup>${Array.from({ length: displayDays * 2 }, () => "<col class='col-sun'>").join("")}</colgroup>
-            <thead><tr>${labels.map((label) => `<th colspan='2'>${_dayLabelHtml(label)}</th>`).join("")}</tr><tr>${Array.from({ length: displayDays }, () => "<th>sunrise</th><th>sunset</th>").join("")}</tr></thead>
-            <tbody>${rightRows}</tbody>
-          </table>
-        </div>
+      <div
+        class="sun-single-wrap"
+        id="sun-single-wrap"
+        data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.sun}"
+        data-sticky-leading-cols="2"
+        data-sticky-header-rows="2"
+        data-sticky-max-visible-rows="10"
+      >
+        <table class="sun-single-table" id="sun-single-table">
+          <colgroup><col class="col-favorite"><col class="col-query">${Array.from({ length: displayDays * 2 }, () => "<col class='col-sun'>").join("")}</colgroup>
+          <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th>${labels.map((label) => `<th colspan='2'>${_dayLabelHtml(label)}</th>`).join("")}</tr><tr>${Array.from({ length: displayDays }, () => "<th>sunrise</th><th>sunset</th>").join("")}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </section>`;
 };
@@ -1311,7 +1309,6 @@ const attachSplitScrollSync = () => {
     [".rain-left-wrap#rain-left-wrap-mobile", ".rain-right-wrap#rain-right-wrap-mobile"],
     [".temperature-left-wrap", ".temperature-right-wrap"],
     [".weather-left-wrap", ".weather-right-wrap"],
-    [".sun-left-wrap", ".sun-right-wrap"],
   ].forEach(([leftSelector, rightSelector]) => {
     attachVerticalSync(document.querySelector(leftSelector), document.querySelector(rightSelector));
   });
@@ -1404,8 +1401,8 @@ const autoSizeSplitTables = () => {
       capToMobileHalfScreen: true,
     });
     _autoSizeQueryOnly({
-      tableSelector: ".sun-left-wrap .sun-left-table",
-      wrapSelector: ".sun-left-wrap",
+      tableSelector: ".sun-single-wrap .sun-single-table",
+      wrapSelector: ".sun-single-wrap",
       queryVarName: "--sun-query-w",
       minWidth: 150,
       maxWidth: 220,
@@ -1454,8 +1451,8 @@ const autoSizeSplitTables = () => {
     minWidth: 50,
   });
   _autoSizeQueryOnly({
-    tableSelector: ".sun-left-wrap .sun-left-table",
-    wrapSelector: ".sun-left-wrap",
+    tableSelector: ".sun-single-wrap .sun-single-table",
+    wrapSelector: ".sun-single-wrap",
     queryVarName: "--sun-query-w",
   });
   _stretchColumnsToWrap({
@@ -1465,8 +1462,8 @@ const autoSizeSplitTables = () => {
     minWidth: 68,
   });
   _stretchColumnsToWrap({
-    wrapSelector: ".sun-right-wrap",
-    tableSelector: ".sun-right-table",
+    wrapSelector: ".sun-single-wrap",
+    tableSelector: ".sun-single-table",
     colSelector: "col.col-sun",
     minWidth: 58,
   });
@@ -1509,14 +1506,12 @@ const syncSplitTableHeights = () => {
       [".rain-left-wrap#rain-left-wrap-mobile .rain-left-table", ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table", ".rain-split-wrap.mobile-only", "--rain-header-row1-h"],
       [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
-      [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
     ]
     : [
       [".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table", ".snowfall-split-wrap.desktop-only", "--snow-header-row1-h"],
       [".rain-left-wrap#rain-left-wrap .rain-left-table", ".rain-right-wrap#rain-right-wrap .rain-right-table", ".rain-split-wrap.desktop-only", "--rain-header-row1-h"],
       [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
-      [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
     ];
   tablePairs.forEach(([leftSelector, rightSelector, wrapSelector, stickyVar]) => {
     const leftTable = document.querySelector(leftSelector);
@@ -1577,8 +1572,7 @@ const observeLayoutContainers = () => {
     ".temperature-right-wrap",
     ".weather-left-wrap",
     ".weather-right-wrap",
-    ".sun-left-wrap",
-    ".sun-right-wrap",
+    ".sun-single-wrap",
   ].forEach((selector) => {
     const element = document.querySelector(selector);
     if (!element || observed.has(element)) return;
@@ -1808,8 +1802,7 @@ const _SCROLLABLE_WRAP_SELECTORS = [
   ".temperature-right-wrap",
   ".weather-left-wrap",
   ".weather-right-wrap",
-  ".sun-left-wrap",
-  ".sun-right-wrap",
+  ".sun-single-wrap",
 ];
 
 const _captureWrapScrollPositions = () => {

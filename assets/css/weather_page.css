@@ -529,8 +529,7 @@
     .rain-right-wrap,
     .temperature-left-wrap,
     .temperature-right-wrap,
-    .sun-left-wrap,
-    .sun-right-wrap {
+    .sun-single-wrap {
       -webkit-overflow-scrolling: touch;
     }
     .sticky-single-table-wrap {
@@ -1009,55 +1008,29 @@
     .temperature-right-table td {
       background-clip: padding-box;
     }
-    .sun-split-wrap {
-      display: flex;
+    .sun-single-wrap {
       border: 1px solid #d1d5db;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-      overflow: hidden;
-      --sun-header-row1-h: 32px;
-    }
-    .sun-left-wrap {
-      flex: 0 0 auto;
-      background: #fff;
-      overflow: hidden;
+      overflow: auto;
       --sun-query-w: 220px;
     }
-    .sun-right-wrap {
-      flex: 1 1 auto;
-      overflow: auto;
-    }
-    .sun-left-table,
-    .sun-right-table {
+    .sun-single-table {
       table-layout: fixed;
-      width: auto;
-      min-width: 0;
+      width: max-content;
+      min-width: 100%;
     }
-    .sun-left-table col.col-favorite {
+    .sun-single-table col.col-favorite {
       width: 28px;
     }
-    .sun-left-table col.col-query {
+    .sun-single-table col.col-query {
       width: var(--sun-query-w);
     }
-    .sun-right-table col.col-sun {
+    .sun-single-table col.col-sun {
       width: 58px;
     }
-    .sun-left-table thead tr:first-child th,
-    .sun-right-table thead tr:first-child th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .sun-left-table thead tr:nth-child(2) th,
-    .sun-right-table thead tr:nth-child(2) th {
-      position: sticky;
-      top: var(--sun-header-row1-h);
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .sun-left-table .query-col {
+    .sun-single-table .query-col {
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -1065,11 +1038,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .sun-left-table td,
-    .sun-right-table td {
+    .sun-single-table td {
       background-clip: padding-box;
     }
-    .sun-right-table td {
+    .sun-single-table td[data-sun-time-raw] {
       text-align: center;
     }
     body.mobile-simple .desktop-only {
@@ -1130,10 +1102,10 @@
     body.mobile-simple .weather-left-table .query-col {
       max-width: min(var(--weather-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .sun-left-table col.col-query {
+    body.mobile-simple .sun-single-table col.col-query {
       width: min(var(--sun-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .sun-left-table .query-col {
+    body.mobile-simple .sun-single-table .query-col {
       max-width: min(var(--sun-query-w), var(--mobile-leading-col-max));
     }
   

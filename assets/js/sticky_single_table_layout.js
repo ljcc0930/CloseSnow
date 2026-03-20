@@ -44,6 +44,33 @@
     }
   };
 
+  const _rowCellMapsByVisualColumn = (rows) => {
+    const pendingRowspans = [];
+    return rows.map((row) => {
+      const visualCells = [];
+      let visualCol = 0;
+      Array.from(row.cells || []).forEach((cell) => {
+        while ((pendingRowspans[visualCol] || 0) > 0) {
+          visualCol += 1;
+        }
+        const colSpan = Math.max(1, Number.parseInt(String(cell.colSpan || 1), 10) || 1);
+        const rowSpan = Math.max(1, Number.parseInt(String(cell.rowSpan || 1), 10) || 1);
+        for (let spanOffset = 0; spanOffset < colSpan; spanOffset += 1) {
+          const targetCol = visualCol + spanOffset;
+          visualCells[targetCol] = cell;
+          if (rowSpan > 1) pendingRowspans[targetCol] = rowSpan;
+        }
+        visualCol += colSpan;
+      });
+      for (let col = 0; col < pendingRowspans.length; col += 1) {
+        if ((pendingRowspans[col] || 0) > 0) {
+          pendingRowspans[col] -= 1;
+        }
+      }
+      return visualCells;
+    });
+  };
+
   const _applyStickyLeadingColumns = (table, requestedColumns) => {
     _clearStickyLeadingCells(table);
 
@@ -53,16 +80,15 @@
 
     const headRows = Array.from(table.tHead?.rows || []);
     const bodyRows = Array.from(table.tBodies[0]?.rows || []);
-    const sampleRow = headRows[headRows.length - 1] || bodyRows[0];
-    if (!sampleRow) return;
-
     const allRows = headRows.concat(bodyRows);
+    if (allRows.length <= 0) return;
+    const rowCellMaps = _rowCellMapsByVisualColumn(allRows);
     let runningLeft = 0;
     for (let colIndex = 0; colIndex < leadingColumns; colIndex += 1) {
-      const sampleCell = sampleRow.cells[colIndex] || allRows.find((row) => row.cells[colIndex])?.cells[colIndex];
+      const sampleCell = rowCellMaps.map((visualCells) => visualCells[colIndex]).find(Boolean);
       const width = sampleCell?.getBoundingClientRect?.().width || sampleCell?.offsetWidth || 0;
-      allRows.forEach((row) => {
-        const cell = row.cells[colIndex];
+      allRows.forEach((row, rowIndex) => {
+        const cell = rowCellMaps[rowIndex]?.[colIndex];
         if (!cell) return;
         cell.classList.add("sticky-leading-cell");
         cell.style.setProperty("--sticky-leading-left", `${runningLeft}px`);
