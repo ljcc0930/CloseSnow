@@ -508,7 +508,6 @@
     }
     .compact-grid-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow-x: hidden;
       overflow-y: auto;
@@ -735,7 +734,6 @@
     }
     .weather-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --weather-query-w: 220px;
@@ -804,7 +802,6 @@
     }
     .snowfall-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --query-col-w: 220px;
@@ -881,7 +878,6 @@
     }
     .rain-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --rain-query-w: 220px;
@@ -946,7 +942,6 @@
     }
     .temperature-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --temp-query-w: 220px;
@@ -1007,7 +1002,6 @@
     }
     .sun-left-wrap {
       flex: 0 0 auto;
-      border-right: 3px solid #94a3b8;
       background: #fff;
       overflow: hidden;
       --sun-query-w: 220px;
