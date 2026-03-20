@@ -8,11 +8,13 @@ from src.web.weather_page_assets import ASSET_MIME_TYPES, asset_path, read_asset
 def test_asset_path_points_to_repo_assets():
     css_path = asset_path("assets/css/weather_page.css")
     compact_js_path = asset_path("assets/js/compact_daily_summary.js")
+    sticky_layout_js_path = asset_path("assets/js/sticky_single_table_layout.js")
     js_path = asset_path("assets/js/weather_page.js")
     hourly_css_path = asset_path("assets/css/resort_hourly.css")
     hourly_js_path = asset_path("assets/js/resort_hourly.js")
     assert str(css_path).endswith("assets/css/weather_page.css")
     assert str(compact_js_path).endswith("assets/js/compact_daily_summary.js")
+    assert str(sticky_layout_js_path).endswith("assets/js/sticky_single_table_layout.js")
     assert str(js_path).endswith("assets/js/weather_page.js")
     assert str(hourly_css_path).endswith("assets/css/resort_hourly.css")
     assert str(hourly_js_path).endswith("assets/js/resort_hourly.js")
@@ -21,21 +23,25 @@ def test_asset_path_points_to_repo_assets():
 def test_read_asset_bytes_reads_known_assets():
     css = read_asset_bytes("assets/css/weather_page.css")
     compact_js = read_asset_bytes("assets/js/compact_daily_summary.js")
+    sticky_layout_js = read_asset_bytes("assets/js/sticky_single_table_layout.js")
     js = read_asset_bytes("assets/js/weather_page.js")
     hourly_css = read_asset_bytes("assets/css/resort_hourly.css")
     hourly_js = read_asset_bytes("assets/js/resort_hourly.js")
     assert len(css) > 100
     assert len(compact_js) > 100
+    assert len(sticky_layout_js) > 100
     assert len(js) > 100
     assert len(hourly_css) > 100
     assert len(hourly_js) > 100
     assert ASSET_MIME_TYPES["assets/css/weather_page.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/compact_daily_summary.js"].startswith("application/javascript")
+    assert ASSET_MIME_TYPES["assets/js/sticky_single_table_layout.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/js/weather_page.js"].startswith("application/javascript")
     assert ASSET_MIME_TYPES["assets/css/resort_hourly.css"].startswith("text/css")
     assert ASSET_MIME_TYPES["assets/js/resort_hourly.js"].startswith("application/javascript")
     css_text = css.decode("utf-8", errors="ignore")
     compact_js_text = compact_js.decode("utf-8", errors="ignore")
+    sticky_layout_js_text = sticky_layout_js.decode("utf-8", errors="ignore")
     hourly_css_text = hourly_css.decode("utf-8", errors="ignore")
     hourly_js_text = hourly_js.decode("utf-8", errors="ignore")
     js_text = js.decode("utf-8", errors="ignore")
@@ -61,6 +67,9 @@ def test_read_asset_bytes_reads_known_assets():
     assert "width: 100%;" in hourly_css_text
     assert "min-width: 0;" in hourly_css_text
     assert "window.CloseSnowCompactDailySummary" in compact_js_text
+    assert "window.CloseSnowStickySingleTableLayout" in sticky_layout_js_text
+    assert "STICKY_VIEWPORT_ROW_CAP = 10" in sticky_layout_js_text
+    assert "[data-sticky-single-table-section]" in sticky_layout_js_text
     assert "renderSingleResortHtml" in compact_js_text
     assert "labelMode" in compact_js_text
     assert 'return "Today";' in compact_js_text
@@ -72,6 +81,9 @@ def test_read_asset_bytes_reads_known_assets():
     assert "compact-day-cell-phase-start" not in compact_js_text
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in js_text
     assert "window.CLOSESNOW_INITIAL_PAYLOAD" in js_text
+    assert "STICKY_SINGLE_TABLE_SECTION_KEYS" in js_text
+    assert "stickySingleTableLayout.applyFromDom" in js_text
+    assert "data-sticky-single-table-section" in js_text
     assert "No resorts match the current filters." in js_text
     assert "report.state_name" in js_text
     assert "report.country_name" in js_text

@@ -56,8 +56,18 @@ const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const LEADING_FAVORITE_COL_PX = 28;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
+const stickySingleTableLayout = window.CloseSnowStickySingleTableLayout || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
+// Reserve section keys so later workers can move one section at a time to shared single-table layout.
+const STICKY_SINGLE_TABLE_SECTION_KEYS = Object.freeze({
+  dailySummary: "daily-summary",
+  snowfall: "snowfall",
+  rainfall: "rainfall",
+  temperature: "temperature",
+  weather: "weather",
+  sun: "sunrise-sunset",
+});
 
 const appState = {
   payload: null,
@@ -326,7 +336,14 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
           <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
         </div>
       </div>
-      <div class="compact-grid-mobile-wrap" id="compact-grid-mobile-wrap">
+      <div
+        class="compact-grid-mobile-wrap"
+        id="compact-grid-mobile-wrap"
+        data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.dailySummary}"
+        data-sticky-leading-cols="2"
+        data-sticky-header-rows="1"
+        data-sticky-max-visible-rows="10"
+      >
         <table class="compact-grid-mobile-table" id="compact-grid-mobile-table">
           <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
           <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
@@ -1485,53 +1502,6 @@ const _syncStickySecondRowTop = (leftTable, rightTable, splitWrap, variableName)
   }
 };
 
-const _setVisibleRowViewport = ({ leftSelector, rightSelector, rowsVisible = 5 }) => {
-  const leftWrap = document.querySelector(leftSelector);
-  const rightWrap = document.querySelector(rightSelector);
-  const leftTable = leftWrap?.querySelector("table");
-  const rightTable = rightWrap?.querySelector("table");
-  if (!leftWrap || !rightWrap || !leftTable || !rightTable) return;
-
-  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
-  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
-  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
-  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
-  const visibleCount = Math.min(
-    rowsVisible,
-    leftBodyRows.length || rowsVisible,
-    rightBodyRows.length || rowsVisible,
-  );
-  if (visibleCount <= 0) return;
-
-  const leftHeadHeight = leftHeadRows.reduce((sum, row) => sum + row.offsetHeight, 0);
-  const rightHeadHeight = rightHeadRows.reduce((sum, row) => sum + row.offsetHeight, 0);
-  const leftBodyHeight = leftBodyRows.slice(0, visibleCount).reduce((sum, row) => sum + row.offsetHeight, 0);
-  const rightBodyHeight = rightBodyRows.slice(0, visibleCount).reduce((sum, row) => sum + row.offsetHeight, 0);
-  const maxHeight = Math.max(leftHeadHeight + leftBodyHeight, rightHeadHeight + rightBodyHeight);
-  if (maxHeight > 0) {
-    leftWrap.style.maxHeight = `${maxHeight}px`;
-    rightWrap.style.maxHeight = `${maxHeight}px`;
-  }
-};
-
-const _setSingleTableViewport = ({ wrapSelector, rowsVisible = 5 }) => {
-  const wrap = document.querySelector(wrapSelector);
-  const table = wrap?.querySelector("table");
-  if (!wrap || !table) return;
-
-  const headRows = Array.from(table.tHead?.rows || []);
-  const bodyRows = Array.from(table.tBodies[0]?.rows || []);
-  const visibleCount = Math.min(rowsVisible, bodyRows.length || rowsVisible);
-  if (visibleCount <= 0) return;
-
-  const headHeight = headRows.reduce((sum, row) => sum + row.offsetHeight, 0);
-  const bodyHeight = bodyRows.slice(0, visibleCount).reduce((sum, row) => sum + row.offsetHeight, 0);
-  const maxHeight = headHeight + bodyHeight;
-  if (maxHeight > 0) {
-    wrap.style.maxHeight = `${maxHeight}px`;
-  }
-};
-
 const syncSplitTableHeights = () => {
   const tablePairs = isCompactLayout()
     ? [
@@ -1568,10 +1538,6 @@ const syncSplitTableHeights = () => {
     _syncRowPairHeights(leftBodyRows, rightBodyRows);
     _syncStickySecondRowTop(leftTable, rightTable, splitWrap, stickyVar);
   });
-  _setSingleTableViewport({
-    wrapSelector: ".compact-grid-mobile-wrap",
-    rowsVisible: 5,
-  });
 };
 
 let layoutFrame = 0;
@@ -1585,6 +1551,9 @@ const applyLayout = () => {
     updateLayoutMode();
     autoSizeSplitTables();
     syncSplitTableHeights();
+    if (typeof stickySingleTableLayout.applyFromDom === "function") {
+      stickySingleTableLayout.applyFromDom({ root: pageContentRoot || document });
+    }
     attachSplitScrollSync();
   });
 };
@@ -1593,6 +1562,7 @@ const observeLayoutContainers = () => {
   if (!window.ResizeObserver) return;
   if (layoutObserver) layoutObserver.disconnect();
   layoutObserver = new ResizeObserver(() => applyLayout());
+  const observed = new Set();
   [
     ".snowfall-left-wrap#snowfall-left-wrap",
     ".snowfall-right-wrap#snowfall-right-wrap",
@@ -1611,7 +1581,14 @@ const observeLayoutContainers = () => {
     ".sun-right-wrap",
   ].forEach((selector) => {
     const element = document.querySelector(selector);
-    if (element) layoutObserver.observe(element);
+    if (!element || observed.has(element)) return;
+    layoutObserver.observe(element);
+    observed.add(element);
+  });
+  document.querySelectorAll("[data-sticky-single-table-section]").forEach((element) => {
+    if (observed.has(element)) return;
+    layoutObserver.observe(element);
+    observed.add(element);
   });
 };
 
@@ -1835,19 +1812,44 @@ const _SCROLLABLE_WRAP_SELECTORS = [
   ".sun-right-wrap",
 ];
 
-const _captureWrapScrollPositions = () => _SCROLLABLE_WRAP_SELECTORS.map((selector) => {
-  const element = document.querySelector(selector);
-  if (!element) return null;
-  return {
-    selector,
-    scrollTop: element.scrollTop,
-    scrollLeft: element.scrollLeft,
-  };
-}).filter(Boolean);
+const _captureWrapScrollPositions = () => {
+  const entries = [];
+  const seen = new Set();
+  _SCROLLABLE_WRAP_SELECTORS.forEach((selector) => {
+    const element = document.querySelector(selector);
+    if (!element || seen.has(element)) return;
+    entries.push({
+      selector,
+      sectionKey: "",
+      scrollTop: element.scrollTop,
+      scrollLeft: element.scrollLeft,
+    });
+    seen.add(element);
+  });
+  document.querySelectorAll("[data-sticky-single-table-section]").forEach((element) => {
+    if (seen.has(element)) return;
+    const sectionKey = String(element.getAttribute("data-sticky-single-table-section") || "").trim();
+    entries.push({
+      selector: "",
+      sectionKey,
+      scrollTop: element.scrollTop,
+      scrollLeft: element.scrollLeft,
+    });
+    seen.add(element);
+  });
+  return entries;
+};
 
 const _restoreWrapScrollPositions = (positions) => {
   positions.forEach((entry) => {
-    const element = document.querySelector(entry.selector);
+    let element = null;
+    if (entry.sectionKey) {
+      const escapedSectionKey = String(entry.sectionKey).replace(/"/g, "\\\"");
+      element = document.querySelector(`[data-sticky-single-table-section="${escapedSectionKey}"]`);
+    }
+    if (!element && entry.selector) {
+      element = document.querySelector(entry.selector);
+    }
     if (!element) return;
     element.scrollTop = entry.scrollTop;
     element.scrollLeft = entry.scrollLeft;

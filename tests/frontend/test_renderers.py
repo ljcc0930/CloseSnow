@@ -248,6 +248,7 @@ def test_build_html_contains_meta_sections():
     assert "Feature requests" in html
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
+    assert 'src="assets/js/sticky_single_table_layout.js"' in html
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
     assert 'id="resort-search-input"' in html
     assert 'id="filter-open-btn"' in html
