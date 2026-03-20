@@ -495,17 +495,18 @@ const _renderWeatherSection = (reports, emptyMessage = "No resorts match the cur
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
     : _fallbackDayLabels(displayDays);
-  const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
-  const rightRows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const cells = Array.from({ length: displayDays }, (_, idx) => {
-      const code = _dailyAt(report, idx).weather_code;
-      const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
-      return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
-    }).join("");
-    return `<tr${attrs}>${cells}</tr>`;
-  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
-  return `
+  const weatherCells = (report) => Array.from({ length: displayDays }, (_, idx) => {
+    const code = _dailyAt(report, idx).weather_code;
+    const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
+    return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
+  }).join("");
+  if (appState.layoutMode === "compact") {
+    const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
+    const rightRows = reports.length ? reports.map((report) => {
+      const attrs = _filterAttrs(report);
+      return `<tr${attrs}>${weatherCells(report)}</tr>`;
+    }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
+    return `
     <section>
       <h2>Weather</h2>
       <div class='weather-split-wrap'>
@@ -523,6 +524,26 @@ const _renderWeatherSection = (reports, emptyMessage = "No resorts match the cur
             <tbody>${rightRows}</tbody>
           </table>
         </div>
+      </div>
+    </section>`;
+  }
+  const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
+  return `
+    <section>
+      <h2>Weather</h2>
+      <div
+        class='weather-table-wrap'
+        id='weather-table-wrap'
+        data-sticky-single-table-section='${STICKY_SINGLE_TABLE_SECTION_KEYS.weather}'
+        data-sticky-leading-cols='2'
+        data-sticky-header-rows='1'
+        data-sticky-max-visible-rows='10'
+      >
+        <table class='weather-table' id='weather-table'>
+          <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-weather'>").join("")}</colgroup>
+          <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </section>`;
 };
@@ -1443,8 +1464,8 @@ const autoSizeSplitTables = () => {
     queryVarName: "--temp-query-w",
   });
   _autoSizeQueryOnly({
-    tableSelector: ".weather-left-wrap .weather-left-table",
-    wrapSelector: ".weather-left-wrap",
+    tableSelector: ".weather-table-wrap .weather-table",
+    wrapSelector: ".weather-table-wrap",
     queryVarName: "--weather-query-w",
   });
   _stretchColumnsToWrap({
@@ -1457,12 +1478,6 @@ const autoSizeSplitTables = () => {
     tableSelector: ".sun-left-wrap .sun-left-table",
     wrapSelector: ".sun-left-wrap",
     queryVarName: "--sun-query-w",
-  });
-  _stretchColumnsToWrap({
-    wrapSelector: ".weather-right-wrap",
-    tableSelector: ".weather-right-table",
-    colSelector: "col.col-weather",
-    minWidth: 68,
   });
   _stretchColumnsToWrap({
     wrapSelector: ".sun-right-wrap",

@@ -521,6 +521,7 @@
     .compact-grid-left-wrap,
     .compact-grid-right-wrap,
     .sticky-single-table-wrap,
+    .weather-table-wrap,
     .weather-left-wrap,
     .weather-right-wrap,
     .snowfall-left-wrap,
@@ -740,6 +741,55 @@
     }
     .mobile-only {
       display: none;
+    }
+    .weather-table-wrap {
+      margin-top: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: auto;
+      --weather-query-w: 220px;
+    }
+    .weather-table {
+      table-layout: fixed;
+      width: max-content;
+      min-width: 100%;
+    }
+    .weather-table col.col-favorite {
+      width: 28px;
+    }
+    .weather-table col.col-query {
+      width: var(--weather-query-w);
+    }
+    .weather-table col.col-weather {
+      width: 68px;
+    }
+    .weather-table .favorite-col,
+    .weather-table .favorite-head {
+      width: 28px;
+      min-width: 28px;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .weather-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      background: #fff;
+      max-width: var(--weather-query-w);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .weather-table thead .query-col {
+      background: #e5e7eb;
+    }
+    .weather-table td {
+      background-clip: padding-box;
+    }
+    .weather-table td.weather-emoji-cell {
+      text-align: center;
+      font-size: 18px;
+      line-height: 1;
     }
     .weather-split-wrap {
       display: flex;
