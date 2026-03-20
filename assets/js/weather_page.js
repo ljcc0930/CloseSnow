@@ -503,33 +503,6 @@ const _renderWeatherSection = (reports, emptyMessage = "No resorts match the cur
     const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
     return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
   }).join("");
-  if (appState.layoutMode === "compact") {
-    const leftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
-    const rightRows = reports.length ? reports.map((report) => {
-      const attrs = _filterAttrs(report);
-      return `<tr${attrs}>${weatherCells(report)}</tr>`;
-    }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
-    return `
-    <section>
-      <h2>Weather</h2>
-      <div class='weather-split-wrap'>
-        <div class='weather-left-wrap' id='weather-left-wrap'>
-          <table class='weather-left-table' id='weather-left-table'>
-            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
-            <tbody>${leftRows}</tbody>
-          </table>
-        </div>
-        <div class='weather-right-wrap' id='weather-right-wrap'>
-          <table class='weather-right-table' id='weather-right-table'>
-            <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-weather'>").join("")}</colgroup>
-            <thead><tr>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${rightRows}</tbody>
-          </table>
-        </div>
-      </div>
-    </section>`;
-  }
   const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
     <section>
@@ -1312,31 +1285,6 @@ const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stick
   }
 };
 
-const attachVerticalSync = (left, right) => {
-  if (!left || !right || left.dataset.scrollSyncAttached === "1") return;
-  let syncing = false;
-  const sync = (source, target) => {
-    if (syncing) return;
-    syncing = true;
-    target.scrollTop = source.scrollTop;
-    requestAnimationFrame(() => {
-      syncing = false;
-    });
-  };
-  left.addEventListener("scroll", () => sync(left, right), { passive: true });
-  right.addEventListener("scroll", () => sync(right, left), { passive: true });
-  left.dataset.scrollSyncAttached = "1";
-  right.dataset.scrollSyncAttached = "1";
-};
-
-const attachSplitScrollSync = () => {
-  [
-    [".weather-left-wrap", ".weather-right-wrap"],
-  ].forEach(([leftSelector, rightSelector]) => {
-    attachVerticalSync(document.querySelector(leftSelector), document.querySelector(rightSelector));
-  });
-};
-
 const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWidth }) => {
   const wrap = document.querySelector(wrapSelector);
   const table = document.querySelector(tableSelector);
@@ -1382,6 +1330,14 @@ const autoSizeSplitTables = () => {
     maxWidth: 220,
     capToMobileHalfScreen: isCompactLayout(),
   });
+  _autoSizeQueryOnly({
+    tableSelector: ".weather-table-wrap .weather-table",
+    wrapSelector: ".weather-table-wrap",
+    queryVarName: "--weather-query-w",
+    minWidth: 150,
+    maxWidth: 220,
+    capToMobileHalfScreen: isCompactLayout(),
+  });
   if (isCompactLayout()) {
     _autoSizeQueryOnly({
       tableSelector: ".snowfall-sticky-wrap.mobile-only .snowfall-sticky-table",
@@ -1404,14 +1360,6 @@ const autoSizeSplitTables = () => {
       mobileCapOffset: 0,
     });
     _autoSizeQueryOnly({
-      tableSelector: ".weather-left-wrap .weather-left-table",
-      wrapSelector: ".weather-left-wrap",
-      queryVarName: "--weather-query-w",
-      minWidth: 150,
-      maxWidth: 220,
-      capToMobileHalfScreen: true,
-    });
-    _autoSizeQueryOnly({
       tableSelector: ".sun-single-wrap .sun-single-table",
       wrapSelector: ".sun-single-wrap",
       queryVarName: "--sun-query-w",
@@ -1432,11 +1380,6 @@ const autoSizeSplitTables = () => {
     queryVarName: "--rain-query-w",
   });
   _autoSizeQueryOnly({
-    tableSelector: ".weather-table-wrap .weather-table",
-    wrapSelector: ".weather-table-wrap",
-    queryVarName: "--weather-query-w",
-  });
-  _autoSizeQueryOnly({
     tableSelector: ".sun-single-wrap .sun-single-table",
     wrapSelector: ".sun-single-wrap",
     queryVarName: "--sun-query-w",
@@ -1446,115 +1389,6 @@ const autoSizeSplitTables = () => {
     tableSelector: ".sun-single-table",
     colSelector: "col.col-sun",
     minWidth: 58,
-  });
-};
-
-const _clearRowHeights = (rows) => {
-  rows.forEach((row) => {
-    row.style.height = "";
-  });
-};
-
-const _syncRowPairHeights = (leftRows, rightRows) => {
-  const count = Math.min(leftRows.length, rightRows.length);
-  const heights = [];
-  for (let index = 0; index < count; index += 1) {
-    heights.push(Math.max(leftRows[index].offsetHeight, rightRows[index].offsetHeight));
-  }
-  for (let index = 0; index < count; index += 1) {
-    const targetHeight = heights[index];
-    leftRows[index].style.height = `${targetHeight}px`;
-    rightRows[index].style.height = `${targetHeight}px`;
-  }
-};
-
-const _syncStickySecondRowTop = (leftTable, rightTable, splitWrap, variableName) => {
-  if (!leftTable || !rightTable || !splitWrap) return;
-  const leftFirstRow = leftTable.tHead?.rows?.[0];
-  const rightFirstRow = rightTable.tHead?.rows?.[0];
-  if (!leftFirstRow || !rightFirstRow) return;
-  const top = Math.max(leftFirstRow.offsetHeight, rightFirstRow.offsetHeight);
-  if (top > 0) {
-    splitWrap.style.setProperty(variableName, `${top}px`);
-  }
-};
-
-const _applySplitViewportCap = ({
-  leftTableSelector,
-  rightTableSelector,
-  leftWrapSelector,
-  rightWrapSelector,
-  maxVisibleRows = 10,
-}) => {
-  const leftTable = document.querySelector(leftTableSelector);
-  const rightTable = document.querySelector(rightTableSelector);
-  const leftWrap = document.querySelector(leftWrapSelector);
-  const rightWrap = document.querySelector(rightWrapSelector);
-
-  [leftWrap, rightWrap].forEach((wrap) => {
-    wrap?.style.removeProperty("max-height");
-  });
-  if (!leftTable || !rightTable || !leftWrap || !rightWrap) return;
-
-  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
-  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
-  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
-  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
-  const visibleRows = Math.min(maxVisibleRows, leftBodyRows.length, rightBodyRows.length);
-  if (visibleRows <= 0) return;
-
-  const headerHeight = Math.max(
-    leftHeadRows.reduce((sum, row) => sum + (row.offsetHeight || 0), 0),
-    rightHeadRows.reduce((sum, row) => sum + (row.offsetHeight || 0), 0),
-  );
-  const bodyHeight = Array.from({ length: visibleRows }, (_, index) => Math.max(
-    leftBodyRows[index]?.offsetHeight || 0,
-    rightBodyRows[index]?.offsetHeight || 0,
-  )).reduce((sum, height) => sum + height, 0);
-  const total = Math.ceil(headerHeight + bodyHeight);
-  if (total <= 0) return;
-
-  leftWrap.style.maxHeight = `${total}px`;
-  rightWrap.style.maxHeight = `${total}px`;
-};
-
-const syncSplitTableHeights = () => {
-  const tablePairs = isCompactLayout()
-    ? [
-      [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
-    ]
-    : [
-      [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
-    ];
-  tablePairs.forEach(([leftSelector, rightSelector, wrapSelector, stickyVar]) => {
-    const leftTable = document.querySelector(leftSelector);
-    const rightTable = document.querySelector(rightSelector);
-    const splitWrap = document.querySelector(wrapSelector);
-    if (!leftTable || !rightTable) return;
-
-    const leftHeadRows = Array.from(leftTable.tHead ? leftTable.tHead.rows : []);
-    const rightHeadRows = Array.from(rightTable.tHead ? rightTable.tHead.rows : []);
-    const leftBodyRows = Array.from(leftTable.tBodies[0] ? leftTable.tBodies[0].rows : []);
-    const rightBodyRows = Array.from(rightTable.tBodies[0] ? rightTable.tBodies[0].rows : []);
-
-    _clearRowHeights(leftHeadRows);
-    _clearRowHeights(rightHeadRows);
-    _clearRowHeights(leftBodyRows);
-    _clearRowHeights(rightBodyRows);
-
-    _syncRowPairHeights(leftHeadRows, rightHeadRows);
-    _syncRowPairHeights(leftBodyRows, rightBodyRows);
-    _syncStickySecondRowTop(leftTable, rightTable, splitWrap, stickyVar);
-  });
-};
-
-const applySplitViewportCaps = () => {
-  _applySplitViewportCap({
-    leftTableSelector: ".weather-left-table",
-    rightTableSelector: ".weather-right-table",
-    leftWrapSelector: ".weather-left-wrap",
-    rightWrapSelector: ".weather-right-wrap",
-    maxVisibleRows: 10,
   });
 };
 
@@ -1568,12 +1402,9 @@ const applyLayout = () => {
     layoutFrame = 0;
     updateLayoutMode();
     autoSizeSplitTables();
-    syncSplitTableHeights();
-    applySplitViewportCaps();
     if (typeof stickySingleTableLayout.applyFromDom === "function") {
       stickySingleTableLayout.applyFromDom({ root: pageContentRoot || document });
     }
-    attachSplitScrollSync();
   });
 };
 
@@ -1589,8 +1420,7 @@ const observeLayoutContainers = () => {
     ".rain-sticky-wrap.mobile-only",
     ".compact-grid-mobile-wrap",
     ".temperature-sticky-wrap",
-    ".weather-left-wrap",
-    ".weather-right-wrap",
+    ".weather-table-wrap",
     ".sun-single-wrap",
   ].forEach((selector) => {
     const element = document.querySelector(selector);
@@ -1814,8 +1644,7 @@ const _SCROLLABLE_WRAP_SELECTORS = [
   ".rain-sticky-wrap.desktop-only",
   ".rain-sticky-wrap.mobile-only",
   ".temperature-sticky-wrap",
-  ".weather-left-wrap",
-  ".weather-right-wrap",
+  ".weather-table-wrap",
   ".sun-single-wrap",
 ];
 
