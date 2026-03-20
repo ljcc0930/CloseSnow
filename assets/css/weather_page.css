@@ -593,7 +593,6 @@
       max-width: var(--compact-mobile-query-w);
       overflow: hidden;
       text-overflow: ellipsis;
-      box-shadow: 1px 0 0 #cbd5e1;
     }
     .compact-grid-mobile-table thead .query-col {
       background: #e5e7eb;
@@ -632,7 +631,6 @@
       position: sticky;
       left: 0;
       z-index: 7;
-      box-shadow: 1px 0 0 #cbd5e1;
     }
     .compact-grid-mobile-table thead .favorite-head {
       z-index: 9;
