@@ -1107,6 +1107,30 @@ const _mobileLeadingQueryCap = (offset = LEADING_FAVORITE_COL_PX) => {
   return Math.max(0, Math.floor((viewportWidth / 2) - Math.max(0, offset)));
 };
 
+const _mobileHalfScreenCap = () => _mobileLeadingQueryCap(0);
+
+const _stickySingleTableWidthContext = ({
+  wrapSelector,
+  queryVarName,
+  leadingWidth = LEADING_FAVORITE_COL_PX,
+}) => {
+  const wrap = document.querySelector(wrapSelector);
+  if (!wrap) return { availableWidth: 0, reservedWidth: leadingWidth };
+  const queryWidth = parseFloat(window.getComputedStyle(wrap).getPropertyValue(queryVarName)) || 0;
+  const reservedWidth = leadingWidth + queryWidth;
+  return {
+    availableWidth: Math.max(0, wrap.clientWidth - reservedWidth),
+    reservedWidth,
+  };
+};
+
+const _compactMobileDailyWidthContext = () => {
+  return _stickySingleTableWidthContext({
+    wrapSelector: ".compact-grid-mobile-wrap",
+    queryVarName: "--compact-mobile-query-w",
+  });
+};
+
 const _resolveQueryColumnBounds = ({
   minWidth,
   maxWidth,
@@ -1232,6 +1256,8 @@ const _autoSizeMobileRightColumns = ({
   daySelector,
   minWeekWidth,
   minDayWidth,
+  maxWeekWidth = Number.POSITIVE_INFINITY,
+  maxDayWidth = Number.POSITIVE_INFINITY,
 }) => {
   const table = document.querySelector(tableSelector);
   const wrap = document.querySelector(wrapSelector);
@@ -1241,24 +1267,31 @@ const _autoSizeMobileRightColumns = ({
   const totalCols = weekCols.length + dayCols.length;
   if (!totalCols) return;
 
-  const minTotal = (minWeekWidth * weekCols.length) + (minDayWidth * dayCols.length);
+  const effectiveMinWeekWidth = Math.min(minWeekWidth, maxWeekWidth);
+  const effectiveMinDayWidth = Math.min(minDayWidth, maxDayWidth);
+  const minTotal = (effectiveMinWeekWidth * weekCols.length) + (effectiveMinDayWidth * dayCols.length);
   const wrapWidth = wrap.clientWidth;
   if (wrapWidth >= minTotal) {
     const base = Math.floor(wrapWidth / totalCols);
     const remainder = wrapWidth - (base * totalCols);
+    let totalWidth = 0;
     [...weekCols, ...dayCols].forEach((col, index) => {
-      const width = base + (index < remainder ? 1 : 0);
+      const isWeekCol = index < weekCols.length;
+      const minWidth = isWeekCol ? effectiveMinWeekWidth : effectiveMinDayWidth;
+      const maxWidth = isWeekCol ? maxWeekWidth : maxDayWidth;
+      const width = Math.max(minWidth, Math.min(maxWidth, base + (index < remainder ? 1 : 0)));
       col.style.width = `${width}px`;
+      totalWidth += width;
     });
-    table.style.width = `${wrapWidth}px`;
+    table.style.width = `${totalWidth}px`;
     return;
   }
 
   weekCols.forEach((col) => {
-    col.style.width = `${minWeekWidth}px`;
+    col.style.width = `${effectiveMinWeekWidth}px`;
   });
   dayCols.forEach((col) => {
-    col.style.width = `${minDayWidth}px`;
+    col.style.width = `${effectiveMinDayWidth}px`;
   });
   table.style.width = `${minTotal}px`;
 };
@@ -1285,7 +1318,15 @@ const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stick
   }
 };
 
-const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWidth }) => {
+const _stretchColumnsToWrap = ({
+  wrapSelector,
+  tableSelector,
+  colSelector,
+  minWidth,
+  maxWidth = Number.POSITIVE_INFINITY,
+  availableWidth = null,
+  tableWidthOffset = 0,
+}) => {
   const wrap = document.querySelector(wrapSelector);
   const table = document.querySelector(tableSelector);
   if (!wrap || !table) return;
@@ -1293,23 +1334,26 @@ const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWi
   const count = cols.length;
   if (!count) return;
 
-  const wrapWidth = wrap.clientWidth;
-  const minTotal = minWidth * count;
-  if (wrapWidth >= minTotal) {
-    const base = Math.floor(wrapWidth / count);
-    const remainder = wrapWidth - (base * count);
+  const effectiveMinWidth = Math.min(minWidth, maxWidth);
+  const stretchWidth = Math.max(0, availableWidth === null ? wrap.clientWidth : availableWidth);
+  const minTotal = effectiveMinWidth * count;
+  if (stretchWidth >= minTotal) {
+    const base = Math.floor(stretchWidth / count);
+    const remainder = stretchWidth - (base * count);
+    let totalWidth = 0;
     cols.forEach((col, index) => {
-      const width = base + (index < remainder ? 1 : 0);
+      const width = Math.max(effectiveMinWidth, Math.min(maxWidth, base + (index < remainder ? 1 : 0)));
       col.style.width = `${width}px`;
+      totalWidth += width;
     });
-    table.style.width = `${wrapWidth}px`;
+    table.style.width = `${totalWidth + tableWidthOffset}px`;
     return;
   }
 
   cols.forEach((col) => {
-    col.style.width = `${minWidth}px`;
+    col.style.width = `${effectiveMinWidth}px`;
   });
-  table.style.width = `${minTotal}px`;
+  table.style.width = `${minTotal + tableWidthOffset}px`;
 };
 
 const autoSizeSplitTables = () => {
@@ -1339,6 +1383,29 @@ const autoSizeSplitTables = () => {
     capToMobileHalfScreen: isCompactLayout(),
   });
   if (isCompactLayout()) {
+    const mobileColumnMax = _mobileHalfScreenCap();
+    const compactMobileDailyContext = _compactMobileDailyWidthContext();
+    const temperatureContext = _stickySingleTableWidthContext({
+      wrapSelector: ".temperature-sticky-wrap",
+      queryVarName: "--temp-query-w",
+    });
+    const weatherContext = _stickySingleTableWidthContext({
+      wrapSelector: ".weather-table-wrap",
+      queryVarName: "--weather-query-w",
+    });
+    const sunContext = _stickySingleTableWidthContext({
+      wrapSelector: ".sun-single-wrap",
+      queryVarName: "--sun-query-w",
+    });
+    _stretchColumnsToWrap({
+      wrapSelector: ".compact-grid-mobile-wrap",
+      tableSelector: ".compact-grid-mobile-table",
+      colSelector: "col.col-compact-day",
+      minWidth: 98,
+      maxWidth: mobileColumnMax,
+      availableWidth: compactMobileDailyContext.availableWidth,
+      tableWidthOffset: compactMobileDailyContext.reservedWidth,
+    });
     _autoSizeQueryOnly({
       tableSelector: ".snowfall-sticky-wrap.mobile-only .snowfall-sticky-table",
       wrapSelector: ".snowfall-sticky-wrap.mobile-only",
@@ -1348,6 +1415,15 @@ const autoSizeSplitTables = () => {
       padding: 38,
       capToMobileHalfScreen: true,
       mobileCapOffset: 0,
+    });
+    _stretchColumnsToWrap({
+      wrapSelector: ".temperature-sticky-wrap",
+      tableSelector: ".temperature-single-table",
+      colSelector: "col.col-temp",
+      minWidth: 50,
+      maxWidth: mobileColumnMax,
+      availableWidth: temperatureContext.availableWidth,
+      tableWidthOffset: temperatureContext.reservedWidth,
     });
     _autoSizeQueryOnly({
       tableSelector: ".rain-sticky-wrap.mobile-only .rain-sticky-table",
@@ -1359,6 +1435,15 @@ const autoSizeSplitTables = () => {
       capToMobileHalfScreen: true,
       mobileCapOffset: 0,
     });
+    _stretchColumnsToWrap({
+      wrapSelector: ".weather-table-wrap",
+      tableSelector: ".weather-table",
+      colSelector: "col.col-weather",
+      minWidth: 68,
+      maxWidth: mobileColumnMax,
+      availableWidth: weatherContext.availableWidth,
+      tableWidthOffset: weatherContext.reservedWidth,
+    });
     _autoSizeQueryOnly({
       tableSelector: ".sun-single-wrap .sun-single-table",
       wrapSelector: ".sun-single-wrap",
@@ -1366,6 +1451,15 @@ const autoSizeSplitTables = () => {
       minWidth: 150,
       maxWidth: 220,
       capToMobileHalfScreen: true,
+    });
+    _stretchColumnsToWrap({
+      wrapSelector: ".sun-single-wrap",
+      tableSelector: ".sun-single-table",
+      colSelector: "col.col-sun",
+      minWidth: 58,
+      maxWidth: mobileColumnMax,
+      availableWidth: sunContext.availableWidth,
+      tableWidthOffset: sunContext.reservedWidth,
     });
     return;
   }
