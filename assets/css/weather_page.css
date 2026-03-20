@@ -524,8 +524,10 @@
     .weather-table-wrap,
     .weather-left-wrap,
     .weather-right-wrap,
+    .snowfall-sticky-wrap,
     .snowfall-left-wrap,
     .snowfall-right-wrap,
+    .rain-sticky-wrap,
     .rain-left-wrap,
     .rain-right-wrap,
     .temperature-sticky-wrap,
@@ -853,6 +855,63 @@
       text-align: center;
       font-size: 18px;
       line-height: 1;
+    }
+    .snowfall-sticky-wrap,
+    .rain-sticky-wrap {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: auto;
+    }
+    .snowfall-sticky-wrap {
+      --snowfall-query-w: 220px;
+      --snowfall-week-w: 110px;
+    }
+    .rain-sticky-wrap {
+      --rain-query-w: 220px;
+      --rain-week-w: 110px;
+    }
+    .snowfall-sticky-table col.col-favorite,
+    .rain-sticky-table col.col-favorite {
+      width: 28px;
+    }
+    .snowfall-sticky-table col.col-query {
+      width: var(--snowfall-query-w);
+    }
+    .rain-sticky-table col.col-query {
+      width: var(--rain-query-w);
+    }
+    .snowfall-sticky-table col.col-week {
+      width: var(--snowfall-week-w);
+    }
+    .rain-sticky-table col.col-week {
+      width: var(--rain-week-w);
+    }
+    .snowfall-sticky-table col.col-day,
+    .rain-sticky-table col.col-day {
+      width: 66px;
+    }
+    .snowfall-sticky-table .query-col,
+    .rain-sticky-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .snowfall-sticky-table .query-col {
+      max-width: var(--snowfall-query-w);
+    }
+    .rain-sticky-table .query-col {
+      max-width: var(--rain-query-w);
+    }
+    .snowfall-sticky-table .week-col-cell,
+    .rain-sticky-table .week-col-cell {
+      text-align: center;
+    }
+    .snowfall-sticky-table td,
+    .rain-sticky-table td {
+      background-clip: padding-box;
     }
     .snowfall-split-wrap {
       display: flex;

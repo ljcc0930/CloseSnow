@@ -401,22 +401,19 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
         </div>
       </section>`;
   }
-  const desktopLeftRows = reports.length ? reports.map((report) => {
+  const desktopRows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const weeklyValues = [
       options.week1(report),
       options.week2(report),
-    ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value)));
-    return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}</tr>`;
-  }).join("") : _emptyStateRow(4, emptyMessage);
-  const desktopRightRows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
+    ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
     const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
       const value = options.daily(_dailyAt(report, idx));
-      return _metricCellHtml(_formatMetric(value), kind, options.color(value));
+      return _metricCellHtml(_formatMetric(value), kind, options.color(value), "day-col-cell");
     }).join("");
-    return `<tr${attrs}>${dailyValues}</tr>`;
-  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
+    return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}${dailyValues}</tr>`;
+  }).join("") : _emptyStateRow(4 + Math.max(1, displayDays), emptyMessage);
+  const stickySectionKey = options.sectionKey || options.prefix;
   return `
     <section>
       <div class="section-header">
@@ -426,21 +423,19 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
           <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
         </div>
       </div>
-      <div class="${options.prefix}-split-wrap desktop-only">
-        <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap">
-          <table class="${options.prefix}-left-table">
-            <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2'>Weekly</th></tr><tr><th>${weeklyHeaders[0]}</th><th>${weeklyHeaders[1]}</th></tr></thead>
-            <tbody>${desktopLeftRows}</tbody>
-          </table>
-        </div>
-        <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap">
-          <table class="${options.prefix}-right-table">
-            <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-            <thead><tr><th colspan='${displayDays}'>Daily</th></tr><tr>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${desktopRightRows}</tbody>
-          </table>
-        </div>
+      <div
+        class="${options.prefix}-sticky-wrap desktop-only"
+        id="${options.prefix}-sticky-wrap"
+        data-sticky-single-table-section="${_escapeHtml(stickySectionKey)}"
+        data-sticky-leading-cols="4"
+        data-sticky-header-rows="2"
+        data-sticky-max-visible-rows="10"
+      >
+        <table class="${options.prefix}-sticky-table">
+          <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
+          <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2' class='week-group'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>${weeklyHeaders[0]}</th><th class='week-col-cell'>${weeklyHeaders[1]}</th>${dayLabels.map((label) => `<th class='day-col-cell'>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+          <tbody>${desktopRows}</tbody>
+        </table>
       </div>
     </section>`;
 };
@@ -607,6 +602,7 @@ const _renderSections = (reports, emptyMessage = "No resorts match the current f
   _renderCompactGridSection(reports, emptyMessage),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
+    sectionKey: STICKY_SINGLE_TABLE_SECTION_KEYS.snowfall,
     week1: (report) => report.week1_total_snowfall_cm,
     week2: (report) => report.week2_total_snowfall_cm,
     daily: (day) => day.snowfall_cm,
@@ -614,6 +610,7 @@ const _renderSections = (reports, emptyMessage = "No resorts match the current f
   }, emptyMessage),
   _renderPrecipSection("Rainfall", "rain", "mm", "in", reports, {
     prefix: "rain",
+    sectionKey: STICKY_SINGLE_TABLE_SECTION_KEYS.rainfall,
     week1: (report) => report.week1_total_rain_mm,
     week2: (report) => report.week2_total_rain_mm,
     daily: (day) => day.rain_mm,
@@ -1321,9 +1318,7 @@ const attachVerticalSync = (left, right) => {
 
 const attachSplitScrollSync = () => {
   [
-    [".snowfall-left-wrap#snowfall-left-wrap", ".snowfall-right-wrap#snowfall-right-wrap"],
     [".snowfall-left-wrap#snowfall-left-wrap-mobile", ".snowfall-right-wrap#snowfall-right-wrap-mobile"],
-    [".rain-left-wrap#rain-left-wrap", ".rain-right-wrap#rain-right-wrap"],
     [".rain-left-wrap#rain-left-wrap-mobile", ".rain-right-wrap#rain-right-wrap-mobile"],
     [".weather-left-wrap", ".weather-right-wrap"],
   ].forEach(([leftSelector, rightSelector]) => {
@@ -1427,29 +1422,15 @@ const autoSizeSplitTables = () => {
     });
     return;
   }
-  _autoSizeDesktopLeftColumns({
-    tableSelector: ".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table",
-    wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap",
-    queryVarName: "--query-col-w",
-    weekVarName: "--week-col-w",
+  _autoSizeQueryOnly({
+    tableSelector: ".snowfall-sticky-wrap.desktop-only .snowfall-sticky-table",
+    wrapSelector: ".snowfall-sticky-wrap.desktop-only",
+    queryVarName: "--snowfall-query-w",
   });
-  _stretchColumnsToWrap({
-    wrapSelector: ".snowfall-right-wrap#snowfall-right-wrap",
-    tableSelector: ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table",
-    colSelector: "col.col-day",
-    minWidth: 66,
-  });
-  _autoSizeDesktopLeftColumns({
-    tableSelector: ".rain-left-wrap#rain-left-wrap .rain-left-table",
-    wrapSelector: ".rain-left-wrap#rain-left-wrap",
+  _autoSizeQueryOnly({
+    tableSelector: ".rain-sticky-wrap.desktop-only .rain-sticky-table",
+    wrapSelector: ".rain-sticky-wrap.desktop-only",
     queryVarName: "--rain-query-w",
-    weekVarName: "--rain-week-w",
-  });
-  _stretchColumnsToWrap({
-    wrapSelector: ".rain-right-wrap#rain-right-wrap",
-    tableSelector: ".rain-right-wrap#rain-right-wrap .rain-right-table",
-    colSelector: "col.col-day",
-    minWidth: 66,
   });
   _autoSizeQueryOnly({
     tableSelector: ".weather-table-wrap .weather-table",
@@ -1507,8 +1488,6 @@ const syncSplitTableHeights = () => {
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
     ]
     : [
-      [".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table", ".snowfall-split-wrap.desktop-only", "--snow-header-row1-h"],
-      [".rain-left-wrap#rain-left-wrap .rain-left-table", ".rain-right-wrap#rain-right-wrap .rain-right-table", ".rain-split-wrap.desktop-only", "--rain-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
     ];
   tablePairs.forEach(([leftSelector, rightSelector, wrapSelector, stickyVar]) => {
@@ -1557,12 +1536,10 @@ const observeLayoutContainers = () => {
   layoutObserver = new ResizeObserver(() => applyLayout());
   const observed = new Set();
   [
-    ".snowfall-left-wrap#snowfall-left-wrap",
-    ".snowfall-right-wrap#snowfall-right-wrap",
+    ".snowfall-sticky-wrap.desktop-only",
     ".snowfall-left-wrap#snowfall-left-wrap-mobile",
     ".snowfall-right-wrap#snowfall-right-wrap-mobile",
-    ".rain-left-wrap#rain-left-wrap",
-    ".rain-right-wrap#rain-right-wrap",
+    ".rain-sticky-wrap.desktop-only",
     ".rain-left-wrap#rain-left-wrap-mobile",
     ".rain-right-wrap#rain-right-wrap-mobile",
     ".compact-grid-mobile-wrap",
@@ -1787,12 +1764,10 @@ const renderPage = () => {
 
 const _SCROLLABLE_WRAP_SELECTORS = [
   ".compact-grid-mobile-wrap",
-  ".snowfall-left-wrap#snowfall-left-wrap",
-  ".snowfall-right-wrap#snowfall-right-wrap",
+  ".snowfall-sticky-wrap.desktop-only",
   ".snowfall-left-wrap#snowfall-left-wrap-mobile",
   ".snowfall-right-wrap#snowfall-right-wrap-mobile",
-  ".rain-left-wrap#rain-left-wrap",
-  ".rain-right-wrap#rain-right-wrap",
+  ".rain-sticky-wrap.desktop-only",
   ".rain-left-wrap#rain-left-wrap-mobile",
   ".rain-right-wrap#rain-right-wrap-mobile",
   ".temperature-sticky-wrap",
