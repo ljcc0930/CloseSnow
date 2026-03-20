@@ -84,6 +84,8 @@ def test_read_asset_bytes_reads_known_assets():
     assert "STICKY_SINGLE_TABLE_SECTION_KEYS" in js_text
     assert "stickySingleTableLayout.applyFromDom" in js_text
     assert "data-sticky-single-table-section" in js_text
+    assert "temperature-sticky-wrap" in js_text
+    assert "temperature-single-table" in js_text
     assert "No resorts match the current filters." in js_text
     assert "report.state_name" in js_text
     assert "report.country_name" in js_text
