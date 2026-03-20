@@ -899,6 +899,27 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .mobile-precip-resort-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .mobile-precip-resort-content .resort-cell {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .mobile-precip-resort-head {
+      text-align: left;
+    }
+    .mobile-precip-resort-head .favorite-btn,
+    .mobile-precip-resort-cell .favorite-btn {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+    .mobile-precip-resort-label {
+      min-width: 0;
+    }
     .snowfall-sticky-table .query-col {
       max-width: var(--snowfall-query-w);
     }
@@ -1150,6 +1171,7 @@
     }
     body.mobile-simple {
       --mobile-leading-col-max: max(0px, calc(50vw - 28px));
+      --mobile-single-leading-col-max: 50vw;
     }
     body.mobile-simple .plain-table {
       min-width: 0;
@@ -1166,11 +1188,35 @@
     body.mobile-simple .snowfall-left-table .query-col {
       max-width: min(var(--query-col-w), var(--mobile-leading-col-max));
     }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-query {
+      width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table .query-col {
+      max-width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-week {
+      width: 92px;
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-day {
+      width: 62px;
+    }
     body.mobile-simple .rain-left-table col.col-query {
       width: min(var(--rain-query-w), var(--mobile-leading-col-max));
     }
     body.mobile-simple .rain-left-table .query-col {
       max-width: min(var(--rain-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-query {
+      width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table .query-col {
+      max-width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-week {
+      width: 92px;
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-day {
+      width: 62px;
     }
     body.mobile-simple .temperature-single-table col.col-query {
       width: min(var(--temp-query-w), var(--mobile-leading-col-max));

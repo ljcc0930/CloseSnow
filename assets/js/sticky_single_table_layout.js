@@ -71,6 +71,24 @@
     });
   };
 
+  const _stickyColumnWidth = (rowCellMaps, columnIndex) => {
+    const exactCell = rowCellMaps
+      .map((visualCells) => visualCells[columnIndex])
+      .find((cell) => cell && Math.max(1, Number.parseInt(String(cell.colSpan || 1), 10) || 1) === 1);
+    if (exactCell) {
+      return exactCell.getBoundingClientRect?.().width || exactCell.offsetWidth || 0;
+    }
+
+    const spanningCell = rowCellMaps
+      .map((visualCells) => visualCells[columnIndex])
+      .find(Boolean);
+    if (!spanningCell) return 0;
+
+    const span = Math.max(1, Number.parseInt(String(spanningCell.colSpan || 1), 10) || 1);
+    const totalWidth = spanningCell.getBoundingClientRect?.().width || spanningCell.offsetWidth || 0;
+    return totalWidth / span;
+  };
+
   const _applyStickyLeadingColumns = (table, requestedColumns) => {
     _clearStickyLeadingCells(table);
 
@@ -83,13 +101,14 @@
     const allRows = headRows.concat(bodyRows);
     if (allRows.length <= 0) return;
     const rowCellMaps = _rowCellMapsByVisualColumn(allRows);
+    const positionedCells = new WeakSet();
     let runningLeft = 0;
     for (let colIndex = 0; colIndex < leadingColumns; colIndex += 1) {
-      const sampleCell = rowCellMaps.map((visualCells) => visualCells[colIndex]).find(Boolean);
-      const width = sampleCell?.getBoundingClientRect?.().width || sampleCell?.offsetWidth || 0;
+      const width = _stickyColumnWidth(rowCellMaps, colIndex);
       allRows.forEach((row, rowIndex) => {
         const cell = rowCellMaps[rowIndex]?.[colIndex];
-        if (!cell) return;
+        if (!cell || positionedCells.has(cell)) return;
+        positionedCells.add(cell);
         cell.classList.add("sticky-leading-cell");
         cell.style.setProperty("--sticky-leading-left", `${runningLeft}px`);
         cell.style.left = `${runningLeft}px`;

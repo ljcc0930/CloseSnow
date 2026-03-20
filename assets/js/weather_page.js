@@ -281,14 +281,28 @@ const _favoriteAllButtonHtml = (reports) => {
 
 const _displayName = (report) => String(report?.display_name || report?.query || "").trim();
 
-const _resortCellHtml = (report) => {
+const _resortLinkHtml = (report) => {
   const text = _escapeHtml(_displayName(report));
   const resortId = String(report.resort_id || "").trim();
-  const linkHtml = resortId
+  return resortId
     ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
     : text;
+};
+
+const _resortCellHtml = (report) => {
+  const linkHtml = _resortLinkHtml(report);
   return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
 };
+
+const _mobilePrecipResortHeadHtml = (favoriteAllButton) => `
+  <th rowspan='2' class='query-col mobile-precip-resort-head'>
+    <div class='mobile-precip-resort-content'>${favoriteAllButton}<span class='mobile-precip-resort-label'>Resort</span></div>
+  </th>`;
+
+const _mobilePrecipResortCellHtml = (report) => `
+  <td class='query-col mobile-precip-resort-cell'>
+    <div class='mobile-precip-resort-content'>${_favoriteButtonHtml(report)}<div class='resort-cell'><div class='resort-link-wrap'>${_resortLinkHtml(report)}</div></div></div>
+  </td>`;
 
 const _displayDays = () => {
   const raw = appState.payload && Number(appState.payload.forecast_days);
@@ -342,7 +356,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
         data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.dailySummary}"
         data-sticky-leading-cols="2"
         data-sticky-header-rows="1"
-        data-sticky-max-visible-rows="10"
+        data-sticky-max-visible-rows="5"
       >
         <table class="compact-grid-mobile-table" id="compact-grid-mobile-table">
           <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
@@ -360,9 +374,9 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     : _fallbackDayLabels(displayDays);
   const weeklyHeaders = ["week 1", "week 2"];
   const favoriteAllButton = _favoriteAllButtonHtml(reports);
+  const stickySectionKey = options.sectionKey || options.prefix;
   if (appState.layoutMode === "compact") {
-    const mobileLeftRows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("") : _emptyStateRow(2, emptyMessage);
-    const mobileRightRows = reports.length ? reports.map((report) => {
+    const mobileRows = reports.length ? reports.map((report) => {
       const attrs = _filterAttrs(report);
       const weeklyValues = [
         options.week1(report),
@@ -370,10 +384,10 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
       const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
         const value = options.daily(_dailyAt(report, idx));
-        return _metricCellHtml(_formatMetric(value), kind, options.color(value));
+        return _metricCellHtml(_formatMetric(value), kind, options.color(value), "day-col-cell");
       });
-      return `<tr${attrs}>${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
-    }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
+      return `<tr${attrs}>${_mobilePrecipResortCellHtml(report)}${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
+    }).join("") : _emptyStateRow(3 + Math.max(1, displayDays), emptyMessage);
     return `
       <section>
         <div class="section-header">
@@ -383,21 +397,19 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
             <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
           </div>
         </div>
-        <div class="${options.prefix}-split-wrap mobile-only">
-          <div class="${options.prefix}-left-wrap" id="${options.prefix}-left-wrap-mobile">
-            <table class="${options.prefix}-left-table">
-              <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-              <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
-              <tbody>${mobileLeftRows}</tbody>
-            </table>
-          </div>
-          <div class="${options.prefix}-right-wrap" id="${options.prefix}-right-wrap-mobile">
-            <table class="${options.prefix}-right-table">
-              <colgroup><col class='col-week-right'><col class='col-week-right'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-              <thead><tr><th class='week-group' colspan='2'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>Week 1</th><th class='week-col-cell'>Week 2</th>${dayLabels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-              <tbody>${mobileRightRows}</tbody>
-            </table>
-          </div>
+        <div
+          class="${options.prefix}-sticky-wrap mobile-only"
+          id="${options.prefix}-sticky-wrap-mobile"
+          data-sticky-single-table-section="${_escapeHtml(stickySectionKey)}"
+          data-sticky-leading-cols="1"
+          data-sticky-header-rows="2"
+          data-sticky-max-visible-rows="10"
+        >
+          <table class="${options.prefix}-sticky-table ${options.prefix}-mobile-sticky-table">
+            <colgroup><col class='col-query'><col class='col-week'><col class='col-week'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
+            <thead><tr>${_mobilePrecipResortHeadHtml(favoriteAllButton)}<th colspan='2' class='week-group'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>${weeklyHeaders[0]}</th><th class='week-col-cell'>${weeklyHeaders[1]}</th>${dayLabels.map((label) => `<th class='day-col-cell'>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+            <tbody>${mobileRows}</tbody>
+          </table>
         </div>
       </section>`;
   }
@@ -413,7 +425,6 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     }).join("");
     return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}${dailyValues}</tr>`;
   }).join("") : _emptyStateRow(4 + Math.max(1, displayDays), emptyMessage);
-  const stickySectionKey = options.sectionKey || options.prefix;
   return `
     <section>
       <div class="section-header">
@@ -1115,22 +1126,23 @@ const updateLayoutMode = () => {
 
 const isCompactLayout = () => appState.layoutMode === "compact";
 
-const _mobileLeadingQueryCap = () => {
+const _mobileLeadingQueryCap = (offset = LEADING_FAVORITE_COL_PX) => {
   const viewportWidth = Math.max(
     document.documentElement?.clientWidth || 0,
     window.innerWidth || 0,
   );
-  return Math.max(0, Math.floor((viewportWidth / 2) - LEADING_FAVORITE_COL_PX));
+  return Math.max(0, Math.floor((viewportWidth / 2) - Math.max(0, offset)));
 };
 
 const _resolveQueryColumnBounds = ({
   minWidth,
   maxWidth,
   capToMobileHalfScreen = false,
+  mobileCapOffset = LEADING_FAVORITE_COL_PX,
 }) => {
   let resolvedMax = maxWidth;
   if (capToMobileHalfScreen && isCompactLayout()) {
-    resolvedMax = Math.min(resolvedMax, _mobileLeadingQueryCap());
+    resolvedMax = Math.min(resolvedMax, _mobileLeadingQueryCap(mobileCapOffset));
   }
   return {
     minWidth: Math.min(minWidth, resolvedMax),
@@ -1185,6 +1197,7 @@ const _autoSizeQueryOnly = ({
   maxWidth = 240,
   padding = 28,
   capToMobileHalfScreen = false,
+  mobileCapOffset = LEADING_FAVORITE_COL_PX,
 }) => {
   const table = document.querySelector(tableSelector);
   const wrap = document.querySelector(wrapSelector);
@@ -1201,7 +1214,7 @@ const _autoSizeQueryOnly = ({
     measureTextWidth(headerText, font),
     ...values.map((value) => measureTextWidth(value, font)),
   );
-  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen });
+  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen, mobileCapOffset });
   wrap.style.setProperty(
     queryVarName,
     `${Math.max(bounds.minWidth, Math.min(bounds.maxWidth, Math.ceil(queryMax + padding)))}px`,
@@ -1318,8 +1331,6 @@ const attachVerticalSync = (left, right) => {
 
 const attachSplitScrollSync = () => {
   [
-    [".snowfall-left-wrap#snowfall-left-wrap-mobile", ".snowfall-right-wrap#snowfall-right-wrap-mobile"],
-    [".rain-left-wrap#rain-left-wrap-mobile", ".rain-right-wrap#rain-right-wrap-mobile"],
     [".weather-left-wrap", ".weather-right-wrap"],
   ].forEach(([leftSelector, rightSelector]) => {
     attachVerticalSync(document.querySelector(leftSelector), document.querySelector(rightSelector));
@@ -1372,37 +1383,25 @@ const autoSizeSplitTables = () => {
     capToMobileHalfScreen: isCompactLayout(),
   });
   if (isCompactLayout()) {
-    _autoSizeMobileQueryColumn({
-      tableSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
-      wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile",
+    _autoSizeQueryOnly({
+      tableSelector: ".snowfall-sticky-wrap.mobile-only .snowfall-sticky-table",
+      wrapSelector: ".snowfall-sticky-wrap.mobile-only",
+      queryVarName: "--snowfall-query-w",
       minWidth: 150,
-      maxWidth: 240,
-      padding: 22,
+      maxWidth: 220,
+      padding: 38,
       capToMobileHalfScreen: true,
+      mobileCapOffset: 0,
     });
-    _autoSizeMobileRightColumns({
-      tableSelector: ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table",
-      wrapSelector: ".snowfall-right-wrap#snowfall-right-wrap-mobile",
-      weekSelector: "col.col-week-right",
-      daySelector: "col.col-day",
-      minWeekWidth: 92,
-      minDayWidth: 62,
-    });
-    _autoSizeMobileQueryColumn({
-      tableSelector: ".rain-left-wrap#rain-left-wrap-mobile .rain-left-table",
-      wrapSelector: ".rain-left-wrap#rain-left-wrap-mobile",
+    _autoSizeQueryOnly({
+      tableSelector: ".rain-sticky-wrap.mobile-only .rain-sticky-table",
+      wrapSelector: ".rain-sticky-wrap.mobile-only",
+      queryVarName: "--rain-query-w",
       minWidth: 150,
-      maxWidth: 240,
-      padding: 22,
+      maxWidth: 220,
+      padding: 38,
       capToMobileHalfScreen: true,
-    });
-    _autoSizeMobileRightColumns({
-      tableSelector: ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table",
-      wrapSelector: ".rain-right-wrap#rain-right-wrap-mobile",
-      weekSelector: "col.col-week-right",
-      daySelector: "col.col-day",
-      minWeekWidth: 92,
-      minDayWidth: 62,
+      mobileCapOffset: 0,
     });
     _autoSizeQueryOnly({
       tableSelector: ".weather-left-wrap .weather-left-table",
@@ -1480,11 +1479,48 @@ const _syncStickySecondRowTop = (leftTable, rightTable, splitWrap, variableName)
   }
 };
 
+const _applySplitViewportCap = ({
+  leftTableSelector,
+  rightTableSelector,
+  leftWrapSelector,
+  rightWrapSelector,
+  maxVisibleRows = 10,
+}) => {
+  const leftTable = document.querySelector(leftTableSelector);
+  const rightTable = document.querySelector(rightTableSelector);
+  const leftWrap = document.querySelector(leftWrapSelector);
+  const rightWrap = document.querySelector(rightWrapSelector);
+
+  [leftWrap, rightWrap].forEach((wrap) => {
+    wrap?.style.removeProperty("max-height");
+  });
+  if (!leftTable || !rightTable || !leftWrap || !rightWrap) return;
+
+  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
+  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
+  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
+  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
+  const visibleRows = Math.min(maxVisibleRows, leftBodyRows.length, rightBodyRows.length);
+  if (visibleRows <= 0) return;
+
+  const headerHeight = Math.max(
+    leftHeadRows.reduce((sum, row) => sum + (row.offsetHeight || 0), 0),
+    rightHeadRows.reduce((sum, row) => sum + (row.offsetHeight || 0), 0),
+  );
+  const bodyHeight = Array.from({ length: visibleRows }, (_, index) => Math.max(
+    leftBodyRows[index]?.offsetHeight || 0,
+    rightBodyRows[index]?.offsetHeight || 0,
+  )).reduce((sum, height) => sum + height, 0);
+  const total = Math.ceil(headerHeight + bodyHeight);
+  if (total <= 0) return;
+
+  leftWrap.style.maxHeight = `${total}px`;
+  rightWrap.style.maxHeight = `${total}px`;
+};
+
 const syncSplitTableHeights = () => {
   const tablePairs = isCompactLayout()
     ? [
-      [".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table", ".snowfall-split-wrap.mobile-only", "--snow-header-row1-h"],
-      [".rain-left-wrap#rain-left-wrap-mobile .rain-left-table", ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table", ".rain-split-wrap.mobile-only", "--rain-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
     ]
     : [
@@ -1512,6 +1548,16 @@ const syncSplitTableHeights = () => {
   });
 };
 
+const applySplitViewportCaps = () => {
+  _applySplitViewportCap({
+    leftTableSelector: ".weather-left-table",
+    rightTableSelector: ".weather-right-table",
+    leftWrapSelector: ".weather-left-wrap",
+    rightWrapSelector: ".weather-right-wrap",
+    maxVisibleRows: 10,
+  });
+};
+
 let layoutFrame = 0;
 let layoutObserver = null;
 let dynamicPayloadAbortController = null;
@@ -1523,6 +1569,7 @@ const applyLayout = () => {
     updateLayoutMode();
     autoSizeSplitTables();
     syncSplitTableHeights();
+    applySplitViewportCaps();
     if (typeof stickySingleTableLayout.applyFromDom === "function") {
       stickySingleTableLayout.applyFromDom({ root: pageContentRoot || document });
     }
@@ -1537,11 +1584,9 @@ const observeLayoutContainers = () => {
   const observed = new Set();
   [
     ".snowfall-sticky-wrap.desktop-only",
-    ".snowfall-left-wrap#snowfall-left-wrap-mobile",
-    ".snowfall-right-wrap#snowfall-right-wrap-mobile",
+    ".snowfall-sticky-wrap.mobile-only",
     ".rain-sticky-wrap.desktop-only",
-    ".rain-left-wrap#rain-left-wrap-mobile",
-    ".rain-right-wrap#rain-right-wrap-mobile",
+    ".rain-sticky-wrap.mobile-only",
     ".compact-grid-mobile-wrap",
     ".temperature-sticky-wrap",
     ".weather-left-wrap",
@@ -1765,11 +1810,9 @@ const renderPage = () => {
 const _SCROLLABLE_WRAP_SELECTORS = [
   ".compact-grid-mobile-wrap",
   ".snowfall-sticky-wrap.desktop-only",
-  ".snowfall-left-wrap#snowfall-left-wrap-mobile",
-  ".snowfall-right-wrap#snowfall-right-wrap-mobile",
+  ".snowfall-sticky-wrap.mobile-only",
   ".rain-sticky-wrap.desktop-only",
-  ".rain-left-wrap#rain-left-wrap-mobile",
-  ".rain-right-wrap#rain-right-wrap-mobile",
+  ".rain-sticky-wrap.mobile-only",
   ".temperature-sticky-wrap",
   ".weather-left-wrap",
   ".weather-right-wrap",
