@@ -520,17 +520,45 @@
     .compact-grid-mobile-wrap,
     .compact-grid-left-wrap,
     .compact-grid-right-wrap,
-    .weather-left-wrap,
-    .weather-right-wrap,
+    .sticky-single-table-wrap,
+    .weather-table-wrap,
+    .snowfall-sticky-wrap,
     .snowfall-left-wrap,
     .snowfall-right-wrap,
+    .rain-sticky-wrap,
     .rain-left-wrap,
     .rain-right-wrap,
-    .temperature-left-wrap,
-    .temperature-right-wrap,
-    .sun-left-wrap,
-    .sun-right-wrap {
+    .temperature-sticky-wrap,
+    .sun-single-wrap {
       -webkit-overflow-scrolling: touch;
+    }
+    .sticky-single-table-wrap {
+      overflow: auto;
+    }
+    .sticky-single-table {
+      table-layout: fixed;
+      width: max-content;
+      min-width: 100%;
+    }
+    .sticky-single-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #e5e7eb;
+    }
+    .sticky-single-table[data-sticky-header-rows="2"] thead tr:nth-child(2) th {
+      top: var(--sticky-header-row-2-top, 32px);
+    }
+    .sticky-single-table .sticky-leading-cell {
+      position: sticky;
+      left: var(--sticky-leading-left, 0px);
+      z-index: 6;
+      background: #fff;
+      background-clip: padding-box;
+    }
+    .sticky-single-table thead .sticky-leading-cell {
+      z-index: 8;
+      background: #e5e7eb;
     }
     .compact-grid-mobile-table {
       table-layout: fixed;
@@ -584,9 +612,6 @@
       text-align: left;
     }
     .compact-grid-mobile-table .query-col {
-      position: sticky;
-      left: 28px;
-      z-index: 6;
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -628,12 +653,6 @@
     }
     .compact-grid-mobile-table .favorite-col,
     .compact-grid-mobile-table .favorite-head {
-      position: sticky;
-      left: 0;
-      z-index: 7;
-    }
-    .compact-grid-mobile-table thead .favorite-head {
-      z-index: 9;
     }
     .compact-day-cell {
       padding: 5px 8px;
@@ -721,55 +740,37 @@
     .mobile-only {
       display: none;
     }
-    .weather-split-wrap {
-      display: flex;
+    .weather-table-wrap {
+      margin-top: 8px;
       border: 1px solid #d1d5db;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-      overflow: hidden;
-      --weather-header-row1-h: 32px;
-    }
-    .weather-left-wrap {
-      flex: 0 0 auto;
-      background: #fff;
-      overflow: hidden;
+      overflow: auto;
       --weather-query-w: 220px;
     }
-    .weather-right-wrap {
-      flex: 1 1 auto;
-      overflow: auto;
-    }
-    .weather-left-table,
-    .weather-right-table {
+    .weather-table {
       table-layout: fixed;
-      width: auto;
-      min-width: 0;
+      width: max-content;
+      min-width: 100%;
     }
-    .weather-left-table col.col-favorite {
+    .weather-table col.col-favorite {
       width: 28px;
     }
-    .weather-left-table col.col-query {
+    .weather-table col.col-query {
       width: var(--weather-query-w);
     }
-    .weather-right-table col.col-weather {
+    .weather-table col.col-weather {
       width: 68px;
     }
-    .weather-left-table thead tr:first-child th,
-    .weather-right-table thead tr:first-child th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: #e5e7eb;
+    .weather-table .favorite-col,
+    .weather-table .favorite-head {
+      width: 28px;
+      min-width: 28px;
+      padding-left: 0;
+      padding-right: 0;
     }
-    .weather-left-table thead tr:nth-child(2) th,
-    .weather-right-table thead tr:nth-child(2) th {
-      position: sticky;
-      top: var(--weather-header-row1-h);
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .weather-left-table .query-col {
+    .weather-table .query-col {
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -777,14 +778,94 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .weather-left-table td,
-    .weather-right-table td {
+    .weather-table thead .query-col {
+      background: #e5e7eb;
+    }
+    .weather-table td {
       background-clip: padding-box;
     }
-    .weather-right-table td.weather-emoji-cell {
+    .weather-table td.weather-emoji-cell {
       text-align: center;
       font-size: 18px;
       line-height: 1;
+    }
+    .snowfall-sticky-wrap,
+    .rain-sticky-wrap {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+      overflow: auto;
+    }
+    .snowfall-sticky-wrap {
+      --snowfall-query-w: 220px;
+      --snowfall-week-w: 110px;
+    }
+    .rain-sticky-wrap {
+      --rain-query-w: 220px;
+      --rain-week-w: 110px;
+    }
+    .snowfall-sticky-table col.col-favorite,
+    .rain-sticky-table col.col-favorite {
+      width: 28px;
+    }
+    .snowfall-sticky-table col.col-query {
+      width: var(--snowfall-query-w);
+    }
+    .rain-sticky-table col.col-query {
+      width: var(--rain-query-w);
+    }
+    .snowfall-sticky-table col.col-week {
+      width: var(--snowfall-week-w);
+    }
+    .rain-sticky-table col.col-week {
+      width: var(--rain-week-w);
+    }
+    .snowfall-sticky-table col.col-day,
+    .rain-sticky-table col.col-day {
+      width: 66px;
+    }
+    .snowfall-sticky-table .query-col,
+    .rain-sticky-table .query-col {
+      text-align: left;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mobile-precip-resort-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .mobile-precip-resort-content .resort-cell {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .mobile-precip-resort-head {
+      text-align: left;
+    }
+    .mobile-precip-resort-head .favorite-btn,
+    .mobile-precip-resort-cell .favorite-btn {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+    .mobile-precip-resort-label {
+      min-width: 0;
+    }
+    .snowfall-sticky-table .query-col {
+      max-width: var(--snowfall-query-w);
+    }
+    .rain-sticky-table .query-col {
+      max-width: var(--rain-query-w);
+    }
+    .snowfall-sticky-table .week-col-cell,
+    .rain-sticky-table .week-col-cell {
+      text-align: center;
+    }
+    .snowfall-sticky-table td,
+    .rain-sticky-table td {
+      background-clip: padding-box;
     }
     .snowfall-split-wrap {
       display: flex;
@@ -929,55 +1010,30 @@
     .rain-left-table td, .rain-right-table td {
       background-clip: padding-box;
     }
-    .temperature-split-wrap {
-      display: flex;
+    .temperature-sticky-wrap {
+      margin-top: 8px;
       border: 1px solid #d1d5db;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-      overflow: hidden;
-      --temp-header-row1-h: 32px;
-    }
-    .temperature-left-wrap {
-      flex: 0 0 auto;
-      background: #fff;
-      overflow: hidden;
+      overflow: auto;
       --temp-query-w: 220px;
     }
-    .temperature-right-wrap {
-      flex: 1 1 auto;
-      overflow: auto;
-    }
-    .temperature-left-table,
-    .temperature-right-table {
+    .temperature-single-table {
       table-layout: fixed;
-      width: auto;
-      min-width: 0;
+      width: max-content;
+      min-width: 100%;
     }
-    .temperature-left-table col.col-favorite {
+    .temperature-single-table col.col-favorite {
       width: 28px;
     }
-    .temperature-left-table col.col-query {
+    .temperature-single-table col.col-query {
       width: var(--temp-query-w);
     }
-    .temperature-right-table col.col-temp {
+    .temperature-single-table col.col-temp {
       width: 50px;
     }
-    .temperature-left-table thead tr:first-child th,
-    .temperature-right-table thead tr:first-child th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .temperature-left-table thead tr:nth-child(2) th,
-    .temperature-right-table thead tr:nth-child(2) th {
-      position: sticky;
-      top: var(--temp-header-row1-h);
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .temperature-left-table .query-col {
+    .temperature-single-table .query-col {
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -985,59 +1041,32 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .temperature-left-table td,
-    .temperature-right-table td {
+    .temperature-single-table td {
       background-clip: padding-box;
     }
-    .sun-split-wrap {
-      display: flex;
+    .sun-single-wrap {
       border: 1px solid #d1d5db;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-      overflow: hidden;
-      --sun-header-row1-h: 32px;
-    }
-    .sun-left-wrap {
-      flex: 0 0 auto;
-      background: #fff;
-      overflow: hidden;
+      overflow: auto;
       --sun-query-w: 220px;
     }
-    .sun-right-wrap {
-      flex: 1 1 auto;
-      overflow: auto;
-    }
-    .sun-left-table,
-    .sun-right-table {
+    .sun-single-table {
       table-layout: fixed;
-      width: auto;
-      min-width: 0;
+      width: max-content;
+      min-width: 100%;
     }
-    .sun-left-table col.col-favorite {
+    .sun-single-table col.col-favorite {
       width: 28px;
     }
-    .sun-left-table col.col-query {
+    .sun-single-table col.col-query {
       width: var(--sun-query-w);
     }
-    .sun-right-table col.col-sun {
+    .sun-single-table col.col-sun {
       width: 58px;
     }
-    .sun-left-table thead tr:first-child th,
-    .sun-right-table thead tr:first-child th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .sun-left-table thead tr:nth-child(2) th,
-    .sun-right-table thead tr:nth-child(2) th {
-      position: sticky;
-      top: var(--sun-header-row1-h);
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .sun-left-table .query-col {
+    .sun-single-table .query-col {
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -1045,11 +1074,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .sun-left-table td,
-    .sun-right-table td {
+    .sun-single-table td {
       background-clip: padding-box;
     }
-    .sun-right-table td {
+    .sun-single-table td[data-sun-time-raw] {
       text-align: center;
     }
     body.mobile-simple .desktop-only {
@@ -1076,6 +1104,7 @@
     }
     body.mobile-simple {
       --mobile-leading-col-max: max(0px, calc(50vw - 28px));
+      --mobile-single-leading-col-max: 50vw;
     }
     body.mobile-simple .plain-table {
       min-width: 0;
@@ -1092,28 +1121,52 @@
     body.mobile-simple .snowfall-left-table .query-col {
       max-width: min(var(--query-col-w), var(--mobile-leading-col-max));
     }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-query {
+      width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table .query-col {
+      max-width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-week {
+      width: 92px;
+    }
+    body.mobile-simple .snowfall-sticky-wrap.mobile-only .snowfall-sticky-table col.col-day {
+      width: 62px;
+    }
     body.mobile-simple .rain-left-table col.col-query {
       width: min(var(--rain-query-w), var(--mobile-leading-col-max));
     }
     body.mobile-simple .rain-left-table .query-col {
       max-width: min(var(--rain-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .temperature-left-table col.col-query {
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-query {
+      width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table .query-col {
+      max-width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-week {
+      width: 92px;
+    }
+    body.mobile-simple .rain-sticky-wrap.mobile-only .rain-sticky-table col.col-day {
+      width: 62px;
+    }
+    body.mobile-simple .temperature-single-table col.col-query {
       width: min(var(--temp-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .temperature-left-table .query-col {
+    body.mobile-simple .temperature-single-table .query-col {
       max-width: min(var(--temp-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .weather-left-table col.col-query {
+    body.mobile-simple .weather-table col.col-query {
       width: min(var(--weather-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .weather-left-table .query-col {
+    body.mobile-simple .weather-table .query-col {
       max-width: min(var(--weather-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .sun-left-table col.col-query {
+    body.mobile-simple .sun-single-table col.col-query {
       width: min(var(--sun-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .sun-left-table .query-col {
+    body.mobile-simple .sun-single-table .query-col {
       max-width: min(var(--sun-query-w), var(--mobile-leading-col-max));
     }
   
