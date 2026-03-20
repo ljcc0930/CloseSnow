@@ -528,8 +528,7 @@
     .snowfall-right-wrap,
     .rain-left-wrap,
     .rain-right-wrap,
-    .temperature-left-wrap,
-    .temperature-right-wrap,
+    .temperature-sticky-wrap,
     .sun-left-wrap,
     .sun-right-wrap {
       -webkit-overflow-scrolling: touch;
@@ -999,55 +998,30 @@
     .rain-left-table td, .rain-right-table td {
       background-clip: padding-box;
     }
-    .temperature-split-wrap {
-      display: flex;
+    .temperature-sticky-wrap {
+      margin-top: 8px;
       border: 1px solid #d1d5db;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-      overflow: hidden;
-      --temp-header-row1-h: 32px;
-    }
-    .temperature-left-wrap {
-      flex: 0 0 auto;
-      background: #fff;
-      overflow: hidden;
+      overflow: auto;
       --temp-query-w: 220px;
     }
-    .temperature-right-wrap {
-      flex: 1 1 auto;
-      overflow: auto;
-    }
-    .temperature-left-table,
-    .temperature-right-table {
+    .temperature-single-table {
       table-layout: fixed;
-      width: auto;
-      min-width: 0;
+      width: max-content;
+      min-width: 100%;
     }
-    .temperature-left-table col.col-favorite {
+    .temperature-single-table col.col-favorite {
       width: 28px;
     }
-    .temperature-left-table col.col-query {
+    .temperature-single-table col.col-query {
       width: var(--temp-query-w);
     }
-    .temperature-right-table col.col-temp {
+    .temperature-single-table col.col-temp {
       width: 50px;
     }
-    .temperature-left-table thead tr:first-child th,
-    .temperature-right-table thead tr:first-child th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .temperature-left-table thead tr:nth-child(2) th,
-    .temperature-right-table thead tr:nth-child(2) th {
-      position: sticky;
-      top: var(--temp-header-row1-h);
-      z-index: 5;
-      background: #e5e7eb;
-    }
-    .temperature-left-table .query-col {
+    .temperature-single-table .query-col {
       text-align: left;
       font-weight: 600;
       background: #fff;
@@ -1055,8 +1029,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .temperature-left-table td,
-    .temperature-right-table td {
+    .temperature-single-table td {
       background-clip: padding-box;
     }
     .sun-split-wrap {
@@ -1168,10 +1141,10 @@
     body.mobile-simple .rain-left-table .query-col {
       max-width: min(var(--rain-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .temperature-left-table col.col-query {
+    body.mobile-simple .temperature-single-table col.col-query {
       width: min(var(--temp-query-w), var(--mobile-leading-col-max));
     }
-    body.mobile-simple .temperature-left-table .query-col {
+    body.mobile-simple .temperature-single-table .query-col {
       max-width: min(var(--temp-query-w), var(--mobile-leading-col-max));
     }
     body.mobile-simple .weather-left-table col.col-query {
