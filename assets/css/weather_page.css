@@ -509,6 +509,20 @@
       flex: 1 1 auto;
       overflow: auto;
     }
+    .compact-grid-left-wrap,
+    .compact-grid-right-wrap,
+    .weather-left-wrap,
+    .weather-right-wrap,
+    .snowfall-left-wrap,
+    .snowfall-right-wrap,
+    .rain-left-wrap,
+    .rain-right-wrap,
+    .temperature-left-wrap,
+    .temperature-right-wrap,
+    .sun-left-wrap,
+    .sun-right-wrap {
+      -webkit-overflow-scrolling: touch;
+    }
     .compact-grid-left-table,
     .compact-grid-right-table {
       table-layout: fixed;
