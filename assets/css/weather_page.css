@@ -1082,7 +1082,46 @@
     body.mobile-simple .rain-right-table td {
       box-sizing: border-box;
     }
+    body.mobile-simple {
+      --mobile-leading-col-max: max(0px, calc(50vw - 28px));
+    }
     body.mobile-simple .plain-table {
       min-width: 0;
+    }
+    body.mobile-simple .compact-grid-mobile-table col.col-query {
+      width: min(var(--compact-mobile-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .compact-grid-mobile-table .query-col {
+      max-width: min(var(--compact-mobile-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .snowfall-left-table col.col-query {
+      width: min(var(--query-col-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .snowfall-left-table .query-col {
+      max-width: min(var(--query-col-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .rain-left-table col.col-query {
+      width: min(var(--rain-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .rain-left-table .query-col {
+      max-width: min(var(--rain-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .temperature-left-table col.col-query {
+      width: min(var(--temp-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .temperature-left-table .query-col {
+      max-width: min(var(--temp-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .weather-left-table col.col-query {
+      width: min(var(--weather-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .weather-left-table .query-col {
+      max-width: min(var(--weather-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .sun-left-table col.col-query {
+      width: min(var(--sun-query-w), var(--mobile-leading-col-max));
+    }
+    body.mobile-simple .sun-left-table .query-col {
+      max-width: min(var(--sun-query-w), var(--mobile-leading-col-max));
     }
   

@@ -54,6 +54,7 @@ const SUBREGION_OPTIONS = [
 ];
 const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
+const LEADING_FAVORITE_COL_PX = 28;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
@@ -1125,6 +1126,29 @@ const updateLayoutMode = () => {
 
 const isCompactLayout = () => appState.layoutMode === "compact";
 
+const _mobileLeadingQueryCap = () => {
+  const viewportWidth = Math.max(
+    document.documentElement?.clientWidth || 0,
+    window.innerWidth || 0,
+  );
+  return Math.max(0, Math.floor((viewportWidth / 2) - LEADING_FAVORITE_COL_PX));
+};
+
+const _resolveQueryColumnBounds = ({
+  minWidth,
+  maxWidth,
+  capToMobileHalfScreen = false,
+}) => {
+  let resolvedMax = maxWidth;
+  if (capToMobileHalfScreen && isCompactLayout()) {
+    resolvedMax = Math.min(resolvedMax, _mobileLeadingQueryCap());
+  }
+  return {
+    minWidth: Math.min(minWidth, resolvedMax),
+    maxWidth: resolvedMax,
+  };
+};
+
 const _autoSizeDesktopLeftColumns = ({
   tableSelector,
   wrapSelector,
@@ -1164,7 +1188,15 @@ const _autoSizeDesktopLeftColumns = ({
   wrap.style.setProperty(weekVarName, `${Math.max(90, Math.min(130, Math.ceil(weekMax + 24)))}px`);
 };
 
-const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {
+const _autoSizeQueryOnly = ({
+  tableSelector,
+  wrapSelector,
+  queryVarName,
+  minWidth = 150,
+  maxWidth = 240,
+  padding = 28,
+  capToMobileHalfScreen = false,
+}) => {
   const table = document.querySelector(tableSelector);
   const wrap = document.querySelector(wrapSelector);
   if (!table || !wrap) return;
@@ -1180,10 +1212,21 @@ const _autoSizeQueryOnly = ({ tableSelector, wrapSelector, queryVarName }) => {
     measureTextWidth(headerText, font),
     ...values.map((value) => measureTextWidth(value, font)),
   );
-  wrap.style.setProperty(queryVarName, `${Math.max(150, Math.min(240, Math.ceil(queryMax + 28)))}px`);
+  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen });
+  wrap.style.setProperty(
+    queryVarName,
+    `${Math.max(bounds.minWidth, Math.min(bounds.maxWidth, Math.ceil(queryMax + padding)))}px`,
+  );
 };
 
-const _autoSizeMobileQueryColumn = ({ tableSelector, wrapSelector, minWidth, maxWidth, padding }) => {
+const _autoSizeMobileQueryColumn = ({
+  tableSelector,
+  wrapSelector,
+  minWidth,
+  maxWidth,
+  padding,
+  capToMobileHalfScreen = false,
+}) => {
   const table = document.querySelector(tableSelector);
   const wrap = document.querySelector(wrapSelector);
   if (!table || !wrap) return;
@@ -1195,10 +1238,11 @@ const _autoSizeMobileQueryColumn = ({ tableSelector, wrapSelector, minWidth, max
   const queryIndex = header && header.cellIndex >= 0 ? header.cellIndex : 0;
   const values = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
   const headerText = header.textContent?.trim() || "Resort";
+  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen });
   const width = Math.max(
-    minWidth,
+    bounds.minWidth,
     Math.min(
-      maxWidth,
+      bounds.maxWidth,
       Math.ceil(Math.max(measureTextWidth(headerText, font), ...values.map((value) => measureTextWidth(value, font))) + padding),
     ),
   );
@@ -1327,12 +1371,22 @@ const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWi
 
 const autoSizeSplitTables = () => {
   if (isCompactLayout()) {
+    _autoSizeQueryOnly({
+      tableSelector: ".compact-grid-mobile-table",
+      wrapSelector: ".compact-grid-mobile-wrap",
+      queryVarName: "--compact-mobile-query-w",
+      minWidth: 120,
+      maxWidth: 180,
+      padding: 22,
+      capToMobileHalfScreen: true,
+    });
     _autoSizeMobileQueryColumn({
       tableSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
       wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile",
       minWidth: 150,
       maxWidth: 240,
       padding: 22,
+      capToMobileHalfScreen: true,
     });
     _autoSizeMobileRightColumns({
       tableSelector: ".snowfall-right-wrap#snowfall-right-wrap-mobile .snowfall-right-table",
@@ -1348,6 +1402,7 @@ const autoSizeSplitTables = () => {
       minWidth: 150,
       maxWidth: 240,
       padding: 22,
+      capToMobileHalfScreen: true,
     });
     _autoSizeMobileRightColumns({
       tableSelector: ".rain-right-wrap#rain-right-wrap-mobile .rain-right-table",
@@ -1356,6 +1411,30 @@ const autoSizeSplitTables = () => {
       daySelector: "col.col-day",
       minWeekWidth: 92,
       minDayWidth: 62,
+    });
+    _autoSizeQueryOnly({
+      tableSelector: ".temperature-left-wrap .temperature-left-table",
+      wrapSelector: ".temperature-left-wrap",
+      queryVarName: "--temp-query-w",
+      minWidth: 150,
+      maxWidth: 220,
+      capToMobileHalfScreen: true,
+    });
+    _autoSizeQueryOnly({
+      tableSelector: ".weather-left-wrap .weather-left-table",
+      wrapSelector: ".weather-left-wrap",
+      queryVarName: "--weather-query-w",
+      minWidth: 150,
+      maxWidth: 220,
+      capToMobileHalfScreen: true,
+    });
+    _autoSizeQueryOnly({
+      tableSelector: ".sun-left-wrap .sun-left-table",
+      wrapSelector: ".sun-left-wrap",
+      queryVarName: "--sun-query-w",
+      minWidth: 150,
+      maxWidth: 220,
+      capToMobileHalfScreen: true,
     });
     return;
   }
