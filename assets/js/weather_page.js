@@ -307,39 +307,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
   const labels = reports.length
     ? Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx))
     : _fallbackDayLabels(displayDays);
-  if (appState.layoutMode === "compact") {
-    const mobileRows = reports.length ? reports.map((report) => {
-      const attrs = _filterAttrs(report);
-      const cells = Array.from({ length: displayDays }, (_, idx) => {
-        const day = _dailyAt(report, idx);
-        const style = compactDailySummary.dayStyle(day);
-        const styleAttr = style ? ` style='${style}'` : "";
-        return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })}</td>`;
-      }).join("");
-      return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
-    }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
-    return `
-      <section>
-        <div class="section-header">
-          <h2>Daily Summary</h2>
-          <div class="unit-toggle" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
-            <button type="button" class="unit-btn" data-unit-mode="metric">Metric</button>
-            <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
-          </div>
-        </div>
-        <div class="compact-grid-mobile-wrap" id="compact-grid-mobile-wrap">
-          <table class="compact-grid-mobile-table" id="compact-grid-mobile-table">
-            <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
-            <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${mobileRows}</tbody>
-          </table>
-        </div>
-      </section>`;
-  }
-  const leftRows = reports.length
-    ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}</tr>`).join("")
-    : _emptyStateRow(2, emptyMessage);
-  const rightRows = reports.length ? reports.map((report) => {
+  const rows = reports.length ? reports.map((report) => {
     const attrs = _filterAttrs(report);
     const cells = Array.from({ length: displayDays }, (_, idx) => {
       const day = _dailyAt(report, idx);
@@ -347,8 +315,8 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
       const styleAttr = style ? ` style='${style}'` : "";
       return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })}</td>`;
     }).join("");
-    return `<tr${attrs}>${cells}</tr>`;
-  }).join("") : _emptyStateRow(Math.max(1, displayDays), emptyMessage);
+    return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
+  }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
     <section>
       <div class="section-header">
@@ -358,21 +326,12 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
           <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
         </div>
       </div>
-      <div class="compact-grid-wrap">
-        <div class="compact-grid-left-wrap" id="compact-grid-left-wrap">
-          <table class="compact-grid-left-table" id="compact-grid-left-table">
-            <colgroup><col class='col-favorite'><col class='col-query'></colgroup>
-            <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr></thead>
-            <tbody>${leftRows}</tbody>
-          </table>
-        </div>
-        <div class="compact-grid-right-wrap" id="compact-grid-right-wrap">
-          <table class="compact-grid-right-table" id="compact-grid-right-table">
-            <colgroup>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
-            <thead><tr>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${rightRows}</tbody>
-          </table>
-        </div>
+      <div class="compact-grid-mobile-wrap" id="compact-grid-mobile-wrap">
+        <table class="compact-grid-mobile-table" id="compact-grid-mobile-table">
+          <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
+          <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </section>`;
 };
@@ -1329,7 +1288,6 @@ const attachVerticalSync = (left, right) => {
 
 const attachSplitScrollSync = () => {
   [
-    [".compact-grid-left-wrap", ".compact-grid-right-wrap"],
     [".snowfall-left-wrap#snowfall-left-wrap", ".snowfall-right-wrap#snowfall-right-wrap"],
     [".snowfall-left-wrap#snowfall-left-wrap-mobile", ".snowfall-right-wrap#snowfall-right-wrap-mobile"],
     [".rain-left-wrap#rain-left-wrap", ".rain-right-wrap#rain-right-wrap"],
@@ -1370,16 +1328,16 @@ const _stretchColumnsToWrap = ({ wrapSelector, tableSelector, colSelector, minWi
 };
 
 const autoSizeSplitTables = () => {
+  _autoSizeQueryOnly({
+    tableSelector: ".compact-grid-mobile-table",
+    wrapSelector: ".compact-grid-mobile-wrap",
+    queryVarName: "--compact-mobile-query-w",
+    minWidth: isCompactLayout() ? 120 : 150,
+    maxWidth: isCompactLayout() ? 180 : 240,
+    padding: isCompactLayout() ? 22 : 28,
+    capToMobileHalfScreen: isCompactLayout(),
+  });
   if (isCompactLayout()) {
-    _autoSizeQueryOnly({
-      tableSelector: ".compact-grid-mobile-table",
-      wrapSelector: ".compact-grid-mobile-wrap",
-      queryVarName: "--compact-mobile-query-w",
-      minWidth: 120,
-      maxWidth: 180,
-      padding: 22,
-      capToMobileHalfScreen: true,
-    });
     _autoSizeMobileQueryColumn({
       tableSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile .snowfall-left-table",
       wrapSelector: ".snowfall-left-wrap#snowfall-left-wrap-mobile",
@@ -1461,11 +1419,6 @@ const autoSizeSplitTables = () => {
     tableSelector: ".rain-right-wrap#rain-right-wrap .rain-right-table",
     colSelector: "col.col-day",
     minWidth: 66,
-  });
-  _autoSizeQueryOnly({
-    tableSelector: ".compact-grid-left-table",
-    wrapSelector: ".compact-grid-left-wrap",
-    queryVarName: "--compact-query-w",
   });
   _autoSizeQueryOnly({
     tableSelector: ".temperature-left-wrap .temperature-left-table",
@@ -1591,7 +1544,6 @@ const syncSplitTableHeights = () => {
     : [
       [".snowfall-left-wrap#snowfall-left-wrap .snowfall-left-table", ".snowfall-right-wrap#snowfall-right-wrap .snowfall-right-table", ".snowfall-split-wrap.desktop-only", "--snow-header-row1-h"],
       [".rain-left-wrap#rain-left-wrap .rain-left-table", ".rain-right-wrap#rain-right-wrap .rain-right-table", ".rain-split-wrap.desktop-only", "--rain-header-row1-h"],
-      [".compact-grid-left-table", ".compact-grid-right-table", ".compact-grid-wrap", "--compact-header-row1-h"],
       [".temperature-left-table", ".temperature-right-table", ".temperature-split-wrap", "--temp-header-row1-h"],
       [".weather-left-table", ".weather-right-table", ".weather-split-wrap", "--weather-header-row1-h"],
       [".sun-left-table", ".sun-right-table", ".sun-split-wrap", "--sun-header-row1-h"],
@@ -1616,18 +1568,10 @@ const syncSplitTableHeights = () => {
     _syncRowPairHeights(leftBodyRows, rightBodyRows);
     _syncStickySecondRowTop(leftTable, rightTable, splitWrap, stickyVar);
   });
-  if (isCompactLayout()) {
-    _setSingleTableViewport({
-      wrapSelector: ".compact-grid-mobile-wrap",
-      rowsVisible: 5,
-    });
-  } else {
-    _setVisibleRowViewport({
-      leftSelector: ".compact-grid-left-wrap",
-      rightSelector: ".compact-grid-right-wrap",
-      rowsVisible: 5,
-    });
-  }
+  _setSingleTableViewport({
+    wrapSelector: ".compact-grid-mobile-wrap",
+    rowsVisible: 5,
+  });
 };
 
 let layoutFrame = 0;
@@ -1658,8 +1602,6 @@ const observeLayoutContainers = () => {
     ".rain-right-wrap#rain-right-wrap",
     ".rain-left-wrap#rain-left-wrap-mobile",
     ".rain-right-wrap#rain-right-wrap-mobile",
-    ".compact-grid-left-wrap",
-    ".compact-grid-right-wrap",
     ".compact-grid-mobile-wrap",
     ".temperature-left-wrap",
     ".temperature-right-wrap",
@@ -1877,8 +1819,6 @@ const renderPage = () => {
 
 const _SCROLLABLE_WRAP_SELECTORS = [
   ".compact-grid-mobile-wrap",
-  ".compact-grid-left-wrap",
-  ".compact-grid-right-wrap",
   ".snowfall-left-wrap#snowfall-left-wrap",
   ".snowfall-right-wrap#snowfall-right-wrap",
   ".snowfall-left-wrap#snowfall-left-wrap-mobile",
