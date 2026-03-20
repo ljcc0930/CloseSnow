@@ -10,8 +10,7 @@
 - `ljcc/feature/homepage-sticky-tables`
 
 ## Dependencies
-- `homepage-sticky-tables-01-shared-layout`: This request needs the shared single-table sticky layout contract, including support for configurable leading sticky columns and the 10-row viewport rule.
-- `homepage-sticky-tables-02-weather-temp-sun`: This request should build on the already-validated desktop sticky single-table rollout pattern before adding the more complex fixed-weekly precipitation behavior.
+- `homepage-sticky-tables-01-shared-layout`: This request needs the shared single-table sticky layout contract, including support for configurable leading sticky columns, the 10-row viewport rule, and section ownership boundaries that let precipitation work land independently.
 
 ## Background
 - `Snowfall` and `Rainfall` are the most complex homepage table sections because their desktop layout currently splits `favorite + resort + weekly` columns from the scrolling daily columns.

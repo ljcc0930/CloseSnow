@@ -12,19 +12,23 @@
 ## Global Assumptions
 - No backend or payload-contract changes are required; this is a homepage rendering and layout refactor in existing frontend assets.
 - `Daily Summary` is the reference interaction model for single-table sticky behavior, but the rollout should avoid cloning one-off logic per section.
+- `homepage-sticky-tables-01-shared-layout` must do more than define a visual contract; it also needs to carve section-level frontend ownership boundaries so follow-up workers can land mostly independent PRs.
 - `Snowfall` and `Rainfall` need more sticky leading columns than the other sections because `Week 1` and `Week 2` must remain visible during horizontal scrolling.
-- The current homepage table stack is still concentrated in `assets/js/weather_page.js` and `assets/css/weather_page.css`, so the rollout is intentionally sequenced to reduce merge conflicts across worker slices.
+- `Snowfall` and `Rainfall` remain one combined worker slice because they still share the same precipitation renderer shape and fixed-weekly requirement.
 
 ## Atomic Requests
-- `homepage-sticky-tables-01-shared-layout`: Define the shared homepage single-table sticky layout contract and 10-row viewport policy.
-- `homepage-sticky-tables-02-weather-temp-sun`: Convert `Weather`, `Temperature`, and `Sunrise / Sunset` desktop sections to the shared sticky single-table layout.
+- `homepage-sticky-tables-01-shared-layout`: Define the shared homepage single-table sticky layout contract, 10-row viewport policy, and section ownership boundaries for follow-up workers.
+- `homepage-sticky-tables-02-weather-table`: Convert desktop `Weather` to the shared sticky single-table layout.
 - `homepage-sticky-tables-03-precip-weekly-sticky`: Convert desktop `Snowfall` and `Rainfall` to sticky single-table layouts with fixed weekly columns.
+- `homepage-sticky-tables-04-temperature-table`: Convert desktop `Temperature` to the shared sticky single-table layout.
+- `homepage-sticky-tables-05-sun-table`: Convert desktop `Sunrise / Sunset` to the shared sticky single-table layout.
 
 ## Dependency Graph
-- `homepage-sticky-tables-01-shared-layout` -> `homepage-sticky-tables-02-weather-temp-sun`
 - `homepage-sticky-tables-01-shared-layout` -> `homepage-sticky-tables-03-precip-weekly-sticky`
-- `homepage-sticky-tables-02-weather-temp-sun` -> `homepage-sticky-tables-03-precip-weekly-sticky`
+- `homepage-sticky-tables-01-shared-layout` -> `homepage-sticky-tables-02-weather-table`
+- `homepage-sticky-tables-01-shared-layout` -> `homepage-sticky-tables-04-temperature-table`
+- `homepage-sticky-tables-01-shared-layout` -> `homepage-sticky-tables-05-sun-table`
 
 ## Notes
 - The final state should let workers remove per-section split-table row-height syncing and vertical scroll syncing for every section that successfully moves to a single-table layout.
-- `homepage-sticky-tables-03-precip-weekly-sticky` depends on the simpler metric-section rollout first so the precipitation slice can reuse an already-validated sticky-table pattern before layering in fixed weekly columns.
+- The maximum ready set after `homepage-sticky-tables-01-shared-layout` should be four independent worker requests: `Weather`, `Temperature`, `Sunrise / Sunset`, and combined precipitation.
