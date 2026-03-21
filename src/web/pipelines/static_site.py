@@ -46,21 +46,30 @@ def _iter_resort_ids(payload: Dict[str, Any]) -> List[str]:
 
 def _build_hourly_payload(
     *,
+    mode: str,
+    source: str,
     resort_id: str,
     hours: int,
+    timeout: int,
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
 ) -> Optional[Dict[str, Any]]:
-    from src.backend.weather_data_server import _hourly_payload_for_resort
+    from src.web.data_sources import load_hourly_payload
 
-    return _hourly_payload_for_resort(
+    code, payload = load_hourly_payload(
+        mode=mode,
+        source=source,
         resort_id=resort_id,
         hours=hours,
+        timeout=timeout,
         cache_file=cache_file,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
     )
+    if code != 200 or "error" in payload:
+        return None
+    return payload
 
 
 def render_hourly_pages(
@@ -68,6 +77,9 @@ def render_hourly_pages(
     payload: Dict[str, Any],
     *,
     include_hourly_data: bool = True,
+    hourly_mode: str = "local",
+    hourly_source: str = "",
+    hourly_timeout: int = 20,
     hourly_hours: int = 120,
     cache_file: str = ".cache/open_meteo_cache.json",
     geocode_cache_hours: int = 24 * 30,
@@ -87,8 +99,11 @@ def render_hourly_pages(
             hourly_context["dailySummary"] = daily_summary
         if include_hourly_data:
             hourly_payload = _build_hourly_payload(
+                mode=hourly_mode,
+                source=hourly_source,
                 resort_id=resort_id,
                 hours=hourly_hours,
+                timeout=hourly_timeout,
                 cache_file=cache_file,
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,

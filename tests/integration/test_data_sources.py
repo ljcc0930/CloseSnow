@@ -8,6 +8,8 @@ from src.contract.validators import ContractValidationError
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
 from src.web.data_sources.gateway import build_payload_client, load_payload
+from src.web.data_sources.hourly_source import load_hourly_payload
+from src.web.data_sources.request_source import load_request_payload, strip_server_filter_query
 from src.web.data_sources.static_json_source import load_static_payload
 
 
@@ -184,3 +186,234 @@ def test_build_payload_client_types():
     assert type(api_client).__name__ == "HttpPayloadClient"
     assert type(file_client).__name__ == "FilePayloadClient"
     assert type(local_client).__name__ == "LocalPayloadClient"
+
+
+def test_strip_server_filter_query():
+    qs = {
+        "resort": ["Snowbird, UT"],
+        "pass_type": ["ikon"],
+        "region": ["west"],
+        "search": ["powder"],
+        "include_all": ["1"],
+    }
+    assert strip_server_filter_query(qs) == {"resort": ["Snowbird, UT"]}
+
+
+def test_load_request_payload_local_with_server_filters(monkeypatch):
+    calls = {}
+
+    monkeypatch.setattr(
+        "src.web.data_sources.request_source.select_resorts_from_query",
+        lambda qs: (
+            ["Snowbird, UT"],
+            "",
+            {"pass_type": ["ikon"], "region": "west"},
+            {"pass_type": {"ikon": 1}, "region": {"west": 1}},
+            False,
+        ),
+    )
+
+    def fake_load_local_payload(**kwargs):  # noqa: ANN001
+        calls.update(kwargs)
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 1,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [{"query": "Snowbird, UT", "daily": []}],
+        }
+
+    monkeypatch.setattr("src.web.data_sources.request_source.load_local_payload", fake_load_local_payload)
+
+    payload = load_request_payload(
+        mode="local",
+        source="",
+        query_params={"pass_type": ["ikon"], "region": ["west"]},
+        cache_file=".cache/x.json",
+        geocode_cache_hours=100,
+        forecast_cache_hours=2,
+        max_workers=4,
+    )
+    assert calls["resorts"] == ["Snowbird, UT"]
+    assert calls["cache_file"] == ".cache/x.json"
+    assert calls["max_workers"] == 4
+    assert payload["available_filters"]["pass_type"]["ikon"] == 1
+    assert payload["applied_filters"]["pass_type"] == ["ikon"]
+
+
+def test_load_request_payload_local_filter_no_match(monkeypatch):
+    monkeypatch.setattr(
+        "src.web.data_sources.request_source.select_resorts_from_query",
+        lambda qs: (
+            [],
+            "",
+            {"pass_type": ["ikon"]},
+            {"pass_type": {"ikon": 1}},
+            True,
+        ),
+    )
+
+    def fake_build_empty_payload(**kwargs):  # noqa: ANN001
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        }
+
+    monkeypatch.setattr("src.web.data_sources.request_source.build_empty_payload", fake_build_empty_payload)
+
+    payload = load_request_payload(
+        mode="local",
+        source="",
+        query_params={"pass_type": ["ikon"]},
+    )
+    assert payload["reports"] == []
+    assert payload["available_filters"]["pass_type"]["ikon"] == 1
+    assert payload["applied_filters"]["pass_type"] == ["ikon"]
+
+
+def test_load_request_payload_api_forwards_query(monkeypatch):
+    calls = {}
+
+    def fake_load_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
+        calls["mode"] = mode
+        calls["source"] = source
+        calls["timeout"] = timeout
+        calls["kwargs"] = kwargs
+        return {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        }
+
+    monkeypatch.setattr("src.web.data_sources.request_source.load_payload", fake_load_payload)
+
+    load_request_payload(
+        mode="api",
+        source="https://example.test/api/data?existing=1",
+        timeout=11,
+        query_params={
+            "resort": ["A", "B"],
+            "pass_type": ["ikon"],
+            "region": ["west"],
+            "include_all": ["1"],
+        },
+    )
+    assert calls["mode"] == "api"
+    assert "existing=1" in calls["source"]
+    assert "resort=A" in calls["source"]
+    assert "resort=B" in calls["source"]
+    assert "pass_type=ikon" in calls["source"]
+    assert "region=west" in calls["source"]
+    assert "include_all=1" in calls["source"]
+    assert calls["timeout"] == 11
+    assert calls["kwargs"]["resorts"] == ["A", "B"]
+
+
+def test_load_request_payload_populates_filter_metadata_fallback(monkeypatch):
+    monkeypatch.setattr(
+        "src.web.data_sources.request_source.load_payload",
+        lambda **kwargs: {
+            "schema_version": "weather_payload_v1",
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "source": "Open-Meteo",
+            "model": "ecmwf_ifs025",
+            "forecast_days": 15,
+            "units": {},
+            "cache": {},
+            "resorts_count": 0,
+            "failed_count": 0,
+            "failed": [],
+            "reports": [],
+        },
+    )
+    monkeypatch.setattr("src.web.data_sources.request_source.load_supported_resort_catalog", lambda: [{"query": "A"}])
+    monkeypatch.setattr("src.web.data_sources.request_source.available_filters", lambda catalog: {"pass_type": {"ikon": 1}})
+    monkeypatch.setattr("src.web.data_sources.request_source.default_applied_filters", lambda: {"search": ""})
+
+    payload = load_request_payload(mode="file", source="/tmp/payload.json")
+    assert payload["available_filters"] == {"pass_type": {"ikon": 1}}
+    assert payload["applied_filters"] == {"search": ""}
+
+
+def test_load_hourly_payload_local_mode(monkeypatch):
+    captured = {}
+
+    def fake_build_hourly_payload_for_resort(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {
+            "resort_id": kwargs["resort_id"],
+            "hours": kwargs["hours"],
+            "hourly": {"time": []},
+        }
+
+    monkeypatch.setattr(
+        "src.web.data_sources.hourly_source.build_hourly_payload_for_resort",
+        fake_build_hourly_payload_for_resort,
+    )
+    code, payload = load_hourly_payload(
+        "local",
+        "",
+        resort_id="snowbird-ut",
+        hours=6,
+        cache_file=".cache/hourly.json",
+        geocode_cache_hours=100,
+        forecast_cache_hours=2,
+    )
+    assert code == 200
+    assert payload["resort_id"] == "snowbird-ut"
+    assert captured["cache_file"] == ".cache/hourly.json"
+    assert captured["geocode_cache_hours"] == 100
+    assert captured["forecast_cache_hours"] == 2
+
+
+def test_load_hourly_payload_api_mode(monkeypatch):
+    captured = {}
+
+    def fake_urlopen(url, timeout):  # noqa: ANN001
+        captured["url"] = url
+        captured["timeout"] = timeout
+        return _DummyResponse(json.dumps({"resort_id": "snowbird-ut", "hourly": {"time": []}}).encode("utf-8"))
+
+    monkeypatch.setattr("src.web.data_sources.hourly_source.urllib.request.urlopen", fake_urlopen)
+    code, payload = load_hourly_payload(
+        "api",
+        "https://example.test/api/data?resort=snowbird-ut",
+        resort_id="snowbird-ut",
+        hours=12,
+        timeout=11,
+    )
+    assert code == 200
+    assert payload["resort_id"] == "snowbird-ut"
+    assert captured["timeout"] == 11
+    assert captured["url"].startswith("https://example.test/api/resort-hourly?")
+    assert "resort_id=snowbird-ut" in captured["url"]
+    assert "hours=12" in captured["url"]
+
+
+def test_load_hourly_payload_file_mode_is_explicitly_unavailable():
+    code, payload = load_hourly_payload("file", "/tmp/data.json", resort_id="snowbird-ut", hours=12)
+    assert code == 501
+    assert payload["error"] == "Hourly endpoint unavailable in file mode"

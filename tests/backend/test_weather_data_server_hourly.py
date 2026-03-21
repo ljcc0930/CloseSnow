@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from src.backend.models import ResortLocation
-from src.backend.weather_data_server import _hourly_payload_for_resort
+from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 
 
 class _DummyJsonCache:
@@ -23,8 +23,8 @@ class _DummyCoordCache:
 
 def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
-        lambda path: [
+        "src.backend.services.hourly_payload_service.load_supported_resort_catalog",
+        lambda: [
             {
                 "resort_id": "crystal-mountain-wa",
                 "query": "Crystal Mountain, WA",
@@ -41,12 +41,12 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
             }
         ],
     )
-    monkeypatch.setattr("src.backend.weather_data_server.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
-    monkeypatch.setattr("src.backend.weather_data_server.JsonCache", lambda path: _DummyJsonCache())
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.JsonCache", lambda path: _DummyJsonCache())
     coord_cache = _DummyCoordCache()
-    monkeypatch.setattr("src.backend.weather_data_server.ResortCoordinateCache", lambda path: coord_cache)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.ResortCoordinateCache", lambda path: coord_cache)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_airport_catalog",
+        "src.backend.services.hourly_payload_service.load_airport_catalog",
         lambda: [
             {
                 "airport_id": "sea-seattle-tacoma",
@@ -72,9 +72,9 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
             admin1=str(seed["admin1"]),
         )
 
-    monkeypatch.setattr("src.backend.weather_data_server.geocode", fake_geocode)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode", fake_geocode)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.fetch_hourly_forecast",
+        "src.backend.services.hourly_payload_service.fetch_hourly_forecast",
         lambda location, cache, ttl_seconds, hours: {
             "latitude": location.latitude,
             "longitude": location.longitude,
@@ -83,7 +83,7 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
         },
     )
 
-    payload = _hourly_payload_for_resort(
+    payload = build_hourly_payload_for_resort(
         resort_id="crystal-mountain-wa",
         hours=72,
         cache_file=".cache/open_meteo_cache.json",
