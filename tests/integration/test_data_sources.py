@@ -8,6 +8,7 @@ from src.contract.validators import ContractValidationError
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
 from src.web.data_sources.gateway import build_payload_client, load_payload
+from src.web.data_sources.hourly_source import load_hourly_payload
 from src.web.data_sources.static_json_source import load_static_payload
 
 
@@ -184,3 +185,64 @@ def test_build_payload_client_types():
     assert type(api_client).__name__ == "HttpPayloadClient"
     assert type(file_client).__name__ == "FilePayloadClient"
     assert type(local_client).__name__ == "LocalPayloadClient"
+
+
+def test_load_hourly_payload_local_mode(monkeypatch):
+    captured = {}
+
+    def fake_build_hourly_payload_for_resort(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {
+            "resort_id": kwargs["resort_id"],
+            "hours": kwargs["hours"],
+            "hourly": {"time": []},
+        }
+
+    monkeypatch.setattr(
+        "src.web.data_sources.hourly_source.build_hourly_payload_for_resort",
+        fake_build_hourly_payload_for_resort,
+    )
+    code, payload = load_hourly_payload(
+        "local",
+        "",
+        resort_id="snowbird-ut",
+        hours=6,
+        cache_file=".cache/hourly.json",
+        geocode_cache_hours=100,
+        forecast_cache_hours=2,
+    )
+    assert code == 200
+    assert payload["resort_id"] == "snowbird-ut"
+    assert captured["cache_file"] == ".cache/hourly.json"
+    assert captured["geocode_cache_hours"] == 100
+    assert captured["forecast_cache_hours"] == 2
+
+
+def test_load_hourly_payload_api_mode(monkeypatch):
+    captured = {}
+
+    def fake_urlopen(url, timeout):  # noqa: ANN001
+        captured["url"] = url
+        captured["timeout"] = timeout
+        return _DummyResponse(json.dumps({"resort_id": "snowbird-ut", "hourly": {"time": []}}).encode("utf-8"))
+
+    monkeypatch.setattr("src.web.data_sources.hourly_source.urllib.request.urlopen", fake_urlopen)
+    code, payload = load_hourly_payload(
+        "api",
+        "https://example.test/api/data?resort=snowbird-ut",
+        resort_id="snowbird-ut",
+        hours=12,
+        timeout=11,
+    )
+    assert code == 200
+    assert payload["resort_id"] == "snowbird-ut"
+    assert captured["timeout"] == 11
+    assert captured["url"].startswith("https://example.test/api/resort-hourly?")
+    assert "resort_id=snowbird-ut" in captured["url"]
+    assert "hours=12" in captured["url"]
+
+
+def test_load_hourly_payload_file_mode_is_explicitly_unavailable():
+    code, payload = load_hourly_payload("file", "/tmp/data.json", resort_id="snowbird-ut", hours=12)
+    assert code == 501
+    assert payload["error"] == "Hourly endpoint unavailable in file mode"

@@ -176,7 +176,12 @@ def run_render(args: argparse.Namespace) -> int:
     payload = load_payload(mode="file", source=args.input_json)
     output_html = _index_html_for_output_dir(args.output_dir, input_json=args.input_json)
     out = render_html(output_html, payload, data_url=_relative_url(output_html, args.input_json))
-    hourly_pages = render_hourly_pages(output_html, payload)
+    hourly_pages = render_hourly_pages(
+        output_html,
+        payload,
+        hourly_mode="file",
+        hourly_source=args.input_json,
+    )
     output_dir = str(Path(output_html).parent)
     copied_assets = _copy_static_assets(output_dir)
     print(f"Done: {out}")
@@ -202,6 +207,8 @@ def run_static(args: argparse.Namespace) -> int:
             output_html,
             payload,
             include_hourly_data=True,
+            hourly_mode="local",
+            hourly_source="",
             cache_file=args.cache_file,
             geocode_cache_hours=args.geocode_cache_hours,
             forecast_cache_hours=args.forecast_cache_hours,

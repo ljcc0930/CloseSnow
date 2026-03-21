@@ -402,24 +402,27 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "src.web.weather_page_server.build_hourly_payload_for_resort",
-        lambda **kwargs: {
-            "resort_id": kwargs["resort_id"],
-            "query": "Snowbird, UT",
-            "timezone": "America/Denver",
-            "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
-            "hours": 2,
-            "hourly": {
-                "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
-                "snowfall": [0.0, 0.1],
-                "rain": [0.0, 0.0],
-                "precipitation_probability": [20, 10],
-                "snow_depth": [100, 100],
-                "wind_speed_10m": [5.0, 6.0],
-                "wind_direction_10m": [120, 110],
-                "visibility": [9000, 8800],
+        "src.web.weather_page_server.load_hourly_payload",
+        lambda **kwargs: (
+            200,
+            {
+                "resort_id": kwargs["resort_id"],
+                "query": "Snowbird, UT",
+                "timezone": "America/Denver",
+                "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
+                "hours": 2,
+                "hourly": {
+                    "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+                    "snowfall": [0.0, 0.1],
+                    "rain": [0.0, 0.0],
+                    "precipitation_probability": [20, 10],
+                    "snow_depth": [100, 100],
+                    "wind_speed_10m": [5.0, 6.0],
+                    "wind_direction_10m": [120, 110],
+                    "visibility": [9000, 8800],
+                },
             },
-        },
+        ),
     )
 
     handler = make_handler(

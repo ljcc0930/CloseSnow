@@ -16,19 +16,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import sys
 from typing import Any, Dict, List
-import urllib.error
-import urllib.request
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.web.data_sources import load_payload
+from src.web.data_sources import load_hourly_payload, load_payload
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
 from src.backend.pipelines.live_pipeline import run_live_payload
-from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 from src.backend.services.resort_selection_service import (
     available_filters,
     build_empty_payload,
@@ -82,11 +79,6 @@ def _append_query_values(base_url: str, qs: Dict[str, List[str]]) -> str:
         merged[key] = list(values)
     query = urlencode(merged, doseq=True)
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))
-
-
-def _hourly_endpoint_from_data_source(base_url: str) -> str:
-    parsed = urlsplit(base_url)
-    return urlunsplit((parsed.scheme, parsed.netloc, "/api/resort-hourly", "", ""))
 
 
 _SERVER_FILTER_QUERY_KEYS = ("pass_type", "region", "subregion", "country", "search", "include_all", "include_default", "search_all")
@@ -171,40 +163,16 @@ def make_handler(
             return payload
 
         def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:
-            if data_mode == "local":
-                payload = build_hourly_payload_for_resort(
-                    resort_id=resort_id,
-                    hours=hours,
-                    cache_file=cache_file,
-                    geocode_cache_hours=geocode_cache_hours,
-                    forecast_cache_hours=forecast_cache_hours,
-                )
-                if payload is None:
-                    return 404, {"error": f"Unknown resort_id: {resort_id}"}
-                if "error" in payload:
-                    return 502, payload
-                return 200, payload
-
-            if data_mode == "api":
-                hourly_base = _hourly_endpoint_from_data_source(data_source)
-                hourly_url = f"{hourly_base}?{urlencode({'resort_id': resort_id, 'hours': str(hours)})}"
-                try:
-                    with urllib.request.urlopen(hourly_url, timeout=data_timeout) as resp:
-                        body = resp.read().decode("utf-8")
-                        return 200, json.loads(body)
-                except urllib.error.HTTPError as exc:
-                    error_body = exc.read().decode("utf-8", errors="ignore")
-                    try:
-                        payload = json.loads(error_body)
-                    except Exception:
-                        payload = {"error": error_body or f"HTTP {exc.code}"}
-                    return exc.code, payload
-                except urllib.error.URLError as exc:
-                    return 502, {"error": str(exc)}
-                except Exception as exc:
-                    return 500, {"error": str(exc)}
-
-            return 501, {"error": "Hourly endpoint unavailable in file mode"}
+            return load_hourly_payload(
+                mode=data_mode,
+                source=data_source,
+                resort_id=resort_id,
+                hours=hours,
+                timeout=data_timeout,
+                cache_file=cache_file,
+                geocode_cache_hours=geocode_cache_hours,
+                forecast_cache_hours=forecast_cache_hours,
+            )
 
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
