@@ -33,7 +33,7 @@ def test_server_api_root_and_asset(monkeypatch):
         "failed": [],
         "reports": [{"query": "A", "daily": []}],
     }
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: sample_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", lambda **kwargs: sample_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: b"body{}")
 
@@ -64,7 +64,7 @@ def test_server_api_root_and_asset(monkeypatch):
 
 
 def test_server_asset_not_found(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", lambda **kwargs: {"reports": []})
     monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: (_ for _ in ()).throw(OSError("x")))
 
     handler = make_handler(
@@ -87,7 +87,7 @@ def test_server_asset_not_found(monkeypatch):
 def test_server_query_resort_pass_through(monkeypatch):
     captured = {}
 
-    def fake_load_payload(**kwargs):  # noqa: ANN001
+    def fake_load_request_payload(**kwargs):  # noqa: ANN001
         captured.update(kwargs)
         return {
             "schema_version": "weather_payload_v1",
@@ -103,7 +103,7 @@ def test_server_query_resort_pass_through(monkeypatch):
             "reports": [],
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", fake_load_request_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
@@ -116,7 +116,7 @@ def test_server_query_resort_pass_through(monkeypatch):
     try:
         urllib.request.urlopen(f"{base}/api/data?resort=A&resort=B", timeout=3).read()
         assert captured["mode"] == "local"
-        assert captured["resorts"] == ["A", "B"]
+        assert captured["query_params"]["resort"] == ["A", "B"]
         assert captured["source"] == ""
     finally:
         server.shutdown()
@@ -124,10 +124,10 @@ def test_server_query_resort_pass_through(monkeypatch):
         thread.join(timeout=3)
 
 
-def test_server_api_mode_loads_remote_payload(monkeypatch):
+def test_server_api_mode_passes_query_to_request_adapter(monkeypatch):
     calls = {}
 
-    def fake_load_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
+    def fake_load_request_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
         calls["mode"] = mode
         calls["source"] = source
         calls["timeout"] = timeout
@@ -146,7 +146,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
             "reports": [],
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", fake_load_request_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
@@ -165,17 +165,17 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
             timeout=3,
         ).read()
         assert calls["mode"] == "api"
-        assert "resort=A" in calls["source"]
-        assert "resort=B" in calls["source"]
-        assert "pass_type=ikon" in calls["source"]
-        assert "region=west" in calls["source"]
-        assert "subregion=rockies" in calls["source"]
-        assert "country=US" in calls["source"]
-        assert "search=snow" in calls["source"]
-        assert "include_all=1" in calls["source"]
-        assert "search_all=0" in calls["source"]
+        assert calls["source"] == "http://127.0.0.1:8020/api/data"
+        assert calls["kwargs"]["query_params"]["resort"] == ["A", "B"]
+        assert calls["kwargs"]["query_params"]["pass_type"] == ["ikon"]
+        assert calls["kwargs"]["query_params"]["region"] == ["west"]
+        assert calls["kwargs"]["query_params"]["subregion"] == ["rockies"]
+        assert calls["kwargs"]["query_params"]["country"] == ["US"]
+        assert calls["kwargs"]["query_params"]["search"] == ["snow"]
+        assert calls["kwargs"]["query_params"]["include_all"] == ["1"]
+        assert calls["kwargs"]["query_params"]["search_all"] == ["0"]
+        assert calls["kwargs"]["apply_server_filters"] is True
         assert calls["timeout"] == 11
-        assert calls["kwargs"]["resorts"] == ["A", "B"]
     finally:
         server.shutdown()
         server.server_close()
@@ -185,7 +185,7 @@ def test_server_api_mode_loads_remote_payload(monkeypatch):
 def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
     captured = {}
 
-    def fake_load_payload(**kwargs):  # noqa: ANN001
+    def fake_load_request_payload(**kwargs):  # noqa: ANN001
         captured.update(kwargs)
         return {
             "schema_version": "weather_payload_v1",
@@ -201,11 +201,7 @@ def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
             "reports": [],
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
-    monkeypatch.setattr(
-        "src.web.weather_page_server.select_resorts_from_query",
-        lambda qs: (_ for _ in ()).throw(AssertionError("select_resorts_from_query should not be used for HTML root")),
-    )
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", fake_load_request_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
@@ -223,7 +219,8 @@ def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
         assert body.decode("utf-8") == "<html>ok</html>"
         assert captured["mode"] == "local"
         assert captured["source"] == ""
-        assert captured["resorts"] == []
+        assert captured["query_params"] == {}
+        assert captured["apply_server_filters"] is False
     finally:
         server.shutdown()
         server.server_close()
@@ -233,7 +230,7 @@ def test_server_root_ignores_filter_query_in_local_mode(monkeypatch):
 def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
     calls = {}
 
-    def fake_load_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
+    def fake_load_request_payload(mode, source, timeout=20, **kwargs):  # noqa: ANN001
         calls["mode"] = mode
         calls["source"] = source
         calls["timeout"] = timeout
@@ -252,7 +249,7 @@ def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
             "reports": [],
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", fake_load_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", fake_load_request_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
@@ -271,37 +268,20 @@ def test_server_root_api_mode_does_not_forward_filter_query(monkeypatch):
             timeout=3,
         ).read()
         assert calls["mode"] == "api"
-        assert "resort=A" in calls["source"]
-        assert "pass_type=ikon" not in calls["source"]
-        assert "region=west" not in calls["source"]
-        assert "subregion=rockies" not in calls["source"]
-        assert "country=US" not in calls["source"]
-        assert "search=snow" not in calls["source"]
-        assert "include_all=1" not in calls["source"]
-        assert "search_all=0" not in calls["source"]
+        assert calls["source"] == "http://127.0.0.1:8020/api/data"
+        assert calls["kwargs"]["query_params"] == {"resort": ["A"]}
+        assert calls["kwargs"]["apply_server_filters"] is False
         assert calls["timeout"] == 11
-        assert calls["kwargs"]["resorts"] == ["A"]
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
 
 
-def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch):
+def test_server_local_mode_uses_request_adapter_for_filter_queries(monkeypatch):
     captured = {}
 
-    monkeypatch.setattr(
-        "src.web.weather_page_server.select_resorts_from_query",
-        lambda qs: (
-            ["Snowbird, UT"],
-            "",
-            {"pass_type": ["ikon"], "region": "west", "country": "US", "search": "snow", "include_all": False},
-            {"pass_type": {"ikon": 1}, "region": {"west": 1}, "country": {"US": 1}},
-            False,
-        ),
-    )
-
-    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+    def fake_load_request_payload(**kwargs):  # noqa: ANN001
         captured.update(kwargs)
         return {
             "schema_version": "weather_payload_v1",
@@ -315,9 +295,20 @@ def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch
             "failed_count": 0,
             "failed": [],
             "reports": [{"query": "Snowbird, UT", "daily": []}],
+            "available_filters": {"pass_type": {"ikon": 1}, "region": {"west": 1}, "country": {"US": 1}},
+            "applied_filters": {
+                "pass_type": ["ikon"],
+                "region": "west",
+                "country": ["US"],
+                "search": "snow",
+                "subregion": [],
+                "include_all": False,
+                "include_default": False,
+                "search_all": False,
+            },
         }
 
-    monkeypatch.setattr("src.web.weather_page_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", fake_load_request_payload)
     monkeypatch.setattr("src.web.weather_page_server.render_payload_html", lambda payload, **kwargs: "<html>ok</html>")
 
     handler = make_handler(
@@ -330,7 +321,8 @@ def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch
     try:
         body = urllib.request.urlopen(f"{base}/api/data?pass_type=ikon&region=west&country=US&search=snow", timeout=3)
         payload = json.loads(body.read().decode("utf-8"))
-        assert captured["resorts"] == ["Snowbird, UT"]
+        assert captured["apply_server_filters"] is True
+        assert captured["query_params"]["pass_type"] == ["ikon"]
         assert payload["available_filters"]["pass_type"]["ikon"] == 1
         assert payload["applied_filters"]["pass_type"] == ["ikon"]
         assert payload["applied_filters"]["search"] == "snow"
@@ -341,7 +333,7 @@ def test_server_local_mode_uses_backend_selection_for_filter_queries(monkeypatch
 
 
 def test_server_health_endpoint(monkeypatch):
-    monkeypatch.setattr("src.web.weather_page_server.load_payload", lambda **kwargs: {"reports": []})
+    monkeypatch.setattr("src.web.weather_page_server.load_request_payload", lambda **kwargs: {"reports": []})
     handler = make_handler(
         cache_file=".cache/x.json",
         geocode_cache_hours=720,
@@ -373,7 +365,7 @@ def test_server_requires_data_source_for_api_mode():
 
 def test_server_hourly_api_and_hourly_page_route(monkeypatch):
     monkeypatch.setattr(
-        "src.web.weather_page_server.load_payload",
+        "src.web.weather_page_server.load_request_payload",
         lambda **kwargs: {
             "reports": [
                 {
