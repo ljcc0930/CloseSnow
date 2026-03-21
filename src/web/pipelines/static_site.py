@@ -52,9 +52,9 @@ def _build_hourly_payload(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
 ) -> Optional[Dict[str, Any]]:
-    from src.backend.weather_data_server import _hourly_payload_for_resort
+    from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 
-    return _hourly_payload_for_resort(
+    return build_hourly_payload_for_resort(
         resort_id=resort_id,
         hours=hours,
         cache_file=cache_file,

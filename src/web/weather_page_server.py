@@ -28,16 +28,14 @@ from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
 from src.backend.pipelines.live_pipeline import run_live_payload
-from src.backend.resort_catalog import load_resort_catalog
-from src.backend.weather_data_server import (
-    _available_filters,
-    _default_applied_filters,
-    _empty_payload,
-    _hourly_payload_for_resort,
-    _supported_catalog,
+from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
+from src.backend.services.resort_selection_service import (
+    available_filters,
+    build_empty_payload,
+    default_applied_filters,
+    load_supported_resort_catalog,
     select_resorts_from_query,
 )
-from src.shared.config import DEFAULT_RESORTS_FILE
 
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
@@ -130,7 +128,7 @@ def make_handler(
             if data_mode == "local" and apply_server_filters and has_server_side_filters:
                 selected, resorts_file, applied, available, no_match = select_resorts_from_query(qs)
                 if no_match:
-                    payload = _empty_payload(
+                    payload = build_empty_payload(
                         cache_file=cache_file,
                         geocode_cache_hours=geocode_cache_hours,
                         forecast_cache_hours=forecast_cache_hours,
@@ -164,17 +162,17 @@ def make_handler(
             )
             if "available_filters" not in payload:
                 try:
-                    catalog = _supported_catalog(load_resort_catalog(DEFAULT_RESORTS_FILE))
-                    payload["available_filters"] = _available_filters(catalog)
+                    catalog = load_supported_resort_catalog()
+                    payload["available_filters"] = available_filters(catalog)
                 except Exception:
                     payload["available_filters"] = {"pass_type": {}, "region": {}, "subregion": {}, "country": {}}
             if "applied_filters" not in payload:
-                payload["applied_filters"] = _default_applied_filters()
+                payload["applied_filters"] = default_applied_filters()
             return payload
 
         def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:
             if data_mode == "local":
-                payload = _hourly_payload_for_resort(
+                payload = build_hourly_payload_for_resort(
                     resort_id=resort_id,
                     hours=hours,
                     cache_file=cache_file,
