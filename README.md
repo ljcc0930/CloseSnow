@@ -24,7 +24,6 @@ It fetches one unified payload contract (`weather_payload_v1`) and reuses that c
 
 - Python `3.9+`
 - Main workflow uses Python standard library only
-- `requirements.txt` is only for legacy scripts under `legacy/`
 
 ## Repository Map
 
