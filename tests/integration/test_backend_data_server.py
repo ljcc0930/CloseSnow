@@ -22,7 +22,7 @@ def _serve_once(handler_cls):
 def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", lambda **kwargs: valid_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "snowbird-ut",
@@ -94,7 +94,7 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
 
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "snowbird-ut",
@@ -161,7 +161,7 @@ def test_backend_data_server_data_include_all(monkeypatch, valid_payload):
 
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "snowbird-ut",
@@ -221,7 +221,7 @@ def test_backend_data_server_data_include_default(monkeypatch, valid_payload):
 
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "snowbird-ut",
@@ -275,7 +275,7 @@ def test_backend_data_server_search_all_ignores_filters(monkeypatch, valid_paylo
 
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "snowbird-ut",
@@ -346,7 +346,7 @@ def test_backend_data_server_search_supports_long_form_locations(monkeypatch, va
 
     monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
     monkeypatch.setattr(
-        "src.backend.weather_data_server.load_resort_catalog",
+        "src.backend.services.resort_selection_service.load_resort_catalog",
         lambda path: [
             {
                 "resort_id": "arapahoe-basin-co",
@@ -421,7 +421,7 @@ def test_backend_data_server_hourly_endpoint(monkeypatch):
             },
         }
 
-    monkeypatch.setattr("src.backend.weather_data_server._hourly_payload_for_resort", fake_hourly)
+    monkeypatch.setattr("src.backend.weather_data_server.build_hourly_payload_for_resort", fake_hourly)
     handler = make_handler(
         cache_file=".cache/x.json",
         geocode_cache_hours=720,

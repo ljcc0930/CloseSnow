@@ -402,7 +402,7 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "src.web.weather_page_server._hourly_payload_for_resort",
+        "src.web.weather_page_server.build_hourly_payload_for_resort",
         lambda **kwargs: {
             "resort_id": kwargs["resort_id"],
             "query": "Snowbird, UT",
