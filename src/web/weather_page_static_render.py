@@ -71,6 +71,8 @@ def main() -> int:
         output_html,
         payload,
         include_hourly_data=True,
+        hourly_mode="local",
+        hourly_source="",
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
