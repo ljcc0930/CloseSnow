@@ -301,6 +301,27 @@ def test_default_catalog_includes_whitefish_as_supported_independent_resort():
     assert item["display_name"] == "Whitefish, MT"
     assert item["website"] == "https://skiwhitefish.com/"
     assert item["pass_types"] == ["independent"]
-    assert item["default_enabled"] is True
+    assert item["default_enabled"] is False
     assert item["latitude"] == 48.4802509
     assert item["longitude"] == -114.3504451
+
+
+def test_default_catalog_includes_requested_non_default_independent_resorts():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    index = {str(item["resort_id"]): item for item in entries}
+
+    expected = {
+        "bridger-bowl-mt": "Bridger Bowl, MT",
+        "loveland-ski-area-co": "Loveland Ski Area, CO",
+        "mad-river-glen-vt": "Mad River Glen, VT",
+        "mt-baker-ski-area-wa": "Mt. Baker Ski Area, WA",
+        "silverton-mountain-co": "Silverton Mountain, CO",
+    }
+
+    for resort_id, query in expected.items():
+        item = index[resort_id]
+        assert item["query"] == query
+        assert item["pass_types"] == ["independent"]
+        assert item["default_enabled"] is False
+        assert item["latitude"] is not None
+        assert item["longitude"] is not None

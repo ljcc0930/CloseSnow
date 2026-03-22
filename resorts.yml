@@ -550,6 +550,25 @@
     "subregion": "rockies"
   },
   {
+    "resort_id": "bridger-bowl-mt",
+    "query": "Bridger Bowl, MT",
+    "name": "Bridger Bowl",
+    "city": "Gallatin County",
+    "address": "Bridger Bowl, Gallatin County, Montana, United States",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Bridger Bowl, MT",
+    "website": "https://bridgerbowl.com/",
+    "latitude": 45.8162603,
+    "longitude": -110.910411,
+    "subregion": "rockies"
+  },
+  {
     "resort_id": "camelback-resort-pa",
     "query": "Camelback Resort Poconos, PA",
     "name": "Camelback Resort Poconos",
@@ -1102,6 +1121,44 @@
     "subregion": "midwest"
   },
   {
+    "resort_id": "loveland-ski-area-co",
+    "query": "Loveland Ski Area, CO",
+    "name": "Loveland Ski Area",
+    "city": "Clear Creek County",
+    "address": "Loveland Basin Ski Area, Clear Creek County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Loveland Ski Area, CO",
+    "website": "https://skiloveland.com/",
+    "latitude": 39.6783252,
+    "longitude": -105.9105051,
+    "subregion": "rockies"
+  },
+  {
+    "resort_id": "mad-river-glen-vt",
+    "query": "Mad River Glen, VT",
+    "name": "Mad River Glen",
+    "city": "Fayston",
+    "address": "Mad River Glen, Buels Gore, Fayston, Washington County, Vermont, United States",
+    "state": "VT",
+    "country": "US",
+    "region": "east",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Mad River Glen, VT",
+    "website": "https://www.madriverglen.com/",
+    "latitude": 44.1975661,
+    "longitude": -72.9238018,
+    "subregion": "northeast"
+  },
+  {
     "resort_id": "mad-river-mountain-oh",
     "query": "Mad River Mountain, OH",
     "name": "Mad River Mountain",
@@ -1218,6 +1275,25 @@
     "default_enabled": false,
     "display_name": "Mt. Bachelor, OR",
     "website": "https://www.mtbachelor.com/",
+    "subregion": "west-coast"
+  },
+  {
+    "resort_id": "mt-baker-ski-area-wa",
+    "query": "Mt. Baker Ski Area, WA",
+    "name": "Mt. Baker Ski Area",
+    "city": "Whatcom County",
+    "address": "Mount Baker Ski Area, Forest Road 3080, Whatcom County, Washington, United States",
+    "state": "WA",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Mt. Baker Ski Area, WA",
+    "website": "https://www.mtbaker.us/",
+    "latitude": 48.8616632,
+    "longitude": -121.6537997,
     "subregion": "west-coast"
   },
   {
@@ -1476,6 +1552,25 @@
     "display_name": "Shiga Kogen, Japan",
     "website": "https://www.shigakogen-ski.com/english/",
     "subregion": "asia"
+  },
+  {
+    "resort_id": "silverton-mountain-co",
+    "query": "Silverton Mountain, CO",
+    "name": "Silverton Mountain",
+    "city": "San Juan County",
+    "address": "Silverton Mountain, San Juan County, Colorado, United States",
+    "state": "CO",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Silverton Mountain, CO",
+    "website": "https://silvertonmountain.com/",
+    "latitude": 37.8751943,
+    "longitude": -107.6579468,
+    "subregion": "rockies"
   },
   {
     "resort_id": "sierra-at-tahoe-ca",
