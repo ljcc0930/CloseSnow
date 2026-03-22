@@ -6,7 +6,9 @@ from src.backend.compute.payload_metadata import build_payload_metadata
 from src.backend.resort_catalog import load_resort_catalog, search_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
 
-_SUPPORTED_PASS_TYPES = {"epic", "ikon"}
+# Dynamic API/search keeps manually curated independent resorts reachable
+# even though the main filter UI still only exposes Ikon/Epic toggles.
+_SUPPORTED_PASS_TYPES = {"epic", "ikon", "independent"}
 
 
 def split_query_values(values: List[str], *, to_upper: bool = False) -> List[str]:

@@ -9,6 +9,7 @@ from src.backend.resort_catalog import (
     search_resort_catalog,
     validate_resort_catalog,
 )
+from src.backend.services.resort_selection_service import load_supported_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
@@ -290,3 +291,16 @@ def test_default_catalog_uses_official_aspen_four_mountain_urls():
         "buttermilk-co": "https://www.aspensnowmass.com/four-mountains/buttermilk",
         "snowmass-co": "https://www.aspensnowmass.com/four-mountains/snowmass",
     }
+
+
+def test_default_catalog_includes_whitefish_as_supported_independent_resort():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "whitefish-mountain-resort-mt")
+
+    assert item["query"] == "Whitefish Mountain Resort, MT"
+    assert item["display_name"] == "Whitefish, MT"
+    assert item["website"] == "https://skiwhitefish.com/"
+    assert item["pass_types"] == ["independent"]
+    assert item["default_enabled"] is True
+    assert item["latitude"] == 48.4802509
+    assert item["longitude"] == -114.3504451

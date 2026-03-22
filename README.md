@@ -299,14 +299,14 @@ Catalog fields:
 - `country`
 - `region`
 - `subregion` (`rockies|west-coast|midwest|mid-atlantic|northeast|europe|asia|australia-new-zealand|south-america`)
-- `pass_types` (`ikon|epic|indy`)
+- `pass_types` (`ikon|epic|indy|independent`)
 - `default_enabled`
 
 Notes:
 
-- Sync tooling manages Ikon/Epic/Indy metadata
+- Sync tooling manages Ikon/Epic/Indy metadata; independent entries are manually curated
 - Main page filter controls currently expose Ikon/Epic toggles
-- Runtime API/filter scope currently includes resorts that have Epic or Ikon pass types
+- Runtime API/filter scope currently includes resorts that have Epic, Ikon, or independent pass types
 
 ## Static Output Structure
 

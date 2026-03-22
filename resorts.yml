@@ -1914,6 +1914,25 @@
     "subregion": "europe"
   },
   {
+    "resort_id": "whitefish-mountain-resort-mt",
+    "query": "Whitefish Mountain Resort, MT",
+    "name": "Whitefish Mountain Resort",
+    "city": "Whitefish",
+    "address": "1015 Glades Drive, Whitefish, MT 59937",
+    "state": "MT",
+    "country": "US",
+    "region": "west",
+    "pass_types": [
+      "independent"
+    ],
+    "default_enabled": false,
+    "display_name": "Whitefish, MT",
+    "website": "https://skiwhitefish.com/",
+    "latitude": 48.4802509,
+    "longitude": -114.3504451,
+    "subregion": "rockies"
+  },
+  {
     "resort_id": "whistler-blackcomb-bc",
     "query": "Whistler Blackcomb, BC",
     "name": "Whistler Blackcomb",

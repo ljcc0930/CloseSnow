@@ -1023,7 +1023,7 @@ const syncFilterSummary = (visibleReports, totalReports) => {
   }
   filterSummary.textContent = parts.length > 0
     ? `${parts.join(" | ")} | visible: ${scope}`
-    : (appState.filterState.includeDefault ? `Default resorts (${scope})` : `All Epic + Ikon resorts (${scope})`);
+    : (appState.filterState.includeDefault ? `Default resorts (${scope})` : `All supported resorts (${scope})`);
 };
 
 const getLayoutModeForWidth = (width = window.innerWidth) => (width < MIN_DESKTOP_SNOW_3DAY_PX ? "compact" : "desktop");

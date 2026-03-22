@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List
 
-VALID_PASS_TYPES = {"ikon", "epic", "indy"}
+VALID_PASS_TYPES = {"ikon", "epic", "indy", "independent"}
 VALID_REGIONS = {"east", "west", "intl"}
 VALID_SUBREGIONS = {
     "rockies",
