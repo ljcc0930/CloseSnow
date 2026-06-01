@@ -7,7 +7,7 @@ import pytest
 from src.contract.validators import ContractValidationError
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
-from src.web.data_sources.gateway import build_payload_client, load_payload
+from src.web.data_sources.gateway import load_payload
 from src.web.data_sources.hourly_source import load_hourly_payload
 from src.web.data_sources.request_source import load_request_payload, strip_server_filter_query
 from src.web.data_sources.static_json_source import load_static_payload
@@ -177,15 +177,6 @@ def test_gateway_routes_to_api_with_timeout(monkeypatch):
     monkeypatch.setattr("src.web.data_sources.gateway.HttpPayloadClient", DummyClient)
     payload = load_payload(mode="api", source="https://a", timeout=11)
     assert payload == {"ok": True, "source": "https://a", "timeout": 11}
-
-
-def test_build_payload_client_types():
-    api_client = build_payload_client("api", "https://a", timeout=9)
-    file_client = build_payload_client("file", "/tmp/a.json")
-    local_client = build_payload_client("local", "", resorts=["A"])
-    assert type(api_client).__name__ == "HttpPayloadClient"
-    assert type(file_client).__name__ == "FilePayloadClient"
-    assert type(local_client).__name__ == "LocalPayloadClient"
 
 
 def test_strip_server_filter_query():

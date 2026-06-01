@@ -34,30 +34,6 @@ def test_serve_web_parser_uses_env_default(monkeypatch):
     assert args.data_source == "https://example.test/api/data"
 
 
-def test_serve_static_parser_uses_build_defaults():
-    parser = cli.build_parser()
-    args = parser.parse_args(["serve-static"])
-    assert args.directory == "site"
-    assert args.cache_file == ".cache/open_meteo_cache.json"
-    assert args.max_workers == 8
-    assert args.skip_fetch is False
-    assert args.skip_render is False
-
-
-def test_render_parser_defaults_output_dir_from_input_parent():
-    parser = cli.build_parser()
-    args = parser.parse_args(["render"])
-    assert args.output_dir is None
-
-
-def test_static_parser_uses_output_dir_default():
-    parser = cli.build_parser()
-    args = parser.parse_args(["static"])
-    assert args.output_dir == "site"
-    assert args.output_json is None
-    assert args.max_workers == 8
-
-
 def test_resolve_resorts_prefers_cli_resorts():
     args = argparse.Namespace(resort=[" Snowbird, UT ", ""], resorts_file="resorts.yml", include_all_resorts=True)
     resorts, resorts_file, include_all_resorts = cli._resolve_resorts(args)

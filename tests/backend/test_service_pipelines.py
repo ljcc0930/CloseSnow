@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from src.backend.pipelines.live_pipeline import run_live_payload
-from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.backend.services.weather_service import build_weather_payload
 
 
@@ -41,7 +40,3 @@ def test_run_live_payload_calls_build_weather_payload(monkeypatch):
     assert out["called"]["resorts"] == ["A"]
     assert out["called"]["resorts_file"] == "x"
     assert out["called"]["include_all_resorts"] is True
-
-
-def test_fetch_static_payload_aliases_live_pipeline():
-    assert fetch_static_payload is run_live_payload

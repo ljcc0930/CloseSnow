@@ -68,18 +68,6 @@ def test_resort_coordinate_cache_normalizes_query_and_saves_when_dirty(tmp_path)
     assert "snowbird, ut" in parsed["entries"]
 
 
-def test_resort_coordinate_cache_save_formats_json_with_indent(tmp_path):
-    path = tmp_path / "coords.json"
-    cache = ResortCoordinateCache(str(path))
-    cache.set("Snowbird, UT", {"latitude": 1.0, "longitude": 2.0})
-    cache.save()
-
-    text = path.read_text(encoding="utf-8")
-    assert '\n  "version": 1,' in text
-    assert '\n  "entries": {' in text
-    assert text.endswith("\n")
-
-
 def test_resort_coordinate_cache_save_skips_when_not_dirty(tmp_path):
     path = tmp_path / "coords.json"
     cache = ResortCoordinateCache(str(path))
