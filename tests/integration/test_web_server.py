@@ -468,3 +468,52 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
+
+
+def test_server_file_mode_hourly_api_reads_static_hourly_json(tmp_path):
+    data_json = tmp_path / "data.json"
+    data_json.write_text(json.dumps({"reports": []}), encoding="utf-8")
+    hourly_dir = tmp_path / "resort" / "snowbird-ut"
+    hourly_dir.mkdir(parents=True)
+    (hourly_dir / "hourly.json").write_text(
+        json.dumps(
+            {
+                "resort_id": "snowbird-ut",
+                "hours": 2,
+                "hourly": {
+                    "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+                    "snowfall": [0.0, 0.1],
+                    "rain": [0.0, 0.0],
+                    "precipitation_probability": [20, 10],
+                    "snow_depth": [100, 100],
+                    "wind_speed_10m": [5.0, 6.0],
+                    "wind_direction_10m": [120, 110],
+                    "visibility": [9000, 8800],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+        data_mode="file",
+        data_source=str(data_json),
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        hourly = json.loads(
+            urllib.request.urlopen(f"{base}/api/resort-hourly?resort_id=snowbird-ut&hours=1", timeout=3)
+            .read()
+            .decode("utf-8")
+        )
+        assert hourly["resort_id"] == "snowbird-ut"
+        assert hourly["hours"] == 1
+        assert hourly["hourly"]["time"] == ["2026-03-04T00:00"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)

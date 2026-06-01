@@ -404,7 +404,43 @@ def test_load_hourly_payload_api_mode(monkeypatch):
     assert "hours=12" in captured["url"]
 
 
-def test_load_hourly_payload_file_mode_is_explicitly_unavailable():
-    code, payload = load_hourly_payload("file", "/tmp/data.json", resort_id="snowbird-ut", hours=12)
-    assert code == 501
-    assert payload["error"] == "Hourly endpoint unavailable in file mode"
+def test_load_hourly_payload_file_mode_reads_static_hourly_json(tmp_path):
+    data_json = tmp_path / "data.json"
+    data_json.write_text("{}", encoding="utf-8")
+    hourly_dir = tmp_path / "resort" / "snowbird-ut"
+    hourly_dir.mkdir(parents=True)
+    (hourly_dir / "hourly.json").write_text(
+        json.dumps(
+            {
+                "resort_id": "snowbird-ut",
+                "hours": 3,
+                "hourly": {
+                    "time": ["2026-03-04T00:00", "2026-03-04T01:00", "2026-03-04T02:00"],
+                    "snowfall": [0.0, 0.1, 0.2],
+                    "rain": [0.0, 0.0, 0.0],
+                    "precipitation_probability": [20, 10, 5],
+                    "snow_depth": [100, 100, 101],
+                    "wind_speed_10m": [5.0, 6.0, 7.0],
+                    "wind_direction_10m": [120, 110, 100],
+                    "visibility": [9000, 8800, 8700],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    code, payload = load_hourly_payload("file", str(data_json), resort_id="snowbird-ut", hours=2)
+    assert code == 200
+    assert payload["resort_id"] == "snowbird-ut"
+    assert payload["hours"] == 2
+    assert payload["hourly"]["time"] == ["2026-03-04T00:00", "2026-03-04T01:00"]
+    assert payload["hourly"]["snowfall"] == [0.0, 0.1]
+
+
+def test_load_hourly_payload_file_mode_missing_hourly_json(tmp_path):
+    data_json = tmp_path / "data.json"
+    data_json.write_text("{}", encoding="utf-8")
+
+    code, payload = load_hourly_payload("file", str(data_json), resort_id="snowbird-ut", hours=12)
+    assert code == 404
+    assert payload["error"] == "Hourly file not found for resort_id: snowbird-ut"

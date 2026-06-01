@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, Dict, Tuple
 import urllib.error
 import urllib.request
-from urllib.parse import urlencode, urlsplit, urlunsplit
+from urllib.parse import quote, urlencode, urlsplit, urlunsplit
 
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
+
+_HOURLY_METRIC_KEYS = [
+    "snowfall",
+    "rain",
+    "precipitation_probability",
+    "snow_depth",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "visibility",
+]
 
 
 def _hourly_endpoint_from_data_source(base_url: str) -> str:
@@ -62,6 +73,47 @@ def _load_api_hourly_payload(
         return 500, {"error": str(exc)}
 
 
+def _trim_hourly_payload(payload: Dict[str, Any], hours: int) -> Dict[str, Any]:
+    hourly = payload.get("hourly", {}) if isinstance(payload, dict) else {}
+    times = list(hourly.get("time", [])) if isinstance(hourly, dict) and isinstance(hourly.get("time"), list) else []
+    requested_hours = max(1, int(hours))
+    n = min(requested_hours, len(times))
+    trimmed_hourly: Dict[str, Any] = {"time": times[:n]}
+    for key in _HOURLY_METRIC_KEYS:
+        values = hourly.get(key, []) if isinstance(hourly, dict) else []
+        trimmed_hourly[key] = values[:n] if isinstance(values, list) else []
+    return {
+        **payload,
+        "hours": n,
+        "hourly": trimmed_hourly,
+    }
+
+
+def _load_file_hourly_payload(
+    *,
+    source: str,
+    resort_id: str,
+    hours: int,
+) -> Tuple[int, Dict[str, Any]]:
+    source_path = Path(source)
+    site_root = source_path if source_path.is_dir() else source_path.parent
+    hourly_path = site_root / "resort" / quote(resort_id, safe="") / "hourly.json"
+    try:
+        with hourly_path.open("r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except FileNotFoundError:
+        return 404, {"error": f"Hourly file not found for resort_id: {resort_id}"}
+    except json.JSONDecodeError as exc:
+        return 502, {"error": f"Invalid hourly JSON for resort_id {resort_id}: {exc}"}
+    except OSError as exc:
+        return 500, {"error": str(exc)}
+    if not isinstance(payload, dict):
+        return 502, {"error": f"Invalid hourly payload for resort_id: {resort_id}"}
+    if "error" in payload:
+        return 502, payload
+    return 200, _trim_hourly_payload(payload, hours)
+
+
 def load_hourly_payload(
     mode: str,
     source: str,
@@ -89,5 +141,5 @@ def load_hourly_payload(
             timeout=timeout,
         )
     if mode == "file":
-        return 501, {"error": "Hourly endpoint unavailable in file mode"}
+        return _load_file_hourly_payload(source=source, resort_id=resort_id, hours=hours)
     raise ValueError(f"Unsupported data source mode: {mode}")
