@@ -387,6 +387,8 @@ Run lint checks:
 ./scripts/lint.sh
 ```
 
+This runs Python formatting/lint checks plus JavaScript, HTML, CSS, and shell syntax checks.
+
 Run all tests:
 
 ```bash

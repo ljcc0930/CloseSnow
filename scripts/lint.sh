@@ -15,3 +15,4 @@ fi
 
 "$PYTHON_BIN" -m ruff format --check "${TARGETS[@]}"
 "$PYTHON_BIN" -m ruff check "${TARGETS[@]}"
+"$PYTHON_BIN" scripts/lint_assets.py
