@@ -151,6 +151,31 @@ def test_run_static_default(monkeypatch, tmp_path, capsys):
     assert "Done:" in out
 
 
+def test_run_static_forwards_max_workers_to_hourly_render(monkeypatch, tmp_path):
+    args = _build_fetch_like_args(tmp_path)
+    args.max_workers = 5
+    args.output_dir = str(tmp_path / "site")
+    args.output_json = None
+    args.skip_fetch = False
+    args.skip_render = False
+    captured = {}
+
+    def fake_render_hourly_pages(*args, **kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": [{"query": "a", "daily": []}]})
+    monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
+    monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
+    monkeypatch.setattr("src.cli.render_hourly_pages", fake_render_hourly_pages)
+    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+
+    rc = cli.run_static(args)
+
+    assert rc == 0
+    assert captured["hourly_max_workers"] == 5
+
+
 def test_run_static_skip_fetch(monkeypatch, tmp_path):
     args = _build_fetch_like_args(tmp_path)
     args.output_dir = str(tmp_path / "site")

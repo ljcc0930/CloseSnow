@@ -212,6 +212,7 @@ def run_static(args: argparse.Namespace) -> int:
             cache_file=args.cache_file,
             geocode_cache_hours=args.geocode_cache_hours,
             forecast_cache_hours=args.forecast_cache_hours,
+            hourly_max_workers=args.max_workers,
         )
         print(f"Done: {out}")
         print(f"Done: {len(hourly_pages)} resort hourly page(s)")

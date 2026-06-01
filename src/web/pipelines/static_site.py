@@ -79,6 +79,7 @@ def _build_local_hourly_payloads(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    max_workers: int,
 ) -> Dict[str, Dict[str, Any] | None]:
     from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
 
@@ -88,6 +89,7 @@ def _build_local_hourly_payloads(
         cache_file=cache_file,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
+        max_workers=max_workers,
     )
 
 
@@ -103,6 +105,7 @@ def render_hourly_pages(
     cache_file: str = ".cache/open_meteo_cache.json",
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
+    hourly_max_workers: int = 8,
 ) -> List[Path]:
     site_root = Path(index_html_path).parent
     outputs: List[Path] = []
@@ -116,6 +119,7 @@ def render_hourly_pages(
             cache_file=cache_file,
             geocode_cache_hours=geocode_cache_hours,
             forecast_cache_hours=forecast_cache_hours,
+            max_workers=hourly_max_workers,
         )
 
     for resort_id in resort_ids:

@@ -76,6 +76,7 @@ def main() -> int:
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
+        hourly_max_workers=args.max_workers,
     )
     _copy_static_assets(args.output_dir)
     print(f"Done: {out}")

@@ -132,6 +132,7 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     outputs = render_hourly_pages(str(p), payload)
     assert len(outputs) == 1
     assert captured["resort_ids"] == ["snowbird-ut"]
+    assert captured["max_workers"] == 8
     hourly_json = tmp_path / "site" / "resort" / "snowbird-ut" / "hourly.json"
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
@@ -186,6 +187,7 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
         cache_file=".cache/x.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,
+        hourly_max_workers=3,
     )
     assert len(outputs) == 1
     hourly_json = tmp_path / "site" / "resort" / "snowbird-ut" / "hourly.json"

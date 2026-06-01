@@ -52,15 +52,18 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     monkeypatch.setattr("src.web.weather_page_static_render.fetch_static_payload", fake_fetch_static_payload)
     monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
     monkeypatch.setattr("src.web.weather_page_static_render._copy_static_assets", lambda output_dir: None)
-    monkeypatch.setattr(
-        "src.web.weather_page_static_render.render_hourly_pages",
-        lambda *args, **kwargs: [f"{args[0]}:resort/snowbird-ut/index.html"],
-    )
+
+    def fake_render_hourly_pages(*args, **kwargs):  # noqa: ANN001
+        captured["render_kwargs"] = kwargs
+        return [f"{args[0]}:resort/snowbird-ut/index.html"]
+
+    monkeypatch.setattr("src.web.weather_page_static_render.render_hourly_pages", fake_render_hourly_pages)
     rc = weather_page_static_render.main()
     out = capsys.readouterr().out
     assert rc == 0
     assert captured["kwargs"]["resorts"] == ["A"]
     assert captured["kwargs"]["resorts_file"] == ""
+    assert captured["render_kwargs"]["hourly_max_workers"] == 8
     assert "Done: site/index.html" in out
 
 

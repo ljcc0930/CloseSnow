@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, Iterable, List, Mapping
 
 from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
@@ -133,12 +134,16 @@ def build_hourly_payloads_for_resorts(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    max_workers: int = 8,
 ) -> Dict[str, Dict[str, object] | None]:
     normalized_ids = [resort_id.strip() for resort_id in resort_ids if resort_id and resort_id.strip()]
     if not normalized_ids:
         return {}
     catalog_by_id = _catalog_by_resort_id(load_supported_resort_catalog())
     items = [catalog_by_id[resort_id] for resort_id in normalized_ids if resort_id in catalog_by_id]
+    out: Dict[str, Dict[str, object] | None] = {resort_id: None for resort_id in normalized_ids}
+    if not items:
+        return out
 
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
@@ -146,22 +151,40 @@ def build_hourly_payloads_for_resorts(
     seed_coordinate_cache_from_entries(coord_cache, items)
     airports = _load_airports_safely()
 
-    out: Dict[str, Dict[str, object] | None] = {}
     try:
-        for resort_id in normalized_ids:
-            item = catalog_by_id.get(resort_id)
-            if item is None:
-                out[resort_id] = None
-                continue
-            out[resort_id] = _build_hourly_payload_for_item(
-                item=item,
-                cache=cache,
-                coord_cache=coord_cache,
-                airports=airports,
-                hours=hours,
-                geocode_cache_hours=geocode_cache_hours,
-                forecast_cache_hours=forecast_cache_hours,
-            )
+        worker_count = min(max(1, int(max_workers)), len(items))
+        if worker_count == 1:
+            for resort_id in normalized_ids:
+                item = catalog_by_id.get(resort_id)
+                if item is None:
+                    continue
+                out[resort_id] = _build_hourly_payload_for_item(
+                    item=item,
+                    cache=cache,
+                    coord_cache=coord_cache,
+                    airports=airports,
+                    hours=hours,
+                    geocode_cache_hours=geocode_cache_hours,
+                    forecast_cache_hours=forecast_cache_hours,
+                )
+        else:
+            with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                futures = {
+                    executor.submit(
+                        _build_hourly_payload_for_item,
+                        item=item,
+                        cache=cache,
+                        coord_cache=coord_cache,
+                        airports=airports,
+                        hours=hours,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                    ): resort_id
+                    for resort_id in normalized_ids
+                    if (item := catalog_by_id.get(resort_id)) is not None
+                }
+                for future in as_completed(futures):
+                    out[futures[future]] = future.result()
     finally:
         cache.save()
         coord_cache.save()

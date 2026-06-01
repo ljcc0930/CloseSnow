@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 from src.backend.models import ResortLocation
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort, build_hourly_payloads_for_resorts
 
@@ -153,6 +155,7 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     )
 
     geocoded_queries = []
+    fetch_barrier = threading.Barrier(2)
 
     def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
         geocoded_queries.append(query)
@@ -167,9 +170,10 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
         )
 
     monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode", fake_geocode)
-    monkeypatch.setattr(
-        "src.backend.services.hourly_payload_service.fetch_hourly_forecast",
-        lambda location, cache, ttl_seconds, hours: {
+
+    def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
+        fetch_barrier.wait(timeout=1)
+        return {
             "latitude": location.latitude,
             "longitude": location.longitude,
             "timezone": "America/Denver",
@@ -183,8 +187,9 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
                 "wind_direction_10m": [120, 110, 100],
                 "visibility": [9000, 8800, 8700],
             },
-        },
-    )
+        }
+
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast", fake_fetch_hourly_forecast)
 
     payloads = build_hourly_payloads_for_resorts(
         resort_ids=["snowbird-ut", "missing-id", "alta-ut"],
@@ -192,6 +197,7 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
         cache_file=".cache/open_meteo_cache.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,
+        max_workers=2,
     )
 
     assert sorted(payloads) == ["alta-ut", "missing-id", "snowbird-ut"]
@@ -199,6 +205,6 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     assert payloads["snowbird-ut"]["hours"] == 2
     assert payloads["snowbird-ut"]["hourly"]["time"] == ["2026-03-04T00:00", "2026-03-04T01:00"]
     assert payloads["alta-ut"]["nearby_airports"][0]["iata_code"] == "SLC"
-    assert geocoded_queries == ["Snowbird, UT", "Alta, UT"]
+    assert sorted(geocoded_queries) == ["Alta, UT", "Snowbird, UT"]
     assert json_cache.saved is True
     assert coord_cache.saved is True
