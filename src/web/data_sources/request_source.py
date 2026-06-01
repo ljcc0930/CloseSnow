@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
+from src.backend.constants import API_RETRY_TIMES
 from src.backend.services.resort_selection_service import (
     available_filters,
     build_empty_payload,
@@ -63,6 +64,7 @@ def load_request_payload(
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
     max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     qs = {key: list(values) for key, values in (query_params or {}).items()}
     resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
@@ -75,6 +77,7 @@ def load_request_payload(
                 cache_file=cache_file,
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
+                api_retries=api_retries,
             )
         else:
             payload = load_local_payload(
@@ -83,6 +86,7 @@ def load_request_payload(
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
                 max_workers=max_workers,
+                api_retries=api_retries,
             )
         payload["available_filters"] = available
         payload["applied_filters"] = applied
@@ -101,5 +105,6 @@ def load_request_payload(
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
+        api_retries=api_retries,
     )
     return _ensure_filter_metadata(payload)

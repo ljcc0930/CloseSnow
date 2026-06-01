@@ -9,7 +9,7 @@ from src.backend.airport_catalog import load_airport_catalog as load_airport_cat
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.compute import build_payload_metadata, select_resorts
 from src.backend.compute import run_pipeline_async as _run_pipeline_async
-from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
+from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import seed_coordinate_cache_from_catalog, seed_coordinate_cache_from_unified
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
@@ -103,6 +103,7 @@ def compute_pipeline_payload(
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
     max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     selected = select_resorts(
         resorts=list(resorts or []),
@@ -133,6 +134,7 @@ def compute_pipeline_payload(
             geocode_ttl=geocode_ttl,
             forecast_ttl=forecast_ttl,
             max_workers=max_workers,
+            api_retries=api_retries,
         )
     )
     reports: List[Dict[str, Any]] = async_result["reports"]
@@ -151,6 +153,7 @@ def compute_pipeline_payload(
         cache_misses=cache.misses,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
+        api_retries=api_retries,
         reports=reports,
         failed=failed,
     )
@@ -183,6 +186,7 @@ def run_pipeline(
     forecast_cache_hours: int = 3,
     write_outputs: bool = True,
     max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     payload = compute_pipeline_payload(
         resorts=resorts,
@@ -194,6 +198,7 @@ def run_pipeline(
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
+        api_retries=api_retries,
     )
     if write_outputs:
         export_payload_artifacts(

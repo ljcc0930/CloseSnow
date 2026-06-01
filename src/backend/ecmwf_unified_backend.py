@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.backend.constants import DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
+from src.backend.constants import API_RETRY_TIMES, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.pipeline import read_resorts, run_pipeline
 
 
@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
     p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     return p.parse_args()
 
 
@@ -44,6 +45,7 @@ def main() -> int:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
+        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
         write_outputs=True,
     )
     cache_info = out["cache"]

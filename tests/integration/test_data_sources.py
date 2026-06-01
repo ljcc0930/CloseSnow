@@ -67,18 +67,20 @@ def test_load_api_payload_invalid_contract(monkeypatch, valid_payload):
 
 def test_load_payload_gateway_api(monkeypatch):
     class DummyClient:
-        def __init__(self, url, timeout):  # noqa: ANN001
+        def __init__(self, url, timeout, api_retries):  # noqa: ANN001
             self.source = url
             self.timeout = timeout
+            self.api_retries = api_retries
 
         def load(self):
-            return {"source": self.source, "mode": "api", "timeout": self.timeout}
+            return {"source": self.source, "mode": "api", "timeout": self.timeout, "api_retries": self.api_retries}
 
     monkeypatch.setattr("src.web.data_sources.gateway.HttpPayloadClient", DummyClient)
     payload = load_payload("api", "https://a")
     assert payload["mode"] == "api"
     assert payload["source"] == "https://a"
     assert payload["timeout"] == 20
+    assert payload["api_retries"] == 2
 
 
 def test_load_payload_gateway_file(monkeypatch):
@@ -97,12 +99,21 @@ def test_load_payload_gateway_file(monkeypatch):
 
 def test_load_payload_gateway_local(monkeypatch):
     class DummyClient:
-        def __init__(self, resorts, cache_file, geocode_cache_hours, forecast_cache_hours, max_workers):  # noqa: ANN001
+        def __init__(
+            self,
+            resorts,
+            cache_file,
+            geocode_cache_hours,
+            forecast_cache_hours,
+            max_workers,
+            api_retries,
+        ):  # noqa: ANN001
             self.resorts = resorts
             self.cache_file = cache_file
             self.geocode_cache_hours = geocode_cache_hours
             self.forecast_cache_hours = forecast_cache_hours
             self.max_workers = max_workers
+            self.api_retries = api_retries
 
         def load(self):
             return {
@@ -110,6 +121,7 @@ def test_load_payload_gateway_local(monkeypatch):
                 "resorts": self.resorts,
                 "cache_file": self.cache_file,
                 "workers": self.max_workers,
+                "api_retries": self.api_retries,
             }
 
     monkeypatch.setattr("src.web.data_sources.gateway.LocalPayloadClient", DummyClient)
@@ -126,6 +138,7 @@ def test_load_payload_gateway_local(monkeypatch):
     assert payload["resorts"] == ["A", "B"]
     assert payload["cache_file"] == ".cache/x.json"
     assert payload["workers"] == 4
+    assert payload["api_retries"] == 2
 
 
 def test_load_payload_gateway_local_uses_live_pipeline(monkeypatch):
@@ -166,16 +179,22 @@ def test_load_payload_gateway_rejects_unknown_mode():
 
 def test_gateway_routes_to_api_with_timeout(monkeypatch):
     class DummyClient:
-        def __init__(self, url, timeout):  # noqa: ANN001
+        def __init__(self, url, timeout, api_retries):  # noqa: ANN001
             self.source = url
             self.timeout = timeout
+            self.api_retries = api_retries
 
         def load(self):
-            return {"ok": True, "source": self.source, "timeout": self.timeout}
+            return {
+                "ok": True,
+                "source": self.source,
+                "timeout": self.timeout,
+                "api_retries": self.api_retries,
+            }
 
     monkeypatch.setattr("src.web.data_sources.gateway.HttpPayloadClient", DummyClient)
-    payload = load_payload(mode="api", source="https://a", timeout=11)
-    assert payload == {"ok": True, "source": "https://a", "timeout": 11}
+    payload = load_payload(mode="api", source="https://a", timeout=11, api_retries=4)
+    assert payload == {"ok": True, "source": "https://a", "timeout": 11, "api_retries": 4}
 
 
 def test_strip_server_filter_query():

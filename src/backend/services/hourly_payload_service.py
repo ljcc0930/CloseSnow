@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
-from src.backend.constants import COORDINATES_CACHE_FILE
+from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE
 from src.backend.io import seed_coordinate_cache_from_entries
 from src.backend.models import ResortLocation
 from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
@@ -97,6 +97,7 @@ def _build_hourly_payload_for_item(
     hours: int,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
 ) -> Dict[str, object]:
     query = str(item.get("query", "")).strip()
     location = geocode(
@@ -104,6 +105,7 @@ def _build_hourly_payload_for_item(
         cache=cache,
         ttl_seconds=geocode_cache_hours * 3600,
         coord_cache=coord_cache,
+        api_retries=api_retries,
     )
     if location is None:
         return {
@@ -117,6 +119,7 @@ def _build_hourly_payload_for_item(
         cache=cache,
         ttl_seconds=forecast_cache_hours * 3600,
         hours=hours,
+        api_retries=api_retries,
     )
     return _build_hourly_payload_from_forecast(
         item=item,
@@ -136,6 +139,7 @@ async def _build_hourly_payload_for_item_async(
     hours: int,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
 ) -> Dict[str, object]:
     query = str(item.get("query", "")).strip()
     location = await geocode_async(
@@ -143,6 +147,7 @@ async def _build_hourly_payload_for_item_async(
         cache=cache,
         ttl_seconds=geocode_cache_hours * 3600,
         coord_cache=coord_cache,
+        api_retries=api_retries,
     )
     if location is None:
         return {
@@ -156,6 +161,7 @@ async def _build_hourly_payload_for_item_async(
         cache=cache,
         ttl_seconds=forecast_cache_hours * 3600,
         hours=hours,
+        api_retries=api_retries,
     )
     return _build_hourly_payload_from_forecast(
         item=item,
@@ -174,6 +180,7 @@ async def build_hourly_payloads_for_resorts_async(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Dict[str, object] | None]:
     normalized_ids = [resort_id.strip() for resort_id in resort_ids if resort_id and resort_id.strip()]
     if not normalized_ids:
@@ -205,6 +212,7 @@ async def build_hourly_payloads_for_resorts_async(
                         hours=hours,
                         geocode_cache_hours=geocode_cache_hours,
                         forecast_cache_hours=forecast_cache_hours,
+                        api_retries=api_retries,
                     )
                     return resort_id, payload
                 except Exception as exc:  # noqa: BLE001
@@ -236,6 +244,7 @@ def build_hourly_payloads_for_resorts(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Dict[str, object] | None]:
     try:
         asyncio.get_running_loop()
@@ -248,6 +257,7 @@ def build_hourly_payloads_for_resorts(
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
                 max_workers=max_workers,
+                api_retries=api_retries,
             )
         )
     raise RuntimeError("build_hourly_payloads_for_resorts_async must be used from an active event loop")
@@ -260,6 +270,7 @@ def build_hourly_payload_for_resort(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, object] | None:
     catalog = load_supported_resort_catalog()
     item = next((r for r in catalog if str(r.get("resort_id", "")) == resort_id), None)
@@ -279,6 +290,7 @@ def build_hourly_payload_for_resort(
             hours=hours,
             geocode_cache_hours=geocode_cache_hours,
             forecast_cache_hours=forecast_cache_hours,
+            api_retries=api_retries,
         )
     finally:
         cache.save()

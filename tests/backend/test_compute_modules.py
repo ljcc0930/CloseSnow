@@ -34,11 +34,13 @@ def test_build_payload_metadata_shape():
         cache_misses=3,
         geocode_cache_hours=720,
         forecast_cache_hours=3,
+        api_retries=2,
         reports=[{"query": "A", "daily": []}],
         failed=[{"query": "B", "reason": "x"}],
     )
     assert payload["schema_version"] == SCHEMA_VERSION
     assert payload["forecast_days"] == 15
     assert payload["cache"]["hits"] == 2
+    assert payload["cache"]["api_retries"] == 2
     assert payload["resorts_count"] == 1
     assert payload["failed_count"] == 1

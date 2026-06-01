@@ -118,6 +118,7 @@ python3 -m src.cli fetch \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
+  [--api-retries 2] \
   [--max-workers 8] \
   [--output-json site/data.json]
 ```
@@ -151,6 +152,7 @@ python3 -m src.cli static \
   [--cache-file .cache/open_meteo_cache.json] \
   [--geocode-cache-hours 720] \
   [--forecast-cache-hours 3] \
+  [--api-retries 2] \
   [--max-workers 8] \
   [--output-json site/data.json] \
   [--output-dir site] \
@@ -344,6 +346,7 @@ Contract types are defined in `src/contract/weather_payload_v1.py`.
 - Default TTL:
   - Geocode: `720` hours
   - Forecast/hourly: `3` hours
+- API failures retry `--api-retries` times, default `2`, with a non-blocking `10` second async delay in concurrent fetch paths
 
 ## Resort Catalog Sync Script
 

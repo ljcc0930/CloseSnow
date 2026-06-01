@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
+from src.backend.constants import API_RETRY_TIMES
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
 from src.web.weather_page_render_core import render_payload_html
 
@@ -54,6 +55,7 @@ def _build_hourly_payload(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
 ) -> Optional[Dict[str, Any]]:
     from src.web.data_sources import load_hourly_payload
 
@@ -66,6 +68,7 @@ def _build_hourly_payload(
         cache_file=cache_file,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
+        api_retries=api_retries,
     )
     if code != 200 or "error" in payload:
         return None
@@ -80,6 +83,7 @@ def _build_local_hourly_payloads(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     max_workers: int,
+    api_retries: int,
 ) -> Dict[str, Dict[str, Any] | None]:
     from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
 
@@ -90,6 +94,7 @@ def _build_local_hourly_payloads(
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
+        api_retries=api_retries,
     )
 
 
@@ -106,6 +111,7 @@ def render_hourly_pages(
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
     hourly_max_workers: int = 8,
+    api_retries: int = API_RETRY_TIMES,
 ) -> List[Path]:
     site_root = Path(index_html_path).parent
     outputs: List[Path] = []
@@ -120,6 +126,7 @@ def render_hourly_pages(
             geocode_cache_hours=geocode_cache_hours,
             forecast_cache_hours=forecast_cache_hours,
             max_workers=hourly_max_workers,
+            api_retries=api_retries,
         )
 
     for resort_id in resort_ids:
@@ -145,6 +152,7 @@ def render_hourly_pages(
                     cache_file=cache_file,
                     geocode_cache_hours=geocode_cache_hours,
                     forecast_cache_hours=forecast_cache_hours,
+                    api_retries=api_retries,
                 )
             if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
                 hourly_data_path = out_dir / "hourly.json"

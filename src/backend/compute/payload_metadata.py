@@ -13,6 +13,7 @@ def build_payload_metadata(
     cache_misses: int,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
     reports: List[Dict[str, Any]],
     failed: List[Dict[str, str]],
 ) -> Dict[str, Any]:
@@ -35,6 +36,7 @@ def build_payload_metadata(
             "misses": cache_misses,
             "geocode_cache_hours": geocode_cache_hours,
             "forecast_cache_hours": forecast_cache_hours,
+            "api_retries": api_retries,
         },
         "resorts_count": len(reports),
         "failed_count": len(failed),

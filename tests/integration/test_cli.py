@@ -12,6 +12,9 @@ def test_build_parser_has_all_commands():
     parser = cli.build_parser()
     args = parser.parse_args(["fetch"])
     assert args.command == "fetch"
+    assert args.api_retries == 2
+    args = parser.parse_args(["fetch", "--api-retries", "5"])
+    assert args.api_retries == 5
     args = parser.parse_args(["render"])
     assert args.command == "render"
     args = parser.parse_args(["static"])
@@ -58,6 +61,7 @@ def _build_fetch_like_args(tmp_path: Path):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
+        api_retries=2,
         output_json=str(tmp_path / "data.json"),
     )
 
@@ -94,6 +98,7 @@ def test_fetch_payload_forwards_include_all_resorts(monkeypatch, tmp_path):
     monkeypatch.setattr("src.cli.fetch_static_payload", fake_fetch_static_payload)
     cli._fetch_payload(args)
     assert captured["include_all_resorts"] is True
+    assert captured["api_retries"] == 2
 
 
 def test_run_render(monkeypatch, tmp_path, capsys):

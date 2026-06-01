@@ -5,6 +5,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache
+from src.backend.constants import API_RETRY_TIMES
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
 
@@ -19,18 +20,29 @@ async def build_resort_report(
     coord_cache: ResortCoordinateCache,
     geocode_ttl: int,
     forecast_ttl: int,
+    api_retries: int,
     semaphore: asyncio.Semaphore,
 ) -> Dict[str, Any]:
     async with semaphore:
         logger.info("Resort %d/%d: start %s", idx, total, resort)
         try:
-            loc = await geocode_async(resort, cache=cache, ttl_seconds=geocode_ttl, coord_cache=coord_cache)
+            loc = await geocode_async(
+                resort,
+                cache=cache,
+                ttl_seconds=geocode_ttl,
+                coord_cache=coord_cache,
+                api_retries=api_retries,
+            )
             if not loc:
                 logger.info("Resort %d/%d: geocode failed %s", idx, total, resort)
                 return {"index": idx - 1, "report": None, "failed": {"query": resort, "reason": "No geocoding match"}}
 
-            forecast_task = asyncio.create_task(fetch_forecast_async(loc, cache=cache, ttl_seconds=forecast_ttl))
-            history_task = asyncio.create_task(fetch_history_async(loc, cache=cache, ttl_seconds=forecast_ttl))
+            forecast_task = asyncio.create_task(
+                fetch_forecast_async(loc, cache=cache, ttl_seconds=forecast_ttl, api_retries=api_retries)
+            )
+            history_task = asyncio.create_task(
+                fetch_history_async(loc, cache=cache, ttl_seconds=forecast_ttl, api_retries=api_retries)
+            )
             forecast_result, history_result = await asyncio.gather(
                 forecast_task,
                 history_task,
@@ -68,6 +80,7 @@ async def run_pipeline_async(
     geocode_ttl: int,
     forecast_ttl: int,
     max_workers: int,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     semaphore = asyncio.Semaphore(max(1, max_workers))
     tasks = [
@@ -80,6 +93,7 @@ async def run_pipeline_async(
                 coord_cache=coord_cache,
                 geocode_ttl=geocode_ttl,
                 forecast_ttl=forecast_ttl,
+                api_retries=api_retries,
                 semaphore=semaphore,
             )
         )

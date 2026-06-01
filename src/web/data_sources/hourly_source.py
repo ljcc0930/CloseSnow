@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 from urllib.parse import quote, urlencode, urlsplit, urlunsplit
 
+from src.backend.constants import API_RETRY_TIMES
+from src.backend.open_meteo import with_retry
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 
 _HOURLY_METRIC_KEYS = [
@@ -32,6 +34,7 @@ def _load_local_hourly_payload(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
 ) -> Tuple[int, Dict[str, Any]]:
     try:
         payload = build_hourly_payload_for_resort(
@@ -40,6 +43,7 @@ def _load_local_hourly_payload(
             cache_file=cache_file,
             geocode_cache_hours=geocode_cache_hours,
             forecast_cache_hours=forecast_cache_hours,
+            api_retries=api_retries,
         )
     except Exception as exc:  # noqa: BLE001
         return 502, {"error": str(exc)}
@@ -56,13 +60,18 @@ def _load_api_hourly_payload(
     resort_id: str,
     hours: int,
     timeout: int,
+    api_retries: int,
 ) -> Tuple[int, Dict[str, Any]]:
     hourly_base = _hourly_endpoint_from_data_source(source)
     hourly_url = f"{hourly_base}?{urlencode({'resort_id': resort_id, 'hours': str(hours)})}"
-    try:
+
+    def do_request() -> Tuple[int, Dict[str, Any]]:
         with urllib.request.urlopen(hourly_url, timeout=timeout) as resp:
             body = resp.read().decode("utf-8")
             return 200, json.loads(body)
+
+    try:
+        return with_retry(do_request, retries=api_retries)
     except urllib.error.HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="ignore")
         try:
@@ -127,6 +136,7 @@ def load_hourly_payload(
     cache_file: str = ".cache/open_meteo_cache.json",
     geocode_cache_hours: int = 24 * 30,
     forecast_cache_hours: int = 3,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Tuple[int, Dict[str, Any]]:
     if mode == "local":
         return _load_local_hourly_payload(
@@ -135,6 +145,7 @@ def load_hourly_payload(
             cache_file=cache_file,
             geocode_cache_hours=geocode_cache_hours,
             forecast_cache_hours=forecast_cache_hours,
+            api_retries=api_retries,
         )
     if mode == "api":
         return _load_api_hourly_payload(
@@ -142,6 +153,7 @@ def load_hourly_payload(
             resort_id=resort_id,
             hours=hours,
             timeout=timeout,
+            api_retries=api_retries,
         )
     if mode == "file":
         return _load_file_hourly_payload(source=source, resort_id=resort_id, hours=hours)

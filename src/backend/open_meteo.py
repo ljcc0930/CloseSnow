@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import gzip
 import json
+import logging
 import math
 import ssl
 import time
@@ -13,6 +14,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, canonical_query
 from src.backend.constants import (
+    API_RETRY_DELAY_SECONDS,
     API_RETRY_TIMES,
     FORECAST_DAYS,
     FORECAST_URL,
@@ -23,6 +25,7 @@ from src.backend.constants import (
 from src.backend.models import ResortLocation
 
 T = TypeVar("T")
+logger = logging.getLogger(__name__)
 _USER_AGENT = "ecmwf-unified-backend/1.0 (+local script)"
 _DAILY_FIELDS = (
     "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset"
@@ -82,7 +85,9 @@ STATE_ABBR_TO_NAME = {
 }
 
 
-def with_retry(fn: Callable[[], T], retries: int = API_RETRY_TIMES, base_delay_seconds: float = 0.5) -> T:
+def with_retry(
+    fn: Callable[[], T], retries: int = API_RETRY_TIMES, retry_delay_seconds: float = API_RETRY_DELAY_SECONDS
+) -> T:
     attempts = max(1, retries + 1)
     last_exc: Optional[Exception] = None
     for attempt in range(attempts):
@@ -97,7 +102,10 @@ def with_retry(fn: Callable[[], T], retries: int = API_RETRY_TIMES, base_delay_s
             last_exc = exc
 
         if attempt < attempts - 1:
-            time.sleep(base_delay_seconds * (2**attempt))
+            logger.info(
+                "API request failed, retrying in %.1fs (%d/%d): %s", retry_delay_seconds, attempt + 1, retries, last_exc
+            )
+            time.sleep(retry_delay_seconds)
 
     assert last_exc is not None
     raise last_exc
@@ -106,7 +114,7 @@ def with_retry(fn: Callable[[], T], retries: int = API_RETRY_TIMES, base_delay_s
 async def with_retry_async(
     fn: Callable[[], Awaitable[T]],
     retries: int = API_RETRY_TIMES,
-    base_delay_seconds: float = 0.5,
+    retry_delay_seconds: float = API_RETRY_DELAY_SECONDS,
 ) -> T:
     attempts = max(1, retries + 1)
     last_exc: Optional[Exception] = None
@@ -127,7 +135,10 @@ async def with_retry_async(
             last_exc = exc
 
         if attempt < attempts - 1:
-            await asyncio.sleep(base_delay_seconds * (2**attempt))
+            logger.info(
+                "API request failed, retrying in %.1fs (%d/%d): %s", retry_delay_seconds, attempt + 1, retries, last_exc
+            )
+            await asyncio.sleep(retry_delay_seconds)
 
     assert last_exc is not None
     raise last_exc
@@ -249,6 +260,7 @@ def fetch_json(
     namespace: str,
     ttl_seconds: int,
     timeout: int = 20,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Any:
     query = canonical_query(params)
     key = _cache_key(namespace, url, query)
@@ -268,7 +280,7 @@ def fetch_json(
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    payload = with_retry(do_request)
+    payload = with_retry(do_request, retries=api_retries)
     cache.set(key, payload)
     return payload
 
@@ -280,6 +292,7 @@ async def fetch_json_async(
     namespace: str,
     ttl_seconds: int,
     timeout: int = 20,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Any:
     query = canonical_query(params)
     key = _cache_key(namespace, url, query)
@@ -287,7 +300,10 @@ async def fetch_json_async(
     if cached is not None:
         return cached
 
-    payload = await with_retry_async(lambda: _request_json_async(f"{url}?{query}", timeout=timeout))
+    payload = await with_retry_async(
+        lambda: _request_json_async(f"{url}?{query}", timeout=timeout),
+        retries=api_retries,
+    )
     cache.set(key, payload)
     return payload
 
@@ -335,6 +351,7 @@ def geocode(
     cache: JsonCache,
     ttl_seconds: int,
     coord_cache: Optional[ResortCoordinateCache] = None,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Optional[ResortLocation]:
     if coord_cache is not None:
         cached_loc = coord_cache.get(name)
@@ -348,6 +365,7 @@ def geocode(
             cache=cache,
             namespace="geocode_openmeteo",
             ttl_seconds=ttl_seconds,
+            api_retries=api_retries,
         )
         results = data.get("results") or []
         if results:
@@ -380,6 +398,7 @@ def geocode(
             cache=cache,
             namespace="geocode_nominatim",
             ttl_seconds=ttl_seconds,
+            api_retries=api_retries,
         )
         if not data2:
             continue
@@ -445,28 +464,44 @@ def _hourly_params(location: ResortLocation, hours: int = 72) -> Dict[str, Any]:
     }
 
 
-def fetch_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+def fetch_forecast(
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    api_retries: int = API_RETRY_TIMES,
+) -> Dict[str, Any]:
     return fetch_json(
         FORECAST_URL,
         _forecast_params(location),
         cache=cache,
         namespace="forecast_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )
 
 
-def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+def fetch_history(
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    api_retries: int = API_RETRY_TIMES,
+) -> Dict[str, Any]:
     return fetch_json(
         FORECAST_URL,
         _history_params(location),
         cache=cache,
         namespace="history_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )
 
 
 def fetch_hourly_forecast(
-    location: ResortLocation, cache: JsonCache, ttl_seconds: int, hours: int = 72
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    hours: int = 72,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     return fetch_json(
         FORECAST_URL,
@@ -474,6 +509,7 @@ def fetch_hourly_forecast(
         cache=cache,
         namespace="hourly_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )
 
 
@@ -482,6 +518,7 @@ async def geocode_async(
     cache: JsonCache,
     ttl_seconds: int,
     coord_cache: Optional[ResortCoordinateCache] = None,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Optional[ResortLocation]:
     if coord_cache is not None:
         cached_loc = coord_cache.get(name)
@@ -495,6 +532,7 @@ async def geocode_async(
             cache=cache,
             namespace="geocode_openmeteo",
             ttl_seconds=ttl_seconds,
+            api_retries=api_retries,
         )
         results = data.get("results") or []
         if results:
@@ -527,6 +565,7 @@ async def geocode_async(
             cache=cache,
             namespace="geocode_nominatim",
             ttl_seconds=ttl_seconds,
+            api_retries=api_retries,
         )
         if not data2:
             continue
@@ -555,23 +594,35 @@ async def geocode_async(
     return None
 
 
-async def fetch_forecast_async(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+async def fetch_forecast_async(
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    api_retries: int = API_RETRY_TIMES,
+) -> Dict[str, Any]:
     return await fetch_json_async(
         FORECAST_URL,
         _forecast_params(location),
         cache=cache,
         namespace="forecast_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )
 
 
-async def fetch_history_async(location: ResortLocation, cache: JsonCache, ttl_seconds: int) -> Dict[str, Any]:
+async def fetch_history_async(
+    location: ResortLocation,
+    cache: JsonCache,
+    ttl_seconds: int,
+    api_retries: int = API_RETRY_TIMES,
+) -> Dict[str, Any]:
     return await fetch_json_async(
         FORECAST_URL,
         _history_params(location),
         cache=cache,
         namespace="history_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )
 
 
@@ -580,6 +631,7 @@ async def fetch_hourly_forecast_async(
     cache: JsonCache,
     ttl_seconds: int,
     hours: int = 72,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     return await fetch_json_async(
         FORECAST_URL,
@@ -587,4 +639,5 @@ async def fetch_hourly_forecast_async(
         cache=cache,
         namespace="hourly_ecmwf_unified",
         ttl_seconds=ttl_seconds,
+        api_retries=api_retries,
     )

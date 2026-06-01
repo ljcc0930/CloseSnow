@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from src.backend.constants import API_RETRY_TIMES
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
@@ -11,6 +12,7 @@ def load_local_payload(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     max_workers: int,
+    api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     # Lazy import keeps frontend startup independent in api/file mode.
     from src.backend.pipelines.live_pipeline import run_live_payload
@@ -24,4 +26,5 @@ def load_local_payload(
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
         max_workers=max_workers,
+        api_retries=api_retries,
     )

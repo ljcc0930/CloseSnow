@@ -70,7 +70,8 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
         ],
     )
 
-    def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
+    def fake_geocode(query, cache, ttl_seconds, coord_cache, api_retries):  # noqa: ANN001
+        assert api_retries == 4
         assert query == "Crystal Mountain, WA"
         assert coord_cache.set_calls
         seed = coord_cache.set_calls[-1][1]
@@ -86,7 +87,7 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
     monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode", fake_geocode)
     monkeypatch.setattr(
         "src.backend.services.hourly_payload_service.fetch_hourly_forecast",
-        lambda location, cache, ttl_seconds, hours: {
+        lambda location, cache, ttl_seconds, hours, api_retries: {
             "latitude": location.latitude,
             "longitude": location.longitude,
             "timezone": "America/Los_Angeles",
@@ -100,6 +101,7 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
         cache_file=".cache/open_meteo_cache.json",
         geocode_cache_hours=720,
         forecast_cache_hours=3,
+        api_retries=4,
     )
 
     assert payload is not None
@@ -165,7 +167,8 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     active_fetches = 0
     max_active_fetches = 0
 
-    async def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
+    async def fake_geocode(query, cache, ttl_seconds, coord_cache, api_retries):  # noqa: ANN001
+        assert api_retries == 5
         geocoded_queries.append(query)
         seed = next(value for key, value in coord_cache.set_calls if key == query)
         return ResortLocation(
@@ -179,8 +182,9 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
 
     monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode_async", fake_geocode)
 
-    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
+    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours, api_retries):  # noqa: ANN001
         nonlocal active_fetches, max_active_fetches
+        assert api_retries == 5
         active_fetches += 1
         max_active_fetches = max(max_active_fetches, active_fetches)
         await asyncio.sleep(0.01)
@@ -212,6 +216,7 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=2,
+        api_retries=5,
     )
 
     assert sorted(payloads) == ["alta-ut", "missing-id", "snowbird-ut"]
@@ -262,7 +267,8 @@ def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path)
     monkeypatch.setattr("src.backend.services.hourly_payload_service.ResortCoordinateCache", lambda path: coord_cache)
     monkeypatch.setattr("src.backend.services.hourly_payload_service.load_airport_catalog", lambda: [])
 
-    async def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
+    async def fake_geocode(query, cache, ttl_seconds, coord_cache, api_retries):  # noqa: ANN001
+        assert api_retries == 6
         seed = next(value for key, value in coord_cache.set_calls if key == query)
         return ResortLocation(
             query=query,
@@ -273,7 +279,8 @@ def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path)
             admin1=str(seed["admin1"]),
         )
 
-    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
+    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours, api_retries):  # noqa: ANN001
+        assert api_retries == 6
         if location.query == "Alta, UT":
             raise RuntimeError("rate limited")
         return {
@@ -295,6 +302,7 @@ def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path)
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=2,
+        api_retries=6,
     )
 
     assert payloads["snowbird-ut"]["hours"] == 1

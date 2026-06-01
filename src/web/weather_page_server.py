@@ -21,6 +21,7 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.backend.constants import API_RETRY_TIMES
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
@@ -72,6 +73,7 @@ def make_handler(
     data_mode: str = "local",
     data_source: str = "",
     data_timeout: int = 20,
+    api_retries: int = API_RETRY_TIMES,
 ) -> type[BaseHTTPRequestHandler]:
     if data_mode not in {"local", "api", "file"}:
         raise ValueError(f"Unsupported data mode: {data_mode}")
@@ -99,6 +101,7 @@ def make_handler(
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
                 max_workers=max_workers,
+                api_retries=api_retries,
             )
 
         def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:
@@ -111,6 +114,7 @@ def make_handler(
                 cache_file=cache_file,
                 geocode_cache_hours=geocode_cache_hours,
                 forecast_cache_hours=forecast_cache_hours,
+                api_retries=api_retries,
             )
 
         def do_GET(self) -> None:  # noqa: N802
@@ -187,6 +191,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
     p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     return p.parse_args()
 
 
@@ -200,6 +205,7 @@ def main() -> int:
         data_mode=args.data_mode,
         data_source=args.data_source,
         data_timeout=args.data_timeout,
+        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving dynamic page at http://{args.host}:{args.port}")

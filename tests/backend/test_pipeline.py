@@ -143,6 +143,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
     )
 
     async def fake_run_pipeline_async(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
         captured["selected"] = deepcopy(kwargs["selected"])
         return {
             "reports": [{"query": "A", "daily": []}],
@@ -164,6 +165,7 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
         max_workers=3,
     )
     assert captured["selected"] == ["A", "B"]
+    assert captured["api_retries"] == 2
     assert out["schema_version"] == pipeline.SCHEMA_VERSION
     assert out["generated_at_utc"].endswith("Z")
     assert out["resorts_count"] == 1
@@ -188,8 +190,10 @@ def test_run_pipeline_builds_contract_and_dedupes(monkeypatch, tmp_path):
 
 def test_run_pipeline_writes_outputs_when_enabled(monkeypatch, tmp_path):
     _patch_pipeline_primitives(monkeypatch, tmp_path)
+    captured = {}
 
     async def fake_run_pipeline_async(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
         return {"reports": [{"query": "A", "daily": []}], "failed": []}
 
     monkeypatch.setattr("src.backend.pipeline._run_pipeline_async", fake_run_pipeline_async)
@@ -210,7 +214,9 @@ def test_run_pipeline_writes_outputs_when_enabled(monkeypatch, tmp_path):
         rain_csv="r.csv",
         temp_csv="t.csv",
         write_outputs=True,
+        api_retries=5,
     )
+    assert captured["api_retries"] == 5
     assert calls == [("export", "o.json", "s.csv", "r.csv", "t.csv")]
 
 

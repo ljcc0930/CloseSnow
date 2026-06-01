@@ -13,6 +13,7 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.backend.constants import API_RETRY_TIMES
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 from src.backend.services.resort_selection_service import (
@@ -70,8 +71,13 @@ def _apply_catalog_filters(
     )
 
 
-def _empty_payload(cache_file: str, geocode_cache_hours: int, forecast_cache_hours: int) -> Dict[str, object]:
-    return build_empty_payload(cache_file, geocode_cache_hours, forecast_cache_hours)
+def _empty_payload(
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+    api_retries: int,
+) -> Dict[str, object]:
+    return build_empty_payload(cache_file, geocode_cache_hours, forecast_cache_hours, api_retries=api_retries)
 
 
 def _default_applied_filters() -> Dict[str, object]:
@@ -85,6 +91,7 @@ def _hourly_payload_for_resort(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
+    api_retries: int,
 ) -> Dict[str, object] | None:
     return build_hourly_payload_for_resort(
         resort_id=resort_id,
@@ -92,6 +99,7 @@ def _hourly_payload_for_resort(
         cache_file=cache_file,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
+        api_retries=api_retries,
     )
 
 
@@ -109,6 +117,7 @@ def make_handler(
     forecast_cache_hours: int,
     max_workers: int,
     allow_origin: str = "*",
+    api_retries: int = API_RETRY_TIMES,
 ) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def _write_json(self, code: int, payload: dict) -> None:
@@ -158,6 +167,7 @@ def make_handler(
                         cache_file=cache_file,
                         geocode_cache_hours=geocode_cache_hours,
                         forecast_cache_hours=forecast_cache_hours,
+                        api_retries=api_retries,
                     )
                 except Exception as exc:
                     self._write_json(500, {"error": f"Failed to build hourly payload: {exc}"})
@@ -219,6 +229,7 @@ def make_handler(
                     cache_file=cache_file,
                     geocode_cache_hours=geocode_cache_hours,
                     forecast_cache_hours=forecast_cache_hours,
+                    api_retries=api_retries,
                 )
             else:
                 payload = run_live_payload(
@@ -228,6 +239,7 @@ def make_handler(
                     geocode_cache_hours=geocode_cache_hours,
                     forecast_cache_hours=forecast_cache_hours,
                     max_workers=max_workers,
+                    api_retries=api_retries,
                 )
             payload["available_filters"] = available_filters
             payload["applied_filters"] = applied_filters
@@ -244,6 +256,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
     p.add_argument("--forecast-cache-hours", type=int, default=3)
     p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     p.add_argument("--allow-origin", default="*")
     return p.parse_args()
 
@@ -256,6 +269,7 @@ def main() -> int:
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
         allow_origin=args.allow_origin,
+        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving backend data API at http://{args.host}:{args.port}")

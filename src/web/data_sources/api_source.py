@@ -4,10 +4,12 @@ import json
 import urllib.request
 from typing import Any, Dict
 
+from src.backend.constants import API_RETRY_TIMES
+from src.backend.open_meteo import with_retry
 from src.contract import validate_weather_payload_v1
 
 
-def load_api_payload(url: str, timeout: int = 20) -> Dict[str, Any]:
+def load_api_payload(url: str, timeout: int = 20, api_retries: int = API_RETRY_TIMES) -> Dict[str, Any]:
     req = urllib.request.Request(
         url,
         headers={
@@ -15,7 +17,11 @@ def load_api_payload(url: str, timeout: int = 20) -> Dict[str, Any]:
             "Accept": "application/json",
         },
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        payload = json.loads(resp.read().decode("utf-8"))
+
+    def do_request() -> Dict[str, Any]:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    payload = with_retry(do_request, retries=api_retries)
     validate_weather_payload_v1(payload)
     return payload

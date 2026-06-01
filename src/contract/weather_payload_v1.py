@@ -11,6 +11,7 @@ class CacheInfo(TypedDict):
     misses: int
     geocode_cache_hours: int
     forecast_cache_hours: int
+    api_retries: int
 
 
 class UnitsInfo(TypedDict):

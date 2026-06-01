@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 from src.backend.compute.payload_metadata import build_payload_metadata
+from src.backend.constants import API_RETRY_TIMES
 from src.backend.resort_catalog import load_resort_catalog, search_resort_catalog
 from src.shared.config import DEFAULT_RESORTS_FILE
 
@@ -105,13 +106,19 @@ def apply_catalog_filters(
     return items
 
 
-def build_empty_payload(cache_file: str, geocode_cache_hours: int, forecast_cache_hours: int) -> Dict[str, object]:
+def build_empty_payload(
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+    api_retries: int = API_RETRY_TIMES,
+) -> Dict[str, object]:
     return build_payload_metadata(
         cache_path=cache_file,
         cache_hits=0,
         cache_misses=0,
         geocode_cache_hours=geocode_cache_hours,
         forecast_cache_hours=forecast_cache_hours,
+        api_retries=api_retries,
         reports=[],
         failed=[],
     )

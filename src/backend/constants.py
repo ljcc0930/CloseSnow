@@ -9,7 +9,8 @@ FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 FORECAST_DAYS = 15
 DAYS_PER_WEEK = 7
 HISTORY_DAYS = 14
-API_RETRY_TIMES = 4
+API_RETRY_TIMES = 2
+API_RETRY_DELAY_SECONDS = 10.0
 
 COORDINATES_CACHE_FILE = str(REPO_ROOT / ".cache" / "resort_coordinates.json")
 
