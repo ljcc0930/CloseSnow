@@ -1,4 +1,8 @@
-from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort, build_hourly_payloads_for_resorts
+from src.backend.services.hourly_payload_service import (
+    build_hourly_payload_for_resort,
+    build_hourly_payloads_for_resorts,
+    build_hourly_payloads_for_resorts_async,
+)
 from src.backend.services.resort_selection_service import (
     apply_catalog_filters,
     available_filters,
@@ -18,6 +22,7 @@ __all__ = [
     "build_empty_payload",
     "build_hourly_payload_for_resort",
     "build_hourly_payloads_for_resorts",
+    "build_hourly_payloads_for_resorts_async",
     "build_weather_payload",
     "catalog_item_with_display_name",
     "default_applied_filters",

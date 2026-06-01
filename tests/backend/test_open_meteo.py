@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import asyncio
+import json
 import urllib.error
 
 import pytest
@@ -62,6 +62,19 @@ def test_with_retry_recovers_from_transient(monkeypatch):
     assert calls["n"] == 3
 
 
+def test_with_retry_async_recovers_from_transient():
+    calls = {"n": 0}
+
+    async def flappy():
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise urllib.error.URLError("temporary")
+        return "ok"
+
+    assert asyncio.run(open_meteo.with_retry_async(flappy, retries=3, base_delay_seconds=0)) == "ok"
+    assert calls["n"] == 3
+
+
 def test_with_retry_does_not_retry_non_transient_http_error():
     err = urllib.error.HTTPError("https://x", 404, "not found", hdrs=None, fp=None)
     calls = {"n": 0}
@@ -108,6 +121,52 @@ def test_fetch_json_cache_miss_requests_and_sets_cache(monkeypatch):
     assert payload == {"hello": "world"}
     assert cache.last_set is not None
     assert cache.last_set[1] == {"hello": "world"}
+
+
+def test_fetch_json_async_returns_cache_hit_without_request(monkeypatch):
+    cache = _DummyCache(cached={"ok": True})
+    called = {"n": 0}
+
+    async def bad_request(url, timeout):  # noqa: ANN001
+        del url, timeout
+        called["n"] += 1
+        raise AssertionError("async request should not be called for cache hit")
+
+    monkeypatch.setattr("src.backend.open_meteo._request_json_async", bad_request)
+    out = asyncio.run(open_meteo.fetch_json_async("https://example.test", {"a": 1}, cache=cache, namespace="n", ttl_seconds=100))
+    assert out == {"ok": True}
+    assert called["n"] == 0
+
+
+def test_fetch_json_async_cache_miss_requests_and_sets_cache(monkeypatch):
+    cache = _DummyCache(cached=None)
+    captured = {}
+
+    async def fake_request(url, timeout):  # noqa: ANN001
+        captured["url"] = url
+        captured["timeout"] = timeout
+        return {"hello": "async"}
+
+    monkeypatch.setattr("src.backend.open_meteo._request_json_async", fake_request)
+    payload = asyncio.run(open_meteo.fetch_json_async("https://example.test", {"b": 2}, cache=cache, namespace="abc", ttl_seconds=5))
+    assert payload == {"hello": "async"}
+    assert captured["url"] == "https://example.test?b=2"
+    assert captured["timeout"] == 20
+    assert cache.last_set is not None
+    assert cache.last_set[1] == {"hello": "async"}
+
+
+def test_async_http_response_parses_chunked_json():
+    raw = (
+        b"HTTP/1.1 200 OK\r\n"
+        b"Content-Type: application/json\r\n"
+        b"Transfer-Encoding: chunked\r\n"
+        b"\r\n"
+        b"4\r\n{\"ok\r\n"
+        b"8\r\n\": true}\r\n"
+        b"0\r\n\r\n"
+    )
+    assert open_meteo._json_from_http_response(raw, "https://example.test") == {"ok": True}
 
 
 def test_geocode_uses_coordinate_cache_first(monkeypatch):
@@ -174,16 +233,41 @@ def test_geocode_fallback_to_nominatim(monkeypatch):
     assert loc.admin1 == "Utah"
 
 
-def test_async_wrappers(monkeypatch):
-    monkeypatch.setattr("src.backend.open_meteo.geocode", lambda *args, **kwargs: "g")
-    monkeypatch.setattr("src.backend.open_meteo.fetch_forecast", lambda *args, **kwargs: {"f": 1})
-    monkeypatch.setattr("src.backend.open_meteo.fetch_history", lambda *args, **kwargs: {"h": 1})
-    g = asyncio.run(open_meteo.geocode_async("x", cache=_DummyCache(), ttl_seconds=1))
-    f = asyncio.run(open_meteo.fetch_forecast_async("loc", cache=_DummyCache(), ttl_seconds=1))  # type: ignore[arg-type]
-    h = asyncio.run(open_meteo.fetch_history_async("loc", cache=_DummyCache(), ttl_seconds=1))  # type: ignore[arg-type]
-    assert g == "g"
-    assert f == {"f": 1}
-    assert h == {"h": 1}
+def test_async_apis_use_async_transport(monkeypatch):
+    captured = {}
+
+    async def fake_fetch_json_async(url, params, cache, namespace, ttl_seconds):  # noqa: ANN001
+        del url, cache, ttl_seconds
+        captured[namespace] = params
+        if namespace == "geocode_openmeteo":
+            return {
+                "results": [
+                    {
+                        "name": "Snowbird",
+                        "latitude": 40.58,
+                        "longitude": -111.65,
+                        "country": "US",
+                        "admin1": "UT",
+                    }
+                ]
+            }
+        return {"namespace": namespace}
+
+    monkeypatch.setattr("src.backend.open_meteo.fetch_json_async", fake_fetch_json_async)
+    loc = asyncio.run(open_meteo.geocode_async("Snowbird, UT", cache=_DummyCache(), ttl_seconds=1))
+    assert loc is not None
+
+    forecast = asyncio.run(open_meteo.fetch_forecast_async(loc, cache=_DummyCache(), ttl_seconds=1))
+    history = asyncio.run(open_meteo.fetch_history_async(loc, cache=_DummyCache(), ttl_seconds=1))
+    hourly = asyncio.run(open_meteo.fetch_hourly_forecast_async(loc, cache=_DummyCache(), ttl_seconds=1, hours=72))
+
+    assert forecast == {"namespace": "forecast_ecmwf_unified"}
+    assert history == {"namespace": "history_ecmwf_unified"}
+    assert hourly == {"namespace": "hourly_ecmwf_unified"}
+    assert captured["geocode_openmeteo"]["name"] == "Snowbird, UT"
+    assert "weather_code" in captured["forecast_ecmwf_unified"]["daily"]
+    assert captured["history_ecmwf_unified"]["past_days"] == open_meteo.HISTORY_DAYS
+    assert captured["hourly_ecmwf_unified"]["forecast_days"] == 3
 
 
 def test_fetch_forecast_and_history_include_weather_and_sun_daily_fields(monkeypatch):

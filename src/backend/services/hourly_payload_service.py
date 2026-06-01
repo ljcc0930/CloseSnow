@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 from typing import Any, Dict, Iterable, List, Mapping
 
 from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
@@ -8,7 +8,7 @@ from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.constants import COORDINATES_CACHE_FILE
 from src.backend.io import seed_coordinate_cache_from_entries
 from src.backend.models import ResortLocation
-from src.backend.open_meteo import fetch_hourly_forecast, geocode
+from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
 from src.backend.services.resort_selection_service import load_supported_resort_catalog
 
 _HOURLY_METRIC_KEYS = [
@@ -127,7 +127,46 @@ def _build_hourly_payload_for_item(
     )
 
 
-def build_hourly_payloads_for_resorts(
+async def _build_hourly_payload_for_item_async(
+    *,
+    item: Dict[str, object],
+    cache: JsonCache,
+    coord_cache: ResortCoordinateCache,
+    airports: List[Dict[str, Any]],
+    hours: int,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+) -> Dict[str, object]:
+    query = str(item.get("query", "")).strip()
+    location = await geocode_async(
+        query,
+        cache=cache,
+        ttl_seconds=geocode_cache_hours * 3600,
+        coord_cache=coord_cache,
+    )
+    if location is None:
+        return {
+            "error": f"Unable to geocode resort '{query}'",
+            "resort_id": str(item.get("resort_id", "")).strip(),
+            "query": query,
+        }
+
+    forecast = await fetch_hourly_forecast_async(
+        location,
+        cache=cache,
+        ttl_seconds=forecast_cache_hours * 3600,
+        hours=hours,
+    )
+    return _build_hourly_payload_from_forecast(
+        item=item,
+        location=location,
+        forecast=forecast,
+        airports=airports,
+        hours=hours,
+    )
+
+
+async def build_hourly_payloads_for_resorts_async(
     *,
     resort_ids: Iterable[str],
     hours: int,
@@ -153,12 +192,11 @@ def build_hourly_payloads_for_resorts(
 
     try:
         worker_count = min(max(1, int(max_workers)), len(items))
-        if worker_count == 1:
-            for resort_id in normalized_ids:
-                item = catalog_by_id.get(resort_id)
-                if item is None:
-                    continue
-                out[resort_id] = _build_hourly_payload_for_item(
+        semaphore = asyncio.Semaphore(worker_count)
+
+        async def run_one(resort_id: str, item: Dict[str, object]) -> tuple[str, Dict[str, object]]:
+            async with semaphore:
+                payload = await _build_hourly_payload_for_item_async(
                     item=item,
                     cache=cache,
                     coord_cache=coord_cache,
@@ -167,28 +205,44 @@ def build_hourly_payloads_for_resorts(
                     geocode_cache_hours=geocode_cache_hours,
                     forecast_cache_hours=forecast_cache_hours,
                 )
-        else:
-            with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                futures = {
-                    executor.submit(
-                        _build_hourly_payload_for_item,
-                        item=item,
-                        cache=cache,
-                        coord_cache=coord_cache,
-                        airports=airports,
-                        hours=hours,
-                        geocode_cache_hours=geocode_cache_hours,
-                        forecast_cache_hours=forecast_cache_hours,
-                    ): resort_id
-                    for resort_id in normalized_ids
-                    if (item := catalog_by_id.get(resort_id)) is not None
-                }
-                for future in as_completed(futures):
-                    out[futures[future]] = future.result()
+                return resort_id, payload
+
+        tasks = [
+            asyncio.create_task(run_one(resort_id, item))
+            for resort_id in normalized_ids
+            if (item := catalog_by_id.get(resort_id)) is not None
+        ]
+        for resort_id, payload in await asyncio.gather(*tasks):
+            out[resort_id] = payload
     finally:
         cache.save()
         coord_cache.save()
     return out
+
+
+def build_hourly_payloads_for_resorts(
+    *,
+    resort_ids: Iterable[str],
+    hours: int,
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+    max_workers: int = 8,
+) -> Dict[str, Dict[str, object] | None]:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(
+            build_hourly_payloads_for_resorts_async(
+                resort_ids=resort_ids,
+                hours=hours,
+                cache_file=cache_file,
+                geocode_cache_hours=geocode_cache_hours,
+                forecast_cache_hours=forecast_cache_hours,
+                max_workers=max_workers,
+            )
+        )
+    raise RuntimeError("build_hourly_payloads_for_resorts_async must be used from an active event loop")
 
 
 def build_hourly_payload_for_resort(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import threading
+import asyncio
 
 from src.backend.models import ResortLocation
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort, build_hourly_payloads_for_resorts
@@ -155,9 +155,10 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     )
 
     geocoded_queries = []
-    fetch_barrier = threading.Barrier(2)
+    active_fetches = 0
+    max_active_fetches = 0
 
-    def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
+    async def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
         geocoded_queries.append(query)
         seed = next(value for key, value in coord_cache.set_calls if key == query)
         return ResortLocation(
@@ -169,10 +170,14 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
             admin1=str(seed["admin1"]),
         )
 
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode", fake_geocode)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode_async", fake_geocode)
 
-    def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
-        fetch_barrier.wait(timeout=1)
+    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
+        nonlocal active_fetches, max_active_fetches
+        active_fetches += 1
+        max_active_fetches = max(max_active_fetches, active_fetches)
+        await asyncio.sleep(0.01)
+        active_fetches -= 1
         return {
             "latitude": location.latitude,
             "longitude": location.longitude,
@@ -189,7 +194,7 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
             },
         }
 
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast", fake_fetch_hourly_forecast)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast)
 
     payloads = build_hourly_payloads_for_resorts(
         resort_ids=["snowbird-ut", "missing-id", "alta-ut"],
@@ -206,5 +211,6 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     assert payloads["snowbird-ut"]["hourly"]["time"] == ["2026-03-04T00:00", "2026-03-04T01:00"]
     assert payloads["alta-ut"]["nearby_airports"][0]["iata_code"] == "SLC"
     assert sorted(geocoded_queries) == ["Alta, UT", "Snowbird, UT"]
+    assert max_active_fetches == 2
     assert json_cache.saved is True
     assert coord_cache.saved is True
