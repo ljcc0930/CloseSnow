@@ -380,6 +380,16 @@ def test_load_hourly_payload_local_mode(monkeypatch):
     assert captured["forecast_cache_hours"] == 2
 
 
+def test_load_hourly_payload_local_mode_returns_502_on_builder_error(monkeypatch):
+    monkeypatch.setattr(
+        "src.web.data_sources.hourly_source.build_hourly_payload_for_resort",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("rate limited")),
+    )
+    code, payload = load_hourly_payload("local", "", resort_id="snowbird-ut", hours=6)
+    assert code == 502
+    assert payload["error"] == "rate limited"
+
+
 def test_load_hourly_payload_api_mode(monkeypatch):
     captured = {}
 

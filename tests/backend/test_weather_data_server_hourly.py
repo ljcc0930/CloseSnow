@@ -214,3 +214,78 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
     assert max_active_fetches == 2
     assert json_cache.saved is True
     assert coord_cache.saved is True
+
+
+def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.load_supported_resort_catalog",
+        lambda: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird",
+                "country": "US",
+                "region": "west",
+                "subregion": "rockies",
+                "pass_types": ["ikon"],
+                "latitude": 40.581,
+                "longitude": -111.657,
+            },
+            {
+                "resort_id": "alta-ut",
+                "query": "Alta, UT",
+                "display_name": "Alta",
+                "country": "US",
+                "region": "west",
+                "subregion": "rockies",
+                "pass_types": ["ikon"],
+                "latitude": 40.588,
+                "longitude": -111.637,
+            },
+        ],
+    )
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
+    json_cache = _DummyJsonCache()
+    coord_cache = _DummyCoordCache()
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.JsonCache", lambda path: json_cache)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.ResortCoordinateCache", lambda path: coord_cache)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.load_airport_catalog", lambda: [])
+
+    async def fake_geocode(query, cache, ttl_seconds, coord_cache):  # noqa: ANN001
+        seed = next(value for key, value in coord_cache.set_calls if key == query)
+        return ResortLocation(
+            query=query,
+            name=str(seed["name"]),
+            latitude=float(seed["latitude"]),
+            longitude=float(seed["longitude"]),
+            country=str(seed["country"]),
+            admin1=str(seed["admin1"]),
+        )
+
+    async def fake_fetch_hourly_forecast(location, cache, ttl_seconds, hours):  # noqa: ANN001
+        if location.query == "Alta, UT":
+            raise RuntimeError("rate limited")
+        return {
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "timezone": "America/Denver",
+            "hourly": {"time": ["2026-03-04T00:00"], "snowfall": [0.0]},
+        }
+
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode_async", fake_geocode)
+    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast)
+
+    payloads = build_hourly_payloads_for_resorts(
+        resort_ids=["snowbird-ut", "alta-ut"],
+        hours=1,
+        cache_file=".cache/open_meteo_cache.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+
+    assert payloads["snowbird-ut"]["hours"] == 1
+    assert payloads["alta-ut"]["resort_id"] == "alta-ut"
+    assert "rate limited" in payloads["alta-ut"]["error"]
+    assert json_cache.saved is True
+    assert coord_cache.saved is True

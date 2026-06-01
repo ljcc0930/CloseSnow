@@ -196,16 +196,24 @@ async def build_hourly_payloads_for_resorts_async(
 
         async def run_one(resort_id: str, item: Dict[str, object]) -> tuple[str, Dict[str, object]]:
             async with semaphore:
-                payload = await _build_hourly_payload_for_item_async(
-                    item=item,
-                    cache=cache,
-                    coord_cache=coord_cache,
-                    airports=airports,
-                    hours=hours,
-                    geocode_cache_hours=geocode_cache_hours,
-                    forecast_cache_hours=forecast_cache_hours,
-                )
-                return resort_id, payload
+                try:
+                    payload = await _build_hourly_payload_for_item_async(
+                        item=item,
+                        cache=cache,
+                        coord_cache=coord_cache,
+                        airports=airports,
+                        hours=hours,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                    )
+                    return resort_id, payload
+                except Exception as exc:  # noqa: BLE001
+                    query = str(item.get("query", "")).strip()
+                    return resort_id, {
+                        "error": f"Unable to build hourly payload for resort '{query}': {exc}",
+                        "resort_id": resort_id,
+                        "query": query,
+                    }
 
         tasks = [
             asyncio.create_task(run_one(resort_id, item))

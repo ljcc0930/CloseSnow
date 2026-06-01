@@ -33,13 +33,16 @@ def _load_local_hourly_payload(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
 ) -> Tuple[int, Dict[str, Any]]:
-    payload = build_hourly_payload_for_resort(
-        resort_id=resort_id,
-        hours=hours,
-        cache_file=cache_file,
-        geocode_cache_hours=geocode_cache_hours,
-        forecast_cache_hours=forecast_cache_hours,
-    )
+    try:
+        payload = build_hourly_payload_for_resort(
+            resort_id=resort_id,
+            hours=hours,
+            cache_file=cache_file,
+            geocode_cache_hours=geocode_cache_hours,
+            forecast_cache_hours=forecast_cache_hours,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return 502, {"error": str(exc)}
     if payload is None:
         return 404, {"error": f"Unknown resort_id: {resort_id}"}
     if "error" in payload:
