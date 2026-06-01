@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
-from src.web.resort_hourly_context import build_resort_daily_summary_context
+from src.web.resort_hourly_context import build_resort_daily_summary_contexts
 from src.web.weather_page_render_core import render_payload_html
 
 _HOURLY_TEMPLATE = (
@@ -72,6 +72,25 @@ def _build_hourly_payload(
     return payload
 
 
+def _build_local_hourly_payloads(
+    *,
+    resort_ids: List[str],
+    hours: int,
+    cache_file: str,
+    geocode_cache_hours: int,
+    forecast_cache_hours: int,
+) -> Dict[str, Dict[str, Any] | None]:
+    from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
+
+    return build_hourly_payloads_for_resorts(
+        resort_ids=resort_ids,
+        hours=hours,
+        cache_file=cache_file,
+        geocode_cache_hours=geocode_cache_hours,
+        forecast_cache_hours=forecast_cache_hours,
+    )
+
+
 def render_hourly_pages(
     index_html_path: str,
     payload: Dict[str, Any],
@@ -87,27 +106,42 @@ def render_hourly_pages(
 ) -> List[Path]:
     site_root = Path(index_html_path).parent
     outputs: List[Path] = []
-    for resort_id in _iter_resort_ids(payload):
+    resort_ids = _iter_resort_ids(payload)
+    daily_summary_by_resort = build_resort_daily_summary_contexts(payload)
+    local_hourly_payloads: Dict[str, Dict[str, Any] | None] | None = None
+    if include_hourly_data and hourly_mode == "local":
+        local_hourly_payloads = _build_local_hourly_payloads(
+            resort_ids=resort_ids,
+            hours=hourly_hours,
+            cache_file=cache_file,
+            geocode_cache_hours=geocode_cache_hours,
+            forecast_cache_hours=forecast_cache_hours,
+        )
+
+    for resort_id in resort_ids:
         encoded_id = quote(resort_id)
         out_dir = site_root / "resort" / encoded_id
         out = out_dir / "index.html"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         hourly_context: Dict[str, Any] = {"resortId": resort_id}
-        daily_summary = build_resort_daily_summary_context(payload, resort_id)
+        daily_summary = daily_summary_by_resort.get(resort_id)
         if daily_summary:
             hourly_context["dailySummary"] = daily_summary
         if include_hourly_data:
-            hourly_payload = _build_hourly_payload(
-                mode=hourly_mode,
-                source=hourly_source,
-                resort_id=resort_id,
-                hours=hourly_hours,
-                timeout=hourly_timeout,
-                cache_file=cache_file,
-                geocode_cache_hours=geocode_cache_hours,
-                forecast_cache_hours=forecast_cache_hours,
-            )
+            if local_hourly_payloads is not None:
+                hourly_payload = local_hourly_payloads.get(resort_id)
+            else:
+                hourly_payload = _build_hourly_payload(
+                    mode=hourly_mode,
+                    source=hourly_source,
+                    resort_id=resort_id,
+                    hours=hourly_hours,
+                    timeout=hourly_timeout,
+                    cache_file=cache_file,
+                    geocode_cache_hours=geocode_cache_hours,
+                    forecast_cache_hours=forecast_cache_hours,
+                )
             if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
                 hourly_data_path = out_dir / "hourly.json"
                 hourly_data_path.write_text(

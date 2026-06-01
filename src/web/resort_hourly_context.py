@@ -20,29 +20,41 @@ def _recent_history_rows(report: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows[-HISTORY_DAYS:]
 
 
-def build_resort_daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[Dict[str, Any]]:
+def _build_context_from_report(report: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    daily = report.get("daily")
+    if not isinstance(daily, list):
+        return None
+    context: Dict[str, Any] = {
+        "query": report.get("query", ""),
+        "display_name": report.get("display_name", report.get("query", "")),
+        "website": report.get("website", ""),
+        "daily": daily,
+    }
+    nearby_airports = report.get("nearby_airports")
+    if isinstance(nearby_airports, list):
+        context["nearbyAirports"] = [item for item in nearby_airports if isinstance(item, dict)]
+    recent_history = _recent_history_rows(report)
+    if recent_history:
+        context["past14dDaily"] = recent_history
+    return context
+
+
+def build_resort_daily_summary_contexts(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     reports = payload.get("reports")
     if not isinstance(reports, list):
-        return None
+        return {}
+    contexts: Dict[str, Dict[str, Any]] = {}
     for report in reports:
         if not isinstance(report, dict):
             continue
-        if str(report.get("resort_id", "")).strip() != resort_id:
+        resort_id = str(report.get("resort_id", "")).strip()
+        if not resort_id or resort_id in contexts:
             continue
-        daily = report.get("daily")
-        if not isinstance(daily, list):
-            return None
-        context: Dict[str, Any] = {
-            "query": report.get("query", ""),
-            "display_name": report.get("display_name", report.get("query", "")),
-            "website": report.get("website", ""),
-            "daily": daily,
-        }
-        nearby_airports = report.get("nearby_airports")
-        if isinstance(nearby_airports, list):
-            context["nearbyAirports"] = [item for item in nearby_airports if isinstance(item, dict)]
-        recent_history = _recent_history_rows(report)
-        if recent_history:
-            context["past14dDaily"] = recent_history
-        return context
-    return None
+        context = _build_context_from_report(report)
+        if context is not None:
+            contexts[resort_id] = context
+    return contexts
+
+
+def build_resort_daily_summary_context(payload: Dict[str, Any], resort_id: str) -> Optional[Dict[str, Any]]:
+    return build_resort_daily_summary_contexts(payload).get(resort_id)

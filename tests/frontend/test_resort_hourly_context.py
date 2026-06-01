@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.web.resort_hourly_context import build_resort_daily_summary_context
+from src.web.resort_hourly_context import build_resort_daily_summary_context, build_resort_daily_summary_contexts
 
 
 def test_build_resort_daily_summary_context_includes_recent_history():
@@ -82,3 +82,33 @@ def test_build_resort_daily_summary_context_omits_history_when_missing():
     assert context is not None
     assert context["daily"] == [{"date": "2026-03-13"}]
     assert "past14dDaily" not in context
+
+
+def test_build_resort_daily_summary_contexts_indexes_reports_once():
+    payload = {
+        "reports": [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "daily": [{"date": "2026-03-13"}],
+            },
+            {
+                "resort_id": "alta-ut",
+                "query": "Alta, UT",
+                "display_name": "Alta",
+                "daily": [{"date": "2026-03-14"}],
+            },
+            {
+                "resort_id": "alta-ut",
+                "query": "Duplicate Alta, UT",
+                "daily": [{"date": "2026-03-15"}],
+            },
+        ]
+    }
+
+    contexts = build_resort_daily_summary_contexts(payload)
+
+    assert sorted(contexts) == ["alta-ut", "snowbird-ut"]
+    assert contexts["snowbird-ut"]["display_name"] == "Snowbird, Utah"
+    assert contexts["alta-ut"]["daily"] == [{"date": "2026-03-14"}]

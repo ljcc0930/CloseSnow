@@ -61,7 +61,7 @@ def test_render_hourly_pages(tmp_path):
             {"resort_id": "alta-ut", "query": "Alta, UT", "daily": []},
         ]
     }
-    outputs = render_hourly_pages(str(p), payload)
+    outputs = render_hourly_pages(str(p), payload, include_hourly_data=False)
     assert [x.relative_to(tmp_path / "site").as_posix() for x in outputs] == [
         "resort/snowbird-ut/index.html",
         "resort/alta-ut/index.html",
@@ -104,28 +104,34 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
         ]
     }
 
-    monkeypatch.setattr(
-        "src.web.pipelines.static_site._build_hourly_payload",
-        lambda **kwargs: {
-            "resort_id": kwargs["resort_id"],
-            "query": "Snowbird, UT",
-            "display_name": "Snowbird, Utah",
-            "hours": 2,
-            "hourly": {
-                "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
-                "snowfall": [0.0, 0.1],
-                "rain": [0.0, 0.0],
-                "precipitation_probability": [20, 10],
-                "snow_depth": [100, 100],
-                "wind_speed_10m": [5.0, 6.0],
-                "wind_direction_10m": [120, 110],
-                "visibility": [9000, 8800],
-            },
-        },
-    )
+    captured = {}
+
+    def fake_build_local_hourly_payloads(**kwargs):  # noqa: ANN001
+        captured.update(kwargs)
+        return {
+            "snowbird-ut": {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "hours": 2,
+                "hourly": {
+                    "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+                    "snowfall": [0.0, 0.1],
+                    "rain": [0.0, 0.0],
+                    "precipitation_probability": [20, 10],
+                    "snow_depth": [100, 100],
+                    "wind_speed_10m": [5.0, 6.0],
+                    "wind_direction_10m": [120, 110],
+                    "visibility": [9000, 8800],
+                },
+            }
+        }
+
+    monkeypatch.setattr("src.web.pipelines.static_site._build_local_hourly_payloads", fake_build_local_hourly_payloads)
 
     outputs = render_hourly_pages(str(p), payload)
     assert len(outputs) == 1
+    assert captured["resort_ids"] == ["snowbird-ut"]
     hourly_json = tmp_path / "site" / "resort" / "snowbird-ut" / "hourly.json"
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
@@ -152,22 +158,24 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     }
 
     monkeypatch.setattr(
-        "src.web.pipelines.static_site._build_hourly_payload",
+        "src.web.pipelines.static_site._build_local_hourly_payloads",
         lambda **kwargs: {
-            "resort_id": kwargs["resort_id"],
-            "query": "Snowbird, UT",
-            "display_name": "Snowbird, Utah",
-            "hours": 2,
-            "hourly": {
-                "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
-                "snowfall": [0.0, 0.1],
-                "rain": [0.0, 0.0],
-                "precipitation_probability": [20, 10],
-                "snow_depth": [100, 100],
-                "wind_speed_10m": [5.0, 6.0],
-                "wind_direction_10m": [120, 110],
-                "visibility": [9000, 8800],
-            },
+            "snowbird-ut": {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "display_name": "Snowbird, Utah",
+                "hours": 2,
+                "hourly": {
+                    "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+                    "snowfall": [0.0, 0.1],
+                    "rain": [0.0, 0.0],
+                    "precipitation_probability": [20, 10],
+                    "snow_depth": [100, 100],
+                    "wind_speed_10m": [5.0, 6.0],
+                    "wind_direction_10m": [120, 110],
+                    "visibility": [9000, 8800],
+                },
+            }
         },
     )
 
