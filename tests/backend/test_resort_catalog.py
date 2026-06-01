@@ -278,7 +278,8 @@ def test_default_catalog_uses_official_aspen_four_mountain_urls():
     websites = {
         x["resort_id"]: x["website"]
         for x in entries
-        if x["resort_id"] in {
+        if x["resort_id"]
+        in {
             "aspen-mountain-co",
             "aspen-highlands-co",
             "buttermilk-co",

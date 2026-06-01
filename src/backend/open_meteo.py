@@ -25,13 +25,9 @@ from src.backend.models import ResortLocation
 T = TypeVar("T")
 _USER_AGENT = "ecmwf-unified-backend/1.0 (+local script)"
 _DAILY_FIELDS = (
-    "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,"
-    "temperature_2m_min,weather_code,sunrise,sunset"
+    "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset"
 )
-_HOURLY_FIELDS = (
-    "snowfall,rain,precipitation_probability,snow_depth,"
-    "wind_speed_10m,wind_direction_10m,visibility"
-)
+_HOURLY_FIELDS = "snowfall,rain,precipitation_probability,snow_depth,wind_speed_10m,wind_direction_10m,visibility"
 STATE_ABBR_TO_NAME = {
     "al": "alabama",
     "ak": "alaska",
@@ -469,7 +465,9 @@ def fetch_history(location: ResortLocation, cache: JsonCache, ttl_seconds: int) 
     )
 
 
-def fetch_hourly_forecast(location: ResortLocation, cache: JsonCache, ttl_seconds: int, hours: int = 72) -> Dict[str, Any]:
+def fetch_hourly_forecast(
+    location: ResortLocation, cache: JsonCache, ttl_seconds: int, hours: int = 72
+) -> Dict[str, Any]:
     return fetch_json(
         FORECAST_URL,
         _hourly_params(location, hours),

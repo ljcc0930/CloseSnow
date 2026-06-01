@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+PYTHON_BIN="${PYTHON:-python3}"
+
+if ! "$PYTHON_BIN" -m ruff --version >/dev/null 2>&1; then
+  echo "Missing dev dependencies." >&2
+  echo "Install with: $PYTHON_BIN -m pip install -r requirements-dev.txt" >&2
+  exit 1
+fi
+
+./scripts/lint.sh
+"$PYTHON_BIN" -m pytest -q

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from typing import Dict, List
 import html
+from typing import Dict, List
 
 from src.web.day_label_html import render_day_label_html
 from src.web.resort_cell_renderer import favorite_all_head_html, filter_attrs, resort_cells_html
@@ -35,7 +35,9 @@ def render_sunrise_sunset_desktop_layout(data: List[Dict[str, str]]) -> str:
         return f"day {day}"
 
     left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
-    right_group = "<tr>" + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days) + "</tr>"
+    right_group = (
+        "<tr>" + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days) + "</tr>"
+    )
     right_detail = "<tr>" + "".join("<th>sunrise</th><th>sunset</th>" for _ in days) + "</tr>"
 
     left_rows: List[str] = []

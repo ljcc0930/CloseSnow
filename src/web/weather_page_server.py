@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import sys
 from typing import Any, Dict, List
 from urllib.parse import parse_qs, urlparse
 
@@ -29,6 +29,8 @@ from src.web.weather_page_render_core import render_payload_html
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
+
+
 def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
     hourly_context: Dict[str, Any] = {"resortId": resort_id}
     if daily_summary:
@@ -61,6 +63,7 @@ def _asset_name_from_path(path: str) -> str:
         return path[idx + 1 :]
     return path.lstrip("/")
 
+
 def make_handler(
     cache_file: str,
     geocode_cache_hours: int,
@@ -83,7 +86,9 @@ def make_handler(
             self.end_headers()
             self.wfile.write(body)
 
-        def _load_request_payload(self, qs: Dict[str, List[str]], *, apply_server_filters: bool = True) -> Dict[str, Any]:
+        def _load_request_payload(
+            self, qs: Dict[str, List[str]], *, apply_server_filters: bool = True
+        ) -> Dict[str, Any]:
             return load_request_payload(
                 mode=data_mode,
                 source=data_source,
@@ -131,7 +136,7 @@ def make_handler(
             if normalized_path == "/api/resort-hourly":
                 resort_id = (qs.get("resort_id", [""])[0] or "").strip()
                 if not resort_id:
-                    self._write(400, b"{\"error\":\"Missing required query parameter: resort_id\"}", "application/json")
+                    self._write(400, b'{"error":"Missing required query parameter: resort_id"}', "application/json")
                     return
                 try:
                     hours = max(1, min(240, int((qs.get("hours", ["72"])[0] or "72"))))

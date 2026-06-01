@@ -50,11 +50,7 @@ def resort_cells_html(row: Dict[str, str]) -> str:
 
     favorite_cell = f"<td class='favorite-col'>{button_html}</td>"
     query_cell = (
-        "<td class='query-col'>"
-        "<div class='resort-cell'>"
-        f"<div class='resort-link-wrap'>{link_html}</div>"
-        "</div>"
-        "</td>"
+        f"<td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>{link_html}</div></div></td>"
     )
     return favorite_cell + query_cell
 

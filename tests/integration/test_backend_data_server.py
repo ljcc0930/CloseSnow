@@ -7,7 +7,6 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 
 import pytest
-
 from src.backend.weather_data_server import make_handler
 
 
@@ -63,7 +62,9 @@ def test_backend_data_server_api_and_health(monkeypatch, valid_payload):
     try:
         payload = json.loads(urllib.request.urlopen(f"{base}/api/data", timeout=3).read().decode("utf-8"))
         health = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=3).read().decode("utf-8"))
-        resorts = json.loads(urllib.request.urlopen(f"{base}/api/resorts?search=ikon", timeout=3).read().decode("utf-8"))
+        resorts = json.loads(
+            urllib.request.urlopen(f"{base}/api/resorts?search=ikon", timeout=3).read().decode("utf-8")
+        )
         assert payload["schema_version"] == valid_payload["schema_version"]
         assert payload["available_filters"]["pass_type"]["ikon"] == 1
         assert payload["available_filters"]["pass_type"]["epic"] == 1
@@ -254,7 +255,9 @@ def test_backend_data_server_data_include_default(monkeypatch, valid_payload):
     )
     server, thread, base = _serve_once(handler)
     try:
-        payload = json.loads(urllib.request.urlopen(f"{base}/api/data?include_default=1", timeout=3).read().decode("utf-8"))
+        payload = json.loads(
+            urllib.request.urlopen(f"{base}/api/data?include_default=1", timeout=3).read().decode("utf-8")
+        )
         assert captured["resorts"] == ["Snowbird, UT"]
         assert captured["resorts_file"] == ""
         assert payload["applied_filters"]["include_default"] is True
@@ -466,7 +469,7 @@ def test_backend_data_server_cors_and_404(monkeypatch):
             assert resp.getheader("Access-Control-Allow-Origin") == "https://example.test"
         try:
             urllib.request.urlopen(f"{base}/nope", timeout=3)
-            assert False, "expected HTTPError for unknown path"
+            raise AssertionError("expected HTTPError for unknown path")
         except urllib.error.HTTPError as exc:
             assert exc.code == 404
     finally:

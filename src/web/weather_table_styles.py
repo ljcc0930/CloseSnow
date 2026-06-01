@@ -71,7 +71,4 @@ def render_measure_cell(raw_value: str, kind: str, style: str = "", klass: str =
     numeric = to_float(value)
     if numeric is None:
         return f"<td{class_attr}{style_attr}>{escaped}</td>"
-    return (
-        f"<td{class_attr}{style_attr} "
-        f"data-kind='{kind}' data-metric-value='{numeric:.6f}'>{escaped}</td>"
-    )
+    return f"<td{class_attr}{style_attr} data-kind='{kind}' data-metric-value='{numeric:.6f}'>{escaped}</td>"

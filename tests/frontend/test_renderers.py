@@ -190,9 +190,9 @@ def test_table_renderer_sections_and_empty_states():
     weather = render_weather_table([_weather_row()])
     sun = render_sun_table([_sun_row()])
     temp = render_temperature_table([_temp_row()])
-    assert "data-target-kind=\"snow\"" in snow
-    assert "data-target-kind=\"rain\"" in rain
-    assert "data-target-kind=\"temp\"" in temp
+    assert 'data-target-kind="snow"' in snow
+    assert 'data-target-kind="rain"' in rain
+    assert 'data-target-kind="temp"' in temp
     assert "<h2>Weather</h2>" in weather
     assert "weather-split-wrap" in weather
     assert "<h2>Sunrise / Sunset</h2>" in sun

@@ -3,7 +3,10 @@ from __future__ import annotations
 import asyncio
 
 from src.backend.models import ResortLocation
-from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort, build_hourly_payloads_for_resorts
+from src.backend.services.hourly_payload_service import (
+    build_hourly_payload_for_resort,
+    build_hourly_payloads_for_resorts,
+)
 
 
 class _DummyJsonCache:
@@ -47,7 +50,9 @@ def test_hourly_payload_uses_catalog_coordinate_override(monkeypatch, tmp_path):
             }
         ],
     )
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json")
+    )
     monkeypatch.setattr("src.backend.services.hourly_payload_service.JsonCache", lambda path: _DummyJsonCache())
     coord_cache = _DummyCoordCache()
     monkeypatch.setattr("src.backend.services.hourly_payload_service.ResortCoordinateCache", lambda path: coord_cache)
@@ -135,7 +140,9 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
             },
         ],
     )
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json")
+    )
     json_cache = _DummyJsonCache()
     coord_cache = _DummyCoordCache()
     monkeypatch.setattr("src.backend.services.hourly_payload_service.JsonCache", lambda path: json_cache)
@@ -194,7 +201,9 @@ def test_bulk_hourly_payloads_share_catalog_cache_and_airports(monkeypatch, tmp_
             },
         }
 
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast)
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast
+    )
 
     payloads = build_hourly_payloads_for_resorts(
         resort_ids=["snowbird-ut", "missing-id", "alta-ut"],
@@ -244,7 +253,9 @@ def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path)
             },
         ],
     )
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json"))
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.dated_cache_path", lambda path: str(tmp_path / "dated_cache.json")
+    )
     json_cache = _DummyJsonCache()
     coord_cache = _DummyCoordCache()
     monkeypatch.setattr("src.backend.services.hourly_payload_service.JsonCache", lambda path: json_cache)
@@ -273,7 +284,9 @@ def test_bulk_hourly_payloads_isolate_per_resort_failures(monkeypatch, tmp_path)
         }
 
     monkeypatch.setattr("src.backend.services.hourly_payload_service.geocode_async", fake_geocode)
-    monkeypatch.setattr("src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast)
+    monkeypatch.setattr(
+        "src.backend.services.hourly_payload_service.fetch_hourly_forecast_async", fake_fetch_hourly_forecast
+    )
 
     payloads = build_hourly_payloads_for_resorts(
         resort_ids=["snowbird-ut", "alta-ut"],

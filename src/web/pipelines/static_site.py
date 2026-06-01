@@ -8,9 +8,9 @@ from urllib.parse import quote
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
 from src.web.weather_page_render_core import render_payload_html
 
-_HOURLY_TEMPLATE = (
-    Path(__file__).resolve().parents[1] / "templates" / "resort_hourly_page.html"
-).read_text(encoding="utf-8")
+_HOURLY_TEMPLATE = (Path(__file__).resolve().parents[1] / "templates" / "resort_hourly_page.html").read_text(
+    encoding="utf-8"
+)
 
 
 def write_payload_json(path: str, payload: Dict[str, Any]) -> Path:

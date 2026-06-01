@@ -89,7 +89,9 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
-def build_report(location: ResortLocation, forecast: Dict[str, Any], history: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def build_report(
+    location: ResortLocation, forecast: Dict[str, Any], history: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     daily = forecast.get("daily", {})
     rows = build_daily_rows(daily)
 

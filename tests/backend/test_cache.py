@@ -7,7 +7,9 @@ from src.backend.cache import JsonCache, ResortCoordinateCache, canonical_query,
 
 
 def test_dated_cache_path_with_extension():
-    assert dated_cache_path(".cache/open_meteo_cache.json", date(2026, 3, 3)) == ".cache/open_meteo_cache_2026-03-03.json"
+    assert (
+        dated_cache_path(".cache/open_meteo_cache.json", date(2026, 3, 3)) == ".cache/open_meteo_cache_2026-03-03.json"
+    )
 
 
 def test_dated_cache_path_without_extension():

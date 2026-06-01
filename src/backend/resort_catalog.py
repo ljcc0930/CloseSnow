@@ -208,10 +208,7 @@ def _normalize_catalog_entry(raw: Dict[str, Any]) -> Dict[str, Any] | None:
     country_aliases = _country_aliases(country)
     country_name = country_aliases[0] if country_aliases else ""
     search_terms = _dedupe_terms(
-        _normalize_search_terms(raw.get("search_terms"))
-        + [state_name]
-        + country_aliases
-        + [city, address]
+        _normalize_search_terms(raw.get("search_terms")) + [state_name] + country_aliases + [city, address]
     )
     return {
         "resort_id": resort_id,

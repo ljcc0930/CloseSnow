@@ -145,12 +145,7 @@ def render_temperature_table(data: List[Dict[str, str]]) -> str:
 def render_sun_table(data: List[Dict[str, str]]) -> str:
     if not data:
         return "<section><h2>Sunrise / Sunset</h2><p>No data</p></section>"
-    return (
-        "<section>"
-        "<h2>Sunrise / Sunset</h2>"
-        f"{render_sunrise_sunset_desktop_layout(data)}"
-        "</section>"
-    )
+    return f"<section><h2>Sunrise / Sunset</h2>{render_sunrise_sunset_desktop_layout(data)}</section>"
 
 
 def render_weather_table(data: List[Dict[str, str]]) -> str:
@@ -205,9 +200,7 @@ def render_weather_table(data: List[Dict[str, str]]) -> str:
         "</div>"
         "<div class='weather-right-wrap' id='weather-right-wrap'>"
         "<table class='weather-right-table' id='weather-right-table'>"
-        "<colgroup>"
-        + "".join("<col class='col-weather'>" for _ in day_headers)
-        + "</colgroup>"
+        "<colgroup>" + "".join("<col class='col-weather'>" for _ in day_headers) + "</colgroup>"
         f"<thead>{right_detail}</thead>"
         f"<tbody>{''.join(right_rows)}</tbody>"
         "</table>"

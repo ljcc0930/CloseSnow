@@ -5,7 +5,6 @@ import json
 import urllib.error
 
 import pytest
-
 from src.backend import open_meteo
 from src.backend.models import ResortLocation
 
@@ -133,7 +132,9 @@ def test_fetch_json_async_returns_cache_hit_without_request(monkeypatch):
         raise AssertionError("async request should not be called for cache hit")
 
     monkeypatch.setattr("src.backend.open_meteo._request_json_async", bad_request)
-    out = asyncio.run(open_meteo.fetch_json_async("https://example.test", {"a": 1}, cache=cache, namespace="n", ttl_seconds=100))
+    out = asyncio.run(
+        open_meteo.fetch_json_async("https://example.test", {"a": 1}, cache=cache, namespace="n", ttl_seconds=100)
+    )
     assert out == {"ok": True}
     assert called["n"] == 0
 
@@ -148,7 +149,9 @@ def test_fetch_json_async_cache_miss_requests_and_sets_cache(monkeypatch):
         return {"hello": "async"}
 
     monkeypatch.setattr("src.backend.open_meteo._request_json_async", fake_request)
-    payload = asyncio.run(open_meteo.fetch_json_async("https://example.test", {"b": 2}, cache=cache, namespace="abc", ttl_seconds=5))
+    payload = asyncio.run(
+        open_meteo.fetch_json_async("https://example.test", {"b": 2}, cache=cache, namespace="abc", ttl_seconds=5)
+    )
     assert payload == {"hello": "async"}
     assert captured["url"] == "https://example.test?b=2"
     assert captured["timeout"] == 20
@@ -162,8 +165,8 @@ def test_async_http_response_parses_chunked_json():
         b"Content-Type: application/json\r\n"
         b"Transfer-Encoding: chunked\r\n"
         b"\r\n"
-        b"4\r\n{\"ok\r\n"
-        b"8\r\n\": true}\r\n"
+        b'4\r\n{"ok\r\n'
+        b'8\r\n": true}\r\n'
         b"0\r\n\r\n"
     )
     assert open_meteo._json_from_http_response(raw, "https://example.test") == {"ok": True}
@@ -179,7 +182,9 @@ def test_geocode_uses_coordinate_cache_first(monkeypatch):
             "admin1": "UT",
         }
     )
-    monkeypatch.setattr("src.backend.open_meteo.fetch_json", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError))
+    monkeypatch.setattr(
+        "src.backend.open_meteo.fetch_json", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError)
+    )
     loc = open_meteo.geocode("Snowbird, UT", cache=_DummyCache(), ttl_seconds=1, coord_cache=coord_cache)
     assert loc is not None
     assert loc.name == "Snowbird"

@@ -25,7 +25,7 @@ def write_snow_csv(path: str, reports: List[Dict[str, Any]]) -> None:
             daily = report.get("daily", [])
             for idx in range(FORECAST_DAYS):
                 value = daily[idx]["snowfall_cm"] if idx < len(daily) else None
-                row[f"day_{idx+1}_cm"] = value if value is not None else ""
+                row[f"day_{idx + 1}_cm"] = value if value is not None else ""
             writer.writerow(row)
 
 
@@ -42,7 +42,7 @@ def write_rain_csv(path: str, reports: List[Dict[str, Any]]) -> None:
             daily = report.get("daily", [])
             for idx in range(FORECAST_DAYS):
                 value = daily[idx]["rain_mm"] if idx < len(daily) else None
-                row[f"day_{idx+1}_rain_mm"] = value if value is not None else ""
+                row[f"day_{idx + 1}_rain_mm"] = value if value is not None else ""
             writer.writerow(row)
 
 
@@ -65,9 +65,9 @@ def write_temp_csv(path: str, reports: List[Dict[str, Any]]) -> None:
             daily = report.get("daily", [])
             for idx in range(FORECAST_DAYS):
                 day = daily[idx] if idx < len(daily) else {}
-                row[f"day_{idx+1}_max_c"] = day.get("temperature_max_c", "")
-                row[f"day_{idx+1}_min_c"] = day.get("temperature_min_c", "")
-                row[f"day_{idx+1}_above_0"] = day.get("above_0", 0)
+                row[f"day_{idx + 1}_max_c"] = day.get("temperature_max_c", "")
+                row[f"day_{idx + 1}_min_c"] = day.get("temperature_min_c", "")
+                row[f"day_{idx + 1}_above_0"] = day.get("above_0", 0)
             writer.writerow(row)
 
 

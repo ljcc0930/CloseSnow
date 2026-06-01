@@ -39,7 +39,16 @@ def test_render_hourly_pages(tmp_path):
                         "distance_miles": 22.4,
                     }
                 ],
-                "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 3, "temperature_min_c": -5, "snowfall_cm": 2.0, "rain_mm": 0.0}],
+                "daily": [
+                    {
+                        "date": "2026-03-13",
+                        "weather_code": 3,
+                        "temperature_max_c": 3,
+                        "temperature_min_c": -5,
+                        "snowfall_cm": 2.0,
+                        "rain_mm": 0.0,
+                    }
+                ],
                 "past_14d_daily": [
                     {"date": "2026-03-01", "weather_code": 3},
                     {"date": "2026-03-02", "weather_code": 45},
@@ -68,7 +77,7 @@ def test_render_hourly_pages(tmp_path):
     ]
     html = outputs[0].read_text(encoding="utf-8")
     assert "../../assets/css/resort_hourly.css" in html
-    assert 'window.CLOSESNOW_HOURLY_CONTEXT = {' in html
+    assert "window.CLOSESNOW_HOURLY_CONTEXT = {" in html
     assert '"resortId": "snowbird-ut"' in html
     assert "Resort Forecast: snowbird-ut" not in html
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
@@ -79,7 +88,7 @@ def test_render_hourly_pages(tmp_path):
     assert 'id="resort-timeline-section"' in html
     assert 'id="resort-daily-summary-section"' not in html
     assert 'id="resort-history-section"' not in html
-    assert 'Past 14 days + forecast' in html
+    assert "Past 14 days + forecast" in html
     assert '"dailySummary": {' in html
     assert '"display_name": "Snowbird, Utah"' in html
     assert '"nearbyAirports": [' in html

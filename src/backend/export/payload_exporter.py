@@ -17,4 +17,3 @@ def export_payload_artifacts(
     write_snow_csv(snow_csv, reports)
     write_rain_csv(rain_csv, reports)
     write_temp_csv(temp_csv, reports)
-

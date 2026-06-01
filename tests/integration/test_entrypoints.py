@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from src.backend import ecmwf_unified_backend
-from src.backend import weather_data_server
+from src.backend import ecmwf_unified_backend, weather_data_server
 from src.web import weather_page_static_render
 
 

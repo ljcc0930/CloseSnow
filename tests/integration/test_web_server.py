@@ -7,7 +7,6 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 
 import pytest
-
 from src.web.weather_page_server import make_handler
 
 
@@ -65,7 +64,9 @@ def test_server_api_root_and_asset(monkeypatch):
 
 def test_server_asset_not_found(monkeypatch):
     monkeypatch.setattr("src.web.weather_page_server.load_request_payload", lambda **kwargs: {"reports": []})
-    monkeypatch.setattr("src.web.weather_page_server.read_asset_bytes", lambda name: (_ for _ in ()).throw(OSError("x")))
+    monkeypatch.setattr(
+        "src.web.weather_page_server.read_asset_bytes", lambda name: (_ for _ in ()).throw(OSError("x"))
+    )
 
     handler = make_handler(
         cache_file=".cache/x.json",
@@ -372,7 +373,16 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
                     "resort_id": "snowbird-ut",
                     "query": "Snowbird, UT",
                     "nearby_airports": [{"airport_id": "slc-salt-lake-city", "iata_code": "SLC"}],
-                    "daily": [{"date": "2026-03-13", "weather_code": 3, "temperature_max_c": 4, "temperature_min_c": -5, "snowfall_cm": 1.2, "rain_mm": 0.0}],
+                    "daily": [
+                        {
+                            "date": "2026-03-13",
+                            "weather_code": 3,
+                            "temperature_max_c": 4,
+                            "temperature_min_c": -5,
+                            "snowfall_cm": 1.2,
+                            "rain_mm": 0.0,
+                        }
+                    ],
                     "past_14d_daily": [
                         {"date": "2026-03-01", "weather_code": 45},
                         {"date": "2026-03-02", "weather_code": 3},

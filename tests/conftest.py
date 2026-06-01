@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import sys
 from copy import deepcopy
 from pathlib import Path
-import sys
 from typing import Any, Dict
 
 import pytest
@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.contract import SCHEMA_VERSION
+from src.contract import SCHEMA_VERSION  # noqa: E402
 
 
 def _build_sample_report() -> Dict[str, Any]:

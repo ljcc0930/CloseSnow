@@ -4,4 +4,3 @@ __all__ = [
     "REPO_ROOT",
     "DEFAULT_RESORTS_FILE",
 ]
-

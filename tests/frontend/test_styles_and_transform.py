@@ -61,7 +61,13 @@ def test_report_transforms():
             "week1_total_rain_mm": 2.2,
             "week2_total_rain_mm": 1.1,
             "daily": [
-                {"date": "2026-03-04", "snowfall_cm": 1.0, "rain_mm": 0.0, "temperature_max_c": -1, "temperature_min_c": -5},
+                {
+                    "date": "2026-03-04",
+                    "snowfall_cm": 1.0,
+                    "rain_mm": 0.0,
+                    "temperature_max_c": -1,
+                    "temperature_min_c": -5,
+                },
                 {
                     "date": "2026-03-05",
                     "snowfall_cm": None,

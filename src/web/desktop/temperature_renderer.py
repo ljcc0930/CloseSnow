@@ -36,9 +36,7 @@ def render_temperature_desktop_layout(data: List[Dict[str, str]]) -> str:
 
     left_head = f"<tr><th rowspan='2' class='favorite-col favorite-head'>{favorite_all_head_html()}</th><th rowspan='2' class='query-col'>Resort</th></tr><tr></tr>"
     right_group = (
-        "<tr>"
-        + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days)
-        + "</tr>"
+        "<tr>" + "".join(f"<th colspan='2'>{render_day_label_html(day_label(d))}</th>" for d in days) + "</tr>"
     )
     right_detail = "<tr>" + "".join("<th>min</th><th>max</th>" for _ in days) + "</tr>"
 

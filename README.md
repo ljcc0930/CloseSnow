@@ -369,6 +369,24 @@ The sync script:
 
 ## Testing
 
+Install development dependencies:
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+```
+
+Run formatter:
+
+```bash
+./scripts/format.sh
+```
+
+Run lint checks:
+
+```bash
+./scripts/lint.sh
+```
+
 Run all tests:
 
 ```bash
@@ -383,6 +401,14 @@ python3 -m pytest tests/frontend -q
 python3 -m pytest tests/integration -q
 python3 -m pytest tests/smoke -q
 ```
+
+Install the repository pre-push hook:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The pre-push hook runs `./scripts/lint.sh` and `python3 -m pytest -q`.
 
 ## GitHub Pages Workflow
 

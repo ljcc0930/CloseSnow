@@ -85,10 +85,10 @@ def _reports_to_metric_rows(
             day = daily[day_idx] if day_idx < len(daily) else {}
             value = day.get(daily_source_key)
             if value is None:
-                row[f"day_{day_idx+1}_{daily_output_suffix}"] = ""
+                row[f"day_{day_idx + 1}_{daily_output_suffix}"] = ""
             else:
-                row[f"day_{day_idx+1}_{daily_output_suffix}"] = format(_as_float(value), daily_format)
-            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+                row[f"day_{day_idx + 1}_{daily_output_suffix}"] = format(_as_float(value), daily_format)
+            row[f"label_day_{day_idx + 1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
 
@@ -134,10 +134,10 @@ def reports_to_temp_rows(reports: List[Dict[str, Any]], display_days: int = 14) 
             day = daily[day_idx] if day_idx < len(daily) else {}
             max_value = day.get("temperature_max_c")
             min_value = day.get("temperature_min_c")
-            row[f"day_{day_idx+1}_max_c"] = "" if max_value is None else str(max_value)
-            row[f"day_{day_idx+1}_min_c"] = "" if min_value is None else str(min_value)
-            row[f"day_{day_idx+1}_above_0"] = "1" if (max_value is not None and float(max_value) > 0) else "0"
-            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+            row[f"day_{day_idx + 1}_max_c"] = "" if max_value is None else str(max_value)
+            row[f"day_{day_idx + 1}_min_c"] = "" if min_value is None else str(min_value)
+            row[f"day_{day_idx + 1}_above_0"] = "1" if (max_value is not None and float(max_value) > 0) else "0"
+            row[f"label_day_{day_idx + 1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
 
@@ -150,8 +150,8 @@ def reports_to_weather_rows(reports: List[Dict[str, Any]], display_days: int = 1
         for day_idx in range(display_days):
             day = daily[day_idx] if day_idx < len(daily) else {}
             code = day.get("weather_code")
-            row[f"day_{day_idx+1}_weather_code"] = "" if code is None else str(code)
-            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+            row[f"day_{day_idx + 1}_weather_code"] = "" if code is None else str(code)
+            row[f"label_day_{day_idx + 1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows
 
@@ -174,8 +174,8 @@ def reports_to_sun_rows(reports: List[Dict[str, Any]], display_days: int = 14) -
             if sunset is None:
                 sunset = _hhmm_value(day.get("sunset_iso"))
 
-            row[f"day_{day_idx+1}_sunrise"] = "" if sunrise is None else str(sunrise)
-            row[f"day_{day_idx+1}_sunset"] = "" if sunset is None else str(sunset)
-            row[f"label_day_{day_idx+1}"] = _day_label_from_date(day.get("date"))
+            row[f"day_{day_idx + 1}_sunrise"] = "" if sunrise is None else str(sunrise)
+            row[f"day_{day_idx + 1}_sunset"] = "" if sunset is None else str(sunset)
+            row[f"label_day_{day_idx + 1}"] = _day_label_from_date(day.get("date"))
         rows.append(row)
     return rows

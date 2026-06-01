@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -39,9 +39,7 @@ def build_html(
     filter_meta_json = json.dumps(filter_meta, ensure_ascii=False).replace("</", "<\\/")
     page_bootstrap_json = json.dumps({"dataUrl": data_url}, ensure_ascii=False).replace("</", "<\\/")
     initial_payload_json = (
-        json.dumps(initial_payload, ensure_ascii=False).replace("</", "<\\/")
-        if initial_payload is not None
-        else "null"
+        json.dumps(initial_payload, ensure_ascii=False).replace("</", "<\\/") if initial_payload is not None else "null"
     )
     return (
         _PAGE_TEMPLATE.replace("{{generated_utc_iso}}", generated_utc_iso)

@@ -91,9 +91,7 @@ def apply_catalog_filters(
         items = [
             item
             for item in items
-            if allowed.intersection(
-                {str(v).strip().lower() for v in (item.get("pass_types") or []) if str(v).strip()}
-            )
+            if allowed.intersection({str(v).strip().lower() for v in (item.get("pass_types") or []) if str(v).strip()})
         ]
     if region:
         want = region.lower()
@@ -158,7 +156,14 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
     catalog = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
     available = available_filters(catalog)
     has_filters = bool(
-        pass_types or region or subregions or countries or search_text or include_all or has_include_default or has_search_all
+        pass_types
+        or region
+        or subregions
+        or countries
+        or search_text
+        or include_all
+        or has_include_default
+        or has_search_all
     )
     if not has_filters:
         applied["search_all"] = True
@@ -193,17 +198,11 @@ def select_resorts_from_query(qs: dict) -> tuple[List[str], str, dict, dict, boo
         )
 
     allowed_queries = {
-        str(item.get("query", "")).strip()
-        for item in filtered_catalog
-        if str(item.get("query", "")).strip()
+        str(item.get("query", "")).strip() for item in filtered_catalog if str(item.get("query", "")).strip()
     }
     if resorts:
         selected = [r for r in resorts if r in allowed_queries]
     else:
-        selected = [
-            str(item["query"]).strip()
-            for item in filtered_catalog
-            if str(item.get("query", "")).strip()
-        ]
+        selected = [str(item["query"]).strip() for item in filtered_catalog if str(item.get("query", "")).strip()]
     no_match = len(selected) == 0
     return selected, "", applied, available, no_match

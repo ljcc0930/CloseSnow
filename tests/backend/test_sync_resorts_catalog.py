@@ -61,6 +61,7 @@ def test_validate_ikon_destinations_coverage_reports_missing_names():
     assert len(errors) == 1
     assert "Winter Park Resort" in errors[0]
 
+
 def test_merge_entries_skips_aspen_snowmass_aggregate():
     existing = [
         {

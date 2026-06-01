@@ -61,4 +61,3 @@ def test_write_unified_json(tmp_path):
     write_unified_json(str(path), payload)
     parsed = json.loads(path.read_text(encoding="utf-8"))
     assert parsed == payload
-

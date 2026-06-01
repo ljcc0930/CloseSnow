@@ -6,7 +6,6 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 
 import pytest
-
 from src.web.weather_page_server import make_handler
 
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
-import sys
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.backend.resort_catalog import VALID_PASS_TYPES, validate_resort_catalog
+from src.backend.resort_catalog import VALID_PASS_TYPES, validate_resort_catalog  # noqa: E402
 
 DEFAULT_RESORTS_PATH = REPO_ROOT / "resorts.yml"
 USER_AGENT = "Mozilla/5.0 (compatible; CloseSnow/1.0)"
@@ -368,7 +368,11 @@ def flatten_ikon_destination_names(destinations: List[Dict[str, Any]]) -> List[s
         if not isinstance(destination, dict):
             continue
         sub_destinations = [x for x in (destination.get("subDestinations") or []) if isinstance(x, dict)]
-        candidates = [destination] if bool(destination.get("ignoreSubDestinations")) or not sub_destinations else sub_destinations
+        candidates = (
+            [destination]
+            if bool(destination.get("ignoreSubDestinations")) or not sub_destinations
+            else sub_destinations
+        )
         for candidate in candidates:
             raw_name = clean_text(candidate.get("name") or candidate.get("title") or "")
             if not raw_name:
@@ -560,11 +564,7 @@ def normalize_existing_entry(entry: Dict[str, Any]) -> Dict[str, Any] | None:
     query = raw_query or build_query(name, state, country)
 
     pass_types = sorted(
-        {
-            str(v).strip().lower()
-            for v in (entry.get("pass_types") or [])
-            if str(v).strip().lower() in VALID_PASS_TYPES
-        }
+        {str(v).strip().lower() for v in (entry.get("pass_types") or []) if str(v).strip().lower() in VALID_PASS_TYPES}
     )
     if not pass_types:
         return None

@@ -40,7 +40,9 @@ def _sample_catalog():
 
 
 def test_select_resorts_defaults_to_default_scope(monkeypatch):
-    monkeypatch.setattr("src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog())
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog()
+    )
 
     selected, resorts_file, applied, available, no_match = select_resorts_from_query({})
 
@@ -57,7 +59,9 @@ def test_select_resorts_defaults_to_default_scope(monkeypatch):
 
 
 def test_select_resorts_search_all_ignores_other_filters(monkeypatch):
-    monkeypatch.setattr("src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog())
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog()
+    )
 
     selected, resorts_file, applied, available, no_match = select_resorts_from_query(
         {
@@ -82,7 +86,9 @@ def test_select_resorts_search_all_ignores_other_filters(monkeypatch):
 
 
 def test_select_resorts_search_filtered_respects_filters(monkeypatch):
-    monkeypatch.setattr("src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog())
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog()
+    )
 
     selected, resorts_file, applied, _available, no_match = select_resorts_from_query(
         {
@@ -104,7 +110,9 @@ def test_select_resorts_search_filtered_respects_filters(monkeypatch):
 
 
 def test_select_resorts_accepts_multi_value_subregion_and_country(monkeypatch):
-    monkeypatch.setattr("src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog())
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog()
+    )
 
     selected, resorts_file, applied, _available, no_match = select_resorts_from_query(
         {
@@ -122,7 +130,9 @@ def test_select_resorts_accepts_multi_value_subregion_and_country(monkeypatch):
 
 
 def test_select_resorts_supports_long_form_state_country_and_city(monkeypatch):
-    monkeypatch.setattr("src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog())
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog", lambda path: _sample_catalog()
+    )
 
     selected_state, _file, _applied, _available, no_match_state = select_resorts_from_query(
         {"search": ["utah"], "search_all": ["1"], "include_all": ["1"]}

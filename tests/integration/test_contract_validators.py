@@ -3,7 +3,6 @@ from __future__ import annotations
 from copy import deepcopy
 
 import pytest
-
 from src.contract.validators import ContractValidationError, validate_weather_payload_v1
 
 
@@ -57,4 +56,3 @@ def test_validate_weather_payload_v1_rejects_report_shape(valid_payload):
     payload["reports"] = [{"query": "A"}]
     with pytest.raises(ContractValidationError, match=r"reports\[0\]\.daily"):
         validate_weather_payload_v1(payload)
-

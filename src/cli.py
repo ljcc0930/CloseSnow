@@ -2,23 +2,23 @@
 from __future__ import annotations
 
 import argparse
-from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import os
-from pathlib import Path
 import shutil
 import sys
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.backend.weather_data_server import make_handler as make_data_handler
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
 from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
 from src.web.weather_page_server import make_handler
-from src.backend.pipelines.static_pipeline import fetch_static_payload
-from src.backend.weather_data_server import make_handler as make_data_handler
 
 
 def _add_fetch_options(p: argparse.ArgumentParser) -> None:
@@ -72,7 +72,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_static.add_argument("--skip-fetch", action="store_true")
     p_static.add_argument("--skip-render", action="store_true")
 
-    p_serve_static = sub.add_parser("serve-static", help="Build and serve generated static site files from a directory.")
+    p_serve_static = sub.add_parser(
+        "serve-static", help="Build and serve generated static site files from a directory."
+    )
     _add_fetch_options(p_serve_static)
     p_serve_static.add_argument("--host", default="127.0.0.1")
     p_serve_static.add_argument("--port", type=int, default=8011)

@@ -5,7 +5,6 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
-
 from src.web.data_sources.gateway import load_payload
 from src.web.pipelines.static_site import write_payload_json
 from src.web.weather_page_render_core import render_payload_html

@@ -4,14 +4,17 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog as load_airport_catalog_airports
+from src.backend.airport_catalog import find_nearby_airports
+from src.backend.airport_catalog import load_airport_catalog as load_airport_catalog_airports
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
-from src.backend.compute import build_payload_metadata, run_pipeline_async as _run_pipeline_async, select_resorts
+from src.backend.compute import build_payload_metadata, select_resorts
+from src.backend.compute import run_pipeline_async as _run_pipeline_async
 from src.backend.constants import COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import seed_coordinate_cache_from_catalog, seed_coordinate_cache_from_unified
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
-from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
+from src.contract import SCHEMA_VERSION as SCHEMA_VERSION
+from src.contract import validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +39,9 @@ def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
     return out
 
 
-def _enrich_reports_with_catalog_metadata(reports: List[Dict[str, Any]], metadata_by_query: Dict[str, Dict[str, Any]]) -> None:
+def _enrich_reports_with_catalog_metadata(
+    reports: List[Dict[str, Any]], metadata_by_query: Dict[str, Dict[str, Any]]
+) -> None:
     for report in reports:
         query = str(report.get("query", "")).strip()
         if not query:

@@ -13,10 +13,10 @@ ColorFn = Callable[[Optional[float]], str]
 
 def short_label(name: str, weekly_suffix: str, daily_suffix: str) -> str:
     if name.startswith("week") and name.endswith(weekly_suffix):
-        idx = name[len("week"):].split("_", 1)[0]
+        idx = name[len("week") :].split("_", 1)[0]
         return f"week {idx}"
     if name.startswith("day_") and name.endswith(daily_suffix):
-        idx = name[len("day_"):].split("_", 1)[0]
+        idx = name[len("day_") :].split("_", 1)[0]
         if idx == "1":
             return "Today"
         return f"day {idx}"
@@ -27,7 +27,7 @@ def _day_index_from_header(name: str, daily_suffix: str) -> Optional[int]:
     if not (name.startswith("day_") and name.endswith(daily_suffix)):
         return None
     try:
-        return int(name[len("day_"):].split("_", 1)[0])
+        return int(name[len("day_") :].split("_", 1)[0])
     except (TypeError, ValueError):
         return None
 

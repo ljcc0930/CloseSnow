@@ -7,23 +7,21 @@ from __future__ import annotations
 
 import argparse
 import logging
-from pathlib import Path
 import shutil
 import sys
+from pathlib import Path
 from typing import List
 
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.shared.config import DEFAULT_RESORTS_FILE
 from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.pipelines import render_hourly_pages, render_html
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        description="Render static ski weather HTML using unified backend payload."
-    )
+    p = argparse.ArgumentParser(description="Render static ski weather HTML using unified backend payload.")
     p.add_argument(
         "--resort",
         action="append",

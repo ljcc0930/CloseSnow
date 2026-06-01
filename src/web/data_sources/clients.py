@@ -9,8 +9,7 @@ from src.web.data_sources.static_json_source import load_static_payload
 
 
 class PayloadClient(Protocol):
-    def load(self) -> Dict[str, Any]:
-        ...
+    def load(self) -> Dict[str, Any]: ...
 
 
 @dataclass(frozen=True)

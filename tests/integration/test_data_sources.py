@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from src.contract.validators import ContractValidationError
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
@@ -341,7 +340,9 @@ def test_load_request_payload_populates_filter_metadata_fallback(monkeypatch):
         },
     )
     monkeypatch.setattr("src.web.data_sources.request_source.load_supported_resort_catalog", lambda: [{"query": "A"}])
-    monkeypatch.setattr("src.web.data_sources.request_source.available_filters", lambda catalog: {"pass_type": {"ikon": 1}})
+    monkeypatch.setattr(
+        "src.web.data_sources.request_source.available_filters", lambda catalog: {"pass_type": {"ikon": 1}}
+    )
     monkeypatch.setattr("src.web.data_sources.request_source.default_applied_filters", lambda: {"search": ""})
 
     payload = load_request_payload(mode="file", source="/tmp/payload.json")

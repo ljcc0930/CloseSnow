@@ -1,0 +1,28 @@
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+src = ["src", "tests", "scripts"]
+exclude = [
+  ".cache",
+  ".git",
+  ".ruff_cache",
+  "__pycache__",
+  "agent_docs",
+  "resort",
+  "site",
+]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+  "B",
+  "E4",
+  "E7",
+  "E9",
+  "F",
+  "I",
+]

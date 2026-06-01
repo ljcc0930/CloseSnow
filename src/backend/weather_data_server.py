@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
+import sys
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import sys
 from typing import Dict, List
 from urllib.parse import parse_qs, urlparse
 
@@ -27,6 +27,7 @@ from src.backend.services.resort_selection_service import (
     supported_catalog,
 )
 from src.shared.config import DEFAULT_RESORTS_FILE
+
 
 def _append_common_headers(handler: BaseHTTPRequestHandler, allow_origin: str) -> None:
     handler.send_header("Access-Control-Allow-Origin", allow_origin)
@@ -137,7 +138,10 @@ def make_handler(
                     {
                         "ok": True,
                         "service": "closesnow-backend-data",
-                        "time_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+                        "time_utc": datetime.now(timezone.utc)
+                        .replace(microsecond=0)
+                        .isoformat()
+                        .replace("+00:00", "Z"),
                     },
                 )
                 return

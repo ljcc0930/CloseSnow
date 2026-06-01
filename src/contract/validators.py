@@ -21,9 +21,7 @@ def validate_weather_payload_v1(payload: Mapping[str, Any]) -> None:
 
     schema_version = payload.get("schema_version")
     if schema_version != SCHEMA_VERSION:
-        raise ContractValidationError(
-            f"Invalid schema_version: expected '{SCHEMA_VERSION}', got '{schema_version}'"
-        )
+        raise ContractValidationError(f"Invalid schema_version: expected '{SCHEMA_VERSION}', got '{schema_version}'")
 
     _require_type(payload, "generated_at_utc", str)
     _require_type(payload, "source", str)
