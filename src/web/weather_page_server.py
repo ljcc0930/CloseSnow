@@ -25,12 +25,11 @@ from src.backend.constants import (
     API_RETRY_TIMES,
     DEFAULT_FORECAST_CACHE_HOURS,
     DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_HOURLY_HOURS,
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
-    MAX_HOURLY_HOURS,
 )
+from src.backend.services.hourly_options import parse_hour_count
 from src.backend.services.payload_memory_cache import PayloadMemoryCache, frozen_query_params
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
@@ -40,14 +39,6 @@ from src.web.weather_page_render_core import render_payload_html
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
-
-
-def _parse_hours(raw: str, default: int = DEFAULT_HOURLY_HOURS) -> int:
-    try:
-        value = int(raw)
-    except (TypeError, ValueError):
-        value = default
-    return max(1, min(MAX_HOURLY_HOURS, value))
 
 
 def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
@@ -179,7 +170,7 @@ def make_handler(
                 if not resort_id:
                     self._write(400, b'{"error":"Missing required query parameter: resort_id"}', "application/json")
                     return
-                hours = _parse_hours((qs.get("hours", [str(DEFAULT_HOURLY_HOURS)])[0] or str(DEFAULT_HOURLY_HOURS)))
+                hours = parse_hour_count(qs.get("hours", [""])[0])
                 code, payload = self._load_hourly_payload(resort_id, hours)
                 body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(code, body, "application/json; charset=utf-8")

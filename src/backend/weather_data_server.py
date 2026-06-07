@@ -17,13 +17,12 @@ from src.backend.constants import (
     API_RETRY_TIMES,
     DEFAULT_FORECAST_CACHE_HOURS,
     DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_HOURLY_HOURS,
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
-    MAX_HOURLY_HOURS,
 )
 from src.backend.pipelines.live_pipeline import run_live_payload
+from src.backend.services.hourly_options import parse_hour_count
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 from src.backend.services.payload_memory_cache import PayloadMemoryCache
 from src.backend.services.resort_selection_service import (
@@ -113,14 +112,6 @@ def _hourly_payload_for_resort(
     )
 
 
-def _parse_hours(raw: str, default: int = DEFAULT_HOURLY_HOURS) -> int:
-    try:
-        value = int(raw)
-    except (TypeError, ValueError):
-        value = default
-    return max(1, min(MAX_HOURLY_HOURS, value))
-
-
 def make_handler(
     cache_file: str,
     geocode_cache_hours: int,
@@ -172,7 +163,7 @@ def make_handler(
                 if not resort_id:
                     self._write_json(400, {"error": "Missing required query parameter: resort_id"})
                     return
-                hours = _parse_hours((qs.get("hours", [str(DEFAULT_HOURLY_HOURS)])[0] or str(DEFAULT_HOURLY_HOURS)))
+                hours = parse_hour_count(qs.get("hours", [""])[0])
                 try:
                     result = build_hourly_payload_for_resort(
                         resort_id=resort_id,
