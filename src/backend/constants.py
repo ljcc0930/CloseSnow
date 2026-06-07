@@ -12,7 +12,8 @@ HISTORY_DAYS = 14
 API_RETRY_TIMES = 2
 API_RETRY_DELAY_SECONDS = 10.0
 
-COORDINATES_CACHE_FILE = str(REPO_ROOT / ".cache" / "resort_coordinates.json")
+CURATED_COORDINATES_CACHE_FILE = str(REPO_ROOT / ".cache" / "resort_coordinates.json")
+COORDINATES_CACHE_FILE = str(REPO_ROOT / ".cache" / "runtime_resort_coordinates.json")
 
 DEFAULT_RESORTS = [
     "Steamboat, CO",

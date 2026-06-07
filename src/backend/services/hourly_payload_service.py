@@ -5,8 +5,8 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
-from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE
-from src.backend.io import seed_coordinate_cache_from_entries
+from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE, CURATED_COORDINATES_CACHE_FILE
+from src.backend.io import seed_coordinate_cache_from_coordinate_cache_file, seed_coordinate_cache_from_entries
 from src.backend.models import ResortLocation
 from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
 from src.backend.services.resort_selection_service import load_supported_resort_catalog
@@ -194,6 +194,7 @@ async def build_hourly_payloads_for_resorts_async(
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
+    seed_coordinate_cache_from_coordinate_cache_file(coord_cache, CURATED_COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_entries(coord_cache, items)
     airports = _load_airports_safely()
 
@@ -280,6 +281,7 @@ def build_hourly_payload_for_resort(
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
+    seed_coordinate_cache_from_coordinate_cache_file(coord_cache, CURATED_COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_entries(coord_cache, [item])
     try:
         return _build_hourly_payload_for_item(

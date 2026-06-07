@@ -9,9 +9,19 @@ from src.backend.airport_catalog import load_airport_catalog as load_airport_cat
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
 from src.backend.compute import build_payload_metadata, select_resorts
 from src.backend.compute import run_pipeline_async as _run_pipeline_async
-from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    COORDINATES_CACHE_FILE,
+    CURATED_COORDINATES_CACHE_FILE,
+    DEFAULT_RESORTS,
+    DEFAULT_RESORTS_FILE,
+)
 from src.backend.export.payload_exporter import export_payload_artifacts
-from src.backend.io import seed_coordinate_cache_from_catalog, seed_coordinate_cache_from_unified
+from src.backend.io import (
+    seed_coordinate_cache_from_catalog,
+    seed_coordinate_cache_from_coordinate_cache_file,
+    seed_coordinate_cache_from_unified,
+)
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
 from src.contract import SCHEMA_VERSION as SCHEMA_VERSION
 from src.contract import validate_weather_payload_v1
@@ -117,6 +127,7 @@ def compute_pipeline_payload(
     cache_path = dated_cache_path(cache_file)
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
+    seed_coordinate_cache_from_coordinate_cache_file(coord_cache, CURATED_COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_unified(coord_cache, ".cache/resorts_weather_unified.json")
     if output_json != ".cache/resorts_weather_unified.json":
         seed_coordinate_cache_from_unified(coord_cache, output_json)

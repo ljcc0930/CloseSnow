@@ -92,6 +92,8 @@ class ResortCoordinateCache:
     def set(self, query: str, value: Dict[str, Any]) -> None:
         key = self._normalize_query(query)
         with self._lock:
+            if self.data["entries"].get(key) == value:
+                return
             self.data["entries"][key] = value
             self._dirty = True
 

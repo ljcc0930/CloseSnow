@@ -77,6 +77,29 @@ def test_resort_coordinate_cache_save_skips_when_not_dirty(tmp_path):
     assert not path.exists()
 
 
+def test_resort_coordinate_cache_set_skips_unchanged_values(tmp_path):
+    path = tmp_path / "coords.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "entries": {
+                    "snowbird, ut": {
+                        "latitude": 1.0,
+                        "longitude": 2.0,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    before = path.read_text(encoding="utf-8")
+    cache = ResortCoordinateCache(str(path))
+    cache.set("Snowbird, UT", {"latitude": 1.0, "longitude": 2.0})
+    cache.save()
+    assert path.read_text(encoding="utf-8") == before
+
+
 def test_resort_coordinate_cache_invalid_file_falls_back(tmp_path):
     path = tmp_path / "coords.json"
     path.write_text("{oops", encoding="utf-8")

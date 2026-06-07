@@ -54,6 +54,27 @@ def seed_coordinate_cache_from_entries(cache: ResortCoordinateCache, entries: It
         )
 
 
+def seed_coordinate_cache_from_coordinate_cache_file(cache: ResortCoordinateCache, path: str) -> None:
+    if not path or not os.path.exists(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except Exception:
+        return
+
+    entries = payload.get("entries") if isinstance(payload, dict) else None
+    if not isinstance(entries, dict):
+        return
+
+    seed_items = []
+    for query, value in entries.items():
+        if not isinstance(value, dict):
+            continue
+        seed_items.append({"query": query, **value})
+    seed_coordinate_cache_from_entries(cache, seed_items)
+
+
 def seed_coordinate_cache_from_unified(cache: ResortCoordinateCache, path: str) -> None:
     if not path or not os.path.exists(path):
         return

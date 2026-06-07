@@ -4,6 +4,7 @@ import json
 
 from src.backend.io.cache_seed import (
     seed_coordinate_cache_from_catalog,
+    seed_coordinate_cache_from_coordinate_cache_file,
     seed_coordinate_cache_from_entries,
     seed_coordinate_cache_from_unified,
 )
@@ -84,6 +85,44 @@ def test_seed_coordinate_cache_from_entries_uses_state_as_admin1():
                 "longitude": -121.4750288,
                 "country": "US",
                 "admin1": "WA",
+            },
+        )
+    ]
+
+
+def test_seed_coordinate_cache_from_coordinate_cache_file_reads_entries(tmp_path):
+    cache = _DummyCoordCache()
+    path = tmp_path / "coords.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "entries": {
+                    "snowbird, ut": {
+                        "name": "Snowbird",
+                        "latitude": 40.581,
+                        "longitude": -111.656,
+                        "country": "US",
+                        "admin1": "UT",
+                    },
+                    "broken": "ignored",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    seed_coordinate_cache_from_coordinate_cache_file(cache, str(path))
+
+    assert cache.set_calls == [
+        (
+            "snowbird, ut",
+            {
+                "name": "Snowbird",
+                "latitude": 40.581,
+                "longitude": -111.656,
+                "country": "US",
+                "admin1": "UT",
             },
         )
     ]
