@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from src.shared.config import DEFAULT_RESORTS_FILE as DEFAULT_RESORTS_FILE
-from src.shared.config import REPO_ROOT
+from src.shared import config
+
+REPO_ROOT = config.REPO_ROOT
+DEFAULT_RESORTS_FILE = config.DEFAULT_RESORTS_FILE
 
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"

@@ -31,10 +31,10 @@ class PayloadMemoryCache:
 
         payload = loader()
         cached_payload = copy.deepcopy(payload)
-        expires_at = now + self.ttl_seconds
+        expires_at = time.monotonic() + self.ttl_seconds
         with self._lock:
             self._entries[key] = _PayloadCacheEntry(expires_at=expires_at, payload=cached_payload)
-        return copy.deepcopy(cached_payload)
+        return copy.deepcopy(payload)
 
 
 def frozen_query_params(qs: Dict[str, List[str]]) -> Tuple[Tuple[str, Tuple[str, ...]], ...]:

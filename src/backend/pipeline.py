@@ -29,10 +29,16 @@ from src.backend.io import (
     seed_coordinate_cache_from_unified,
 )
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
-from src.contract import SCHEMA_VERSION as SCHEMA_VERSION
-from src.contract import validate_weather_payload_v1
+from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "SCHEMA_VERSION",
+    "compute_pipeline_payload",
+    "read_resorts",
+    "run_pipeline",
+]
 
 
 def read_resorts(path: str, *, include_all: bool = False) -> List[str]:
