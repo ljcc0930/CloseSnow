@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+    DEFAULT_STATIC_HOURLY_HOURS,
+)
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
 from src.web.weather_page_render_core import render_payload_html
 
@@ -106,11 +113,11 @@ def render_hourly_pages(
     hourly_mode: str = "local",
     hourly_source: str = "",
     hourly_timeout: int = 20,
-    hourly_hours: int = 120,
-    cache_file: str = ".cache/open_meteo_cache.json",
-    geocode_cache_hours: int = 24 * 30,
-    forecast_cache_hours: int = 3,
-    hourly_max_workers: int = 8,
+    hourly_hours: int = DEFAULT_STATIC_HOURLY_HOURS,
+    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
+    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
+    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
+    hourly_max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> List[Path]:
     site_root = Path(index_html_path).parent

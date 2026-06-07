@@ -13,8 +13,14 @@ from src.backend.constants import (
     API_RETRY_TIMES,
     COORDINATES_CACHE_FILE,
     CURATED_COORDINATES_CACHE_FILE,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_RESORTS,
     DEFAULT_RESORTS_FILE,
+    DEFAULT_UNIFIED_PAYLOAD_FILE,
 )
 from src.backend.export.payload_exporter import export_payload_artifacts
 from src.backend.io import (
@@ -99,7 +105,7 @@ def _enrich_reports_with_nearby_airports(reports: List[Dict[str, Any]], airports
             resort_latitude=lat,
             resort_longitude=lon,
             airports=airports,
-            radius_miles=250.0,
+            radius_miles=DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
         )
 
 
@@ -108,11 +114,11 @@ def compute_pipeline_payload(
     resorts_file: str = DEFAULT_RESORTS_FILE,
     include_all_resorts: bool = False,
     use_default_resorts: bool = False,
-    output_json: str = ".cache/resorts_weather_unified.json",
-    cache_file: str = ".cache/open_meteo_cache.json",
-    geocode_cache_hours: int = 24 * 30,
-    forecast_cache_hours: int = 3,
-    max_workers: int = 8,
+    output_json: str = DEFAULT_UNIFIED_PAYLOAD_FILE,
+    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
+    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
+    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
+    max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     selected = select_resorts(
@@ -128,8 +134,8 @@ def compute_pipeline_payload(
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_coordinate_cache_file(coord_cache, CURATED_COORDINATES_CACHE_FILE)
-    seed_coordinate_cache_from_unified(coord_cache, ".cache/resorts_weather_unified.json")
-    if output_json != ".cache/resorts_weather_unified.json":
+    seed_coordinate_cache_from_unified(coord_cache, DEFAULT_UNIFIED_PAYLOAD_FILE)
+    if output_json != DEFAULT_UNIFIED_PAYLOAD_FILE:
         seed_coordinate_cache_from_unified(coord_cache, output_json)
     seed_coordinate_cache_from_catalog(coord_cache, DEFAULT_RESORTS_FILE)
     if resorts_file:
@@ -188,15 +194,15 @@ def run_pipeline(
     resorts_file: str = DEFAULT_RESORTS_FILE,
     include_all_resorts: bool = False,
     use_default_resorts: bool = False,
-    output_json: str = ".cache/resorts_weather_unified.json",
+    output_json: str = DEFAULT_UNIFIED_PAYLOAD_FILE,
     snow_csv: str = ".cache/resorts_snowfall_daily.csv",
     rain_csv: str = ".cache/resorts_rainfall_daily.csv",
     temp_csv: str = ".cache/resorts_temperature_daily.csv",
-    cache_file: str = ".cache/open_meteo_cache.json",
-    geocode_cache_hours: int = 24 * 30,
-    forecast_cache_hours: int = 3,
+    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
+    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
+    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     write_outputs: bool = True,
-    max_workers: int = 8,
+    max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     payload = compute_pipeline_payload(

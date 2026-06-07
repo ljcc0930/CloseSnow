@@ -7,7 +7,12 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 from urllib.parse import quote, urlencode, urlsplit, urlunsplit
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+)
 from src.backend.open_meteo import with_retry
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 
@@ -133,9 +138,9 @@ def load_hourly_payload(
     resort_id: str,
     hours: int,
     timeout: int = 20,
-    cache_file: str = ".cache/open_meteo_cache.json",
-    geocode_cache_hours: int = 24 * 30,
-    forecast_cache_hours: int = 3,
+    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
+    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
+    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Tuple[int, Dict[str, Any]]:
     if mode == "local":

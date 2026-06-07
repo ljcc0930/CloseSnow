@@ -13,7 +13,13 @@ from typing import Any, Dict, List, Tuple
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+)
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.backend.weather_data_server import make_handler as make_data_handler
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
@@ -39,10 +45,10 @@ def _add_fetch_options(p: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Include all resorts from --resorts-file, including default_enabled=false entries.",
     )
-    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
 
 
@@ -87,19 +93,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
     p_serve.add_argument("--host", default="127.0.0.1")
     p_serve.add_argument("--port", type=int, default=8010)
-    p_serve.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p_serve.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p_serve.add_argument("--forecast-cache-hours", type=int, default=3)
-    p_serve.add_argument("--max-workers", type=int, default=8)
+    p_serve.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p_serve.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p_serve.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p_serve.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p_serve.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
 
     p_serve_data = sub.add_parser("serve-data", help="Run backend data API server only.")
     p_serve_data.add_argument("--host", default="127.0.0.1")
     p_serve_data.add_argument("--port", type=int, default=8020)
-    p_serve_data.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p_serve_data.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p_serve_data.add_argument("--forecast-cache-hours", type=int, default=3)
-    p_serve_data.add_argument("--max-workers", type=int, default=8)
+    p_serve_data.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p_serve_data.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p_serve_data.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p_serve_data.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p_serve_data.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     p_serve_data.add_argument("--allow-origin", default="*")
 
@@ -109,10 +115,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve_web.add_argument("--data-mode", choices=["local", "api", "file"], default="api")
     p_serve_web.add_argument("--data-source", default=os.getenv(DATA_API_URL_ENV, DEFAULT_DATA_API_URL))
     p_serve_web.add_argument("--data-timeout", type=int, default=20)
-    p_serve_web.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p_serve_web.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p_serve_web.add_argument("--forecast-cache-hours", type=int, default=3)
-    p_serve_web.add_argument("--max-workers", type=int, default=8)
+    p_serve_web.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p_serve_web.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p_serve_web.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p_serve_web.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p_serve_web.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
 
     return p

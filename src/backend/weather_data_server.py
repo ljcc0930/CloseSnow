@@ -13,7 +13,16 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_HOURLY_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+    DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
+    MAX_HOURLY_HOURS,
+)
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
 from src.backend.services.payload_memory_cache import PayloadMemoryCache
@@ -104,12 +113,12 @@ def _hourly_payload_for_resort(
     )
 
 
-def _parse_hours(raw: str, default: int = 72) -> int:
+def _parse_hours(raw: str, default: int = DEFAULT_HOURLY_HOURS) -> int:
     try:
         value = int(raw)
     except (TypeError, ValueError):
         value = default
-    return max(1, min(240, value))
+    return max(1, min(MAX_HOURLY_HOURS, value))
 
 
 def make_handler(
@@ -119,7 +128,7 @@ def make_handler(
     max_workers: int,
     allow_origin: str = "*",
     api_retries: int = API_RETRY_TIMES,
-    payload_cache_ttl_seconds: int = 60,
+    payload_cache_ttl_seconds: int = DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
 ) -> type[BaseHTTPRequestHandler]:
     payload_cache = PayloadMemoryCache(payload_cache_ttl_seconds)
 
@@ -163,7 +172,7 @@ def make_handler(
                 if not resort_id:
                     self._write_json(400, {"error": "Missing required query parameter: resort_id"})
                     return
-                hours = _parse_hours((qs.get("hours", ["72"])[0] or "72"), default=72)
+                hours = _parse_hours((qs.get("hours", [str(DEFAULT_HOURLY_HOURS)])[0] or str(DEFAULT_HOURLY_HOURS)))
                 try:
                     result = build_hourly_payload_for_resort(
                         resort_id=resort_id,
@@ -227,7 +236,13 @@ def make_handler(
                 self._write_json(404, {"error": "Not Found"})
                 return
 
-            resorts, resorts_file, applied_filters, available_filters, no_match = self._selected_resorts(qs)
+            (
+                resorts,
+                resorts_file,
+                applied_filters,
+                available_filters,
+                no_match,
+            ) = self._selected_resorts(qs)
             if no_match:
                 payload = _empty_payload(
                     cache_file=cache_file,
@@ -267,10 +282,10 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Serve backend weather payload API.")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8020)
-    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     p.add_argument("--allow-origin", default="*")
     return p.parse_args()

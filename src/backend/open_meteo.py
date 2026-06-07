@@ -16,10 +16,13 @@ from src.backend.cache import JsonCache, ResortCoordinateCache, canonical_query
 from src.backend.constants import (
     API_RETRY_DELAY_SECONDS,
     API_RETRY_TIMES,
+    DEFAULT_HOURLY_HOURS,
+    ECMWF_MODEL,
     FORECAST_DAYS,
     FORECAST_URL,
     GEOCODING_URL,
     HISTORY_DAYS,
+    MAX_HOURLY_FORECAST_DAYS,
     NOMINATIM_URL,
 )
 from src.backend.models import ResortLocation
@@ -462,7 +465,7 @@ def _forecast_params(location: ResortLocation) -> Dict[str, Any]:
         "longitude": location.longitude,
         "forecast_days": FORECAST_DAYS,
         "timezone": "auto",
-        "models": "ecmwf_ifs025",
+        "models": ECMWF_MODEL,
         "daily": _DAILY_FIELDS,
     }
 
@@ -480,15 +483,15 @@ def _history_params(location: ResortLocation) -> Dict[str, Any]:
     }
 
 
-def _hourly_params(location: ResortLocation, hours: int = 72) -> Dict[str, Any]:
+def _hourly_params(location: ResortLocation, hours: int = DEFAULT_HOURLY_HOURS) -> Dict[str, Any]:
     requested_hours = max(1, int(hours))
-    forecast_days = max(1, min(16, math.ceil(requested_hours / 24)))
+    forecast_days = max(1, min(MAX_HOURLY_FORECAST_DAYS, math.ceil(requested_hours / 24)))
     return {
         "latitude": location.latitude,
         "longitude": location.longitude,
         "forecast_days": forecast_days,
         "timezone": "auto",
-        "models": "ecmwf_ifs025",
+        "models": ECMWF_MODEL,
         "hourly": _HOURLY_FIELDS,
     }
 
@@ -529,7 +532,7 @@ def fetch_hourly_forecast(
     location: ResortLocation,
     cache: JsonCache,
     ttl_seconds: int,
-    hours: int = 72,
+    hours: int = DEFAULT_HOURLY_HOURS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     return fetch_json(
@@ -606,7 +609,7 @@ async def fetch_hourly_forecast_async(
     location: ResortLocation,
     cache: JsonCache,
     ttl_seconds: int,
-    hours: int = 72,
+    hours: int = DEFAULT_HOURLY_HOURS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     return await fetch_json_async(

@@ -3,7 +3,13 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+)
 from src.backend.services.resort_selection_service import (
     available_filters,
     build_empty_payload,
@@ -60,10 +66,10 @@ def load_request_payload(
     query_params: Dict[str, List[str]] | None = None,
     apply_server_filters: bool = True,
     timeout: int = 20,
-    cache_file: str = ".cache/open_meteo_cache.json",
-    geocode_cache_hours: int = 24 * 30,
-    forecast_cache_hours: int = 3,
-    max_workers: int = 8,
+    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
+    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
+    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
+    max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Any]:
     qs = {key: list(values) for key, values in (query_params or {}).items()}

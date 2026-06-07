@@ -5,7 +5,14 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from src.backend.airport_catalog import find_nearby_airports, load_airport_catalog
 from src.backend.cache import JsonCache, ResortCoordinateCache, dated_cache_path
-from src.backend.constants import API_RETRY_TIMES, COORDINATES_CACHE_FILE, CURATED_COORDINATES_CACHE_FILE
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    COORDINATES_CACHE_FILE,
+    CURATED_COORDINATES_CACHE_FILE,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
+    ECMWF_MODEL,
+)
 from src.backend.io import seed_coordinate_cache_from_coordinate_cache_file, seed_coordinate_cache_from_entries
 from src.backend.models import ResortLocation
 from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
@@ -63,7 +70,7 @@ def _build_hourly_payload_from_forecast(
         resort_latitude=location.latitude,
         resort_longitude=location.longitude,
         airports=airports,
-        radius_miles=250.0,
+        radius_miles=DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
     )
     n, trimmed_hourly = _trim_hourly_forecast(forecast, hours)
     return {
@@ -77,7 +84,7 @@ def _build_hourly_payload_from_forecast(
         "subregion": item.get("subregion"),
         "pass_types": item.get("pass_types", []),
         "timezone": forecast.get("timezone"),
-        "model": "ecmwf_ifs025",
+        "model": ECMWF_MODEL,
         "input_latitude": location.latitude,
         "input_longitude": location.longitude,
         "resolved_latitude": forecast.get("latitude"),
@@ -179,7 +186,7 @@ async def build_hourly_payloads_for_resorts_async(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
-    max_workers: int = 8,
+    max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Dict[str, object] | None]:
     normalized_ids = [resort_id.strip() for resort_id in resort_ids if resort_id and resort_id.strip()]
@@ -244,7 +251,7 @@ def build_hourly_payloads_for_resorts(
     cache_file: str,
     geocode_cache_hours: int,
     forecast_cache_hours: int,
-    max_workers: int = 8,
+    max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> Dict[str, Dict[str, object] | None]:
     try:

@@ -21,7 +21,16 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_HOURLY_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+    DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
+    MAX_HOURLY_HOURS,
+)
 from src.backend.services.payload_memory_cache import PayloadMemoryCache, frozen_query_params
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
@@ -31,6 +40,14 @@ from src.web.weather_page_render_core import render_payload_html
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
+
+
+def _parse_hours(raw: str, default: int = DEFAULT_HOURLY_HOURS) -> int:
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = default
+    return max(1, min(MAX_HOURLY_HOURS, value))
 
 
 def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
@@ -75,7 +92,7 @@ def make_handler(
     data_source: str = "",
     data_timeout: int = 20,
     api_retries: int = API_RETRY_TIMES,
-    payload_cache_ttl_seconds: int = 60,
+    payload_cache_ttl_seconds: int = DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
 ) -> type[BaseHTTPRequestHandler]:
     if data_mode not in {"local", "api", "file"}:
         raise ValueError(f"Unsupported data mode: {data_mode}")
@@ -162,10 +179,7 @@ def make_handler(
                 if not resort_id:
                     self._write(400, b'{"error":"Missing required query parameter: resort_id"}', "application/json")
                     return
-                try:
-                    hours = max(1, min(240, int((qs.get("hours", ["72"])[0] or "72"))))
-                except ValueError:
-                    hours = 72
+                hours = _parse_hours((qs.get("hours", [str(DEFAULT_HOURLY_HOURS)])[0] or str(DEFAULT_HOURLY_HOURS)))
                 code, payload = self._load_hourly_payload(resort_id, hours)
                 body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
                 self._write(code, body, "application/json; charset=utf-8")
@@ -207,10 +221,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--data-mode", choices=["local", "api", "file"], default="local")
     p.add_argument("--data-source", default="")
     p.add_argument("--data-timeout", type=int, default=20)
-    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     return p.parse_args()
 

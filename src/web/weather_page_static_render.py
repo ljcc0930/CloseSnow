@@ -15,7 +15,13 @@ from typing import List
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import API_RETRY_TIMES
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+)
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.pipelines import render_hourly_pages, render_html
@@ -34,10 +40,10 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_RESORTS_FILE,
         help="Input resorts file when --resort is not provided.",
     )
-    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     p.add_argument("--output-dir", default="site")
     return p.parse_args()

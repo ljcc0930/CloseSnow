@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Sequence
 
+from src.backend.constants import DEFAULT_NEARBY_AIRPORT_RADIUS_MILES
 from src.shared.config import DEFAULT_AIRPORTS_FILE
 
 EARTH_RADIUS_MILES = 3958.7613
@@ -105,7 +106,7 @@ def find_nearby_airports(
     resort_latitude: float,
     resort_longitude: float,
     airports: Sequence[Dict[str, Any]] | None = None,
-    radius_miles: float = 250.0,
+    radius_miles: float = DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
 ) -> List[Dict[str, Any]]:
     if airports is None:
         airports = load_airport_catalog()

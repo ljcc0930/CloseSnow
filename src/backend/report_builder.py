@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from src.backend.constants import DAYS_PER_WEEK, FORECAST_DAYS, HISTORY_DAYS
+from src.backend.constants import DAYS_PER_WEEK, ECMWF_MODEL, FORECAST_DAYS, HISTORY_DAYS
 from src.backend.models import ResortLocation
 
 
@@ -110,7 +110,7 @@ def build_report(
         "admin1": location.admin1,
         "input_latitude": location.latitude,
         "input_longitude": location.longitude,
-        "model": "ecmwf_ifs025",
+        "model": ECMWF_MODEL,
         "forecast_timezone": forecast.get("timezone"),
         "resolved_latitude": forecast.get("latitude"),
         "resolved_longitude": forecast.get("longitude"),

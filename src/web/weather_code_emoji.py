@@ -3,29 +3,27 @@ from __future__ import annotations
 
 from typing import Any
 
+UNKNOWN_WEATHER_EMOJI = "❓"
+WEATHER_CODE_EMOJI_GROUPS = (
+    ((0,), "☀️"),
+    ((1,), "🌤️"),
+    ((2,), "⛅"),
+    ((3,), "☁️"),
+    ((45, 48), "🌫️"),
+    ((51, 53, 55, 56, 57), "🌦️"),
+    ((61, 63, 65, 80, 81, 82), "🌧️"),
+    ((71, 73, 75, 77, 85, 86), "❄️"),
+    ((95, 96, 99), "⛈️"),
+)
+
 
 def emoji_for_weather_code(raw_code: Any) -> str:
     try:
         code = int(raw_code)
     except (TypeError, ValueError):
-        return "❓"
+        return UNKNOWN_WEATHER_EMOJI
 
-    if code == 0:
-        return "☀️"
-    if code in {1}:
-        return "🌤️"
-    if code in {2}:
-        return "⛅"
-    if code in {3}:
-        return "☁️"
-    if code in {45, 48}:
-        return "🌫️"
-    if code in {51, 53, 55, 56, 57}:
-        return "🌦️"
-    if code in {61, 63, 65, 80, 81, 82}:
-        return "🌧️"
-    if code in {71, 73, 75, 77, 85, 86}:
-        return "❄️"
-    if code in {95, 96, 99}:
-        return "⛈️"
-    return "❓"
+    for codes, emoji in WEATHER_CODE_EMOJI_GROUPS:
+        if code in codes:
+            return emoji
+    return UNKNOWN_WEATHER_EMOJI

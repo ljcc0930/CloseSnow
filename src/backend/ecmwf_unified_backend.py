@@ -6,7 +6,16 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.backend.constants import API_RETRY_TIMES, DEFAULT_RESORTS, DEFAULT_RESORTS_FILE
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+    DEFAULT_RESORTS,
+    DEFAULT_RESORTS_FILE,
+    DEFAULT_UNIFIED_PAYLOAD_FILE,
+)
 from src.backend.pipeline import read_resorts, run_pipeline
 
 
@@ -19,14 +28,14 @@ def parse_args() -> argparse.Namespace:
         help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
     )
     p.add_argument("--use-default-resorts", action="store_true", help="Use built-in resort list.")
-    p.add_argument("--output-json", default=".cache/resorts_weather_unified.json")
+    p.add_argument("--output-json", default=DEFAULT_UNIFIED_PAYLOAD_FILE)
     p.add_argument("--snow-csv", default=".cache/resorts_snowfall_daily.csv")
     p.add_argument("--rain-csv", default=".cache/resorts_rainfall_daily.csv")
     p.add_argument("--temp-csv", default=".cache/resorts_temperature_daily.csv")
-    p.add_argument("--cache-file", default=".cache/open_meteo_cache.json")
-    p.add_argument("--geocode-cache-hours", type=int, default=24 * 30)
-    p.add_argument("--forecast-cache-hours", type=int, default=3)
-    p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
+    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
+    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
+    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     return p.parse_args()
 

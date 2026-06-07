@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from src.backend.constants import FORECAST_DAYS
+from src.backend.constants import ECMWF_MODEL, FORECAST_DAYS
 from src.contract import SCHEMA_VERSION
 
 
@@ -21,7 +21,7 @@ def build_payload_metadata(
         "schema_version": SCHEMA_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": "Open-Meteo",
-        "model": "ecmwf_ifs025",
+        "model": ECMWF_MODEL,
         "forecast_days": FORECAST_DAYS,
         "units": {
             "snowfall_cm": "cm",
