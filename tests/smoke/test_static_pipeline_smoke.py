@@ -17,6 +17,7 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=4,
+        api_retries=2,
         output_json=str(tmp_path / "data.json"),
     )
     monkeypatch.setattr("src.cli.fetch_static_payload", lambda **kwargs: valid_payload)

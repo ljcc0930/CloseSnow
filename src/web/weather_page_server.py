@@ -230,7 +230,7 @@ def main() -> int:
         data_mode=args.data_mode,
         data_source=args.data_source,
         data_timeout=args.data_timeout,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving dynamic page at http://{args.host}:{args.port}")

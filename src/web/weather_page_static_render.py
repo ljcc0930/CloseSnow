@@ -63,7 +63,7 @@ def main() -> int:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
 
     output_html = str(Path(args.output_dir) / "index.html")
@@ -78,7 +78,7 @@ def main() -> int:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         hourly_max_workers=args.max_workers,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     copy_static_assets(args.output_dir)
     print(f"Done: {out}")

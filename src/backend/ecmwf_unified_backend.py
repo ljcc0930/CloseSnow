@@ -54,7 +54,7 @@ def main() -> int:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
         write_outputs=True,
     )
     cache_info = out["cache"]

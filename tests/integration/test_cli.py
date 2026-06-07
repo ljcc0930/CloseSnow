@@ -364,6 +364,7 @@ def test_run_server_boot_path(monkeypatch, capsys):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
+        api_retries=2,
     )
     monkeypatch.setattr("src.cli.make_handler", lambda **kwargs: "handler")
     monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
@@ -398,6 +399,7 @@ def test_run_data_server_boot_path(monkeypatch, capsys):
         forecast_cache_hours=3,
         max_workers=8,
         allow_origin="*",
+        api_retries=2,
     )
     monkeypatch.setattr("src.cli.make_data_handler", lambda **kwargs: "handler")
     monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)
@@ -434,6 +436,7 @@ def test_run_web_server_boot_path(monkeypatch, capsys):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
+        api_retries=2,
     )
     monkeypatch.setattr("src.cli.make_handler", lambda **kwargs: "handler")
     monkeypatch.setattr("src.cli.ThreadingHTTPServer", DummyServer)

@@ -290,7 +290,7 @@ def main() -> int:
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
         allow_origin=args.allow_origin,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving backend data API at http://{args.host}:{args.port}")

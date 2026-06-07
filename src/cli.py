@@ -126,7 +126,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
     resorts, resorts_file, include_all_resorts = _resolve_resorts(args)
-    api_retries = getattr(args, "api_retries", API_RETRY_TIMES)
     return fetch_static_payload(
         resorts=resorts,
         resorts_file=resorts_file,
@@ -135,7 +134,7 @@ def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
-        api_retries=api_retries,
+        api_retries=args.api_retries,
     )
 
 
@@ -239,7 +238,7 @@ def run_static(args: argparse.Namespace) -> int:
             geocode_cache_hours=args.geocode_cache_hours,
             forecast_cache_hours=args.forecast_cache_hours,
             hourly_max_workers=args.max_workers,
-            api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+            api_retries=args.api_retries,
         )
         print(f"Done: {out}")
         print(f"Done: {len(hourly_pages)} resort hourly page(s)")
@@ -289,7 +288,7 @@ def run_server(args: argparse.Namespace) -> int:
         data_mode="local",
         data_source="",
         data_timeout=20,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     return _serve_http_server(
         args.host,
@@ -309,7 +308,7 @@ def run_data_server(args: argparse.Namespace) -> int:
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
         allow_origin=args.allow_origin,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     return _serve_http_server(
         args.host,
@@ -334,7 +333,7 @@ def run_web_server(args: argparse.Namespace) -> int:
         data_mode=args.data_mode,
         data_source=data_source,
         data_timeout=args.data_timeout,
-        api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
+        api_retries=args.api_retries,
     )
     lines = [
         f"Serving frontend web at http://{args.host}:{args.port}",

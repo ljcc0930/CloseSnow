@@ -19,6 +19,7 @@ def test_backend_entrypoint_main(monkeypatch, capsys):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
+        api_retries=2,
     )
     monkeypatch.setattr("src.backend.ecmwf_unified_backend.parse_args", lambda: args)
     monkeypatch.setattr(
@@ -39,6 +40,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=8,
+        api_retries=2,
         output_dir="site",
     )
     captured = {}
@@ -89,6 +91,7 @@ def test_weather_data_server_entrypoint_main(monkeypatch, capsys):
         forecast_cache_hours=3,
         max_workers=8,
         allow_origin="*",
+        api_retries=2,
     )
     monkeypatch.setattr("src.backend.weather_data_server.parse_args", lambda: args)
     monkeypatch.setattr("src.backend.weather_data_server.make_handler", lambda **kwargs: "handler")
