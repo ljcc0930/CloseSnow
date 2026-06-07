@@ -101,8 +101,15 @@ const resolveResortLabel = (payload) => String(
 const buildExternalLink = (href, label, className = "") => {
   const url = String(href || "").trim();
   if (!url) return null;
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch (_error) {
+    return null;
+  }
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) return null;
   const link = document.createElement("a");
-  link.href = url;
+  link.href = parsedUrl.toString();
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   if (className) link.className = className;
@@ -279,11 +286,11 @@ const renderLocalTime = () => {
 const renderWebsiteLink = (payload) => {
   if (!websiteLinkEl) return;
   const url = String(payload?.website || dailySummary?.website || "").trim();
-  if (!url) {
-    websiteLinkEl.innerHTML = "";
-    return;
-  }
-  websiteLinkEl.innerHTML = `Official website: <a href="${url}" target="_blank" rel="noopener noreferrer">link</a>`;
+  websiteLinkEl.textContent = "";
+  const link = buildExternalLink(url, "link");
+  if (!link) return;
+  websiteLinkEl.appendChild(document.createTextNode("Official website: "));
+  websiteLinkEl.appendChild(link);
 };
 
 const renderResortLocationLink = (payload) => {
