@@ -22,6 +22,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.backend.constants import API_RETRY_TIMES
+from src.backend.services.payload_memory_cache import PayloadMemoryCache, frozen_query_params
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
@@ -74,11 +75,13 @@ def make_handler(
     data_source: str = "",
     data_timeout: int = 20,
     api_retries: int = API_RETRY_TIMES,
+    payload_cache_ttl_seconds: int = 60,
 ) -> type[BaseHTTPRequestHandler]:
     if data_mode not in {"local", "api", "file"}:
         raise ValueError(f"Unsupported data mode: {data_mode}")
     if data_mode in {"api", "file"} and not data_source:
         raise ValueError("--data-source is required when --data-mode is api or file")
+    payload_cache = PayloadMemoryCache(payload_cache_ttl_seconds)
 
     class Handler(BaseHTTPRequestHandler):
         def _write(self, code: int, body: bytes, content_type: str) -> None:
@@ -91,17 +94,34 @@ def make_handler(
         def _load_request_payload(
             self, qs: Dict[str, List[str]], *, apply_server_filters: bool = True
         ) -> Dict[str, Any]:
-            return load_request_payload(
-                mode=data_mode,
-                source=data_source,
-                query_params=qs,
-                apply_server_filters=apply_server_filters,
-                timeout=data_timeout,
-                cache_file=cache_file,
-                geocode_cache_hours=geocode_cache_hours,
-                forecast_cache_hours=forecast_cache_hours,
-                max_workers=max_workers,
-                api_retries=api_retries,
+            def load() -> Dict[str, Any]:
+                return load_request_payload(
+                    mode=data_mode,
+                    source=data_source,
+                    query_params=qs,
+                    apply_server_filters=apply_server_filters,
+                    timeout=data_timeout,
+                    cache_file=cache_file,
+                    geocode_cache_hours=geocode_cache_hours,
+                    forecast_cache_hours=forecast_cache_hours,
+                    max_workers=max_workers,
+                    api_retries=api_retries,
+                )
+
+            if data_mode != "local":
+                return load()
+
+            return payload_cache.get_or_load(
+                (
+                    frozen_query_params(qs),
+                    apply_server_filters,
+                    cache_file,
+                    geocode_cache_hours,
+                    forecast_cache_hours,
+                    max_workers,
+                    api_retries,
+                ),
+                load,
             )
 
         def _load_hourly_payload(self, resort_id: str, hours: int) -> tuple[int, Dict[str, Any]]:

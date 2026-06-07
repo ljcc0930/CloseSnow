@@ -16,6 +16,7 @@ if str(Path(__file__).resolve().parents[2]) not in sys.path:
 from src.backend.constants import API_RETRY_TIMES
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
+from src.backend.services.payload_memory_cache import PayloadMemoryCache
 from src.backend.services.resort_selection_service import (
     apply_catalog_filters,
     available_filters,
@@ -118,7 +119,10 @@ def make_handler(
     max_workers: int,
     allow_origin: str = "*",
     api_retries: int = API_RETRY_TIMES,
+    payload_cache_ttl_seconds: int = 60,
 ) -> type[BaseHTTPRequestHandler]:
+    payload_cache = PayloadMemoryCache(payload_cache_ttl_seconds)
+
     class Handler(BaseHTTPRequestHandler):
         def _write_json(self, code: int, payload: dict) -> None:
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
@@ -232,14 +236,25 @@ def make_handler(
                     api_retries=api_retries,
                 )
             else:
-                payload = run_live_payload(
-                    resorts=resorts,
-                    resorts_file=resorts_file,
-                    cache_file=cache_file,
-                    geocode_cache_hours=geocode_cache_hours,
-                    forecast_cache_hours=forecast_cache_hours,
-                    max_workers=max_workers,
-                    api_retries=api_retries,
+                payload = payload_cache.get_or_load(
+                    (
+                        tuple(resorts),
+                        resorts_file,
+                        cache_file,
+                        geocode_cache_hours,
+                        forecast_cache_hours,
+                        max_workers,
+                        api_retries,
+                    ),
+                    lambda: run_live_payload(
+                        resorts=resorts,
+                        resorts_file=resorts_file,
+                        cache_file=cache_file,
+                        geocode_cache_hours=geocode_cache_hours,
+                        forecast_cache_hours=forecast_cache_hours,
+                        max_workers=max_workers,
+                        api_retries=api_retries,
+                    ),
                 )
             payload["available_filters"] = available_filters
             payload["applied_filters"] = applied_filters

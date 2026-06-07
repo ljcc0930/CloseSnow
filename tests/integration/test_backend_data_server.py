@@ -153,6 +153,48 @@ def test_backend_data_server_data_filters(monkeypatch, valid_payload):
         thread.join(timeout=3)
 
 
+def test_backend_data_server_caches_repeated_payload_requests(monkeypatch, valid_payload):
+    calls = []
+
+    def fake_run_live_payload(**kwargs):  # noqa: ANN001
+        calls.append(kwargs)
+        return valid_payload
+
+    monkeypatch.setattr("src.backend.weather_data_server.run_live_payload", fake_run_live_payload)
+    monkeypatch.setattr(
+        "src.backend.services.resort_selection_service.load_resort_catalog",
+        lambda path: [
+            {
+                "resort_id": "snowbird-ut",
+                "query": "Snowbird, UT",
+                "name": "Snowbird",
+                "state": "UT",
+                "country": "US",
+                "region": "west",
+                "pass_types": ["ikon"],
+            }
+        ],
+    )
+
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        first = json.loads(urllib.request.urlopen(f"{base}/api/data?pass_type=ikon", timeout=3).read().decode("utf-8"))
+        second = json.loads(urllib.request.urlopen(f"{base}/api/data?pass_type=ikon", timeout=3).read().decode("utf-8"))
+        assert first["applied_filters"]["pass_type"] == ["ikon"]
+        assert second["applied_filters"]["pass_type"] == ["ikon"]
+        assert len(calls) == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
 def test_backend_data_server_data_include_all(monkeypatch, valid_payload):
     captured = {}
 
@@ -383,6 +425,7 @@ def test_backend_data_server_search_supports_long_form_locations(monkeypatch, va
         geocode_cache_hours=720,
         forecast_cache_hours=3,
         max_workers=2,
+        payload_cache_ttl_seconds=0,
     )
     server, thread, base = _serve_once(handler)
     try:
