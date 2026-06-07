@@ -15,6 +15,12 @@ from src.backend.services.resort_selection_service import load_supported_resort_
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
+def _load_curated_coordinate_cache() -> dict[str, dict]:
+    cache_path = Path(DEFAULT_RESORTS_FILE).resolve().parent / ".cache" / "resort_coordinates.json"
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    return payload["entries"]
+
+
 def test_load_resort_catalog_from_txt(tmp_path):
     p = tmp_path / "plain_resorts.txt"
     p.write_text("Snowbird, UT\n# comment\n\nSnowbird, UT\nSolitude, UT\n", encoding="utf-8")
@@ -388,3 +394,53 @@ def test_default_catalog_includes_requested_non_default_independent_resorts():
         assert item["default_enabled"] is False
         assert item["latitude"] is not None
         assert item["longitude"] is not None
+
+
+def test_curated_coordinate_cache_matches_catalog_queries():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    cache_entries = _load_curated_coordinate_cache()
+
+    assert set(cache_entries) == {item["query"].strip().lower() for item in entries}
+
+
+def test_curated_coordinate_cache_matches_catalog_explicit_coordinates():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    cache_entries = _load_curated_coordinate_cache()
+
+    for item in entries:
+        if item.get("latitude") is None or item.get("longitude") is None:
+            continue
+        cached = cache_entries[item["query"].strip().lower()]
+        assert cached == {
+            "name": item["name"],
+            "latitude": item["latitude"],
+            "longitude": item["longitude"],
+            "country": item["country"],
+            "admin1": item.get("state") or None,
+        }
+
+
+def test_curated_coordinate_cache_keeps_audited_public_locations():
+    cache_entries = _load_curated_coordinate_cache()
+
+    assert cache_entries["coronet peak, queenstown, new zealand"] == {
+        "name": "Coronet Peak",
+        "latitude": -44.9271,
+        "longitude": 168.7362,
+        "country": "NZ",
+        "admin1": None,
+    }
+    assert cache_entries["jackson hole mountain resort, wy"] == {
+        "name": "Jackson Hole Mountain Resort",
+        "latitude": 43.588635,
+        "longitude": -110.82826740000002,
+        "country": "US",
+        "admin1": "WY",
+    }
+    assert cache_entries["yunding snow park, china"] == {
+        "name": "Yunding Snow Park",
+        "latitude": 40.565488,
+        "longitude": 115.2681,
+        "country": "CN",
+        "admin1": None,
+    }
