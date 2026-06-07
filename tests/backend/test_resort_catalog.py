@@ -335,8 +335,8 @@ def test_default_catalog_includes_silverstar_as_ikon_resort():
     assert item["default_enabled"] is False
     assert item["country"] == "CA"
     assert item["state"] == "BC"
-    assert item["latitude"] == 50.3572222
-    assert item["longitude"] == -119.0594444
+    assert item["latitude"] == 50.36030532578333
+    assert item["longitude"] == -119.05898409762015
 
 
 def test_default_catalog_includes_requested_non_default_independent_resorts():
