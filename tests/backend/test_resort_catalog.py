@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from src.backend.constants import DEFAULT_RESORTS
 from src.backend.resort_catalog import (
     load_resort_catalog,
     read_resort_queries,
@@ -337,6 +338,13 @@ def test_default_catalog_includes_silverstar_as_ikon_resort():
     assert item["state"] == "BC"
     assert item["latitude"] == 50.36030532578333
     assert item["longitude"] == -119.05898409762015
+
+
+def test_default_resorts_constant_matches_default_enabled_catalog_queries():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    expected = [item["query"] for item in entries if item.get("default_enabled")]
+
+    assert DEFAULT_RESORTS == expected
 
 
 def test_default_catalog_includes_requested_non_default_independent_resorts():
