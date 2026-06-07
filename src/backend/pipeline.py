@@ -19,7 +19,6 @@ from src.backend.constants import (
     DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
     DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_RESORTS,
-    DEFAULT_RESORTS_FILE,
     DEFAULT_UNIFIED_PAYLOAD_FILE,
 )
 from src.backend.export.payload_exporter import export_payload_artifacts
@@ -30,6 +29,7 @@ from src.backend.io import (
 )
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
 from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
+from src.shared.config import DEFAULT_RESORTS_FILE
 
 logger = logging.getLogger(__name__)
 

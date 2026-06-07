@@ -13,10 +13,10 @@ from src.backend.constants import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_RESORTS,
-    DEFAULT_RESORTS_FILE,
     DEFAULT_UNIFIED_PAYLOAD_FILE,
 )
 from src.backend.pipeline import read_resorts, run_pipeline
+from src.shared.config import DEFAULT_RESORTS_FILE
 
 
 def parse_args() -> argparse.Namespace:
