@@ -15,6 +15,46 @@ def _require_type(payload: Mapping[str, Any], key: str, expected_type: type) -> 
         raise ContractValidationError(f"Invalid type for '{key}': expected {expected_type.__name__}")
 
 
+def _require_optional_type(payload: Mapping[str, Any], key: str, expected_types: tuple[type, ...], path: str) -> None:
+    if key not in payload or payload.get(key) is None:
+        return
+    if not isinstance(payload.get(key), expected_types):
+        expected = " or ".join(t.__name__ for t in expected_types)
+        raise ContractValidationError(f"Invalid {path}.{key}: expected {expected} or null")
+
+
+def _require_optional_number(payload: Mapping[str, Any], key: str, path: str) -> None:
+    _require_optional_type(payload, key, (int, float), path)
+
+
+def _validate_daily_row(row: Any, path: str) -> None:
+    if not isinstance(row, Mapping):
+        raise ContractValidationError(f"Invalid {path}: expected object")
+    _require_optional_type(row, "date", (str,), path)
+    for key in (
+        "snowfall_cm",
+        "rain_mm",
+        "precipitation_mm",
+        "temperature_max_c",
+        "temperature_min_c",
+    ):
+        _require_optional_number(row, key, path)
+    _require_optional_type(row, "weather_code", (int,), path)
+    for key in ("sunrise_iso", "sunset_iso", "sunrise_local_hhmm", "sunset_local_hhmm"):
+        _require_optional_type(row, key, (str,), path)
+    _require_optional_type(row, "above_0", (int,), path)
+
+
+def _validate_daily_list(report: Mapping[str, Any], key: str, path: str) -> None:
+    value = report.get(key)
+    if value is None:
+        return
+    if not isinstance(value, list):
+        raise ContractValidationError(f"Invalid {path}.{key}: expected list")
+    for idx, row in enumerate(value):
+        _validate_daily_row(row, f"{path}.{key}[{idx}]")
+
+
 def validate_weather_payload_v1(payload: Mapping[str, Any]) -> None:
     if not isinstance(payload, Mapping):
         raise ContractValidationError("Payload must be a mapping")
@@ -49,3 +89,21 @@ def validate_weather_payload_v1(payload: Mapping[str, Any]) -> None:
             raise ContractValidationError(f"Invalid reports[{idx}].query: expected str")
         if not isinstance(report.get("daily"), list):
             raise ContractValidationError(f"Invalid reports[{idx}].daily: expected list")
+        path = f"reports[{idx}]"
+        for key in ("resort_id", "display_name", "matched_name", "country", "admin1", "model", "forecast_timezone"):
+            _require_optional_type(report, key, (str,), path)
+        for key in (
+            "input_latitude",
+            "input_longitude",
+            "resolved_latitude",
+            "resolved_longitude",
+            "week1_total_snowfall_cm",
+            "week2_total_snowfall_cm",
+            "week1_total_rain_mm",
+            "week2_total_rain_mm",
+        ):
+            _require_optional_number(report, key, path)
+        if "pass_types" in report and not isinstance(report.get("pass_types"), list):
+            raise ContractValidationError(f"Invalid {path}.pass_types: expected list")
+        _validate_daily_list(report, "daily", path)
+        _validate_daily_list(report, "past_14d_daily", path)

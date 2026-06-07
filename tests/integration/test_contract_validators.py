@@ -56,3 +56,24 @@ def test_validate_weather_payload_v1_rejects_report_shape(valid_payload):
     payload["reports"] = [{"query": "A"}]
     with pytest.raises(ContractValidationError, match=r"reports\[0\]\.daily"):
         validate_weather_payload_v1(payload)
+
+
+def test_validate_weather_payload_v1_rejects_bad_daily_row(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["daily"][0] = "not-an-object"
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.daily\[0\]"):
+        validate_weather_payload_v1(payload)
+
+
+def test_validate_weather_payload_v1_rejects_bad_daily_field_type(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["daily"][0]["snowfall_cm"] = "lots"
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.daily\[0\]\.snowfall_cm"):
+        validate_weather_payload_v1(payload)
+
+
+def test_validate_weather_payload_v1_rejects_bad_report_field_type(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["week1_total_snowfall_cm"] = "lots"
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.week1_total_snowfall_cm"):
+        validate_weather_payload_v1(payload)
