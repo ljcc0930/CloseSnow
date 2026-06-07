@@ -81,13 +81,13 @@ def _load_api_hourly_payload(
         error_body = exc.read().decode("utf-8", errors="ignore")
         try:
             payload = json.loads(error_body)
-        except Exception:
+        except json.JSONDecodeError:
             payload = {"error": error_body or f"HTTP {exc.code}"}
         return exc.code, payload
     except urllib.error.URLError as exc:
         return 502, {"error": str(exc)}
-    except Exception as exc:
-        return 500, {"error": str(exc)}
+    except (TimeoutError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return 502, {"error": str(exc)}
 
 
 def _trim_hourly_payload(payload: Dict[str, Any], hours: int) -> Dict[str, Any]:

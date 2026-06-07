@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 
 import pytest
 from src.contract.validators import ContractValidationError
@@ -24,6 +25,9 @@ class _DummyResponse:
 
     def read(self) -> bytes:
         return self._body
+
+    def close(self) -> None:
+        return None
 
 
 def test_load_static_payload_success(tmp_path, valid_payload):
@@ -432,6 +436,33 @@ def test_load_hourly_payload_api_mode(monkeypatch):
     assert captured["url"].startswith("https://example.test/api/resort-hourly?")
     assert "resort_id=snowbird-ut" in captured["url"]
     assert "hours=12" in captured["url"]
+
+
+def test_load_hourly_payload_api_mode_preserves_non_json_http_error(monkeypatch):
+    def fake_urlopen(url, timeout):  # noqa: ANN001
+        raise urllib.error.HTTPError(url, 503, "Unavailable", {}, _DummyResponse(b"upstream down"))
+
+    monkeypatch.setattr("src.web.data_sources.hourly_source.urllib.request.urlopen", fake_urlopen)
+    code, payload = load_hourly_payload(
+        "api", "https://example.test/api/data", resort_id="snowbird-ut", hours=12, api_retries=0
+    )
+
+    assert code == 503
+    assert payload == {"error": "upstream down"}
+
+
+def test_load_hourly_payload_api_mode_returns_502_for_invalid_json(monkeypatch):
+    monkeypatch.setattr(
+        "src.web.data_sources.hourly_source.urllib.request.urlopen",
+        lambda url, timeout: _DummyResponse(b"not-json"),
+    )
+
+    code, payload = load_hourly_payload(
+        "api", "https://example.test/api/data", resort_id="snowbird-ut", hours=12, api_retries=0
+    )
+
+    assert code == 502
+    assert "Expecting value" in payload["error"]
 
 
 def test_load_hourly_payload_file_mode_reads_static_hourly_json(tmp_path):
