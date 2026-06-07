@@ -1554,6 +1554,25 @@
     "subregion": "asia"
   },
   {
+    "resort_id": "silverstar-mountain-bc",
+    "query": "SilverStar Mountain, BC",
+    "name": "SilverStar Mountain",
+    "city": "Silver Star Mountain",
+    "address": "123 Shortt Street, Silver Star Mountain, BC V1B 3M1, Canada",
+    "latitude": 50.3572222,
+    "longitude": -119.0594444,
+    "state": "BC",
+    "country": "CA",
+    "region": "west",
+    "pass_types": [
+      "ikon"
+    ],
+    "default_enabled": false,
+    "display_name": "SilverStar Mountain, BC",
+    "website": "https://www.skisilverstar.com/",
+    "subregion": "west-coast"
+  },
+  {
     "resort_id": "silverton-mountain-co",
     "query": "Silverton Mountain, CO",
     "name": "Silverton Mountain",

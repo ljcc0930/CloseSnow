@@ -324,6 +324,21 @@ def test_default_catalog_includes_whitefish_as_supported_independent_resort():
     assert item["longitude"] == -114.3504451
 
 
+def test_default_catalog_includes_silverstar_as_ikon_resort():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    item = next(x for x in entries if x["resort_id"] == "silverstar-mountain-bc")
+
+    assert item["query"] == "SilverStar Mountain, BC"
+    assert item["display_name"] == "SilverStar Mountain, BC"
+    assert item["website"] == "https://www.skisilverstar.com/"
+    assert item["pass_types"] == ["ikon"]
+    assert item["default_enabled"] is False
+    assert item["country"] == "CA"
+    assert item["state"] == "BC"
+    assert item["latitude"] == 50.3572222
+    assert item["longitude"] == -119.0594444
+
+
 def test_default_catalog_includes_requested_non_default_independent_resorts():
     entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
     index = {str(item["resort_id"]): item for item in entries}

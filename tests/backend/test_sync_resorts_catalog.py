@@ -62,6 +62,19 @@ def test_validate_ikon_destinations_coverage_reports_missing_names():
     assert "Winter Park Resort" in errors[0]
 
 
+def test_split_name_state_country_prefers_canadian_province_over_fallback_country():
+    assert sync_catalog.split_name_state_country("Whistler Blackcomb, BC", fallback_country="US") == (
+        "Whistler Blackcomb",
+        "BC",
+        "CA",
+    )
+    assert sync_catalog.split_name_state_country("Vail, CO", fallback_country="US") == (
+        "Vail",
+        "CO",
+        "US",
+    )
+
+
 def test_merge_entries_skips_aspen_snowmass_aggregate():
     existing = [
         {

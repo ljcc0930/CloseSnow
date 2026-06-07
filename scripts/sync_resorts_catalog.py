@@ -254,14 +254,14 @@ def split_name_state_country(
             country = country_candidate
             name = ", ".join(parts[:-2]).strip() or parts[0]
 
+    if not country and state:
+        country = "CA" if state in CA_WEST else "US"
     if not country:
         country = normalize_country_code(fallback_subregion)
     if not country:
         country = extract_country_from_tags(tags)
     if not country:
         country = normalize_country_code(fallback_country)
-    if not country and state:
-        country = "CA" if state in CA_WEST else "US"
 
     name = clean_text(name)
     if not name:
