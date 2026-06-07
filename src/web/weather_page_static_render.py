@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import shutil
 import sys
 from pathlib import Path
 from typing import List
@@ -25,6 +24,7 @@ from src.backend.constants import (
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.pipelines import render_hourly_pages, render_html
+from src.web.static_assets import copy_static_assets
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,12 +47,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
     p.add_argument("--output-dir", default="site")
     return p.parse_args()
-
-
-def _copy_static_assets(output_dir: str) -> None:
-    root = Path(output_dir).resolve() / "assets"
-    for name in ("css", "js"):
-        shutil.copytree(Path("assets") / name, root / name, dirs_exist_ok=True)
 
 
 def main() -> int:
@@ -86,7 +80,7 @@ def main() -> int:
         hourly_max_workers=args.max_workers,
         api_retries=getattr(args, "api_retries", API_RETRY_TIMES),
     )
-    _copy_static_assets(args.output_dir)
+    copy_static_assets(args.output_dir)
     print(f"Done: {out}")
     print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     return 0

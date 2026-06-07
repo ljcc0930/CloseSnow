@@ -50,7 +50,7 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     monkeypatch.setattr("src.web.weather_page_static_render.parse_args", lambda: args)
     monkeypatch.setattr("src.web.weather_page_static_render.fetch_static_payload", fake_fetch_static_payload)
     monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
-    monkeypatch.setattr("src.web.weather_page_static_render._copy_static_assets", lambda output_dir: None)
+    monkeypatch.setattr("src.web.weather_page_static_render.copy_static_assets", lambda output_dir: [])
 
     def fake_render_hourly_pages(*args, **kwargs):  # noqa: ANN001
         captured["render_kwargs"] = kwargs

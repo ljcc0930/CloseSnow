@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +24,7 @@ from src.backend.weather_data_server import make_handler as make_data_handler
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
 from src.web.data_sources import load_payload
 from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
+from src.web.static_assets import copy_static_assets
 from src.web.weather_page_server import make_handler
 
 
@@ -209,7 +209,7 @@ def run_render(args: argparse.Namespace) -> int:
         hourly_source=args.input_json,
     )
     output_dir = str(Path(output_html).parent)
-    copied_assets = _copy_static_assets(output_dir)
+    copied_assets = copy_static_assets(output_dir)
     print(f"Done: {out}")
     print(f"Done: {len(hourly_pages)} resort hourly page(s)")
     print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
@@ -243,7 +243,7 @@ def run_static(args: argparse.Namespace) -> int:
         )
         print(f"Done: {out}")
         print(f"Done: {len(hourly_pages)} resort hourly page(s)")
-    copied_assets = _copy_static_assets(args.output_dir)
+    copied_assets = copy_static_assets(args.output_dir)
     print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
     return 0
 
@@ -251,18 +251,6 @@ def run_static(args: argparse.Namespace) -> int:
 def _static_outputs_for_directory(directory: str) -> tuple[str, str]:
     root = Path(directory)
     return str(root / "data.json"), str(root / "index.html")
-
-
-def _copy_static_assets(directory: str) -> List[Path]:
-    root = Path(directory).resolve()
-    assets_root = root / "assets"
-    copied: List[Path] = []
-    for name in ("css", "js"):
-        source = Path("assets") / name
-        target = assets_root / name
-        shutil.copytree(source, target, dirs_exist_ok=True)
-        copied.append(target)
-    return copied
 
 
 def run_static_server(args: argparse.Namespace) -> int:

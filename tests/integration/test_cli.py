@@ -106,7 +106,7 @@ def test_run_render(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "from": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_render(args)
     out = capsys.readouterr().out
     assert rc == 0
@@ -124,7 +124,7 @@ def test_run_static_default(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
     out = capsys.readouterr().out
     assert rc == 0
@@ -148,7 +148,7 @@ def test_run_static_forwards_max_workers_to_hourly_render(monkeypatch, tmp_path)
     monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
     monkeypatch.setattr("src.cli.render_hourly_pages", fake_render_hourly_pages)
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
 
     rc = cli.run_static(args)
 
@@ -168,7 +168,7 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
     assert rc == 0
 
@@ -192,7 +192,7 @@ def test_run_static_skip_render(monkeypatch, tmp_path):
     args.skip_render = True
     monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": []})
     monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
     assert rc == 0
 
@@ -217,7 +217,7 @@ def test_run_static_uses_output_dir_for_json_and_html(monkeypatch, tmp_path):
     monkeypatch.setattr("src.cli.write_payload_json", fake_write_payload_json)
     monkeypatch.setattr("src.cli.render_html", fake_render_html)
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     cli.run_static(args)
     assert captured["json"] == str(tmp_path / "site" / "data.json")
     assert captured["html"] == str(tmp_path / "site" / "index.html")
@@ -314,7 +314,7 @@ def test_copy_static_assets_copies_css_and_js(tmp_path):
     cwd = Path.cwd()
     try:
         os.chdir(assets_root)
-        copied = cli._copy_static_assets(str(output_dir))
+        copied = cli.copy_static_assets(str(output_dir))
     finally:
         os.chdir(cwd)
 
@@ -336,7 +336,7 @@ def test_run_render_uses_input_parent_when_output_dir_missing(monkeypatch, tmp_p
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": []})
     monkeypatch.setattr("src.cli.render_html", fake_render_html)
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
 
     cli.run_render(argparse.Namespace(input_json=str(input_json), output_dir=None))
     assert captured["html"] == str(input_json.parent / "index.html")
