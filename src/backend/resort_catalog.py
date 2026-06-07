@@ -244,10 +244,25 @@ def _load_catalog_from_txt(path: Path) -> List[Dict[str, Any]]:
     return entries
 
 
-def _load_catalog_from_yaml_json(path: Path) -> List[Dict[str, Any]]:
-    raw = json.loads(path.read_text(encoding="utf-8"))
+def _json_catalog_format_note(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix in {".yml", ".yaml"}:
+        return " Files with .yml/.yaml extensions are parsed as JSON-compatible catalogs; native YAML syntax is not supported."
+    return ""
+
+
+def _load_catalog_from_json_compatible(path: Path) -> List[Dict[str, Any]]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        note = _json_catalog_format_note(path)
+        raise ValueError(
+            f"Invalid resort catalog JSON in {path}: {exc.msg} at line {exc.lineno} column {exc.colno}.{note}"
+        ) from exc
     if not isinstance(raw, list):
-        raise ValueError(f"Invalid resort catalog format in {path}: expected list")
+        raise ValueError(
+            f"Invalid resort catalog format in {path}: expected JSON list.{_json_catalog_format_note(path)}"
+        )
     entries: List[Dict[str, Any]] = []
     for item in raw:
         if not isinstance(item, dict):
@@ -263,7 +278,7 @@ def load_resort_catalog(path: str) -> List[Dict[str, Any]]:
     if p.suffix.lower() == ".txt":
         entries = _load_catalog_from_txt(p)
     else:
-        entries = _load_catalog_from_yaml_json(p)
+        entries = _load_catalog_from_json_compatible(p)
     seen = set()
     return [item for item in entries if not (item["query"] in seen or seen.add(item["query"]))]
 

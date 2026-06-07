@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from src.backend.resort_catalog import (
     load_resort_catalog,
     read_resort_queries,
@@ -57,6 +58,22 @@ def test_load_resort_catalog_from_yml_json(tmp_path):
     assert "utah" in [x.lower() for x in entries[0]["search_terms"]]
     assert "united states" in [x.lower() for x in entries[0]["search_terms"]]
     assert read_resort_queries(str(p)) == ["Snowbird, UT"]
+
+
+def test_load_resort_catalog_rejects_native_yaml_with_clear_error(tmp_path):
+    p = tmp_path / "resorts.yml"
+    p.write_text("- query: Snowbird, UT\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="native YAML syntax is not supported"):
+        load_resort_catalog(str(p))
+
+
+def test_load_resort_catalog_rejects_non_list_json_with_clear_error(tmp_path):
+    p = tmp_path / "resorts.yml"
+    p.write_text(json.dumps({"query": "Snowbird, UT"}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="expected JSON list"):
+        load_resort_catalog(str(p))
 
 
 def test_read_resort_queries_respects_default_enabled(tmp_path):
