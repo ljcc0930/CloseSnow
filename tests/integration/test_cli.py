@@ -162,12 +162,26 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     args.output_json = None
     args.skip_fetch = True
     args.skip_render = False
+    payload_path = Path(args.output_dir) / "data.json"
+    payload_path.parent.mkdir(parents=True)
+    payload_path.write_text("{}", encoding="utf-8")
     monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
     monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
     monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
     monkeypatch.setattr("src.cli._copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
     rc = cli.run_static(args)
     assert rc == 0
+
+
+def test_run_static_skip_fetch_reports_missing_payload(tmp_path):
+    args = _build_fetch_like_args(tmp_path)
+    args.output_dir = str(tmp_path / "site")
+    args.output_json = None
+    args.skip_fetch = True
+    args.skip_render = False
+
+    with pytest.raises(FileNotFoundError, match="static --skip-fetch"):
+        cli.run_static(args)
 
 
 def test_run_static_skip_render(monkeypatch, tmp_path):
@@ -439,6 +453,25 @@ def test_main_dispatches_fetch(monkeypatch):
     )
     monkeypatch.setattr("src.cli.run_fetch", lambda args: 7)
     assert cli.main() == 7
+
+
+def test_main_reports_static_missing_payload_without_traceback(monkeypatch, tmp_path, capsys):
+    args = _build_fetch_like_args(tmp_path)
+    args.command = "static"
+    args.output_dir = str(tmp_path / "site")
+    args.output_json = None
+    args.skip_fetch = True
+    args.skip_render = False
+
+    monkeypatch.setattr(
+        "src.cli.build_parser",
+        lambda: type("P", (), {"parse_args": staticmethod(lambda: args)})(),
+    )
+
+    assert cli.main() == 2
+    err = capsys.readouterr().err
+    assert "Error:" in err
+    assert "static --skip-fetch" in err
 
 
 def test_main_dispatches_serve_static(monkeypatch):

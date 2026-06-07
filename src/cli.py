@@ -162,6 +162,17 @@ def _static_output_json(args: argparse.Namespace) -> str:
     return str(Path(args.output_dir) / "data.json")
 
 
+def _load_existing_static_payload(output_json: str) -> Dict[str, Any]:
+    path = Path(output_json)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Static payload JSON does not exist: {path}. "
+            "The static --skip-fetch command can only render an existing payload. "
+            "Run without --skip-fetch to create it, or pass --output-json to an existing JSON file."
+        )
+    return load_payload(mode="file", source=output_json)
+
+
 def _serve_http_server(
     host: str,
     port: int,
@@ -216,7 +227,7 @@ def run_static(args: argparse.Namespace) -> int:
 
     if not args.skip_render:
         if payload is None:
-            payload = load_payload(mode="file", source=output_json)
+            payload = _load_existing_static_payload(output_json)
         out = render_html(output_html, payload, data_url=_relative_url(output_html, output_json))
         hourly_pages = render_hourly_pages(
             output_html,
@@ -354,7 +365,11 @@ def main() -> int:
     if args.command == "render":
         return run_render(args)
     if args.command == "static":
-        return run_static(args)
+        try:
+            return run_static(args)
+        except FileNotFoundError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 2
     if args.command == "serve-static":
         return run_static_server(args)
     if args.command == "serve":
