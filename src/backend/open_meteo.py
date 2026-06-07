@@ -346,6 +346,88 @@ def _location_from_coordinate_cache(name: str, cached_loc: Dict[str, Any]) -> Re
     )
 
 
+def _coordinate_cache_payload(location: ResortLocation) -> Dict[str, Any]:
+    return {
+        "name": location.name,
+        "latitude": location.latitude,
+        "longitude": location.longitude,
+        "country": location.country,
+        "admin1": location.admin1,
+    }
+
+
+def _remember_location(
+    name: str,
+    location: ResortLocation,
+    coord_cache: Optional[ResortCoordinateCache],
+) -> None:
+    if coord_cache is not None:
+        coord_cache.set(name, _coordinate_cache_payload(location))
+
+
+def _cached_location(name: str, coord_cache: Optional[ResortCoordinateCache]) -> Optional[ResortLocation]:
+    if coord_cache is None:
+        return None
+    cached_loc = coord_cache.get(name)
+    if cached_loc:
+        return _location_from_coordinate_cache(name, cached_loc)
+    return None
+
+
+def _openmeteo_geocode_params(query: str) -> Dict[str, Any]:
+    return {"name": query, "count": 1, "language": "en", "format": "json"}
+
+
+def _nominatim_geocode_params(query: str) -> Dict[str, Any]:
+    return {"q": query, "format": "jsonv2", "limit": 1, "addressdetails": 1}
+
+
+def _location_from_openmeteo_data(name: str, data: Any) -> Optional[ResortLocation]:
+    results = data.get("results") if isinstance(data, dict) else None
+    if not results:
+        return None
+    top = results[0]
+    return ResortLocation(
+        query=name,
+        name=top.get("name", name),
+        latitude=float(top["latitude"]),
+        longitude=float(top["longitude"]),
+        country=top.get("country"),
+        admin1=top.get("admin1"),
+    )
+
+
+def _location_from_nominatim_data(name: str, data: Any) -> Optional[ResortLocation]:
+    if not isinstance(data, list) or not data:
+        return None
+    top = data[0]
+    addr = top.get("address", {})
+    return ResortLocation(
+        query=name,
+        name=top.get("display_name", name),
+        latitude=float(top["lat"]),
+        longitude=float(top["lon"]),
+        country=addr.get("country"),
+        admin1=addr.get("state") or addr.get("region"),
+    )
+
+
+_GEOCODE_PROVIDERS = (
+    (
+        GEOCODING_URL,
+        "geocode_openmeteo",
+        _openmeteo_geocode_params,
+        _location_from_openmeteo_data,
+    ),
+    (
+        NOMINATIM_URL,
+        "geocode_nominatim",
+        _nominatim_geocode_params,
+        _location_from_nominatim_data,
+    ),
+)
+
+
 def geocode(
     name: str,
     cache: JsonCache,
@@ -353,77 +435,24 @@ def geocode(
     coord_cache: Optional[ResortCoordinateCache] = None,
     api_retries: int = API_RETRY_TIMES,
 ) -> Optional[ResortLocation]:
-    if coord_cache is not None:
-        cached_loc = coord_cache.get(name)
-        if cached_loc:
-            return _location_from_coordinate_cache(name, cached_loc)
+    cached = _cached_location(name, coord_cache)
+    if cached:
+        return cached
 
-    for query in _geocode_queries(name):
-        data = fetch_json(
-            GEOCODING_URL,
-            {"name": query, "count": 1, "language": "en", "format": "json"},
-            cache=cache,
-            namespace="geocode_openmeteo",
-            ttl_seconds=ttl_seconds,
-            api_retries=api_retries,
-        )
-        results = data.get("results") or []
-        if results:
-            top = results[0]
-            location = ResortLocation(
-                query=name,
-                name=top.get("name", name),
-                latitude=float(top["latitude"]),
-                longitude=float(top["longitude"]),
-                country=top.get("country"),
-                admin1=top.get("admin1"),
+    for url, namespace, params_for_query, location_from_data in _GEOCODE_PROVIDERS:
+        for query in _geocode_queries(name):
+            data = fetch_json(
+                url,
+                params_for_query(query),
+                cache=cache,
+                namespace=namespace,
+                ttl_seconds=ttl_seconds,
+                api_retries=api_retries,
             )
-            if coord_cache is not None:
-                coord_cache.set(
-                    name,
-                    {
-                        "name": location.name,
-                        "latitude": location.latitude,
-                        "longitude": location.longitude,
-                        "country": location.country,
-                        "admin1": location.admin1,
-                    },
-                )
-            return location
-
-    for query in _geocode_queries(name):
-        data2 = fetch_json(
-            NOMINATIM_URL,
-            {"q": query, "format": "jsonv2", "limit": 1, "addressdetails": 1},
-            cache=cache,
-            namespace="geocode_nominatim",
-            ttl_seconds=ttl_seconds,
-            api_retries=api_retries,
-        )
-        if not data2:
-            continue
-        top2 = data2[0]
-        addr = top2.get("address", {})
-        location = ResortLocation(
-            query=name,
-            name=top2.get("display_name", name),
-            latitude=float(top2["lat"]),
-            longitude=float(top2["lon"]),
-            country=addr.get("country"),
-            admin1=addr.get("state") or addr.get("region"),
-        )
-        if coord_cache is not None:
-            coord_cache.set(
-                name,
-                {
-                    "name": location.name,
-                    "latitude": location.latitude,
-                    "longitude": location.longitude,
-                    "country": location.country,
-                    "admin1": location.admin1,
-                },
-            )
-        return location
+            location = location_from_data(name, data)
+            if location:
+                _remember_location(name, location, coord_cache)
+                return location
     return None
 
 
@@ -520,77 +549,24 @@ async def geocode_async(
     coord_cache: Optional[ResortCoordinateCache] = None,
     api_retries: int = API_RETRY_TIMES,
 ) -> Optional[ResortLocation]:
-    if coord_cache is not None:
-        cached_loc = coord_cache.get(name)
-        if cached_loc:
-            return _location_from_coordinate_cache(name, cached_loc)
+    cached = _cached_location(name, coord_cache)
+    if cached:
+        return cached
 
-    for query in _geocode_queries(name):
-        data = await fetch_json_async(
-            GEOCODING_URL,
-            {"name": query, "count": 1, "language": "en", "format": "json"},
-            cache=cache,
-            namespace="geocode_openmeteo",
-            ttl_seconds=ttl_seconds,
-            api_retries=api_retries,
-        )
-        results = data.get("results") or []
-        if results:
-            top = results[0]
-            location = ResortLocation(
-                query=name,
-                name=top.get("name", name),
-                latitude=float(top["latitude"]),
-                longitude=float(top["longitude"]),
-                country=top.get("country"),
-                admin1=top.get("admin1"),
+    for url, namespace, params_for_query, location_from_data in _GEOCODE_PROVIDERS:
+        for query in _geocode_queries(name):
+            data = await fetch_json_async(
+                url,
+                params_for_query(query),
+                cache=cache,
+                namespace=namespace,
+                ttl_seconds=ttl_seconds,
+                api_retries=api_retries,
             )
-            if coord_cache is not None:
-                coord_cache.set(
-                    name,
-                    {
-                        "name": location.name,
-                        "latitude": location.latitude,
-                        "longitude": location.longitude,
-                        "country": location.country,
-                        "admin1": location.admin1,
-                    },
-                )
-            return location
-
-    for query in _geocode_queries(name):
-        data2 = await fetch_json_async(
-            NOMINATIM_URL,
-            {"q": query, "format": "jsonv2", "limit": 1, "addressdetails": 1},
-            cache=cache,
-            namespace="geocode_nominatim",
-            ttl_seconds=ttl_seconds,
-            api_retries=api_retries,
-        )
-        if not data2:
-            continue
-        top2 = data2[0]
-        addr = top2.get("address", {})
-        location = ResortLocation(
-            query=name,
-            name=top2.get("display_name", name),
-            latitude=float(top2["lat"]),
-            longitude=float(top2["lon"]),
-            country=addr.get("country"),
-            admin1=addr.get("state") or addr.get("region"),
-        )
-        if coord_cache is not None:
-            coord_cache.set(
-                name,
-                {
-                    "name": location.name,
-                    "latitude": location.latitude,
-                    "longitude": location.longitude,
-                    "country": location.country,
-                    "admin1": location.admin1,
-                },
-            )
-        return location
+            location = location_from_data(name, data)
+            if location:
+                _remember_location(name, location, coord_cache)
+                return location
     return None
 
 
