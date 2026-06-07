@@ -26,7 +26,7 @@ class JsonCache:
                 parsed = json.load(f)
             if isinstance(parsed, dict) and isinstance(parsed.get("entries"), dict):
                 self.data = parsed
-        except Exception:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             self.data = {"version": 1, "entries": {}}
 
     def get(self, key: str, max_age_seconds: int) -> Optional[Any]:
@@ -78,7 +78,7 @@ class ResortCoordinateCache:
                 parsed = json.load(f)
             if isinstance(parsed, dict) and isinstance(parsed.get("entries"), dict):
                 self.data = parsed
-        except Exception:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             self.data = {"version": 1, "entries": {}}
 
     def get(self, query: str) -> Optional[Dict[str, Any]]:

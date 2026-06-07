@@ -60,7 +60,7 @@ def seed_coordinate_cache_from_coordinate_cache_file(cache: ResortCoordinateCach
     try:
         with open(path, "r", encoding="utf-8") as f:
             payload = json.load(f)
-    except Exception:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return
 
     entries = payload.get("entries") if isinstance(payload, dict) else None
@@ -81,7 +81,7 @@ def seed_coordinate_cache_from_unified(cache: ResortCoordinateCache, path: str) 
     try:
         with open(path, "r", encoding="utf-8") as f:
             payload = json.load(f)
-    except Exception:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return
 
     reports = payload.get("reports")
@@ -98,7 +98,7 @@ def seed_coordinate_cache_from_catalog(cache: ResortCoordinateCache, path: str) 
         from src.backend.resort_catalog import load_resort_catalog
 
         entries = load_resort_catalog(path)
-    except Exception:
+    except (OSError, ValueError):
         return
 
     seed_coordinate_cache_from_entries(cache, entries)

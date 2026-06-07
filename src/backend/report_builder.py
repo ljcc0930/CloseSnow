@@ -11,7 +11,7 @@ def as_float_list(values: List[Any]) -> List[Optional[float]]:
     for value in values:
         try:
             out.append(float(value))
-        except Exception:
+        except (TypeError, ValueError, OverflowError):
             out.append(None)
     return out
 
@@ -21,7 +21,7 @@ def as_int_list(values: List[Any]) -> List[Optional[int]]:
     for value in values:
         try:
             out.append(int(value))
-        except Exception:
+        except (TypeError, ValueError, OverflowError):
             out.append(None)
     return out
 
