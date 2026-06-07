@@ -599,7 +599,7 @@
     ],
     "default_enabled": false,
     "display_name": "Chamonix Mont-Blanc, France",
-    "website": "https://en.chamonix.com/chamonix-mont-blanc-valley",
+    "website": "https://www.montblancnaturalresort.com/fr/",
     "subregion": "europe"
   },
   {
@@ -1550,7 +1550,7 @@
     ],
     "default_enabled": false,
     "display_name": "Shiga Kogen, Japan",
-    "website": "https://www.shigakogen-ski.com/english/",
+    "website": "https://www.shigakogen-ski.or.jp/",
     "subregion": "asia"
   },
   {
@@ -1700,7 +1700,7 @@
     ],
     "default_enabled": true,
     "display_name": "Snow Valley, CA",
-    "website": "https://www.snow-valley.com/",
+    "website": "https://www.bigbearmountainresort.com/",
     "subregion": "west-coast"
   },
   {
@@ -2147,7 +2147,7 @@
     ],
     "default_enabled": false,
     "display_name": "Yunding Snow Park, China",
-    "website": "https://www.ysgsnow.com/",
+    "website": "http://www.secretgardenresorts.com",
     "subregion": "asia"
   },
   {

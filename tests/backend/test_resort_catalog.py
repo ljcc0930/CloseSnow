@@ -340,6 +340,28 @@ def test_default_catalog_includes_silverstar_as_ikon_resort():
     assert item["longitude"] == -119.05898409762015
 
 
+def test_default_catalog_uses_verified_ikon_destination_urls():
+    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
+    websites = {
+        item["resort_id"]: item["website"]
+        for item in entries
+        if item["resort_id"]
+        in {
+            "chamonix-mont-blanc-valley-france",
+            "shiga-kogen-mountain-resort-japan",
+            "snow-valley-ca",
+            "yunding-snow-park-china",
+        }
+    }
+
+    assert websites == {
+        "chamonix-mont-blanc-valley-france": "https://www.montblancnaturalresort.com/fr/",
+        "shiga-kogen-mountain-resort-japan": "https://www.shigakogen-ski.or.jp/",
+        "snow-valley-ca": "https://www.bigbearmountainresort.com/",
+        "yunding-snow-park-china": "http://www.secretgardenresorts.com",
+    }
+
+
 def test_default_resorts_constant_matches_default_enabled_catalog_queries():
     entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
     expected = [item["query"] for item in entries if item.get("default_enabled")]
