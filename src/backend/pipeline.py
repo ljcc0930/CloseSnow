@@ -52,7 +52,7 @@ def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
             continue
         try:
             entries = load_resort_catalog(path)
-        except Exception:
+        except (OSError, UnicodeDecodeError, ValueError):
             continue
         for item in entries:
             query = str(item.get("query", "")).strip()
@@ -166,7 +166,7 @@ def compute_pipeline_payload(
     _enrich_reports_with_catalog_metadata(reports, catalog_index)
     try:
         airports = load_airport_catalog_airports()
-    except Exception:
+    except (OSError, UnicodeDecodeError, ValueError):
         airports = []
     _enrich_reports_with_nearby_airports(reports, airports)
 

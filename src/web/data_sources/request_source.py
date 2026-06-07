@@ -52,7 +52,7 @@ def _ensure_filter_metadata(payload: Dict[str, Any]) -> Dict[str, Any]:
         try:
             catalog = load_supported_resort_catalog()
             payload["available_filters"] = available_filters(catalog)
-        except Exception:
+        except (OSError, UnicodeDecodeError, ValueError):
             payload["available_filters"] = {"pass_type": {}, "region": {}, "subregion": {}, "country": {}}
     if "applied_filters" not in payload:
         payload["applied_filters"] = default_applied_filters()

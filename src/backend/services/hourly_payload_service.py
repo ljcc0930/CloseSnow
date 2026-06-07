@@ -41,7 +41,7 @@ def _catalog_by_resort_id(catalog: Iterable[Dict[str, object]]) -> Dict[str, Dic
 def _load_airports_safely() -> List[Dict[str, Any]]:
     try:
         return load_airport_catalog()
-    except Exception:
+    except (OSError, UnicodeDecodeError, ValueError):
         return []
 
 
