@@ -101,6 +101,16 @@ const _escapeHtml = (value) => String(value || "")
   .replaceAll("\"", "&quot;")
   .replaceAll("'", "&#39;");
 
+const _errorMessage = (error) => (error instanceof Error ? error.message : String(error));
+
+const renderPageLoadError = (error) => {
+  if (!pageContentRoot) return;
+  const el = document.createElement("div");
+  el.className = "page-load-error";
+  el.textContent = _errorMessage(error);
+  pageContentRoot.replaceChildren(el);
+};
+
 const _isTruthyParam = (value) => {
   const text = _normalizeSearch(value);
   return text === "1" || text === "true" || text === "yes" || text === "on";
@@ -1768,9 +1778,7 @@ const applyFiltersImmediately = async () => {
       await reloadDynamicPayloadForFilters();
     } catch (error) {
       if (error && error.name === "AbortError") return;
-      if (pageContentRoot) {
-        pageContentRoot.innerHTML = `<div class="page-load-error">${_escapeHtml(error instanceof Error ? error.message : String(error))}</div>`;
-      }
+      renderPageLoadError(error);
       return;
     }
   }
@@ -1891,9 +1899,7 @@ const initialize = async () => {
     applyControlsFromQueryOrMeta();
     renderPage();
   } catch (error) {
-    if (pageContentRoot) {
-      pageContentRoot.innerHTML = `<div class="page-load-error">${_escapeHtml(error instanceof Error ? error.message : String(error))}</div>`;
-    }
+    renderPageLoadError(error);
     document.body.classList.remove("units-pending");
   }
 };
