@@ -55,6 +55,7 @@ const MAX_DISPLAY_DAYS = 14;
 const MIN_DESKTOP_SNOW_3DAY_PX = 554;
 const LEADING_FAVORITE_COL_PX = 28;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
+const filterStateHelpers = window.CloseSnowFilterState || {};
 const stickySingleTableLayout = window.CloseSnowStickySingleTableLayout || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
@@ -636,32 +637,9 @@ const _availableFilters = () => {
   return _deriveAvailableFiltersFromReports(_payloadReports());
 };
 
-const parsePassTypeValues = (values) => {
-  const out = [];
-  values.forEach((raw) => {
-    String(raw || "").split(",").map((value) => _normalizeSearch(value)).filter(Boolean).forEach((value) => out.push(value));
-  });
-  return Array.from(new Set(out));
-};
-
-const parseSubregionValues = (values) => {
-  const out = [];
-  values.forEach((raw) => {
-    String(raw || "").split(",").map((value) => _normalizeSearch(value)).filter(Boolean).forEach((value) => out.push(value));
-  });
-  return Array.from(new Set(out));
-};
-
-const normalizeSortBy = (value) => {
-  const text = _normalizeSearch(value);
-  if (text === "name") return "name";
-  if (text === "favorites") return "favorites";
-  if (text === "today_snow") return "today_snow";
-  if (text === "week_snow") return "week_snow";
-  if (text === "next_week_snow") return "next_week_snow";
-  if (text === "two_week_snow") return "two_week_snow";
-  return "state";
-};
+const parsePassTypeValues = filterStateHelpers.parsePassTypeValues;
+const parseSubregionValues = filterStateHelpers.parseSubregionValues;
+const normalizeSortBy = filterStateHelpers.normalizeSortBy;
 
 const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
 const _weeklySnowfall = (report) => _asFiniteNumber(report && report.week1_total_snowfall_cm);
@@ -673,15 +651,7 @@ const _twoWeekSnowfall = (report) => {
   return (week1 || 0) + (week2 || 0);
 };
 
-const _sortLabel = (sortBy) => {
-  if (sortBy === "name") return "Resort Name (A-Z)";
-  if (sortBy === "favorites") return "Favorites First";
-  if (sortBy === "today_snow") return "Today's Snowfall";
-  if (sortBy === "week_snow") return "This Week's Snowfall";
-  if (sortBy === "next_week_snow") return "Next Week's Snowfall";
-  if (sortBy === "two_week_snow") return "Two-Week Snowfall";
-  return "State (A-Z)";
-};
+const _sortLabel = filterStateHelpers.sortLabel;
 
 const _subregionLabel = (value) => {
   const hit = SUBREGION_OPTIONS.find((option) => option.value === _normalizeSearch(value));
@@ -791,40 +761,10 @@ const setFavoritesOnlyControls = (checked) => {
   if (filterFavoritesOnlyInput) filterFavoritesOnlyInput.checked = value;
 };
 
-const loadStoredFilterState = () => {
-  try {
-    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-    return {
-      passTypes: parsePassTypeValues(Array.isArray(parsed.passTypes) ? parsed.passTypes : []),
-      subregions: parseSubregionValues(Array.isArray(parsed.subregions) ? parsed.subregions : (parsed.subregion ? [parsed.subregion] : [])),
-      sortBy: normalizeSortBy(parsed.sortBy || ""),
-      includeDefault: parsed.includeDefault !== false,
-      searchAll: parsed.searchAll !== false,
-      search: String(parsed.search || ""),
-      favoritesOnly: Boolean(parsed.favoritesOnly),
-    };
-  } catch (error) {
-    return null;
-  }
-};
+const loadStoredFilterState = () => filterStateHelpers.loadStoredFilterState(localStorage, FILTER_STORAGE_KEY);
 
 const persistFilterState = () => {
-  try {
-    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
-      passTypes: Array.from(appState.filterState.passTypes).sort(),
-      subregions: Array.from(appState.filterState.subregions).sort(),
-      sortBy: appState.filterState.sortBy,
-      includeDefault: appState.filterState.includeDefault,
-      searchAll: appState.filterState.searchAll,
-      search: appState.filterState.search,
-      favoritesOnly: appState.filterState.favoritesOnly,
-    }));
-  } catch (error) {
-    // Ignore storage failures.
-  }
+  filterStateHelpers.persistFilterState(localStorage, FILTER_STORAGE_KEY, appState.filterState);
 };
 
 const applyControlsFromQueryOrMeta = () => {
