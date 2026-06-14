@@ -77,3 +77,10 @@ def test_validate_weather_payload_v1_rejects_bad_report_field_type(valid_payload
     payload["reports"][0]["week1_total_snowfall_cm"] = "lots"
     with pytest.raises(ContractValidationError, match=r"reports\[0\]\.week1_total_snowfall_cm"):
         validate_weather_payload_v1(payload)
+
+
+def test_validate_weather_payload_v1_rejects_bad_catalog_report_field_type(valid_payload):
+    payload = deepcopy(valid_payload)
+    payload["reports"][0]["country_code"] = 123
+    with pytest.raises(ContractValidationError, match=r"reports\[0\]\.country_code"):
+        validate_weather_payload_v1(payload)

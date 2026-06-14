@@ -4,13 +4,15 @@ import copy
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Hashable, List, Tuple
+from typing import Callable, Dict, Hashable, List, Tuple
+
+from src.contract import WeatherPayloadV1
 
 
 @dataclass
 class _PayloadCacheEntry:
     expires_at: float
-    payload: Dict[str, Any]
+    payload: WeatherPayloadV1
 
 
 class PayloadMemoryCache:
@@ -19,7 +21,7 @@ class PayloadMemoryCache:
         self._entries: Dict[Hashable, _PayloadCacheEntry] = {}
         self._lock = threading.RLock()
 
-    def get_or_load(self, key: Hashable, loader: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
+    def get_or_load(self, key: Hashable, loader: Callable[[], WeatherPayloadV1]) -> WeatherPayloadV1:
         if self.ttl_seconds <= 0:
             return copy.deepcopy(loader())
 

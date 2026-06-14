@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from src.backend.constants import (
     API_RETRY_TIMES,
@@ -9,6 +9,7 @@ from src.backend.constants import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
+from src.contract import WeatherPayloadV1
 from src.web.data_sources.clients import FilePayloadClient, HttpPayloadClient, LocalPayloadClient, PayloadClient
 
 
@@ -51,7 +52,7 @@ def load_payload(
     forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> WeatherPayloadV1:
     return build_payload_client(
         mode=mode,
         source=source,

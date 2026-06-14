@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import List
 
 from src.backend.constants import ECMWF_MODEL, FORECAST_DAYS
-from src.contract import SCHEMA_VERSION
+from src.contract import SCHEMA_VERSION, FailedItem, WeatherPayloadV1, WeatherReport
 
 
 def build_payload_metadata(
@@ -14,9 +14,9 @@ def build_payload_metadata(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int,
-    reports: List[Dict[str, Any]],
-    failed: List[Dict[str, str]],
-) -> Dict[str, Any]:
+    reports: List[WeatherReport],
+    failed: List[FailedItem],
+) -> WeatherPayloadV1:
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),

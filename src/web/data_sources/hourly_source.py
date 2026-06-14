@@ -4,7 +4,7 @@ import json
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Tuple
 from urllib.parse import quote, urlencode, urlsplit, urlunsplit
 
 from src.backend.constants import (
@@ -14,7 +14,7 @@ from src.backend.constants import (
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
-from src.contract.hourly_payload import trim_hourly_payload
+from src.contract.hourly_payload import HourlyPayload, trim_hourly_payload
 from src.shared.retry import with_retry
 
 
@@ -31,7 +31,7 @@ def _load_local_hourly_payload(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int,
-) -> Tuple[int, Dict[str, Any]]:
+) -> Tuple[int, HourlyPayload]:
     try:
         payload = build_hourly_payload_for_resort(
             resort_id=resort_id,
@@ -57,11 +57,11 @@ def _load_api_hourly_payload(
     hours: int,
     timeout: int,
     api_retries: int,
-) -> Tuple[int, Dict[str, Any]]:
+) -> Tuple[int, HourlyPayload]:
     hourly_base = _hourly_endpoint_from_data_source(source)
     hourly_url = f"{hourly_base}?{urlencode({'resort_id': resort_id, 'hours': str(hours)})}"
 
-    def do_request() -> Tuple[int, Dict[str, Any]]:
+    def do_request() -> Tuple[int, HourlyPayload]:
         with urllib.request.urlopen(hourly_url, timeout=timeout) as resp:
             body = resp.read().decode("utf-8")
             return 200, json.loads(body)
@@ -86,7 +86,7 @@ def _load_file_hourly_payload(
     source: str,
     resort_id: str,
     hours: int,
-) -> Tuple[int, Dict[str, Any]]:
+) -> Tuple[int, HourlyPayload]:
     source_path = Path(source)
     site_root = source_path if source_path.is_dir() else source_path.parent
     hourly_path = site_root / "resort" / quote(resort_id, safe="") / "hourly.json"
@@ -118,7 +118,7 @@ def load_hourly_payload(
     geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
     forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     api_retries: int = API_RETRY_TIMES,
-) -> Tuple[int, Dict[str, Any]]:
+) -> Tuple[int, HourlyPayload]:
     if mode == "local":
         return _load_local_hourly_payload(
             resort_id=resort_id,

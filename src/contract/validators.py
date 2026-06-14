@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from src.contract.weather_payload_v1 import SCHEMA_VERSION
+from src.contract.weather_payload_v1 import (
+    DAILY_NUMBER_FIELDS,
+    DAILY_TIME_FIELDS,
+    REPORT_NUMBER_FIELDS,
+    REPORT_STRING_FIELDS,
+    SCHEMA_VERSION,
+)
 
 
 class ContractValidationError(ValueError):
@@ -31,16 +37,10 @@ def _validate_daily_row(row: Any, path: str) -> None:
     if not isinstance(row, Mapping):
         raise ContractValidationError(f"Invalid {path}: expected object")
     _require_optional_type(row, "date", (str,), path)
-    for key in (
-        "snowfall_cm",
-        "rain_mm",
-        "precipitation_mm",
-        "temperature_max_c",
-        "temperature_min_c",
-    ):
+    for key in DAILY_NUMBER_FIELDS:
         _require_optional_number(row, key, path)
     _require_optional_type(row, "weather_code", (int,), path)
-    for key in ("sunrise_iso", "sunset_iso", "sunrise_local_hhmm", "sunset_local_hhmm"):
+    for key in DAILY_TIME_FIELDS:
         _require_optional_type(row, key, (str,), path)
     _require_optional_type(row, "above_0", (int,), path)
 
@@ -90,18 +90,9 @@ def validate_weather_payload_v1(payload: Mapping[str, Any]) -> None:
         if not isinstance(report.get("daily"), list):
             raise ContractValidationError(f"Invalid reports[{idx}].daily: expected list")
         path = f"reports[{idx}]"
-        for key in ("resort_id", "display_name", "matched_name", "country", "admin1", "model", "forecast_timezone"):
+        for key in REPORT_STRING_FIELDS:
             _require_optional_type(report, key, (str,), path)
-        for key in (
-            "input_latitude",
-            "input_longitude",
-            "resolved_latitude",
-            "resolved_longitude",
-            "week1_total_snowfall_cm",
-            "week2_total_snowfall_cm",
-            "week1_total_rain_mm",
-            "week2_total_rain_mm",
-        ):
+        for key in REPORT_NUMBER_FIELDS:
             _require_optional_number(report, key, path)
         if "pass_types" in report and not isinstance(report.get("pass_types"), list):
             raise ContractValidationError(f"Invalid {path}.pass_types: expected list")

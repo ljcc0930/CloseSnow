@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Dict, List
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from src.backend.constants import (
@@ -17,6 +17,7 @@ from src.backend.services.resort_selection_service import (
     load_supported_resort_catalog,
     select_resorts_from_query,
 )
+from src.contract import WeatherPayloadV1
 from src.web.data_sources.gateway import load_payload
 from src.web.data_sources.local_source import load_local_payload
 
@@ -47,7 +48,7 @@ def strip_server_filter_query(qs: Dict[str, List[str]]) -> Dict[str, List[str]]:
     return {key: list(values) for key, values in qs.items() if key not in SERVER_FILTER_QUERY_KEYS}
 
 
-def _ensure_filter_metadata(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _ensure_filter_metadata(payload: WeatherPayloadV1) -> WeatherPayloadV1:
     if "available_filters" not in payload:
         try:
             catalog = load_supported_resort_catalog()
@@ -71,7 +72,7 @@ def load_request_payload(
     forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> WeatherPayloadV1:
     qs = {key: list(values) for key, values in (query_params or {}).items()}
     resorts = [x.strip() for x in qs.get("resort", []) if x.strip()]
 

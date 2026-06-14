@@ -17,7 +17,7 @@ from src.backend.io import seed_coordinate_cache_from_coordinate_cache_file, see
 from src.backend.models import ResortLocation
 from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
 from src.backend.services.resort_selection_service import load_supported_resort_catalog
-from src.contract.hourly_payload import trim_hourly_payload
+from src.contract.hourly_payload import HourlyPayload, trim_hourly_payload
 
 
 def _catalog_by_resort_id(catalog: Iterable[Dict[str, object]]) -> Dict[str, Dict[str, object]]:
@@ -43,7 +43,7 @@ def _build_hourly_payload_from_forecast(
     forecast: Mapping[str, Any],
     airports: List[Dict[str, Any]],
     hours: int,
-) -> Dict[str, object]:
+) -> HourlyPayload:
     query = str(item.get("query", "")).strip()
     nearby_airports = find_nearby_airports(
         resort_latitude=location.latitude,
@@ -84,7 +84,7 @@ def _build_hourly_payload_for_item(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int,
-) -> Dict[str, object]:
+) -> HourlyPayload:
     query = str(item.get("query", "")).strip()
     location = geocode(
         query,
@@ -126,7 +126,7 @@ async def _build_hourly_payload_for_item_async(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int,
-) -> Dict[str, object]:
+) -> HourlyPayload:
     query = str(item.get("query", "")).strip()
     location = await geocode_async(
         query,
@@ -167,13 +167,13 @@ async def build_hourly_payloads_for_resorts_async(
     forecast_cache_hours: int,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Dict[str, object] | None]:
+) -> Dict[str, HourlyPayload | None]:
     normalized_ids = [resort_id.strip() for resort_id in resort_ids if resort_id and resort_id.strip()]
     if not normalized_ids:
         return {}
     catalog_by_id = _catalog_by_resort_id(load_supported_resort_catalog())
     items = [catalog_by_id[resort_id] for resort_id in normalized_ids if resort_id in catalog_by_id]
-    out: Dict[str, Dict[str, object] | None] = {resort_id: None for resort_id in normalized_ids}
+    out: Dict[str, HourlyPayload | None] = {resort_id: None for resort_id in normalized_ids}
     if not items:
         return out
 
@@ -188,7 +188,7 @@ async def build_hourly_payloads_for_resorts_async(
         worker_count = min(max(1, int(max_workers)), len(items))
         semaphore = asyncio.Semaphore(worker_count)
 
-        async def run_one(resort_id: str, item: Dict[str, object]) -> tuple[str, Dict[str, object]]:
+        async def run_one(resort_id: str, item: Dict[str, object]) -> tuple[str, HourlyPayload]:
             async with semaphore:
                 try:
                     payload = await _build_hourly_payload_for_item_async(
@@ -232,7 +232,7 @@ def build_hourly_payloads_for_resorts(
     forecast_cache_hours: int,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Dict[str, object] | None]:
+) -> Dict[str, HourlyPayload | None]:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -258,7 +258,7 @@ def build_hourly_payload_for_resort(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, object] | None:
+) -> HourlyPayload | None:
     catalog = load_supported_resort_catalog()
     item = next((r for r in catalog if str(r.get("resort_id", "")) == resort_id), None)
     if item is None:

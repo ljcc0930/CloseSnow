@@ -13,6 +13,8 @@ from src.backend.constants import (
     DEFAULT_OPEN_METEO_CACHE_FILE,
     DEFAULT_STATIC_HOURLY_HOURS,
 )
+from src.contract import WeatherPayloadV1
+from src.contract.hourly_payload import HourlyPayload
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
 from src.web.weather_page_render_core import render_payload_html
 
@@ -28,14 +30,14 @@ def write_payload_json(path: str, payload: Dict[str, Any]) -> Path:
     return out
 
 
-def render_html(path: str, payload: Dict[str, Any], *, data_url: str = "./data.json") -> Path:
+def render_html(path: str, payload: WeatherPayloadV1, *, data_url: str = "./data.json") -> Path:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render_payload_html(payload, data_url=data_url), encoding="utf-8")
     return out
 
 
-def _iter_resort_ids(payload: Dict[str, Any]) -> List[str]:
+def _iter_resort_ids(payload: WeatherPayloadV1) -> List[str]:
     reports = payload.get("reports")
     if not isinstance(reports, list):
         return []
@@ -63,7 +65,7 @@ def _build_hourly_payload(
     geocode_cache_hours: int,
     forecast_cache_hours: int,
     api_retries: int,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[HourlyPayload]:
     from src.web.data_sources import load_hourly_payload
 
     code, payload = load_hourly_payload(
@@ -91,7 +93,7 @@ def _build_local_hourly_payloads(
     forecast_cache_hours: int,
     max_workers: int,
     api_retries: int,
-) -> Dict[str, Dict[str, Any] | None]:
+) -> Dict[str, HourlyPayload | None]:
     from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
 
     return build_hourly_payloads_for_resorts(
@@ -107,7 +109,7 @@ def _build_local_hourly_payloads(
 
 def render_hourly_pages(
     index_html_path: str,
-    payload: Dict[str, Any],
+    payload: WeatherPayloadV1,
     *,
     include_hourly_data: bool = True,
     hourly_mode: str = "local",
@@ -124,7 +126,7 @@ def render_hourly_pages(
     outputs: List[Path] = []
     resort_ids = _iter_resort_ids(payload)
     daily_summary_by_resort = build_resort_daily_summary_contexts(payload)
-    local_hourly_payloads: Dict[str, Dict[str, Any] | None] | None = None
+    local_hourly_payloads: Dict[str, HourlyPayload | None] | None = None
     if include_hourly_data and hourly_mode == "local":
         local_hourly_payloads = _build_local_hourly_payloads(
             resort_ids=resort_ids,
