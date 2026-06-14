@@ -93,13 +93,21 @@ const appState = {
   layoutMode: "desktop",
 };
 
-const _normalizeSearch = (value) => String(value || "").trim().toLowerCase();
-const _escapeHtml = (value) => String(value || "")
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll("\"", "&quot;")
-  .replaceAll("'", "&#39;");
+const weatherPageFormatters = window.CloseSnowWeatherPageFormatters || {};
+const {
+  asFiniteNumber: _asFiniteNumber,
+  dayLabelHtml: _dayLabelHtml,
+  escapeHtml: _escapeHtml,
+  formatDayLabel: _formatDayLabel,
+  formatMetric: _formatMetric,
+  formatTemp: _formatTemp,
+  isTruthyParam: _isTruthyParam,
+  metricCellHtml: _metricCellHtml,
+  normalizeSearch: _normalizeSearch,
+  rainColor: _rainColor,
+  snowColor: _snowColor,
+  tempColor: _tempColor,
+} = weatherPageFormatters;
 
 const _errorMessage = (error) => (error instanceof Error ? error.message : String(error));
 
@@ -109,11 +117,6 @@ const renderPageLoadError = (error) => {
   el.className = "page-load-error";
   el.textContent = _errorMessage(error);
   pageContentRoot.replaceChildren(el);
-};
-
-const _isTruthyParam = (value) => {
-  const text = _normalizeSearch(value);
-  return text === "1" || text === "true" || text === "yes" || text === "on";
 };
 
 const measureTextWidth = (text, font) => {
@@ -153,102 +156,9 @@ const _isDynamicApiDataUrl = () => {
   }
 };
 
-const _asFiniteNumber = (value) => {
-  if (value === null || value === undefined || value === "") return null;
-  const num = Number(value);
-  return Number.isFinite(num) ? num : null;
-};
-
-const _formatMetric = (value) => {
-  const num = _asFiniteNumber(value);
-  return num === null ? "" : num.toFixed(1);
-};
-
-const _formatTemp = (value) => {
-  const num = _asFiniteNumber(value);
-  if (num === null) return "";
-  if (Number.isInteger(num)) return String(num);
-  return num.toFixed(1);
-};
-
-const _formatDayLabel = (dateText) => {
-  const text = String(dateText || "").trim();
-  if (!text) return "";
-  const parts = text.split("-");
-  if (parts.length !== 3) return "";
-  const [year, month, day] = parts;
-  const dt = new Date(`${year}-${month}-${day}T00:00:00`);
-  if (Number.isNaN(dt.getTime())) return "";
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return `${month}-${day} ${weekdays[dt.getDay()]}`;
-};
-
-const _dayLabelHtml = (label) => {
-  const text = String(label || "").trim();
-  if (!text) return "";
-  const parts = text.split(/\s+/, 2);
-  if (parts.length === 2 && parts[0].includes("-")) {
-    return `<span class='day-label-date'>${_escapeHtml(parts[0])}</span><span class='day-label-weekday'>${_escapeHtml(parts[1])}</span>`;
-  }
-  return _escapeHtml(text);
-};
-
 const _weatherEmoji = (rawCode) => {
   const helper = window.CloseSnowWeatherCode?.emojiForWeatherCode;
   return helper ? helper(rawCode) : "❓";
-};
-
-const _snowColor = (value) => {
-  const v = _asFiniteNumber(value);
-  if (v === null) return "";
-  if (v > 15) return "background:#FFE7CC;";
-  const x = Math.min(Math.max(v, 0), 15) / 15;
-  const r = Math.round(255 + ((207 - 255) * x));
-  const g = Math.round(255 + ((232 - 255) * x));
-  return `background:rgb(${r},${g},255);`;
-};
-
-const _rainColor = (value) => {
-  const v = _asFiniteNumber(value);
-  if (v === null) return "";
-  if (v <= 0) return "background:#FFFFFF;";
-  if (v >= 7.6) return "background:#CFEFD8;";
-  const x = v / 7.6;
-  const r = Math.round(255 + ((207 - 255) * x));
-  const g = Math.round(255 + ((239 - 255) * x));
-  const b = Math.round(255 + ((216 - 255) * x));
-  return `background:rgb(${r},${g},${b});`;
-};
-
-const _tempColor = (value) => {
-  const v = _asFiniteNumber(value);
-  if (v === null) return "";
-  if (v < -10) return "background:#CFE8FF;";
-  if (v < 0) {
-    const x = (v + 10) / 10;
-    const r = Math.round(207 + ((255 - 207) * x));
-    const g = Math.round(232 + ((255 - 232) * x));
-    return `background:rgb(${r},${g},255);`;
-  }
-  if (v <= 20) {
-    if (v <= 4) return "background:#FFFFFF;";
-    const x = (v - 4) / 16;
-    const g = Math.round(255 + ((214 - 255) * x));
-    const b = Math.round(255 + ((214 - 255) * x));
-    return `background:rgb(255,${g},${b});`;
-  }
-  return "background:#FFD6D6;";
-};
-
-const _metricCellHtml = (rawValue, kind, style = "", klass = "") => {
-  const value = String(rawValue || "").trim();
-  const klassAttr = klass ? ` class='${klass}'` : "";
-  const styleAttr = style ? ` style='${style}'` : "";
-  const numeric = _asFiniteNumber(value);
-  if (numeric === null) {
-    return `<td${klassAttr}${styleAttr}>${_escapeHtml(value)}</td>`;
-  }
-  return `<td${klassAttr}${styleAttr} data-kind='${kind}' data-metric-value='${numeric.toFixed(6)}'>${_escapeHtml(value)}</td>`;
 };
 
 const _filterAttrs = (report) => {

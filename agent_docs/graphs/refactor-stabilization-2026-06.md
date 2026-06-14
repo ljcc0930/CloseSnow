@@ -34,11 +34,11 @@
 - Push: done (`origin/main`)
 
 ### 3. Split Homepage JavaScript Responsibilities
-- Status: pending
+- Status: done
 - Goal: reduce `assets/js/weather_page.js` by extracting cohesive homepage helpers while preserving browser behavior and asset load order.
 - Primary files: `assets/js/weather_page.js`, new `assets/js/*` helper modules, `src/web/templates/weather_page.html`, asset tests.
 - Validation: JS syntax lint; frontend/integration tests touching homepage render/assets.
-- Commit: pending
+- Commit: `Extract weather page formatter helpers`
 - Push: pending
 
 ### 4. Centralize Hourly Metric Schema And Trimming
@@ -76,3 +76,4 @@
 ## Completion Ledger
 - Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
 - Slice 2 completed and pushed: `4619789`; `python3 -m pytest tests/backend/test_open_meteo.py tests/integration/test_data_sources.py -q` passed; web-side boundary grep for direct `src.backend.open_meteo`, `src.backend.pipeline`, and `src.backend.cache` imports returned no matches; targeted ruff check passed.
+- Slice 3 completed: extracted homepage formatter helpers to `assets/js/weather_page_formatters.js`; `python3 -m pytest tests/frontend/test_renderers.py tests/integration/test_web_server.py -q`, `python3 -m pytest tests/integration/test_cli.py::test_copy_static_assets_copies_css_and_js -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed; `python3 scripts/lint_assets.py --js` is blocked locally by missing Node; browser preview loaded formatter and main scripts with no console errors.

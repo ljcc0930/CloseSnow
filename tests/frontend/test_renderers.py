@@ -251,6 +251,8 @@ def test_build_html_contains_meta_sections():
     assert 'src="assets/js/weather_code_emoji.js"' in html
     assert 'src="assets/js/weather_filter_state.js"' in html
     assert 'src="assets/js/sticky_single_table_layout.js"' in html
+    assert 'src="assets/js/weather_page_formatters.js"' in html
+    assert html.index('src="assets/js/weather_page_formatters.js"') < html.index('src="assets/js/weather_page.js"')
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
     assert 'id="resort-search-input"' in html
     assert 'id="filter-open-btn"' in html
