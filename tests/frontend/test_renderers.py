@@ -270,6 +270,25 @@ def test_build_html_contains_meta_sections():
     assert re.search(r"data-generated-utc=\"[0-9T:\-]+Z\"", html)
 
 
+def test_build_html_keeps_legacy_table_args_out_of_page_shell():
+    html = build_html(
+        [{"query": "Legacy Snow"}],
+        [{"query": "Legacy Rain"}],
+        [{"query": "Legacy Weather"}],
+        [{"query": "Legacy Sun"}],
+        [{"query": "Legacy Temp"}],
+        initial_payload={"reports": []},
+    )
+
+    assert "Legacy Snow" not in html
+    assert "Legacy Rain" not in html
+    assert "Legacy Weather" not in html
+    assert "Legacy Sun" not in html
+    assert "Legacy Temp" not in html
+    assert "Loading forecast..." in html
+    assert 'window.CLOSESNOW_INITIAL_PAYLOAD = {"reports": []};' in html
+
+
 def test_render_payload_html_wires_transform_and_builder(monkeypatch):
     captured = {}
 

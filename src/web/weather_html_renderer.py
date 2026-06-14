@@ -30,6 +30,14 @@ def build_html(
     data_url: str = "./data.json",
     initial_payload: Dict[str, Any] | None = None,
 ) -> str:
+    """Build the browser-rendered page shell.
+
+    The table-data arguments are kept for compatibility with older tests and
+    callers; the active page path bootstraps payload JSON and lets JS render
+    forecast tables in the browser.
+    """
+    del snowfall, rain, weather, sun, temp
+
     now_utc = datetime.now(timezone.utc)
     generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
     filter_meta = {
