@@ -39,5 +39,5 @@
 - [ ] The control layout remains usable on mobile and desktop static builds.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-home-base-ui --max-workers 8`

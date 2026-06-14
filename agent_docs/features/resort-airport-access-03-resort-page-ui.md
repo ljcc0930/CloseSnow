@@ -33,5 +33,5 @@
 
 ## Test Plan
 - Add targeted frontend/integration coverage for the new HTML container, rendered airport labels, fallback copy, and asset changes.
-- Run `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`.
+- Run `python3 -m pytest tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`.
 - Run `python3 -m src.cli static --output-dir /tmp/closesnow-airport-access-ui --max-workers 8 --resort "Snowbird, UT"` and manually open the generated resort page to confirm section placement and responsive behavior.

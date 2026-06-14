@@ -37,5 +37,5 @@
 - [ ] Popups, legend, and status elements feel like one coherent product surface instead of separate demo widgets.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-us-map-redesign --max-workers 8`

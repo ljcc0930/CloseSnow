@@ -32,6 +32,6 @@
 - [ ] Desktop filtering, sorting, favorites, and WMO tooltip behavior continue to work after the layout conversion.
 
 ## Test Plan
-- `python3 -m pytest tests/frontend/test_assets.py -q`
+- `python3 -m pytest tests/frontend/test_static_site_pipeline.py -q`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-homepage-sticky-tables --max-workers 8`
 - Desktop manual check of `Weather` with enough resorts to confirm sticky leading columns, sticky header, horizontal scrolling, and 10-row vertical viewport behavior.

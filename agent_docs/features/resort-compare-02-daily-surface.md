@@ -36,5 +36,5 @@
 - [ ] The compare rendering can be produced in static builds without requiring a live backend.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-resort-compare-daily --max-workers 8`

@@ -37,5 +37,5 @@
 - [ ] Shared URLs can reproduce the same home base state on another browser without server-side session state.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-home-base-model --max-workers 8`

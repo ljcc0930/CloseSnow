@@ -41,6 +41,6 @@
 - [ ] Any obsolete `Daily Summary` split-table-only sync logic that is no longer needed after the shared contract is introduced is removed or clearly isolated so later requests do not depend on it.
 
 ## Test Plan
-- `python3 -m pytest tests/frontend/test_assets.py -q`
+- `python3 -m pytest tests/frontend/test_static_site_pipeline.py -q`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-homepage-sticky-tables --max-workers 8`
 - Desktop manual check of `Daily Summary` with enough resorts to confirm horizontal scrolling, sticky leading columns, and a 10-row max viewport still behave correctly.

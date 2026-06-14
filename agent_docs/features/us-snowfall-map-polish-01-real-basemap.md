@@ -33,5 +33,5 @@
 - [ ] Tile or basemap failures degrade to a scoped map fallback instead of breaking the page.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-us-map-real-basemap --max-workers 8`
