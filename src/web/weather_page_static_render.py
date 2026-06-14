@@ -14,37 +14,19 @@ from typing import List
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import (
-    API_RETRY_TIMES,
-    DEFAULT_FORECAST_CACHE_HOURS,
-    DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_OPEN_METEO_CACHE_FILE,
-)
 from src.backend.pipelines.static_pipeline import fetch_static_payload
-from src.shared.config import DEFAULT_RESORTS_FILE
+from src.shared.cli_options import add_cache_runtime_options, add_resort_options
 from src.web.pipelines import render_hourly_pages, render_html
 from src.web.static_assets import copy_static_assets
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Render static ski weather HTML using unified backend payload.")
-    p.add_argument(
-        "--resort",
-        action="append",
-        default=[],
-        help="Resort query (repeatable). If set, --resorts-file is ignored.",
+    add_resort_options(
+        p,
+        resort_help="Resort query (repeatable). If set, --resorts-file is ignored.",
     )
-    p.add_argument(
-        "--resorts-file",
-        default=DEFAULT_RESORTS_FILE,
-        help="Input resorts file when --resort is not provided.",
-    )
-    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_cache_runtime_options(p)
     p.add_argument("--output-dir", default="site")
     return p.parse_args()
 

@@ -5,38 +5,30 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
-from src.backend.constants import (
-    API_RETRY_TIMES,
-    DEFAULT_FORECAST_CACHE_HOURS,
-    DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_OPEN_METEO_CACHE_FILE,
-    DEFAULT_RESORTS,
-    DEFAULT_UNIFIED_PAYLOAD_FILE,
-)
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from src.backend.constants import DEFAULT_RESORTS, DEFAULT_UNIFIED_PAYLOAD_FILE
 from src.backend.pipeline import read_resorts, run_pipeline
+from src.shared.cli_options import add_cache_runtime_options, add_resort_options
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Unified ECMWF backend pipeline for ski weather.")
-    p.add_argument("--resort", action="append", default=[], help="Resort name (repeatable).")
-    p.add_argument(
-        "--resorts-file",
-        default=DEFAULT_RESORTS_FILE,
-        help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
+    add_resort_options(
+        p,
+        resort_help="Resort name (repeatable).",
+        resorts_file_help="Resort catalog file (.yml/.json) or plain text file with one resort query per line.",
+        use_default_resorts=True,
     )
-    p.add_argument("--use-default-resorts", action="store_true", help="Use built-in resort list.")
     p.add_argument("--output-json", default=DEFAULT_UNIFIED_PAYLOAD_FILE)
     p.add_argument("--snow-csv", default=".cache/resorts_snowfall_daily.csv")
     p.add_argument("--rain-csv", default=".cache/resorts_rainfall_daily.csv")
     p.add_argument("--temp-csv", default=".cache/resorts_temperature_daily.csv")
-    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_cache_runtime_options(p)
     return p.parse_args()
 
 
