@@ -40,7 +40,14 @@ class LintResult:
     message: str
 
     def render(self) -> str:
-        return f"{self.path.relative_to(REPO_ROOT)}: {self.message}"
+        path = self.path
+        if not path.is_absolute():
+            return f"{path}: {self.message}"
+        try:
+            rendered_path = path.relative_to(REPO_ROOT)
+        except ValueError:
+            rendered_path = path
+        return f"{rendered_path}: {self.message}"
 
 
 class BalancedHtmlParser(HTMLParser):

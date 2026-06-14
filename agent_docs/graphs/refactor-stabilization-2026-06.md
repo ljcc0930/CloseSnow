@@ -18,11 +18,11 @@
 ## Refactor Slices
 
 ### 1. Fix Asset Lint Path Rendering
-- Status: pending
+- Status: done
 - Goal: make `./scripts/lint.sh` report missing Node or tinycss2 dependency errors cleanly instead of crashing when `LintResult.path` is relative.
 - Primary files: `scripts/lint_assets.py`, relevant tests.
 - Validation: `python3 scripts/lint_assets.py --js`; `./scripts/lint.sh`.
-- Commit: pending
+- Commit: `Fix asset lint path rendering`
 - Push: pending
 
 ### 2. Move Retry Helpers Out Of Backend Open-Meteo
@@ -74,4 +74,4 @@
 - Push: pending
 
 ## Completion Ledger
-- No slices completed yet.
+- Slice 1 completed: `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
