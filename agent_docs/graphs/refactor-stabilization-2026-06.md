@@ -3,7 +3,7 @@
 ## Summary
 - Execute seven focused refactor slices from the codebase review without changing product behavior.
 - Before starting each slice, read this document and use the first unchecked item as the current target.
-- After completing each slice, update this document with the validation result, commit hash, and push status before moving to the next slice.
+- After completing each slice, update this document with the validation result, commit hash, PR URL, and merge status before moving to the next slice.
 
 ## Branch
 - Primary branch: `main`
@@ -13,7 +13,9 @@
 - Do not touch untracked `reports/`.
 - Keep each slice behavior-preserving unless the slice explicitly removes dead compatibility surface.
 - Run the smallest useful validation first; run broader validation when shared boundaries are touched.
-- Make one commit per completed slice and push it to `origin/main`.
+- Do not commit directly to `main`.
+- For each remaining slice, fetch latest `origin/main`, create a fresh `ljcc/*` branch, commit there, push the branch, open a PR into `main`, enable auto-merge, and wait until the PR is successfully merged before starting the next slice.
+- Slices 1-4 were completed with direct `main` pushes before this workflow change; slices 5-7 must use the branch and PR workflow.
 
 ## Refactor Slices
 
@@ -56,6 +58,7 @@
 - Validation: contract validator tests and pipeline/report builder tests.
 - Commit: pending
 - Push: pending
+- PR/Merge: pending
 
 ### 6. Deduplicate CLI And Server Option Wiring
 - Status: pending
@@ -64,6 +67,7 @@
 - Validation: CLI/entrypoint/static-server tests.
 - Commit: pending
 - Push: pending
+- PR/Merge: pending
 
 ### 7. Clean Stale Docs And Legacy Renderer Decision
 - Status: pending
@@ -72,6 +76,7 @@
 - Validation: documentation grep for stale paths; targeted renderer/docs-adjacent tests.
 - Commit: pending
 - Push: pending
+- PR/Merge: pending
 
 ## Completion Ledger
 - Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
