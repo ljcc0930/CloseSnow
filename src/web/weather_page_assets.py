@@ -15,6 +15,7 @@ ASSET_MIME_TYPES: Dict[str, str] = {
     "assets/js/weather_page_formatters.js": "application/javascript; charset=utf-8",
     "assets/js/weather_page.js": "application/javascript; charset=utf-8",
     "assets/css/resort_hourly.css": "text/css; charset=utf-8",
+    "assets/js/resort_hourly_metrics.js": "application/javascript; charset=utf-8",
     "assets/js/resort_hourly.js": "application/javascript; charset=utf-8",
 }
 

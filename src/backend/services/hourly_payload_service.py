@@ -17,16 +17,7 @@ from src.backend.io import seed_coordinate_cache_from_coordinate_cache_file, see
 from src.backend.models import ResortLocation
 from src.backend.open_meteo import fetch_hourly_forecast, fetch_hourly_forecast_async, geocode, geocode_async
 from src.backend.services.resort_selection_service import load_supported_resort_catalog
-
-_HOURLY_METRIC_KEYS = [
-    "snowfall",
-    "rain",
-    "precipitation_probability",
-    "snow_depth",
-    "wind_speed_10m",
-    "wind_direction_10m",
-    "visibility",
-]
+from src.contract.hourly_payload import trim_hourly_payload
 
 
 def _catalog_by_resort_id(catalog: Iterable[Dict[str, object]]) -> Dict[str, Dict[str, object]]:
@@ -45,18 +36,6 @@ def _load_airports_safely() -> List[Dict[str, Any]]:
         return []
 
 
-def _trim_hourly_forecast(forecast: Mapping[str, Any], hours: int) -> tuple[int, Dict[str, object]]:
-    requested_hours = max(1, int(hours))
-    hourly = forecast.get("hourly", {}) if isinstance(forecast, dict) else {}
-    times = list(hourly.get("time", [])) if isinstance(hourly, dict) else []
-    n = min(requested_hours, len(times))
-    trimmed_hourly: Dict[str, object] = {"time": times[:n]}
-    for key in _HOURLY_METRIC_KEYS:
-        values = hourly.get(key, []) if isinstance(hourly, dict) else []
-        trimmed_hourly[key] = values[:n] if isinstance(values, list) else []
-    return n, trimmed_hourly
-
-
 def _build_hourly_payload_from_forecast(
     *,
     item: Dict[str, object],
@@ -72,7 +51,7 @@ def _build_hourly_payload_from_forecast(
         airports=airports,
         radius_miles=DEFAULT_NEARBY_AIRPORT_RADIUS_MILES,
     )
-    n, trimmed_hourly = _trim_hourly_forecast(forecast, hours)
+    n, trimmed_hourly = trim_hourly_payload(forecast, hours)
     return {
         "resort_id": str(item.get("resort_id", "")).strip(),
         "query": query,

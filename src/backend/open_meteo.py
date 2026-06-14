@@ -24,13 +24,14 @@ from src.backend.constants import (
     NOMINATIM_URL,
 )
 from src.backend.models import ResortLocation
+from src.contract.hourly_payload import HOURLY_METRIC_KEYS
 from src.shared.retry import with_retry, with_retry_async
 
 _USER_AGENT = "ecmwf-unified-backend/1.0 (+local script)"
 _DAILY_FIELDS = (
     "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset"
 )
-_HOURLY_FIELDS = "snowfall,rain,precipitation_probability,snow_depth,wind_speed_10m,wind_direction_10m,visibility"
+_HOURLY_FIELDS = ",".join(HOURLY_METRIC_KEYS)
 STATE_ABBR_TO_NAME = {
     "al": "alabama",
     "ak": "alaska",

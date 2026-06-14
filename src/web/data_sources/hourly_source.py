@@ -14,17 +14,8 @@ from src.backend.constants import (
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
+from src.contract.hourly_payload import trim_hourly_payload
 from src.shared.retry import with_retry
-
-_HOURLY_METRIC_KEYS = [
-    "snowfall",
-    "rain",
-    "precipitation_probability",
-    "snow_depth",
-    "wind_speed_10m",
-    "wind_direction_10m",
-    "visibility",
-]
 
 
 def _hourly_endpoint_from_data_source(base_url: str) -> str:
@@ -90,22 +81,6 @@ def _load_api_hourly_payload(
         return 502, {"error": str(exc)}
 
 
-def _trim_hourly_payload(payload: Dict[str, Any], hours: int) -> Dict[str, Any]:
-    hourly = payload.get("hourly", {}) if isinstance(payload, dict) else {}
-    times = list(hourly.get("time", [])) if isinstance(hourly, dict) and isinstance(hourly.get("time"), list) else []
-    requested_hours = max(1, int(hours))
-    n = min(requested_hours, len(times))
-    trimmed_hourly: Dict[str, Any] = {"time": times[:n]}
-    for key in _HOURLY_METRIC_KEYS:
-        values = hourly.get(key, []) if isinstance(hourly, dict) else []
-        trimmed_hourly[key] = values[:n] if isinstance(values, list) else []
-    return {
-        **payload,
-        "hours": n,
-        "hourly": trimmed_hourly,
-    }
-
-
 def _load_file_hourly_payload(
     *,
     source: str,
@@ -128,7 +103,8 @@ def _load_file_hourly_payload(
         return 502, {"error": f"Invalid hourly payload for resort_id: {resort_id}"}
     if "error" in payload:
         return 502, payload
-    return 200, _trim_hourly_payload(payload, hours)
+    n, trimmed_hourly = trim_hourly_payload(payload, hours)
+    return 200, {**payload, "hours": n, "hourly": trimmed_hourly}
 
 
 def load_hourly_payload(

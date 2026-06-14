@@ -77,6 +77,8 @@ def test_render_hourly_pages(tmp_path):
     ]
     html = outputs[0].read_text(encoding="utf-8")
     assert "../../assets/css/resort_hourly.css" in html
+    assert "../../assets/js/resort_hourly_metrics.js" in html
+    assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
     assert "window.CLOSESNOW_HOURLY_CONTEXT = {" in html
     assert '"resortId": "snowbird-ut"' in html
     assert "Resort Forecast: snowbird-ut" not in html

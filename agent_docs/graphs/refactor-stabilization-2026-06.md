@@ -42,11 +42,11 @@
 - Push: done (`origin/main`)
 
 ### 4. Centralize Hourly Metric Schema And Trimming
-- Status: pending
+- Status: done
 - Goal: remove duplicate hourly metric key and trim logic from backend service, web data source, and resort hourly frontend code where practical.
 - Primary files: `src/contract/*`, `src/backend/services/hourly_payload_service.py`, `src/web/data_sources/hourly_source.py`, `assets/js/resort_hourly.js`.
 - Validation: hourly backend/data-source/frontend tests; JS syntax lint.
-- Commit: pending
+- Commit: `Centralize hourly metric trimming`
 - Push: pending
 
 ### 5. Strengthen Payload And Report Contract Types
@@ -77,3 +77,4 @@
 - Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
 - Slice 2 completed and pushed: `4619789`; `python3 -m pytest tests/backend/test_open_meteo.py tests/integration/test_data_sources.py -q` passed; web-side boundary grep for direct `src.backend.open_meteo`, `src.backend.pipeline`, and `src.backend.cache` imports returned no matches; targeted ruff check passed.
 - Slice 3 completed and pushed: `f4403ad`; extracted homepage formatter helpers to `assets/js/weather_page_formatters.js`; `python3 -m pytest tests/frontend/test_renderers.py tests/integration/test_web_server.py -q`, `python3 -m pytest tests/integration/test_cli.py::test_copy_static_assets_copies_css_and_js -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed; `python3 scripts/lint_assets.py --js` is blocked locally by missing Node; browser preview loaded formatter and main scripts with no console errors.
+- Slice 4 completed: centralized Python hourly metric keys and trimming in `src/contract/hourly_payload.py`; extracted browser hourly metric defs and static trim to `assets/js/resort_hourly_metrics.js`; `python3 -m pytest tests/integration/test_hourly_payload_contract.py tests/backend/test_weather_data_server_hourly.py tests/integration/test_data_sources.py tests/integration/test_web_server.py tests/frontend/test_static_site_pipeline.py tests/backend/test_open_meteo.py -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed; `python3 scripts/lint_assets.py --js` is blocked locally by missing Node; browser preview loaded static resort hourly page with 72 rows, 7 charts, and no console errors.

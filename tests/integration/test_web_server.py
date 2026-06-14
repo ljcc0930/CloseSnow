@@ -56,6 +56,8 @@ def test_server_api_root_and_asset(monkeypatch):
         assert asset == b"body{}"
         formatter_asset = urllib.request.urlopen(f"{base}/assets/js/weather_page_formatters.js", timeout=3).read()
         assert formatter_asset == b"body{}"
+        hourly_metrics_asset = urllib.request.urlopen(f"{base}/assets/js/resort_hourly_metrics.js", timeout=3).read()
+        assert hourly_metrics_asset == b"body{}"
         asset_with_prefix = urllib.request.urlopen(f"{base}/CloseSnow/assets/css/weather_page.css", timeout=3).read()
         assert asset_with_prefix == b"body{}"
     finally:
@@ -462,6 +464,8 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
         assert 'id="resort-location-link"' in page
         assert 'id="resort-airport-access-section"' in page
         assert "../assets/js/resort_hourly.js" in page
+        assert "../assets/js/resort_hourly_metrics.js" in page
+        assert page.index("../assets/js/resort_hourly_metrics.js") < page.index("../assets/js/resort_hourly.js")
         assert "../assets/js/weather_code_emoji.js" in page
         assert "../assets/js/compact_daily_summary.js" in page
         assert 'id="resort-timeline-section"' in page
