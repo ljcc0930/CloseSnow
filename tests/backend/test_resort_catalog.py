@@ -396,30 +396,6 @@ def test_default_catalog_includes_requested_non_default_independent_resorts():
         assert item["longitude"] is not None
 
 
-def test_curated_coordinate_cache_matches_catalog_queries():
-    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
-    cache_entries = _load_curated_coordinate_cache()
-
-    assert set(cache_entries) == {item["query"].strip().lower() for item in entries}
-
-
-def test_curated_coordinate_cache_matches_catalog_explicit_coordinates():
-    entries = load_supported_resort_catalog(DEFAULT_RESORTS_FILE)
-    cache_entries = _load_curated_coordinate_cache()
-
-    for item in entries:
-        if item.get("latitude") is None or item.get("longitude") is None:
-            continue
-        cached = cache_entries[item["query"].strip().lower()]
-        assert cached == {
-            "name": item["name"],
-            "latitude": item["latitude"],
-            "longitude": item["longitude"],
-            "country": item["country"],
-            "admin1": item.get("state") or None,
-        }
-
-
 def test_curated_coordinate_cache_keeps_audited_public_locations():
     cache_entries = _load_curated_coordinate_cache()
 

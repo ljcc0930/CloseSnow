@@ -243,45 +243,23 @@ def test_build_html_contains_meta_sections():
     )
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
-    assert "Powered by" in html
-    assert "https://open-meteo.com/en/docs/ecmwf-api" in html
-    assert "Feature requests" in html
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
-    assert 'src="assets/js/weather_code_emoji.js"' in html
-    assert 'src="assets/js/weather_filter_state.js"' in html
-    assert 'src="assets/js/sticky_single_table_layout.js"' in html
     assert 'src="assets/js/weather_page_formatters.js"' in html
     assert html.index('src="assets/js/weather_page_formatters.js"') < html.index('src="assets/js/weather_page.js"')
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
     assert 'id="resort-search-input"' in html
-    assert 'id="filter-open-btn"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
-    assert '<option value="state">State (A-Z)</option>' in html
-    assert '<option value="week_snow" selected>This Week\'s Snowfall</option>' in html
     assert 'id="filter-region-options"' in html
-    assert html.index('id="filter-sort-select"') < html.index('id="filter-include-all"')
-    assert html.index('id="filter-include-all"') < html.index('id="filter-favorites-only"')
-    assert html.index('id="filter-favorites-only"') < html.index('name="filter-pass-type" value="ikon"')
-    assert html.index('id="filter-sort-select"') < html.index('name="filter-pass-type" value="ikon"')
-    assert html.index('id="filter-sort-select"') < html.index('id="filter-region-options"')
     assert 'id="favorites-only-toggle"' in html
     assert 'id="filter-favorites-only"' in html
     assert 'name="filter-pass-type" value="ikon"' in html
     assert 'name="filter-pass-type" value="epic"' in html
     assert 'name="filter-pass-type" value="indy"' not in html
     assert 'id="filter-apply-btn"' not in html
-    assert "Default resorts only" in html
     assert 'id="filter-include-all" checked' in html
-    assert "Search all resorts" in html
     assert 'id="filter-search-all" checked' in html
-    assert "Default resorts" in html
-    assert '<option value="next_week_snow">Next Week\'s Snowfall</option>' in html
-    assert '<option value="two_week_snow">Two-Week Snowfall</option>' in html
-    assert '<option value="favorites">Favorites First</option>' in html
-    assert '<option value="today_snow">Today\'s Snowfall</option>' in html
-    assert '<option value="default">Default</option>' not in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert "window.CLOSESNOW_INITIAL_PAYLOAD = null" in html

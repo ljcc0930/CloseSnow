@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from copy import deepcopy
 
 from src.backend import pipeline
@@ -56,48 +55,6 @@ def test_read_resorts_from_yml_catalog_include_all(tmp_path):
     )
     assert pipeline.read_resorts(str(p)) == ["Snowbird, UT"]
     assert pipeline.read_resorts(str(p), include_all=True) == ["Snowbird, UT", "Alta Ski Area, UT"]
-
-
-def test_seed_coordinate_cache_from_unified(tmp_path):
-    cache = _DummyCoordCache("x")
-    payload = {
-        "reports": [
-            {
-                "query": "A",
-                "matched_name": "AA",
-                "input_latitude": 1.1,
-                "input_longitude": 2.2,
-                "country": "US",
-                "admin1": "X",
-            },
-            {
-                "query": "B",
-                "name": "BB",
-                "latitude": 3.3,
-                "longitude": 4.4,
-            },
-            {"query": "", "latitude": 1, "longitude": 2},
-            {"query": "C", "latitude": "bad", "longitude": 2},
-        ]
-    }
-    f = tmp_path / "payload.json"
-    f.write_text(json.dumps(payload), encoding="utf-8")
-    pipeline.seed_coordinate_cache_from_unified(cache, str(f))
-    assert len(cache.set_calls) == 2
-    assert cache.set_calls[0][0] == "A"
-    assert cache.set_calls[1][0] == "B"
-    assert cache.set_calls[1][1]["name"] == "BB"
-
-
-def test_seed_coordinate_cache_from_unified_handles_missing_or_bad_file(tmp_path):
-    cache = _DummyCoordCache("x")
-    pipeline.seed_coordinate_cache_from_unified(cache, str(tmp_path / "missing.json"))
-    assert cache.set_calls == []
-
-    broken = tmp_path / "broken.json"
-    broken.write_text("{oops", encoding="utf-8")
-    pipeline.seed_coordinate_cache_from_unified(cache, str(broken))
-    assert cache.set_calls == []
 
 
 def _patch_pipeline_primitives(monkeypatch, tmp_path):

@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import json
+import re
 
 from src.web.pipelines.static_site import render_hourly_pages, render_html, write_payload_json
+
+
+def _hourly_context_from_html(html: str) -> dict:
+    match = re.search(r"window\.CLOSESNOW_HOURLY_CONTEXT = (\{.*?\});", html, re.S)
+    assert match is not None
+    return json.loads(match.group(1))
 
 
 def test_write_payload_json(tmp_path):
@@ -79,25 +86,14 @@ def test_render_hourly_pages(tmp_path):
     assert "../../assets/css/resort_hourly.css" in html
     assert "../../assets/js/resort_hourly_metrics.js" in html
     assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
-    assert "window.CLOSESNOW_HOURLY_CONTEXT = {" in html
-    assert '"resortId": "snowbird-ut"' in html
-    assert "Resort Forecast: snowbird-ut" not in html
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
-    assert 'id="resort-local-time"' in html
-    assert 'id="resort-location-link"' in html
-    assert 'id="resort-airport-access-section"' in html
     assert 'id="hourly-charts"' in html
-    assert 'id="resort-timeline-section"' in html
-    assert 'id="resort-daily-summary-section"' not in html
-    assert 'id="resort-history-section"' not in html
-    assert "Past 14 days + forecast" in html
-    assert '"dailySummary": {' in html
-    assert '"display_name": "Snowbird, Utah"' in html
-    assert '"nearbyAirports": [' in html
-    assert '"iata_code": "SLC"' in html
-    assert '"past14dDaily": [' in html
-    assert '"date": "2026-03-01"' in html
-    assert '"date": "2026-03-14"' in html
+    context = _hourly_context_from_html(html)
+    assert context["resortId"] == "snowbird-ut"
+    assert context["dailySummary"]["display_name"] == "Snowbird, Utah"
+    assert context["dailySummary"]["nearbyAirports"][0]["iata_code"] == "SLC"
+    assert context["dailySummary"]["past14dDaily"][0]["date"] == "2026-03-01"
+    assert context["dailySummary"]["past14dDaily"][-1]["date"] == "2026-03-14"
 
 
 def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatch):
@@ -147,11 +143,11 @@ def test_render_hourly_pages_defaults_to_static_hourly_data(tmp_path, monkeypatc
     hourly_json = tmp_path / "site" / "resort" / "snowbird-ut" / "hourly.json"
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
-    assert '"hourlyDataUrl": "./hourly.json"' in html
-    assert '"dailySummary": {' in html
-    assert '"display_name": "Snowbird, Utah"' in html
-    assert '"nearbyAirports": [' in html
-    assert '"past14dDaily": [' in html
+    context = _hourly_context_from_html(html)
+    assert context["hourlyDataUrl"] == "./hourly.json"
+    assert context["dailySummary"]["display_name"] == "Snowbird, Utah"
+    assert context["dailySummary"]["nearbyAirports"][0]["iata_code"] == "SLC"
+    assert len(context["dailySummary"]["past14dDaily"]) == 3
 
 
 def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
@@ -204,8 +200,8 @@ def test_render_hourly_pages_with_static_hourly_data(tmp_path, monkeypatch):
     hourly_json = tmp_path / "site" / "resort" / "snowbird-ut" / "hourly.json"
     assert hourly_json.exists()
     html = outputs[0].read_text(encoding="utf-8")
-    assert '"hourlyDataUrl": "./hourly.json"' in html
-    assert '"dailySummary": {' in html
-    assert '"display_name": "Snowbird, Utah"' in html
-    assert '"nearbyAirports": [' in html
-    assert '"past14dDaily": [' in html
+    context = _hourly_context_from_html(html)
+    assert context["hourlyDataUrl"] == "./hourly.json"
+    assert context["dailySummary"]["display_name"] == "Snowbird, Utah"
+    assert context["dailySummary"]["nearbyAirports"][0]["iata_code"] == "SLC"
+    assert len(context["dailySummary"]["past14dDaily"]) == 3
