@@ -49,7 +49,7 @@ class _DummyCoordCache:
 
 def test_with_retry_recovers_from_transient(monkeypatch):
     calls = {"n": 0}
-    monkeypatch.setattr("src.backend.open_meteo.time.sleep", lambda _: None)
+    monkeypatch.setattr("src.shared.retry.time.sleep", lambda _: None)
 
     def flappy():
         calls["n"] += 1
@@ -76,7 +76,7 @@ def test_with_retry_async_recovers_from_transient(monkeypatch):
             raise urllib.error.URLError("temporary")
         return "ok"
 
-    monkeypatch.setattr("src.backend.open_meteo.asyncio.sleep", fake_sleep)
+    monkeypatch.setattr("src.shared.retry.asyncio.sleep", fake_sleep)
     assert asyncio.run(open_meteo.with_retry_async(flappy, retries=3, retry_delay_seconds=10)) == "ok"
     assert calls["n"] == 3
     assert sleeps == [10, 10]
@@ -118,7 +118,7 @@ def test_fetch_json_returns_cache_hit_without_request(monkeypatch):
 
 def test_fetch_json_cache_miss_requests_and_sets_cache(monkeypatch):
     cache = _DummyCache(cached=None)
-    monkeypatch.setattr("src.backend.open_meteo.time.sleep", lambda _: None)
+    monkeypatch.setattr("src.shared.retry.time.sleep", lambda _: None)
     calls = {"n": 0}
 
     def fake_urlopen(req, timeout):  # noqa: ANN001
@@ -175,7 +175,7 @@ def test_fetch_json_async_cache_miss_requests_and_sets_cache(monkeypatch):
         await original_sleep(0)
 
     monkeypatch.setattr("src.backend.open_meteo._request_json_async", fake_request)
-    monkeypatch.setattr("src.backend.open_meteo.asyncio.sleep", fake_sleep)
+    monkeypatch.setattr("src.shared.retry.asyncio.sleep", fake_sleep)
     payload = asyncio.run(
         open_meteo.fetch_json_async(
             "https://example.test", {"b": 2}, cache=cache, namespace="abc", ttl_seconds=5, api_retries=1

@@ -26,11 +26,11 @@
 - Push: done (`origin/main`)
 
 ### 2. Move Retry Helpers Out Of Backend Open-Meteo
-- Status: pending
+- Status: done
 - Goal: move generic retry helpers used by web adapters out of `src/backend/open_meteo.py` into a shared module.
 - Primary files: `src/shared/*`, `src/backend/open_meteo.py`, `src/web/data_sources/api_source.py`, `src/web/data_sources/hourly_source.py`.
 - Validation: web/backend boundary grep from the playbook; targeted data-source/open-meteo tests.
-- Commit: pending
+- Commit: `Move retry helpers to shared module`
 - Push: pending
 
 ### 3. Split Homepage JavaScript Responsibilities
@@ -75,3 +75,4 @@
 
 ## Completion Ledger
 - Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
+- Slice 2 completed: `python3 -m pytest tests/backend/test_open_meteo.py tests/integration/test_data_sources.py -q` passed; web-side boundary grep for direct `src.backend.open_meteo`, `src.backend.pipeline`, and `src.backend.cache` imports returned no matches; targeted ruff check passed.

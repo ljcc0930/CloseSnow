@@ -3,14 +3,12 @@ from __future__ import annotations
 import asyncio
 import gzip
 import json
-import logging
 import math
 import ssl
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from typing import Any, Dict, Optional
 
 from src.backend.cache import JsonCache, ResortCoordinateCache, canonical_query
 from src.backend.constants import (
@@ -26,9 +24,8 @@ from src.backend.constants import (
     NOMINATIM_URL,
 )
 from src.backend.models import ResortLocation
+from src.shared.retry import with_retry, with_retry_async
 
-T = TypeVar("T")
-logger = logging.getLogger(__name__)
 _USER_AGENT = "ecmwf-unified-backend/1.0 (+local script)"
 _DAILY_FIELDS = (
     "snowfall_sum,rain_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset"
@@ -86,65 +83,6 @@ STATE_ABBR_TO_NAME = {
     "wi": "wisconsin",
     "wy": "wyoming",
 }
-
-
-def with_retry(
-    fn: Callable[[], T], retries: int = API_RETRY_TIMES, retry_delay_seconds: float = API_RETRY_DELAY_SECONDS
-) -> T:
-    attempts = max(1, retries + 1)
-    last_exc: Optional[Exception] = None
-    for attempt in range(attempts):
-        try:
-            return fn()
-        except urllib.error.HTTPError as exc:
-            # Retry only transient HTTP failures.
-            if exc.code != 429 and exc.code < 500:
-                raise
-            last_exc = exc
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            last_exc = exc
-
-        if attempt < attempts - 1:
-            logger.info(
-                "API request failed, retrying in %.1fs (%d/%d): %s", retry_delay_seconds, attempt + 1, retries, last_exc
-            )
-            time.sleep(retry_delay_seconds)
-
-    assert last_exc is not None
-    raise last_exc
-
-
-async def with_retry_async(
-    fn: Callable[[], Awaitable[T]],
-    retries: int = API_RETRY_TIMES,
-    retry_delay_seconds: float = API_RETRY_DELAY_SECONDS,
-) -> T:
-    attempts = max(1, retries + 1)
-    last_exc: Optional[Exception] = None
-    for attempt in range(attempts):
-        try:
-            return await fn()
-        except urllib.error.HTTPError as exc:
-            if exc.code != 429 and exc.code < 500:
-                raise
-            last_exc = exc
-        except (
-            urllib.error.URLError,
-            TimeoutError,
-            asyncio.TimeoutError,
-            OSError,
-            json.JSONDecodeError,
-        ) as exc:
-            last_exc = exc
-
-        if attempt < attempts - 1:
-            logger.info(
-                "API request failed, retrying in %.1fs (%d/%d): %s", retry_delay_seconds, attempt + 1, retries, last_exc
-            )
-            await asyncio.sleep(retry_delay_seconds)
-
-    assert last_exc is not None
-    raise last_exc
 
 
 def _cache_key(namespace: str, url: str, query: str) -> str:
@@ -283,7 +221,7 @@ def fetch_json(
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    payload = with_retry(do_request, retries=api_retries)
+    payload = with_retry(do_request, retries=api_retries, retry_delay_seconds=API_RETRY_DELAY_SECONDS)
     cache.set(key, payload)
     return payload
 
@@ -306,6 +244,7 @@ async def fetch_json_async(
     payload = await with_retry_async(
         lambda: _request_json_async(f"{url}?{query}", timeout=timeout),
         retries=api_retries,
+        retry_delay_seconds=API_RETRY_DELAY_SECONDS,
     )
     cache.set(key, payload)
     return payload

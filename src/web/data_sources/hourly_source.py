@@ -13,8 +13,8 @@ from src.backend.constants import (
     DEFAULT_GEOCODE_CACHE_HOURS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
-from src.backend.open_meteo import with_retry
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
+from src.shared.retry import with_retry
 
 _HOURLY_METRIC_KEYS = [
     "snowfall",

@@ -5,8 +5,8 @@ import urllib.request
 from typing import Any, Dict
 
 from src.backend.constants import API_RETRY_TIMES
-from src.backend.open_meteo import with_retry
 from src.contract import validate_weather_payload_v1
+from src.shared.retry import with_retry
 
 
 def load_api_payload(url: str, timeout: int = 20, api_retries: int = API_RETRY_TIMES) -> Dict[str, Any]:
