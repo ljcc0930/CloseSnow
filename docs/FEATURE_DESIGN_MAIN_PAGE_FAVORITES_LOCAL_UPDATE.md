@@ -105,7 +105,7 @@ This keeps the render strategy explicit:
 Files expected in this slice:
 
 1. [`assets/js/weather_page.js`](/Users/ljcc/workspace/CloseSnow/assets/js/weather_page.js)
-2. [`tests/frontend/test_assets.py`](/Users/ljcc/workspace/CloseSnow/tests/frontend/test_assets.py)
+2. [`tests/frontend/test_static_site_pipeline.py`](/Users/ljcc/workspace/CloseSnow/tests/frontend/test_static_site_pipeline.py)
 3. [`docs/REFACTOR_PROGRESS_LEDGER.md`](/Users/ljcc/workspace/CloseSnow/docs/REFACTOR_PROGRESS_LEDGER.md)
 
 Phase 1:

@@ -207,7 +207,7 @@ HTML/template/bootstrap:
 
 Tests:
 
-1. [`tests/frontend/test_assets.py`](/Users/ljcc/workspace/CloseSnow/tests/frontend/test_assets.py)
+1. [`tests/frontend/test_resort_hourly_context.py`](/Users/ljcc/workspace/CloseSnow/tests/frontend/test_resort_hourly_context.py)
 2. [`tests/frontend/test_static_site_pipeline.py`](/Users/ljcc/workspace/CloseSnow/tests/frontend/test_static_site_pipeline.py)
 3. [`tests/integration/test_web_server.py`](/Users/ljcc/workspace/CloseSnow/tests/integration/test_web_server.py)
 
@@ -223,8 +223,8 @@ Automated:
 Commands:
 
 ```bash
-python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q
-python3 -m src.cli static --output-html index.html
+python3 -m pytest tests/frontend/test_resort_hourly_context.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q
+python3 -m src.cli static --output-dir site --max-workers 8
 ```
 
 Manual:

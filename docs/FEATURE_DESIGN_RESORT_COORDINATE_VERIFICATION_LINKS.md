@@ -65,7 +65,8 @@ Primary files:
 1. `assets/js/resort_hourly.js`
 2. `assets/css/resort_hourly.css`
 3. `.github/ISSUE_TEMPLATE/01-coordinate-correction.yml`
-4. `tests/frontend/test_assets.py`
+4. `tests/frontend/test_static_site_pipeline.py`
+5. `tests/integration/test_web_server.py`
 
 ## 6. Validation
 

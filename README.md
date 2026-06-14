@@ -432,7 +432,7 @@ python -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
 touch site/.nojekyll
 ```
 
-## Compatibility Entrypoint
+## Compatibility Surfaces
 
 Legacy-compatible backend entrypoint:
 
@@ -447,12 +447,15 @@ Default artifacts:
 - `.cache/resorts_rainfall_daily.csv`
 - `.cache/resorts_temperature_daily.csv`
 
+Legacy Python table renderers under `src/web/weather_table_renderer.py`, `src/web/split_metric_renderer.py`, and `src/web/desktop`/`src/web/mobile` are retained as compatibility and regression-test surface. The current main page shell bootstraps payload data and renders forecast tables in browser JavaScript.
+
 ## Architecture Docs
 
-- `docs/FRONTEND_BACKEND_FLOW_ARCHITECTURE.md`
-- `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
 - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
-- `docs/FEATURE_DESIGN_SKI_WEATHER_FULL_INFO.md`
+- `docs/FEATURE_DESIGN_MAIN_PAGE_FAVORITES_LOCAL_UPDATE.md`
+- `docs/FEATURE_DESIGN_RESORT_COORDINATE_VERIFICATION_LINKS.md`
+- `docs/FEATURE_DESIGN_RESORT_PAGE_DAILY_SUMMARY_REUSE.md`
+- `docs/FEATURE_DESIGN_SERVE_STATIC.md`
 - `docs/REFACTOR_PROGRESS_LEDGER.md`
 
 ## License

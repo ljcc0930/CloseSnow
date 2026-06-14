@@ -2,11 +2,12 @@
 
 This file is the recovery anchor for long-running refactor work.
 
-Always read in this order before continuing:
+Current continuation order:
 
-1. `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
-2. `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
-3. `docs/REFACTOR_PROGRESS_LEDGER.md` (this file)
+1. `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+2. `docs/REFACTOR_PROGRESS_LEDGER.md` (this file)
+
+Historical entries below are preserved as executed. Some older entries mention removed planning docs, removed tests such as `tests/frontend/test_assets.py`, or superseded CLI flags such as `--output-html`; treat those as dated ledger evidence, not current instructions.
 
 ---
 
@@ -28,9 +29,7 @@ Status: v4 classification+merge pass implemented and validated on 2026-03-04 loc
 2. Cache read/write paths are lock-protected for concurrent access.
 3. Frontend has per-table unit toggles (`cm/in`, `mm/in`, `C/F`) with persisted browser preference.
 4. Desktop/mobile renderer split exists with merged precipitation wrappers by platform.
-5. Two planning docs already exist:
-   - `docs/FRONTEND_COMM_BACKEND_REFACTOR_GUIDE.md`
-   - `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
+5. Current validation guidance lives in `docs/CODEBASE_VALIDATION_PLAYBOOK.md`; feature-specific plans live in `docs/FEATURE_DESIGN_*.md` and `agent_docs/graphs/`.
 6. Automated pytest suite exists under `tests/` and is runnable via `python3 -m pytest -q`.
 7. Current Codex convention for local static preview/validation runs is `--max-workers 8`; older ledger entries that used `2` were temporary throttled runs.
 
