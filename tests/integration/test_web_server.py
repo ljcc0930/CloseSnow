@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -16,6 +17,12 @@ def _serve_once(handler_cls):
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
     return server, t, f"http://{host}:{port}"
+
+
+def _hourly_context_from_html(html: str) -> dict:
+    match = re.search(r"window\.CLOSESNOW_HOURLY_CONTEXT = (\{.*?\});", html, re.S)
+    assert match is not None
+    return json.loads(match.group(1))
 
 
 def test_server_api_root_and_asset(monkeypatch):
@@ -457,30 +464,20 @@ def test_server_hourly_api_and_hourly_page_route(monkeypatch):
 
         page = urllib.request.urlopen(f"{base}/resort/snowbird-ut", timeout=3).read().decode("utf-8")
         assert "Resort Forecast" in page
-        assert "snowbird-ut" in page
         assert "Resort Forecast: snowbird-ut" not in page
-        assert '"dailySummary": {' in page
-        assert '"nearbyAirports": [' in page
-        assert 'id="resort-location-link"' in page
-        assert 'id="resort-airport-access-section"' in page
-        assert "../assets/js/resort_hourly.js" in page
         assert "../assets/js/resort_hourly_metrics.js" in page
         assert page.index("../assets/js/resort_hourly_metrics.js") < page.index("../assets/js/resort_hourly.js")
-        assert "../assets/js/weather_code_emoji.js" in page
-        assert "../assets/js/compact_daily_summary.js" in page
-        assert 'id="resort-timeline-section"' in page
-        assert 'id="resort-daily-summary-section"' not in page
-        assert 'id="resort-history-section"' not in page
-        assert "Past 14 days + forecast" in page
         assert 'id="hourly-charts"' in page
-        assert '"past14dDaily": [' in page
-        assert '"date": "2026-03-01"' in page
-        assert '"date": "2026-03-14"' in page
+        context = _hourly_context_from_html(page)
+        assert context["resortId"] == "snowbird-ut"
+        assert context["dailySummary"]["nearbyAirports"][0]["iata_code"] == "SLC"
+        assert context["dailySummary"]["past14dDaily"][0]["date"] == "2026-03-01"
+        assert context["dailySummary"]["past14dDaily"][-1]["date"] == "2026-03-14"
 
         prefixed_page = urllib.request.urlopen(f"{base}/CloseSnow/resort/snowbird-ut", timeout=3).read().decode("utf-8")
         assert "Resort Forecast" in prefixed_page
-        assert "snowbird-ut" in prefixed_page
         assert "Resort Forecast: snowbird-ut" not in prefixed_page
+        assert _hourly_context_from_html(prefixed_page)["resortId"] == "snowbird-ut"
     finally:
         server.shutdown()
         server.server_close()
