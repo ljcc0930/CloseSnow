@@ -6,6 +6,14 @@ from pathlib import Path
 
 import pytest
 from src import cli
+from src.backend.constants import (
+    API_RETRY_TIMES,
+    DEFAULT_FORECAST_CACHE_HOURS,
+    DEFAULT_GEOCODE_CACHE_HOURS,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_OPEN_METEO_CACHE_FILE,
+)
+from src.shared.config import DEFAULT_RESORTS_FILE
 
 
 def test_build_parser_has_all_commands():
@@ -27,6 +35,55 @@ def test_build_parser_has_all_commands():
     assert args.command == "serve-data"
     args = parser.parse_args(["serve-web"])
     assert args.command == "serve-web"
+
+
+def test_build_parser_shared_option_defaults_and_overrides():
+    parser = cli.build_parser()
+
+    fetch_args = parser.parse_args(["fetch"])
+    assert fetch_args.resort == []
+    assert fetch_args.resorts_file == DEFAULT_RESORTS_FILE
+    assert fetch_args.include_all_resorts is False
+    assert fetch_args.cache_file == DEFAULT_OPEN_METEO_CACHE_FILE
+    assert fetch_args.geocode_cache_hours == DEFAULT_GEOCODE_CACHE_HOURS
+    assert fetch_args.forecast_cache_hours == DEFAULT_FORECAST_CACHE_HOURS
+    assert fetch_args.max_workers == DEFAULT_MAX_WORKERS
+    assert fetch_args.api_retries == API_RETRY_TIMES
+
+    serve_static_args = parser.parse_args(["serve-static"])
+    assert serve_static_args.host == "127.0.0.1"
+    assert serve_static_args.port == 8011
+    assert serve_static_args.directory == "site"
+    assert serve_static_args.cache_file == DEFAULT_OPEN_METEO_CACHE_FILE
+
+    serve_args = parser.parse_args(["serve"])
+    assert serve_args.host == "127.0.0.1"
+    assert serve_args.port == 8010
+    assert serve_args.api_retries == API_RETRY_TIMES
+
+    serve_data_args = parser.parse_args(["serve-data"])
+    assert serve_data_args.host == "127.0.0.1"
+    assert serve_data_args.port == 8020
+    assert serve_data_args.allow_origin == "*"
+    assert serve_data_args.max_workers == DEFAULT_MAX_WORKERS
+
+    serve_web_args = parser.parse_args(
+        [
+            "serve-web",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "9000",
+            "--cache-file",
+            ".cache/custom.json",
+            "--api-retries",
+            "5",
+        ]
+    )
+    assert serve_web_args.host == "0.0.0.0"
+    assert serve_web_args.port == 9000
+    assert serve_web_args.cache_file == ".cache/custom.json"
+    assert serve_web_args.api_retries == 5
 
 
 def test_serve_web_parser_uses_env_default(monkeypatch):

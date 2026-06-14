@@ -12,16 +12,10 @@ from typing import Any, Dict, List, Tuple
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.backend.constants import (
-    API_RETRY_TIMES,
-    DEFAULT_FORECAST_CACHE_HOURS,
-    DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_OPEN_METEO_CACHE_FILE,
-)
 from src.backend.pipelines.static_pipeline import fetch_static_payload
 from src.backend.weather_data_server import make_handler as make_data_handler
-from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL, DEFAULT_RESORTS_FILE
+from src.shared.cli_options import add_cache_runtime_options, add_resort_options, add_server_bind_options
+from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL
 from src.web.data_sources import load_payload
 from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
 from src.web.static_assets import copy_static_assets
@@ -29,27 +23,8 @@ from src.web.weather_page_server import make_handler
 
 
 def _add_fetch_options(p: argparse.ArgumentParser) -> None:
-    p.add_argument(
-        "--resort",
-        action="append",
-        default=[],
-        help="Resort query (repeatable). If set, resorts file is ignored.",
-    )
-    p.add_argument(
-        "--resorts-file",
-        default=DEFAULT_RESORTS_FILE,
-        help="Input resorts file when --resort is not provided.",
-    )
-    p.add_argument(
-        "--include-all-resorts",
-        action="store_true",
-        help="Include all resorts from --resorts-file, including default_enabled=false entries.",
-    )
-    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_resort_options(p, include_all_resorts=True)
+    add_cache_runtime_options(p)
 
 
 def _resolve_resorts(args: argparse.Namespace) -> Tuple[List[str], str, bool]:
@@ -84,42 +59,26 @@ def build_parser() -> argparse.ArgumentParser:
         "serve-static", help="Build and serve generated static site files from a directory."
     )
     _add_fetch_options(p_serve_static)
-    p_serve_static.add_argument("--host", default="127.0.0.1")
-    p_serve_static.add_argument("--port", type=int, default=8011)
+    add_server_bind_options(p_serve_static, default_port=8011)
     p_serve_static.add_argument("--directory", default="site")
     p_serve_static.add_argument("--skip-fetch", action="store_true")
     p_serve_static.add_argument("--skip-render", action="store_true")
 
     p_serve = sub.add_parser("serve", help="Run dynamic weather HTTP server.")
-    p_serve.add_argument("--host", default="127.0.0.1")
-    p_serve.add_argument("--port", type=int, default=8010)
-    p_serve.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p_serve.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p_serve.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p_serve.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p_serve.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_server_bind_options(p_serve, default_port=8010)
+    add_cache_runtime_options(p_serve)
 
     p_serve_data = sub.add_parser("serve-data", help="Run backend data API server only.")
-    p_serve_data.add_argument("--host", default="127.0.0.1")
-    p_serve_data.add_argument("--port", type=int, default=8020)
-    p_serve_data.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p_serve_data.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p_serve_data.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p_serve_data.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p_serve_data.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_server_bind_options(p_serve_data, default_port=8020)
+    add_cache_runtime_options(p_serve_data)
     p_serve_data.add_argument("--allow-origin", default="*")
 
     p_serve_web = sub.add_parser("serve-web", help="Run frontend web server with configurable data source.")
-    p_serve_web.add_argument("--host", default="127.0.0.1")
-    p_serve_web.add_argument("--port", type=int, default=8010)
+    add_server_bind_options(p_serve_web, default_port=8010)
     p_serve_web.add_argument("--data-mode", choices=["local", "api", "file"], default="api")
     p_serve_web.add_argument("--data-source", default=os.getenv(DATA_API_URL_ENV, DEFAULT_DATA_API_URL))
     p_serve_web.add_argument("--data-timeout", type=int, default=20)
-    p_serve_web.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p_serve_web.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p_serve_web.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p_serve_web.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p_serve_web.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_cache_runtime_options(p_serve_web)
 
     return p
 

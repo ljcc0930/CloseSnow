@@ -59,16 +59,16 @@
 - Validation: contract validator tests and pipeline/report builder tests.
 - Commit: `6bfcfb4` (`Strengthen payload contract types`)
 - Push: done (`origin/ljcc/refactor-contract-types`)
-- PR/Merge: [#68](https://github.com/ljcc0930/CloseSnow/pull/68); merge must be verified before slice 6 starts.
+- PR/Merge: [#68](https://github.com/ljcc0930/CloseSnow/pull/68); merged and verified before slice 6 started.
 
 ### 6. Deduplicate CLI And Server Option Wiring
-- Status: pending
+- Status: done; PR pending merge verification
 - Goal: reduce repeated argparse option declarations and server startup wiring while keeping CLI behavior stable.
 - Primary files: `src/cli.py`, server entrypoints if needed, integration CLI tests.
 - Validation: CLI/entrypoint/static-server tests.
-- Commit: pending
-- Push: pending
-- PR/Merge: pending
+- Commit: `7d931e5` (`Deduplicate CLI option wiring`)
+- Push: done (`origin/ljcc/refactor-cli-option-wiring`)
+- PR/Merge: [#69](https://github.com/ljcc0930/CloseSnow/pull/69); merge must be verified before slice 7 starts.
 
 ### 7. Clean Stale Docs And Legacy Renderer Decision
 - Status: pending
@@ -85,3 +85,4 @@
 - Slice 3 completed and pushed: `f4403ad`; extracted homepage formatter helpers to `assets/js/weather_page_formatters.js`; `python3 -m pytest tests/frontend/test_renderers.py tests/integration/test_web_server.py -q`, `python3 -m pytest tests/integration/test_cli.py::test_copy_static_assets_copies_css_and_js -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed; `python3 scripts/lint_assets.py --js` is blocked locally by missing Node; browser preview loaded formatter and main scripts with no console errors.
 - Slice 4 completed and pushed: `bae0547`; centralized Python hourly metric keys and trimming in `src/contract/hourly_payload.py`; extracted browser hourly metric defs and static trim to `assets/js/resort_hourly_metrics.js`; `python3 -m pytest tests/integration/test_hourly_payload_contract.py tests/backend/test_weather_data_server_hourly.py tests/integration/test_data_sources.py tests/integration/test_web_server.py tests/frontend/test_static_site_pipeline.py tests/backend/test_open_meteo.py -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed; `python3 scripts/lint_assets.py --js` is blocked locally by missing Node; browser preview loaded static resort hourly page with 72 rows, 7 charts, and no console errors.
 - Slice 5 completed on branch `ljcc/refactor-contract-types` and PR [#68](https://github.com/ljcc0930/CloseSnow/pull/68): `6bfcfb4`; replaced broad report and hourly payload contract annotations with explicit typed dicts; updated builder, pipeline, data source, render, and cache annotations; validators now share field lists from contract definitions; `python3 -m pytest -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed.
+- Slice 6 completed on branch `ljcc/refactor-cli-option-wiring` and PR [#69](https://github.com/ljcc0930/CloseSnow/pull/69): `7d931e5`; added shared argparse helpers for resort, cache/runtime, and server bind options; reused them across the unified CLI, standalone backend data server, dynamic web server, static renderer, and legacy backend entrypoint; added parser default/override coverage; `python3 -m ruff check src/shared/cli_options.py src/cli.py src/backend/weather_data_server.py src/web/weather_page_server.py src/backend/ecmwf_unified_backend.py src/web/weather_page_static_render.py tests/integration/test_cli.py`, `python3 -m pytest tests/integration/test_cli.py tests/integration/test_entrypoints.py tests/integration/test_web_server.py tests/integration/test_backend_data_server.py -q`, `python3 -m pytest -q`, and standalone `--help` smoke tests passed.

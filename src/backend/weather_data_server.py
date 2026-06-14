@@ -13,14 +13,7 @@ from urllib.parse import parse_qs, urlparse
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.constants import (
-    API_RETRY_TIMES,
-    DEFAULT_FORECAST_CACHE_HOURS,
-    DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_OPEN_METEO_CACHE_FILE,
-    DEFAULT_PAYLOAD_CACHE_TTL_SECONDS,
-)
+from src.backend.constants import API_RETRY_TIMES, DEFAULT_PAYLOAD_CACHE_TTL_SECONDS
 from src.backend.pipelines.live_pipeline import run_live_payload
 from src.backend.services.hourly_options import parse_hour_count
 from src.backend.services.hourly_payload_service import build_hourly_payload_for_resort
@@ -36,6 +29,7 @@ from src.backend.services.resort_selection_service import (
     split_query_values,
     supported_catalog,
 )
+from src.shared.cli_options import add_cache_runtime_options, add_server_bind_options
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 
@@ -271,13 +265,8 @@ def make_handler(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Serve backend weather payload API.")
-    p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=8020)
-    p.add_argument("--cache-file", default=DEFAULT_OPEN_METEO_CACHE_FILE)
-    p.add_argument("--geocode-cache-hours", type=int, default=DEFAULT_GEOCODE_CACHE_HOURS)
-    p.add_argument("--forecast-cache-hours", type=int, default=DEFAULT_FORECAST_CACHE_HOURS)
-    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
-    p.add_argument("--api-retries", type=int, default=API_RETRY_TIMES)
+    add_server_bind_options(p, default_port=8020)
+    add_cache_runtime_options(p)
     p.add_argument("--allow-origin", default="*")
     return p.parse_args()
 
