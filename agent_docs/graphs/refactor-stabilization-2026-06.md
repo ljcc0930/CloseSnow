@@ -71,13 +71,13 @@
 - PR/Merge: [#69](https://github.com/ljcc0930/CloseSnow/pull/69); merged and verified before slice 7 started.
 
 ### 7. Clean Stale Docs And Legacy Renderer Decision
-- Status: done; PR pending merge verification
+- Status: done
 - Goal: remove or clearly mark stale documentation references and decide whether old Python table renderers are compatibility surface or dead code.
 - Primary files: `README.md`, docs, legacy renderer modules/tests if changed.
 - Validation: documentation grep for stale paths; targeted renderer/docs-adjacent tests.
 - Commit: `1786a65` (`Clarify legacy renderer compatibility`)
 - Push: done (`origin/ljcc/refactor-docs-legacy-renderers`)
-- PR/Merge: [#70](https://github.com/ljcc0930/CloseSnow/pull/70); merge must be verified before declaring all seven slices complete.
+- PR/Merge: [#70](https://github.com/ljcc0930/CloseSnow/pull/70); merged and verified. All seven slices are complete.
 
 ## Completion Ledger
 - Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
@@ -87,3 +87,4 @@
 - Slice 5 completed on branch `ljcc/refactor-contract-types` and PR [#68](https://github.com/ljcc0930/CloseSnow/pull/68): `6bfcfb4`; replaced broad report and hourly payload contract annotations with explicit typed dicts; updated builder, pipeline, data source, render, and cache annotations; validators now share field lists from contract definitions; `python3 -m pytest -q`, `python3 scripts/lint_assets.py --html`, and targeted ruff passed.
 - Slice 6 completed on branch `ljcc/refactor-cli-option-wiring` and PR [#69](https://github.com/ljcc0930/CloseSnow/pull/69): `7d931e5`; added shared argparse helpers for resort, cache/runtime, and server bind options; reused them across the unified CLI, standalone backend data server, dynamic web server, static renderer, and legacy backend entrypoint; added parser default/override coverage; `python3 -m ruff check src/shared/cli_options.py src/cli.py src/backend/weather_data_server.py src/web/weather_page_server.py src/backend/ecmwf_unified_backend.py src/web/weather_page_static_render.py tests/integration/test_cli.py`, `python3 -m pytest tests/integration/test_cli.py tests/integration/test_entrypoints.py tests/integration/test_web_server.py tests/integration/test_backend_data_server.py -q`, `python3 -m pytest -q`, and standalone `--help` smoke tests passed.
 - Slice 7 completed on branch `ljcc/refactor-docs-legacy-renderers` and PR [#70](https://github.com/ljcc0930/CloseSnow/pull/70): `1786a65`; removed current README/docs references to missing architecture docs, removed test paths, and old `--output-html` examples; marked old ledger entries as historical evidence rather than current instructions; documented legacy Python table renderers as compatibility/regression-test surface while current page shell rendering is browser-driven; `python3 -m ruff check src/web/weather_html_renderer.py tests/frontend/test_renderers.py`, `python3 -m pytest tests/frontend/test_renderers.py tests/frontend/test_resort_hourly_context.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`, `python3 -m pytest tests/integration/test_cli.py::test_copy_static_assets_copies_css_and_js -q`, `python3 -m pytest -q`, and documentation/renderer grep checks passed.
+- Final merge verification: PR [#70](https://github.com/ljcc0930/CloseSnow/pull/70) merged into `main` at `2026-06-14T02:29:04Z` with merge commit `e84bbb9`; no remaining refactor slices are pending.
