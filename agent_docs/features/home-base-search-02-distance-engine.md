@@ -36,5 +36,5 @@
 - [ ] Existing pass type, region, country, favorites, and text search filters continue to work in combination with the new distance filter.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/integration/test_web_server.py tests/integration/test_data_sources.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py tests/integration/test_data_sources.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-home-base-distance --max-workers 8`

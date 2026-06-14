@@ -36,5 +36,5 @@
 
 ## Test Plan
 - Update targeted frontend and integration coverage for the new resort-location CTA.
-- Run `python3 -m pytest tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`.
+- Run `python3 -m pytest tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py -q`.
 - Run `python3 -m src.cli static --output-dir /tmp/closesnow-resort-map-link --max-workers 8 --resort "Snowbird, UT"` and manually confirm the generated resort page shows the Google Maps CTA near the header.

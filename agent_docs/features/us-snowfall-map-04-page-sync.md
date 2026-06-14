@@ -39,5 +39,5 @@
 - [ ] If the controller asset is unavailable or initialization fails, the page keeps rendering existing content and degrades to a no-map state without uncaught errors.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-us-snowfall-map-sync --max-workers 8`

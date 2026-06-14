@@ -40,5 +40,5 @@
 - [ ] Template, JS, CSS, and frontend/integration tests move together so the static build output reflects the new filter behavior.
 
 ## Test Plan
-- `pytest tests/frontend/test_renderers.py tests/frontend/test_assets.py tests/integration/test_web_server.py`
+- `pytest tests/frontend/test_renderers.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-region-filters --max-workers 8`

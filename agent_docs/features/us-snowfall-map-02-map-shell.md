@@ -44,5 +44,5 @@
 - [ ] The shell layout is responsive on mobile and desktop without obscuring the existing filter/search bar or breaking current tables.
 
 ## Test Plan
-- `python3 -m pytest -q tests/frontend/test_assets.py tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
+- `python3 -m pytest -q tests/frontend/test_static_site_pipeline.py tests/integration/test_web_server.py`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-us-snowfall-map-shell --max-workers 8`

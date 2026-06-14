@@ -34,6 +34,6 @@
 - [ ] Metric/imperial toggles, filtering, sorting, favorites, labels, and cell color semantics continue to behave the same after the conversion.
 
 ## Test Plan
-- `python3 -m pytest tests/frontend/test_assets.py -q`
+- `python3 -m pytest tests/frontend/test_static_site_pipeline.py -q`
 - `python3 -m src.cli static --output-dir /tmp/closesnow-homepage-sticky-tables --max-workers 8 --include-all-resorts`
 - Desktop manual check of `Snowfall` and `Rainfall` with enough resorts to confirm fixed weekly columns, horizontal daily scrolling, and a 10-row vertical viewport.
