@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from src.backend.constants import (
     API_RETRY_TIMES,
@@ -10,6 +10,7 @@ from src.backend.constants import (
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
 from src.backend.pipeline import compute_pipeline_payload
+from src.contract import WeatherPayloadV1
 
 
 def _normalize_resorts(resorts: Optional[List[str]]) -> List[str]:
@@ -25,7 +26,7 @@ def build_weather_payload(
     forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> WeatherPayloadV1:
     return compute_pipeline_payload(
         resorts=_normalize_resorts(resorts),
         resorts_file=resorts_file,

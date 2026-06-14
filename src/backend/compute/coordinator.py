@@ -2,14 +2,26 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 from src.backend.cache import JsonCache, ResortCoordinateCache
 from src.backend.constants import API_RETRY_TIMES
 from src.backend.open_meteo import fetch_forecast_async, fetch_history_async, geocode_async
 from src.backend.report_builder import build_report
+from src.contract import FailedItem, WeatherReport
 
 logger = logging.getLogger(__name__)
+
+
+class ResortReportResult(TypedDict):
+    index: int
+    report: Optional[WeatherReport]
+    failed: Optional[FailedItem]
+
+
+class PipelineResult(TypedDict):
+    reports: List[WeatherReport]
+    failed: List[FailedItem]
 
 
 async def build_resort_report(
@@ -22,7 +34,7 @@ async def build_resort_report(
     forecast_ttl: int,
     api_retries: int,
     semaphore: asyncio.Semaphore,
-) -> Dict[str, Any]:
+) -> ResortReportResult:
     async with semaphore:
         logger.info("Resort %d/%d: start %s", idx, total, resort)
         try:
@@ -81,7 +93,7 @@ async def run_pipeline_async(
     forecast_ttl: int,
     max_workers: int,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> PipelineResult:
     semaphore = asyncio.Semaphore(max(1, max_workers))
     tasks = [
         asyncio.create_task(
@@ -101,8 +113,8 @@ async def run_pipeline_async(
     ]
     results = await asyncio.gather(*tasks)
 
-    reports_ordered: List[Optional[Dict[str, Any]]] = [None] * len(selected)
-    failed: List[Dict[str, str]] = []
+    reports_ordered: List[Optional[WeatherReport]] = [None] * len(selected)
+    failed: List[FailedItem] = []
     for result in results:
         reports_ordered[result["index"]] = result["report"]
         if result["failed"] is not None:

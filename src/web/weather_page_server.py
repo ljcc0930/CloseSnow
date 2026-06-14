@@ -31,6 +31,7 @@ from src.backend.constants import (
 )
 from src.backend.services.hourly_options import parse_hour_count
 from src.backend.services.payload_memory_cache import PayloadMemoryCache, frozen_query_params
+from src.contract import WeatherPayloadV1
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
 from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
@@ -101,8 +102,8 @@ def make_handler(
 
         def _load_request_payload(
             self, qs: Dict[str, List[str]], *, apply_server_filters: bool = True
-        ) -> Dict[str, Any]:
-            def load() -> Dict[str, Any]:
+        ) -> WeatherPayloadV1:
+            def load() -> WeatherPayloadV1:
                 return load_request_payload(
                     mode=data_mode,
                     source=data_source,

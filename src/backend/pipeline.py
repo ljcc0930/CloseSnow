@@ -28,7 +28,7 @@ from src.backend.io import (
     seed_coordinate_cache_from_unified,
 )
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
-from src.contract import SCHEMA_VERSION, validate_weather_payload_v1
+from src.contract import SCHEMA_VERSION, FailedItem, WeatherPayloadV1, WeatherReport, validate_weather_payload_v1
 from src.shared.config import DEFAULT_RESORTS_FILE
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ def _catalog_metadata_by_query(paths: List[str]) -> Dict[str, Dict[str, Any]]:
 
 
 def _enrich_reports_with_catalog_metadata(
-    reports: List[Dict[str, Any]], metadata_by_query: Dict[str, Dict[str, Any]]
+    reports: List[WeatherReport], metadata_by_query: Dict[str, Dict[str, Any]]
 ) -> None:
     for report in reports:
         query = str(report.get("query", "")).strip()
@@ -100,7 +100,7 @@ def _to_float(value: Any) -> float | None:
         return None
 
 
-def _enrich_reports_with_nearby_airports(reports: List[Dict[str, Any]], airports: List[Dict[str, Any]]) -> None:
+def _enrich_reports_with_nearby_airports(reports: List[WeatherReport], airports: List[Dict[str, Any]]) -> None:
     for report in reports:
         lat = _to_float(report.get("input_latitude"))
         lon = _to_float(report.get("input_longitude"))
@@ -126,7 +126,7 @@ def compute_pipeline_payload(
     forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> WeatherPayloadV1:
     selected = select_resorts(
         resorts=list(resorts or []),
         resorts_file=resorts_file,
@@ -160,8 +160,8 @@ def compute_pipeline_payload(
             api_retries=api_retries,
         )
     )
-    reports: List[Dict[str, Any]] = async_result["reports"]
-    failed: List[Dict[str, str]] = async_result["failed"]
+    reports: List[WeatherReport] = async_result["reports"]
+    failed: List[FailedItem] = async_result["failed"]
     catalog_index = _catalog_metadata_by_query([resorts_file, DEFAULT_RESORTS_FILE])
     _enrich_reports_with_catalog_metadata(reports, catalog_index)
     try:
@@ -210,7 +210,7 @@ def run_pipeline(
     write_outputs: bool = True,
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
-) -> Dict[str, Any]:
+) -> WeatherPayloadV1:
     payload = compute_pipeline_payload(
         resorts=resorts,
         resorts_file=resorts_file,

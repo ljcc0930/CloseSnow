@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from typing import Any, Dict
-
+from src.contract import WeatherPayloadV1
 from src.web.weather_html_renderer import build_html
 
 
-def render_payload_html(payload: Dict[str, Any], *, data_url: str = "./data.json") -> str:
+def render_payload_html(payload: WeatherPayloadV1, *, data_url: str = "./data.json") -> str:
     return build_html(
         [],
         [],

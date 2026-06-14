@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from src.backend.constants import DAYS_PER_WEEK, ECMWF_MODEL, FORECAST_DAYS, HISTORY_DAYS
 from src.backend.models import ResortLocation
+from src.contract.weather_payload_v1 import DailyForecastRow, WeatherReport
 
 
 def as_float_list(values: List[Any]) -> List[Optional[float]]:
@@ -43,7 +44,7 @@ def safe_sum(values: List[Optional[float]]) -> float:
     return float(sum(value for value in values if value is not None))
 
 
-def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
+def build_daily_rows(daily: Dict[str, Any]) -> List[DailyForecastRow]:
     dates = daily.get("time", [])
     snowfall = as_float_list(daily.get("snowfall_sum", []))
     rain = as_float_list(daily.get("rain_sum", []))
@@ -54,7 +55,7 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
     sunrise = daily.get("sunrise", [])
     sunset = daily.get("sunset", [])
 
-    rows: List[Dict[str, Any]] = []
+    rows: List[DailyForecastRow] = []
     n = max(
         len(dates),
         len(snowfall),
@@ -91,7 +92,7 @@ def build_daily_rows(daily: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def build_report(
     location: ResortLocation, forecast: Dict[str, Any], history: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+) -> WeatherReport:
     daily = forecast.get("daily", {})
     rows = build_daily_rows(daily)
 
