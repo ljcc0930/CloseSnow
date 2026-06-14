@@ -22,8 +22,8 @@
 - Goal: make `./scripts/lint.sh` report missing Node or tinycss2 dependency errors cleanly instead of crashing when `LintResult.path` is relative.
 - Primary files: `scripts/lint_assets.py`, relevant tests.
 - Validation: `python3 scripts/lint_assets.py --js`; `./scripts/lint.sh`.
-- Commit: `Fix asset lint path rendering`
-- Push: pending
+- Commit: `f7961fa` (`Fix asset lint path rendering`)
+- Push: done (`origin/main`)
 
 ### 2. Move Retry Helpers Out Of Backend Open-Meteo
 - Status: pending
@@ -74,4 +74,4 @@
 - Push: pending
 
 ## Completion Ledger
-- Slice 1 completed: `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
+- Slice 1 completed and pushed: `f7961fa`; `python3 -m pytest tests/test_lint_assets.py -q` passed; `./scripts/lint.sh` now reports `assets/js: node is required for JavaScript syntax checks` cleanly on this machine instead of raising `ValueError`.
