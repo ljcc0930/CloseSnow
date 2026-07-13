@@ -148,6 +148,7 @@ Notes:
 - Generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`)
 - Copies bundled `resort/<resort_id>/hourly.json` files and points each static hourly page at `./hourly.json`
 - Copies and validates the assets declared by the canonical web asset manifest
+- Writes bundle metadata for the rendered `data.json`, so the output directory can be reused as an offline bundle
 
 ### `static`
 
@@ -328,7 +329,8 @@ If output HTML is `site/index.html`, generated artifacts include:
 - `site/resort/<resort_id>/index.html`
 - `site/resort/<resort_id>/hourly.json` (when hourly fetch succeeds)
 - `site/assets/css/*` and `site/assets/js/*` (copied automatically by `render`, `static`, and `serve-static`)
-- `<bundle-root>/.closesnow-static-bundle.json` and `<output-dir>/.closesnow-static-site.json` (builder ownership metadata; both are under `site/` when bundle and render output share that directory)
+- `<bundle-root>/.closesnow-static-bundle.json` (written by fetch and refreshed in every rendered output)
+- `<output-dir>/.closesnow-static-site.json` (rendered route and asset ownership metadata)
 
 ## Payload Contract (`weather_payload_v1`)
 

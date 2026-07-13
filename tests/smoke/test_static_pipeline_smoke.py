@@ -25,7 +25,16 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
     hourly_payload = {
         "resort_id": "snowbird-ut",
         "hours": 2,
-        "hourly": {"time": ["2026-03-04T00:00", "2026-03-04T01:00"]},
+        "hourly": {
+            "time": ["2026-03-04T00:00", "2026-03-04T01:00"],
+            "snowfall": [0.0, 0.1],
+            "rain": [0.0, 0.0],
+            "precipitation_probability": [20, 10],
+            "snow_depth": [100, 100],
+            "wind_speed_10m": [5.0, 6.0],
+            "wind_direction_10m": [120, 110],
+            "visibility": [9000, 8800],
+        },
     }
     monkeypatch.setattr(
         "src.web.static_site_builder.build_weather_payload_for_request",

@@ -10,11 +10,13 @@ from src.web.asset_manifest import WEB_ASSET_MANIFEST
 from src.web.pipelines.static_site import render_hourly_pages, render_html, write_payload_json
 from src.web.static_site_builder import (
     BUNDLE_MANIFEST_FILENAME,
+    SITE_MANIFEST_FILENAME,
     StaticBuildRequest,
     StaticFetchRequest,
     StaticRenderRequest,
     build_static_site,
     fetch_static_bundle,
+    load_static_bundle,
     render_static_bundle,
 )
 from src.web.static_site_validator import validate_static_site
@@ -204,6 +206,23 @@ def test_render_hourly_pages_removes_stale_hourly_data_when_bundle_has_none(tmp_
     assert len(context["dailySummary"]["past14dDaily"]) == 3
 
 
+def test_render_hourly_pages_preserves_safe_custom_resort_ids(tmp_path):
+    index_path = tmp_path / "site" / "index.html"
+    payload = {
+        "reports": [
+            {
+                "resort_id": "Snowbird_UT",
+                "query": "Snowbird, UT",
+                "daily": [],
+            }
+        ]
+    }
+
+    outputs = render_hourly_pages(str(index_path), payload)
+
+    assert outputs == [tmp_path / "site" / "resort" / "Snowbird_UT" / "index.html"]
+
+
 def test_fetch_static_bundle_writes_daily_and_hourly_with_shared_runtime(monkeypatch, tmp_path, valid_payload):
     valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
     output_json = tmp_path / "bundle" / "data.json"
@@ -284,6 +303,63 @@ def test_fetch_static_bundle_removes_failed_stale_hourly_but_preserves_unknown_f
     assert manifest["hourly"] == {}
     assert manifest["missing_hourly"] == ["snowbird-ut"]
     assert result.bundle.missing_hourly_resort_ids == ("snowbird-ut",)
+
+
+@pytest.mark.parametrize("invalid_kind", ["swapped-resort", "malformed-series"])
+def test_fetch_static_bundle_rejects_mismatched_or_malformed_hourly_payloads(
+    monkeypatch, tmp_path, valid_payload, invalid_kind
+):
+    valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
+    output_json = tmp_path / "bundle" / "data.json"
+    invalid_hourly = _static_hourly_payload()
+    if invalid_kind == "swapped-resort":
+        invalid_hourly["resort_id"] = "alta-ut"
+    else:
+        invalid_hourly["hourly"]["snowfall"] = "not-a-list"
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        lambda request: valid_payload,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        lambda **kwargs: {"snowbird-ut": invalid_hourly},
+    )
+
+    result = fetch_static_bundle(StaticFetchRequest(WeatherPayloadBuildRequest(output_json=str(output_json))))
+
+    assert result.bundle.missing_hourly_resort_ids == ("snowbird-ut",)
+    assert not (output_json.parent / "resort" / "snowbird-ut" / "hourly.json").exists()
+    manifest = json.loads((output_json.parent / BUNDLE_MANIFEST_FILENAME).read_text(encoding="utf-8"))
+    assert manifest["hourly"] == {}
+
+
+@pytest.mark.parametrize("invalid_kind", ["swapped-resort", "malformed-series"])
+def test_load_static_bundle_rejects_manifest_hourly_with_wrong_identity_or_shape(
+    monkeypatch, tmp_path, valid_payload, invalid_kind
+):
+    valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
+    output_json = tmp_path / "bundle" / "data.json"
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        lambda request: valid_payload,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        lambda **kwargs: {"snowbird-ut": _static_hourly_payload()},
+    )
+    fetch_static_bundle(StaticFetchRequest(WeatherPayloadBuildRequest(output_json=str(output_json))))
+    hourly_path = output_json.parent / "resort" / "snowbird-ut" / "hourly.json"
+    invalid_hourly = _static_hourly_payload()
+    if invalid_kind == "swapped-resort":
+        invalid_hourly["resort_id"] = "alta-ut"
+    else:
+        invalid_hourly["hourly"]["visibility"] = [9000]
+    hourly_path.write_text(json.dumps(invalid_hourly), encoding="utf-8")
+
+    bundle = load_static_bundle(str(output_json))
+
+    assert bundle.hourly_payloads["snowbird-ut"] is None
+    assert bundle.missing_hourly_resort_ids == ("snowbird-ut",)
 
 
 def test_render_static_bundle_is_offline_and_self_contained_for_external_output(monkeypatch, tmp_path, valid_payload):
@@ -379,6 +455,65 @@ def test_render_static_bundle_cleans_only_owned_stale_route_files(monkeypatch, t
     assert unknown_file.read_text(encoding="utf-8") == "keep"
     assert (output_dir / "resort" / "alta-ut" / "index.html").is_file()
     assert (output_dir / "resort" / "alta-ut" / "hourly.json").is_file()
+
+
+def test_external_render_replaces_stale_bundle_manifest_with_deployed_bundle(monkeypatch, tmp_path, valid_payload):
+    valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        lambda request: valid_payload,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        lambda **kwargs: {resort_id: _static_hourly_payload(resort_id) for resort_id in kwargs["resort_ids"]},
+    )
+    old_input = tmp_path / "old-bundle" / "data.json"
+    output_dir = tmp_path / "deploy"
+    fetch_static_bundle(StaticFetchRequest(WeatherPayloadBuildRequest(output_json=str(old_input))))
+    render_static_bundle(StaticRenderRequest(input_json=str(old_input), output_dir=str(output_dir)))
+
+    valid_payload["reports"][0]["resort_id"] = "alta-ut"
+    new_input = tmp_path / "new-bundle" / "data.json"
+    fetch_static_bundle(StaticFetchRequest(WeatherPayloadBuildRequest(output_json=str(new_input))))
+    render_static_bundle(StaticRenderRequest(input_json=str(new_input), output_dir=str(output_dir)))
+
+    manifest = json.loads((output_dir / BUNDLE_MANIFEST_FILENAME).read_text(encoding="utf-8"))
+    assert manifest["daily_json"] == "data.json"
+    assert manifest["hourly"] == {"alta-ut": "resort/alta-ut/hourly.json"}
+    deployed_bundle = load_static_bundle(str(output_dir / "data.json"))
+    assert deployed_bundle.missing_hourly_resort_ids == ()
+    assert set(deployed_bundle.hourly_payloads) == {"alta-ut"}
+
+
+def test_render_static_bundle_cleans_manifest_owned_stale_assets_only(monkeypatch, tmp_path, valid_payload):
+    valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
+    input_json = tmp_path / "bundle" / "data.json"
+    output_dir = tmp_path / "deploy"
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        lambda request: valid_payload,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        lambda **kwargs: {"snowbird-ut": _static_hourly_payload()},
+    )
+    fetch_static_bundle(StaticFetchRequest(WeatherPayloadBuildRequest(output_json=str(input_json))))
+    render_request = StaticRenderRequest(input_json=str(input_json), output_dir=str(output_dir))
+    render_static_bundle(render_request)
+
+    stale_asset = output_dir / "assets" / "css" / "obsolete.css"
+    unknown_asset = output_dir / "assets" / "css" / "user-theme.css"
+    stale_asset.write_text("obsolete", encoding="utf-8")
+    unknown_asset.write_text("custom", encoding="utf-8")
+    site_manifest_path = output_dir / SITE_MANIFEST_FILENAME
+    site_manifest = json.loads(site_manifest_path.read_text(encoding="utf-8"))
+    site_manifest["assets"].append("assets/css/obsolete.css")
+    site_manifest_path.write_text(json.dumps(site_manifest), encoding="utf-8")
+
+    render_static_bundle(render_request)
+
+    assert not stale_asset.exists()
+    assert unknown_asset.read_text(encoding="utf-8") == "custom"
 
 
 def test_static_builder_rejects_traversal_resort_ids_before_fetch_or_render(monkeypatch, tmp_path, valid_payload):

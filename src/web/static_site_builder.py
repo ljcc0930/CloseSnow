@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any, Mapping, Optional
 
@@ -13,6 +13,7 @@ from src.backend.runtime import WeatherPayloadBuildRequest
 from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
 from src.backend.services.weather_service import build_weather_payload_for_request
 from src.contract import HourlyPayload, WeatherPayloadV1
+from src.contract.hourly_payload import HOURLY_METRIC_KEYS
 from src.web.asset_manifest import WEB_ASSET_MANIFEST
 from src.web.data_sources.static_json_source import load_static_payload
 from src.web.pipelines.static_site import (
@@ -74,6 +75,7 @@ class StaticBundle:
     manifest_path: Optional[Path]
     hourly_payloads: Mapping[str, HourlyPayload | None]
     missing_hourly_resort_ids: tuple[str, ...]
+    hourly_hours: int
 
 
 @dataclass(frozen=True)
@@ -102,6 +104,12 @@ class _BundleManifest:
     daily_json: str
     hourly_hours: int
     hourly_paths: Mapping[str, str]
+
+
+@dataclass(frozen=True)
+class _SiteManifest:
+    resort_ids: tuple[str, ...] = ()
+    asset_paths: tuple[str, ...] = ()
 
 
 def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> Path:
@@ -144,8 +152,27 @@ def _site_manifest_path(output_dir: Path) -> Path:
     return output_dir / SITE_MANIFEST_FILENAME
 
 
-def _is_hourly_payload(payload: Any) -> bool:
-    return isinstance(payload, dict) and "error" not in payload and isinstance(payload.get("hourly"), dict)
+def _is_hourly_payload(payload: Any, resort_id: str) -> bool:
+    if not isinstance(payload, dict) or "error" in payload or payload.get("resort_id") != resort_id:
+        return False
+    hourly = payload.get("hourly")
+    if not isinstance(hourly, dict):
+        return False
+    times = hourly.get("time")
+    if not isinstance(times, list) or not all(isinstance(item, str) for item in times):
+        return False
+    hours = payload.get("hours")
+    if not isinstance(hours, int) or isinstance(hours, bool) or hours != len(times):
+        return False
+    for key in HOURLY_METRIC_KEYS:
+        values = hourly.get(key)
+        if not isinstance(values, list) or len(values) != len(times):
+            return False
+        if any(
+            value is not None and (not isinstance(value, (int, float)) or isinstance(value, bool)) for value in values
+        ):
+            return False
+    return True
 
 
 def _validated_resort_ids(payload: WeatherPayloadV1) -> list[str]:
@@ -236,7 +263,7 @@ def fetch_static_bundle(request: StaticFetchRequest) -> StaticFetchResult:
     hourly_payloads: dict[str, HourlyPayload | None] = {}
     for resort_id in resort_ids:
         hourly_payload = fetched_hourly.get(resort_id)
-        hourly_payloads[resort_id] = hourly_payload if _is_hourly_payload(hourly_payload) else None
+        hourly_payloads[resort_id] = hourly_payload if _is_hourly_payload(hourly_payload, resort_id) else None
 
     previously_owned_ids: set[str] = set()
     if previous_payload is not None:
@@ -277,6 +304,7 @@ def fetch_static_bundle(request: StaticFetchRequest) -> StaticFetchResult:
         manifest_path=manifest_path,
         hourly_payloads=MappingProxyType(hourly_payloads),
         missing_hourly_resort_ids=missing_ids,
+        hourly_hours=request.hourly_hours,
     )
     return StaticFetchResult(bundle=bundle, hourly_json_paths=tuple(hourly_paths))
 
@@ -303,7 +331,7 @@ def load_static_bundle(input_json: str) -> StaticBundle:
             hourly_payload = json.loads(hourly_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, ValueError, TypeError):
             continue
-        if _is_hourly_payload(hourly_payload):
+        if _is_hourly_payload(hourly_payload, resort_id):
             hourly_payloads[resort_id] = hourly_payload
 
     missing_ids = tuple(resort_id for resort_id in resort_ids if hourly_payloads[resort_id] is None)
@@ -313,23 +341,73 @@ def load_static_bundle(input_json: str) -> StaticBundle:
         manifest_path=manifest_path if manifest is not None else None,
         hourly_payloads=MappingProxyType(hourly_payloads),
         missing_hourly_resort_ids=missing_ids,
+        hourly_hours=manifest.hourly_hours if manifest is not None else DEFAULT_STATIC_HOURLY_HOURS,
     )
 
 
-def _read_owned_site_resort_ids(output_dir: Path) -> tuple[str, ...]:
+def _normalize_owned_asset_path(raw_path: str) -> Optional[str]:
+    parsed = PurePosixPath(raw_path)
+    if (
+        parsed.is_absolute()
+        or not parsed.parts
+        or parsed.parts[0] != "assets"
+        or ".." in parsed.parts
+        or str(parsed) != raw_path
+    ):
+        return None
+    return raw_path
+
+
+def _read_owned_site_manifest(output_dir: Path) -> _SiteManifest:
     path = _site_manifest_path(output_dir)
     if not path.is_file():
-        return ()
+        return _SiteManifest()
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, TypeError):
-        return ()
+        return _SiteManifest()
     if not isinstance(raw, dict) or raw.get("schema_version") != _SITE_SCHEMA:
-        return ()
+        return _SiteManifest()
     resort_ids = raw.get("resort_ids")
     if not isinstance(resort_ids, list) or not all(isinstance(item, str) for item in resort_ids):
-        return ()
-    return tuple(dict.fromkeys(item.strip() for item in resort_ids if item.strip()))
+        resort_ids = []
+    asset_paths = raw.get("assets")
+    if not isinstance(asset_paths, list) or not all(isinstance(item, str) for item in asset_paths):
+        asset_paths = []
+    normalized_assets = [
+        normalized for item in asset_paths if (normalized := _normalize_owned_asset_path(item)) is not None
+    ]
+    return _SiteManifest(
+        resort_ids=tuple(dict.fromkeys(item.strip() for item in resort_ids if item.strip())),
+        asset_paths=tuple(dict.fromkeys(normalized_assets)),
+    )
+
+
+def _asset_artifact_path(output_dir: Path, relative_path: str) -> Path:
+    normalized = _normalize_owned_asset_path(relative_path)
+    if normalized is None:
+        raise ValueError(f"Invalid owned static asset path: {relative_path!r}")
+    root = output_dir.resolve()
+    candidate = root.joinpath(*PurePosixPath(normalized).parts)
+    cursor = root
+    for part in PurePosixPath(normalized).parts:
+        cursor /= part
+        if cursor.is_symlink():
+            raise ValueError(f"Static asset path must not contain symlinks: {candidate}")
+    try:
+        candidate.resolve(strict=False).relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"Static asset path escapes its selected root: {candidate}") from exc
+    return candidate
+
+
+def _cleanup_stale_assets(output_dir: Path, previous_paths: set[str], current_paths: set[str]) -> None:
+    for relative_path in previous_paths.difference(current_paths):
+        try:
+            path = _asset_artifact_path(output_dir, relative_path)
+        except ValueError:
+            continue
+        _unlink_owned_file(path)
 
 
 def _cleanup_stale_site_routes(output_dir: Path, previous_ids: set[str], current_ids: set[str]) -> None:
@@ -344,14 +422,19 @@ def render_static_bundle(request: StaticRenderRequest) -> StaticRenderResult:
     output_dir = request.resolved_output_dir
     output_json = output_dir / "data.json"
     previous_payload = _try_load_previous_payload(output_json)
-    previous_ids = set(_read_owned_site_resort_ids(output_dir))
+    previous_site_manifest = _read_owned_site_manifest(output_dir)
+    previous_ids = set(previous_site_manifest.resort_ids)
     if previous_payload is not None:
         previous_ids.update(_validated_resort_ids(previous_payload))
     current_resort_ids = _validated_resort_ids(bundle.payload)
     current_ids = set(current_resort_ids)
+    current_asset_paths = {asset.repository_path for asset in WEB_ASSET_MANIFEST}
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    for relative_path in current_asset_paths:
+        _asset_artifact_path(output_dir, relative_path)
     _cleanup_stale_site_routes(output_dir, previous_ids, current_ids)
+    _cleanup_stale_assets(output_dir, set(previous_site_manifest.asset_paths), current_asset_paths)
     _atomic_write_json(output_json, bundle.payload)
     index_html = render_html(str(output_dir / "index.html"), bundle.payload, data_url="./data.json")
     hourly_pages = render_hourly_pages(
@@ -366,6 +449,21 @@ def render_static_bundle(request: StaticRenderRequest) -> StaticRenderResult:
         rendered_issues = "; ".join(issue.render() for issue in issues)
         raise RuntimeError(f"Generated static site failed validation: {rendered_issues}")
 
+    rendered_hourly = {
+        resort_id: _hourly_relative_path(resort_id)
+        for resort_id in current_resort_ids
+        if bundle.hourly_payloads.get(resort_id) is not None
+    }
+    _atomic_write_json(
+        _bundle_manifest_path(output_json),
+        {
+            "schema_version": _BUNDLE_SCHEMA,
+            "daily_json": output_json.name,
+            "hourly_hours": bundle.hourly_hours,
+            "hourly": rendered_hourly,
+            "missing_hourly": [resort_id for resort_id in current_resort_ids if resort_id not in rendered_hourly],
+        },
+    )
     _atomic_write_json(
         _site_manifest_path(output_dir),
         {

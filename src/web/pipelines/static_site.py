@@ -13,7 +13,7 @@ from src.web.weather_page_render_core import render_payload_html
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parents[1] / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
-_RESORT_ARTIFACT_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+_RESORT_ARTIFACT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 _RESORT_ARTIFACT_FILENAMES = frozenset({"index.html", "hourly.json"})
 
 

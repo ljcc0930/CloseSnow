@@ -290,14 +290,15 @@ Pass criteria:
 
 ## 7) Workflow compatibility check
 
-The GitHub Pages workflow currently builds with split static pipeline commands.
+The GitHub Pages workflow currently uses the one-shot static builder for every catalog resort.
 
 Local equivalent:
 
 ```bash
-python3 -m src.cli fetch --output-json site/data.json --max-workers 8
-python3 -m src.cli render --input-json site/data.json --output-dir site
-ls -la site site/assets/css site/assets/js
+python3 -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
+touch site/.nojekyll
+python3 -m src.web.static_site_validator --site-dir site --require-pages-artifacts
+ls -la site site/resort site/assets/css site/assets/js
 ```
 
 Pass criteria:
@@ -305,7 +306,7 @@ Pass criteria:
 1. `site/data.json` and `site/index.html` exist.
 2. Per-resort `index.html` and `hourly.json` files are present in `site/resort/...`.
 3. CSS and JS files are present in `site/assets/...`.
-4. The `render` step does not contact the backend or external APIs.
+4. Strict Pages validation confirms every resort in `data.json` has both `index.html` and `hourly.json`.
 
 ---
 
