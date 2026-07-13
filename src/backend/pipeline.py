@@ -28,6 +28,7 @@ from src.backend.io import (
     seed_coordinate_cache_from_unified,
 )
 from src.backend.resort_catalog import load_resort_catalog, read_resort_queries
+from src.backend.runtime import WeatherPayloadBuildRequest
 from src.contract import SCHEMA_VERSION, FailedItem, WeatherPayloadV1, WeatherReport, validate_weather_payload_v1
 from src.shared.config import DEFAULT_RESORTS_FILE
 
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "SCHEMA_VERSION",
     "compute_pipeline_payload",
+    "compute_pipeline_payload_for_request",
     "read_resorts",
     "run_pipeline",
 ]
@@ -127,27 +129,44 @@ def compute_pipeline_payload(
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> WeatherPayloadV1:
-    selected = select_resorts(
-        resorts=list(resorts or []),
+    request = WeatherPayloadBuildRequest.from_legacy_options(
+        resorts=resorts,
         resorts_file=resorts_file,
+        include_all_resorts=include_all_resorts,
         use_default_resorts=use_default_resorts,
+        output_json=output_json,
+        cache_file=cache_file,
+        geocode_cache_hours=geocode_cache_hours,
+        forecast_cache_hours=forecast_cache_hours,
+        max_workers=max_workers,
+        api_retries=api_retries,
+    )
+    return compute_pipeline_payload_for_request(request)
+
+
+def compute_pipeline_payload_for_request(request: WeatherPayloadBuildRequest) -> WeatherPayloadV1:
+    runtime = request.runtime
+    selected = select_resorts(
+        resorts=list(request.resorts),
+        resorts_file=request.resorts_file,
+        use_default_resorts=request.use_default_resorts,
         default_resorts=list(DEFAULT_RESORTS),
-        read_resorts_fn=lambda path: read_resorts(path, include_all=include_all_resorts),
+        read_resorts_fn=lambda path: read_resorts(path, include_all=request.include_all_resorts),
     )
     logger.info("Pipeline start: resorts=%d", len(selected))
 
-    cache_path = dated_cache_path(cache_file)
+    cache_path = dated_cache_path(runtime.cache_file)
     cache = JsonCache(cache_path)
     coord_cache = ResortCoordinateCache(COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_coordinate_cache_file(coord_cache, CURATED_COORDINATES_CACHE_FILE)
     seed_coordinate_cache_from_unified(coord_cache, DEFAULT_UNIFIED_PAYLOAD_FILE)
-    if output_json != DEFAULT_UNIFIED_PAYLOAD_FILE:
-        seed_coordinate_cache_from_unified(coord_cache, output_json)
+    if request.output_json != DEFAULT_UNIFIED_PAYLOAD_FILE:
+        seed_coordinate_cache_from_unified(coord_cache, request.output_json)
     seed_coordinate_cache_from_catalog(coord_cache, DEFAULT_RESORTS_FILE)
-    if resorts_file:
-        seed_coordinate_cache_from_catalog(coord_cache, resorts_file)
-    geocode_ttl = geocode_cache_hours * 3600
-    forecast_ttl = forecast_cache_hours * 3600
+    if request.resorts_file:
+        seed_coordinate_cache_from_catalog(coord_cache, request.resorts_file)
+    geocode_ttl = runtime.geocode_cache_hours * 3600
+    forecast_ttl = runtime.forecast_cache_hours * 3600
 
     async_result = asyncio.run(
         _run_pipeline_async(
@@ -156,13 +175,13 @@ def compute_pipeline_payload(
             coord_cache=coord_cache,
             geocode_ttl=geocode_ttl,
             forecast_ttl=forecast_ttl,
-            max_workers=max_workers,
-            api_retries=api_retries,
+            max_workers=runtime.max_workers,
+            api_retries=runtime.api_retries,
         )
     )
     reports: List[WeatherReport] = async_result["reports"]
     failed: List[FailedItem] = async_result["failed"]
-    catalog_index = _catalog_metadata_by_query([resorts_file, DEFAULT_RESORTS_FILE])
+    catalog_index = _catalog_metadata_by_query([request.resorts_file, DEFAULT_RESORTS_FILE])
     _enrich_reports_with_catalog_metadata(reports, catalog_index)
     try:
         airports = load_airport_catalog_airports()
@@ -174,9 +193,9 @@ def compute_pipeline_payload(
         cache_path=cache_path,
         cache_hits=cache.hits,
         cache_misses=cache.misses,
-        geocode_cache_hours=geocode_cache_hours,
-        forecast_cache_hours=forecast_cache_hours,
-        api_retries=api_retries,
+        geocode_cache_hours=runtime.geocode_cache_hours,
+        forecast_cache_hours=runtime.forecast_cache_hours,
+        api_retries=runtime.api_retries,
         reports=reports,
         failed=failed,
     )
@@ -211,7 +230,7 @@ def run_pipeline(
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> WeatherPayloadV1:
-    payload = compute_pipeline_payload(
+    request = WeatherPayloadBuildRequest.from_legacy_options(
         resorts=resorts,
         resorts_file=resorts_file,
         include_all_resorts=include_all_resorts,
@@ -223,6 +242,7 @@ def run_pipeline(
         max_workers=max_workers,
         api_retries=api_retries,
     )
+    payload = compute_pipeline_payload_for_request(request)
     if write_outputs:
         export_payload_artifacts(
             payload=payload,

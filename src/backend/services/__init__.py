@@ -14,7 +14,7 @@ from src.backend.services.resort_selection_service import (
     split_query_values,
     supported_catalog,
 )
-from src.backend.services.weather_service import build_weather_payload
+from src.backend.services.weather_service import build_weather_payload, build_weather_payload_for_request
 
 __all__ = [
     "apply_catalog_filters",
@@ -24,6 +24,7 @@ __all__ = [
     "build_hourly_payloads_for_resorts",
     "build_hourly_payloads_for_resorts_async",
     "build_weather_payload",
+    "build_weather_payload_for_request",
     "catalog_item_with_display_name",
     "default_applied_filters",
     "load_supported_resort_catalog",

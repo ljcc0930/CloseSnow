@@ -9,7 +9,8 @@ from src.backend.constants import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
-from src.backend.services.weather_service import build_weather_payload
+from src.backend.runtime import WeatherPayloadBuildRequest
+from src.backend.services.weather_service import build_weather_payload_for_request
 from src.contract import WeatherPayloadV1
 
 
@@ -23,7 +24,7 @@ def run_live_payload(
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> WeatherPayloadV1:
-    return build_weather_payload(
+    request = WeatherPayloadBuildRequest.from_legacy_options(
         resorts=resorts,
         resorts_file=resorts_file,
         include_all_resorts=include_all_resorts,
@@ -33,3 +34,4 @@ def run_live_payload(
         max_workers=max_workers,
         api_retries=api_retries,
     )
+    return build_weather_payload_for_request(request)
