@@ -7,18 +7,23 @@ import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.backend.runtime import WeatherPayloadBuildRequest
 from src.backend.weather_data_server import make_handler as make_data_handler
 from src.shared.cli_options import add_cache_runtime_options, add_resort_options, add_server_bind_options
 from src.shared.config import DATA_API_URL_ENV, DEFAULT_DATA_API_URL
-from src.web.data_sources import load_payload
-from src.web.pipelines import render_hourly_pages, render_html, write_payload_json
-from src.web.static_assets import copy_static_assets
+from src.web.static_site_builder import (
+    StaticBuildRequest,
+    StaticFetchRequest,
+    StaticRenderRequest,
+    build_static_site,
+    fetch_static_bundle,
+    render_static_bundle,
+)
 from src.web.weather_page_server import make_handler
 
 
@@ -83,27 +88,19 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def _fetch_payload(args: argparse.Namespace) -> Dict[str, Any]:
+def _payload_build_request(args: argparse.Namespace, *, output_json: str) -> WeatherPayloadBuildRequest:
     resorts, resorts_file, include_all_resorts = _resolve_resorts(args)
-    return fetch_static_payload(
+    return WeatherPayloadBuildRequest.from_legacy_options(
         resorts=resorts,
         resorts_file=resorts_file,
         include_all_resorts=include_all_resorts,
+        output_json=output_json,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
         api_retries=args.api_retries,
     )
-
-
-def _relative_url(from_html_path: str, target_path: str) -> str:
-    from_dir = Path(from_html_path).resolve().parent
-    target = Path(target_path).resolve()
-    rel = os.path.relpath(target, start=from_dir).replace(os.sep, "/")
-    if not rel.startswith("."):
-        return f"./{rel}"
-    return rel
 
 
 def _index_html_for_output_dir(output_dir: str | None, *, input_json: str | None = None) -> str:
@@ -120,7 +117,7 @@ def _static_output_json(args: argparse.Namespace) -> str:
     return str(Path(args.output_dir) / "data.json")
 
 
-def _load_existing_static_payload(output_json: str) -> Dict[str, Any]:
+def _require_existing_static_bundle(output_json: str) -> None:
     path = Path(output_json)
     if not path.exists():
         raise FileNotFoundError(
@@ -128,7 +125,6 @@ def _load_existing_static_payload(output_json: str) -> Dict[str, Any]:
             "The static --skip-fetch command can only render an existing payload. "
             "Run without --skip-fetch to create it, or pass --output-json to an existing JSON file."
         )
-    return load_payload(mode="file", source=output_json)
 
 
 def _serve_http_server(
@@ -150,59 +146,39 @@ def _serve_http_server(
 
 
 def run_fetch(args: argparse.Namespace) -> int:
-    payload = _fetch_payload(args)
-    out = write_payload_json(args.output_json, payload)
-    print(f"Done: {out}")
+    request = StaticFetchRequest(_payload_build_request(args, output_json=args.output_json))
+    result = fetch_static_bundle(request)
+    print(f"Done: {args.output_json}")
+    print(f"Done: {len(result.hourly_json_paths)} resort hourly artifact(s)")
     return 0
 
 
 def run_render(args: argparse.Namespace) -> int:
-    payload = load_payload(mode="file", source=args.input_json)
-    output_html = _index_html_for_output_dir(args.output_dir, input_json=args.input_json)
-    out = render_html(output_html, payload, data_url=_relative_url(output_html, args.input_json))
-    hourly_pages = render_hourly_pages(
-        output_html,
-        payload,
-        hourly_mode="file",
-        hourly_source=args.input_json,
-    )
-    output_dir = str(Path(output_html).parent)
-    copied_assets = copy_static_assets(output_dir)
-    print(f"Done: {out}")
-    print(f"Done: {len(hourly_pages)} resort hourly page(s)")
-    print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
+    result = render_static_bundle(StaticRenderRequest(input_json=args.input_json, output_dir=args.output_dir))
+    print(f"Done: {_index_html_for_output_dir(args.output_dir, input_json=args.input_json)}")
+    print(f"Done: {len(result.hourly_page_paths)} resort hourly page(s)")
+    print(f"Done: copied assets -> {', '.join(str(path) for path in result.asset_directories)}")
     return 0
 
 
 def run_static(args: argparse.Namespace) -> int:
     output_json = _static_output_json(args)
-    output_html = _index_html_for_output_dir(args.output_dir)
-    payload: Dict[str, Any] | None = None
-    if not args.skip_fetch:
-        payload = _fetch_payload(args)
-        write_payload_json(output_json, payload)
+    if args.skip_fetch and not args.skip_render:
+        _require_existing_static_bundle(output_json)
+    request = StaticBuildRequest(
+        fetch=StaticFetchRequest(_payload_build_request(args, output_json=output_json)),
+        render=StaticRenderRequest(input_json=output_json, output_dir=args.output_dir),
+        skip_fetch=args.skip_fetch,
+        skip_render=args.skip_render,
+    )
+    result = build_static_site(request)
+    if result.fetch_result is not None:
         print(f"Done: {output_json}")
-
-    if not args.skip_render:
-        if payload is None:
-            payload = _load_existing_static_payload(output_json)
-        out = render_html(output_html, payload, data_url=_relative_url(output_html, output_json))
-        hourly_pages = render_hourly_pages(
-            output_html,
-            payload,
-            include_hourly_data=True,
-            hourly_mode="local",
-            hourly_source="",
-            cache_file=args.cache_file,
-            geocode_cache_hours=args.geocode_cache_hours,
-            forecast_cache_hours=args.forecast_cache_hours,
-            hourly_max_workers=args.max_workers,
-            api_retries=args.api_retries,
-        )
-        print(f"Done: {out}")
-        print(f"Done: {len(hourly_pages)} resort hourly page(s)")
-    copied_assets = copy_static_assets(args.output_dir)
-    print(f"Done: copied assets -> {', '.join(str(path) for path in copied_assets)}")
+        print(f"Done: {len(result.fetch_result.hourly_json_paths)} resort hourly artifact(s)")
+    if result.render_result is not None:
+        print(f"Done: {_index_html_for_output_dir(args.output_dir)}")
+        print(f"Done: {len(result.render_result.hourly_page_paths)} resort hourly page(s)")
+        print("Done: copied assets -> " + ", ".join(str(path) for path in result.render_result.asset_directories))
     return 0
 
 

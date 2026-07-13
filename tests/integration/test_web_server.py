@@ -8,6 +8,7 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 
 import pytest
+from src.web.asset_manifest import WEB_ASSET_MANIFEST
 from src.web.weather_page_server import make_handler
 
 
@@ -23,6 +24,25 @@ def _hourly_context_from_html(html: str) -> dict:
     match = re.search(r"window\.CLOSESNOW_HOURLY_CONTEXT = (\{.*?\});", html, re.S)
     assert match is not None
     return json.loads(match.group(1))
+
+
+def test_server_serves_every_manifest_asset_with_expected_mime_type():
+    handler = make_handler(
+        cache_file=".cache/x.json",
+        geocode_cache_hours=720,
+        forecast_cache_hours=3,
+        max_workers=2,
+    )
+    server, thread, base = _serve_once(handler)
+    try:
+        for asset in WEB_ASSET_MANIFEST:
+            with urllib.request.urlopen(f"{base}{asset.public_url}", timeout=3) as response:
+                assert response.headers["Content-Type"] == asset.mime_type
+                assert response.read() == asset.source_path().read_bytes()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
 
 
 def test_server_api_root_and_asset(monkeypatch):

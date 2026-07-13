@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import FrozenInstanceError
 
+import pytest
 from src.backend import pipeline
+from src.backend.runtime import WeatherPayloadBuildRequest, WeatherRuntimeOptions
 
 
 class _DummyJsonCache:
@@ -27,6 +30,67 @@ class _DummyCoordCache:
 
     def save(self):
         self.saved = True
+
+
+def test_runtime_contracts_use_current_defaults_and_are_frozen():
+    runtime = WeatherRuntimeOptions()
+    first_request = WeatherPayloadBuildRequest()
+    second_request = WeatherPayloadBuildRequest()
+
+    assert runtime.cache_file == ".cache/open_meteo_cache.json"
+    assert runtime.geocode_cache_hours == 720
+    assert runtime.forecast_cache_hours == 3
+    assert runtime.max_workers == 8
+    assert runtime.api_retries == 2
+    assert first_request.resorts == ()
+    assert first_request.runtime == runtime
+    assert first_request.runtime is not second_request.runtime
+
+    with pytest.raises(FrozenInstanceError):
+        runtime.max_workers = 1
+    with pytest.raises(FrozenInstanceError):
+        first_request.resorts = ("Snowbird, UT",)
+
+
+def test_compute_pipeline_payload_adapts_legacy_arguments_to_request(monkeypatch):
+    captured = []
+
+    def fake_compute(request):  # noqa: ANN001
+        captured.append(request)
+        return {"reports": []}
+
+    monkeypatch.setattr(pipeline, "compute_pipeline_payload_for_request", fake_compute)
+
+    payload = pipeline.compute_pipeline_payload(
+        resorts=["Snowbird, UT"],
+        resorts_file="custom-resorts.json",
+        include_all_resorts=True,
+        use_default_resorts=True,
+        output_json="custom-output.json",
+        cache_file="custom-cache.json",
+        geocode_cache_hours=11,
+        forecast_cache_hours=12,
+        max_workers=13,
+        api_retries=14,
+    )
+
+    assert payload == {"reports": []}
+    assert captured == [
+        WeatherPayloadBuildRequest(
+            resorts=("Snowbird, UT",),
+            resorts_file="custom-resorts.json",
+            include_all_resorts=True,
+            use_default_resorts=True,
+            output_json="custom-output.json",
+            runtime=WeatherRuntimeOptions(
+                cache_file="custom-cache.json",
+                geocode_cache_hours=11,
+                forecast_cache_hours=12,
+                max_workers=13,
+                api_retries=14,
+            ),
+        )
+    ]
 
 
 def test_read_resorts_ignores_comments_and_blanks(tmp_path):

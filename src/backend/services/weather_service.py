@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from dataclasses import replace
+from typing import Iterable, List, Optional
 
 from src.backend.constants import (
     API_RETRY_TIMES,
@@ -9,12 +10,18 @@ from src.backend.constants import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
-from src.backend.pipeline import compute_pipeline_payload
+from src.backend.pipeline import compute_pipeline_payload_for_request
+from src.backend.runtime import WeatherPayloadBuildRequest
 from src.contract import WeatherPayloadV1
 
 
-def _normalize_resorts(resorts: Optional[List[str]]) -> List[str]:
-    return [r.strip() for r in (resorts or []) if r and r.strip()]
+def _normalize_resorts(resorts: Iterable[str]) -> tuple[str, ...]:
+    return tuple(r.strip() for r in resorts if r and r.strip())
+
+
+def build_weather_payload_for_request(request: WeatherPayloadBuildRequest) -> WeatherPayloadV1:
+    normalized_request = replace(request, resorts=_normalize_resorts(request.resorts))
+    return compute_pipeline_payload_for_request(normalized_request)
 
 
 def build_weather_payload(
@@ -27,8 +34,8 @@ def build_weather_payload(
     max_workers: int = DEFAULT_MAX_WORKERS,
     api_retries: int = API_RETRY_TIMES,
 ) -> WeatherPayloadV1:
-    return compute_pipeline_payload(
-        resorts=_normalize_resorts(resorts),
+    request = WeatherPayloadBuildRequest.from_legacy_options(
+        resorts=resorts,
         resorts_file=resorts_file,
         include_all_resorts=include_all_resorts,
         use_default_resorts=False,
@@ -38,3 +45,4 @@ def build_weather_payload(
         max_workers=max_workers,
         api_retries=api_retries,
     )
+    return build_weather_payload_for_request(request)

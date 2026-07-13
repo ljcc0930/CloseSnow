@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
+from types import SimpleNamespace
 
 from src.backend import ecmwf_unified_backend, weather_data_server
 from src.web import weather_page_static_render
@@ -45,26 +47,26 @@ def test_static_render_entrypoint_main(monkeypatch, capsys):
     )
     captured = {}
 
-    def fake_fetch_static_payload(**kwargs):  # noqa: ANN001
-        captured["kwargs"] = kwargs
-        return {"reports": []}
-
     monkeypatch.setattr("src.web.weather_page_static_render.parse_args", lambda: args)
-    monkeypatch.setattr("src.web.weather_page_static_render.fetch_static_payload", fake_fetch_static_payload)
-    monkeypatch.setattr("src.web.weather_page_static_render.render_html", lambda path, payload: path)
-    monkeypatch.setattr("src.web.weather_page_static_render.copy_static_assets", lambda output_dir: [])
 
-    def fake_render_hourly_pages(*args, **kwargs):  # noqa: ANN001
-        captured["render_kwargs"] = kwargs
-        return [f"{args[0]}:resort/snowbird-ut/index.html"]
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return SimpleNamespace(
+            render_result=SimpleNamespace(
+                index_html=Path("site/index.html"),
+                hourly_page_paths=(Path("site/resort/snowbird-ut/index.html"),),
+            )
+        )
 
-    monkeypatch.setattr("src.web.weather_page_static_render.render_hourly_pages", fake_render_hourly_pages)
+    monkeypatch.setattr("src.web.weather_page_static_render.build_static_site", fake_build_static_site)
     rc = weather_page_static_render.main()
     out = capsys.readouterr().out
     assert rc == 0
-    assert captured["kwargs"]["resorts"] == ["A"]
-    assert captured["kwargs"]["resorts_file"] == ""
-    assert captured["render_kwargs"]["hourly_max_workers"] == 8
+    payload_request = captured["request"].fetch.payload_request
+    assert payload_request.resorts == ("A",)
+    assert payload_request.resorts_file == ""
+    assert payload_request.runtime.max_workers == 8
+    assert captured["request"].render.input_json == "site/data.json"
     assert "Done: site/index.html" in out
 
 

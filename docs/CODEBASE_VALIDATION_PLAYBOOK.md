@@ -139,6 +139,7 @@ Pass criteria:
 
 1. Command prints `Done: site/data.json`.
 2. Exit code is 0.
+3. `site/resort/<resort_id>/hourly.json` files and `site/.closesnow-static-bundle.json` are written.
 
 ### 4.2 Render HTML from fetched payload
 
@@ -150,6 +151,7 @@ Pass criteria:
 
 1. Command prints `Done: site/index.html`.
 2. Exit code is 0.
+3. Rendering succeeds with network access disabled because it only consumes the fetched bundle.
 
 ### 4.3 Validate one-shot wrapper still works
 
@@ -165,7 +167,7 @@ Pass criteria:
 ### 4.4 Verify output files exist and are not empty
 
 ```bash
-ls -lh site/data.json site/index.html site/assets/css site/assets/js
+ls -lh site/data.json site/index.html site/resort/*/index.html site/resort/*/hourly.json site/assets/css site/assets/js
 ```
 
 Pass criteria:
@@ -274,33 +276,37 @@ Pass criteria:
 Because backend now uses async orchestration with worker limits, validate at least two worker settings:
 
 ```bash
-python3 -m src.cli fetch --output-json /tmp/worker1.json --max-workers 1
-python3 -m src.cli fetch --output-json /tmp/worker8.json --max-workers 8
+python3 -m src.cli fetch --output-json /tmp/closesnow-worker1/data.json --max-workers 1
+python3 -m src.cli fetch --output-json /tmp/closesnow-worker8/data.json --max-workers 8
 ```
 
 Pass criteria:
 
 1. Both commands succeed.
 2. No crashes around cache or race conditions.
+3. Distinct bundle roots prevent the two runs from sharing per-resort hourly paths.
 
 ---
 
 ## 7) Workflow compatibility check
 
-The GitHub Pages workflow currently builds with split static pipeline commands.
+The GitHub Pages workflow currently uses the one-shot static builder for every catalog resort.
 
 Local equivalent:
 
 ```bash
-python3 -m src.cli fetch --output-json site/data.json --max-workers 8
-python3 -m src.cli render --input-json site/data.json --output-dir site
-ls -la site site/assets/css site/assets/js
+python3 -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
+touch site/.nojekyll
+python3 -m src.web.static_site_validator --site-dir site --require-pages-artifacts
+ls -la site site/resort site/assets/css site/assets/js
 ```
 
 Pass criteria:
 
 1. `site/data.json` and `site/index.html` exist.
-2. CSS and JS files are present in `site/assets/...`.
+2. Per-resort `index.html` and `hourly.json` files are present in `site/resort/...`.
+3. CSS and JS files are present in `site/assets/...`.
+4. Strict Pages validation confirms every resort in `data.json` has both `index.html` and `hourly.json`.
 
 ---
 
@@ -316,7 +322,7 @@ Pass criteria:
 
 ## 9) Optional deeper checks (when touching backend request logic)
 
-1. Run static render twice; second run should show more cache hits.
+1. Run static fetch twice; the second fetch should show more cache hits. Render itself does not use the cache.
 2. Confirm no unhandled exceptions in logs.
 3. If changing retry/caching behavior, test with temporary network interruption.
 
