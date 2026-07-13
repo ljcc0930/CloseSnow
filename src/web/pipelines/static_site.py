@@ -1,18 +1,10 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from urllib.parse import quote
+from typing import Any, Dict, List, Mapping
 
-from src.backend.constants import (
-    API_RETRY_TIMES,
-    DEFAULT_FORECAST_CACHE_HOURS,
-    DEFAULT_GEOCODE_CACHE_HOURS,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_OPEN_METEO_CACHE_FILE,
-    DEFAULT_STATIC_HOURLY_HOURS,
-)
 from src.contract import WeatherPayloadV1
 from src.contract.hourly_payload import HourlyPayload
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
@@ -21,6 +13,8 @@ from src.web.weather_page_render_core import render_payload_html
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parents[1] / "templates" / "resort_hourly_page.html").read_text(
     encoding="utf-8"
 )
+_RESORT_ARTIFACT_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+_RESORT_ARTIFACT_FILENAMES = frozenset({"index.html", "hourly.json"})
 
 
 def write_payload_json(path: str, payload: Dict[str, Any]) -> Path:
@@ -37,7 +31,7 @@ def render_html(path: str, payload: WeatherPayloadV1, *, data_url: str = "./data
     return out
 
 
-def _iter_resort_ids(payload: WeatherPayloadV1) -> List[str]:
+def resort_ids_from_payload(payload: WeatherPayloadV1) -> List[str]:
     reports = payload.get("reports")
     if not isinstance(reports, list):
         return []
@@ -54,122 +48,62 @@ def _iter_resort_ids(payload: WeatherPayloadV1) -> List[str]:
     return resort_ids
 
 
-def _build_hourly_payload(
-    *,
-    mode: str,
-    source: str,
-    resort_id: str,
-    hours: int,
-    timeout: int,
-    cache_file: str,
-    geocode_cache_hours: int,
-    forecast_cache_hours: int,
-    api_retries: int,
-) -> Optional[HourlyPayload]:
-    from src.web.data_sources import load_hourly_payload
-
-    code, payload = load_hourly_payload(
-        mode=mode,
-        source=source,
-        resort_id=resort_id,
-        hours=hours,
-        timeout=timeout,
-        cache_file=cache_file,
-        geocode_cache_hours=geocode_cache_hours,
-        forecast_cache_hours=forecast_cache_hours,
-        api_retries=api_retries,
-    )
-    if code != 200 or "error" in payload:
-        return None
-    return payload
+def resort_artifact_dir_name(resort_id: str) -> str:
+    normalized = resort_id.strip()
+    if normalized != resort_id or _RESORT_ARTIFACT_ID_PATTERN.fullmatch(normalized) is None:
+        raise ValueError(f"Invalid resort_id for a static artifact path: {resort_id!r}")
+    return normalized
 
 
-def _build_local_hourly_payloads(
-    *,
-    resort_ids: List[str],
-    hours: int,
-    cache_file: str,
-    geocode_cache_hours: int,
-    forecast_cache_hours: int,
-    max_workers: int,
-    api_retries: int,
-) -> Dict[str, HourlyPayload | None]:
-    from src.backend.services.hourly_payload_service import build_hourly_payloads_for_resorts
-
-    return build_hourly_payloads_for_resorts(
-        resort_ids=resort_ids,
-        hours=hours,
-        cache_file=cache_file,
-        geocode_cache_hours=geocode_cache_hours,
-        forecast_cache_hours=forecast_cache_hours,
-        max_workers=max_workers,
-        api_retries=api_retries,
-    )
+def resort_artifact_path(root: str | Path, resort_id: str, filename: str) -> Path:
+    if filename not in _RESORT_ARTIFACT_FILENAMES:
+        raise ValueError(f"Unsupported static resort artifact filename: {filename!r}")
+    root_path = Path(root).resolve()
+    resort_root = root_path / "resort"
+    artifact_dir = resort_root / resort_artifact_dir_name(resort_id)
+    candidate = artifact_dir / filename
+    if resort_root.is_symlink() or artifact_dir.is_symlink() or candidate.is_symlink():
+        raise ValueError(f"Static resort artifact path must not contain symlinks: {candidate}")
+    resolved_candidate = candidate.resolve(strict=False)
+    try:
+        resolved_candidate.relative_to(root_path)
+    except ValueError as exc:
+        raise ValueError(f"Static resort artifact path escapes its selected root: {candidate}") from exc
+    return candidate
 
 
 def render_hourly_pages(
     index_html_path: str,
     payload: WeatherPayloadV1,
     *,
-    include_hourly_data: bool = True,
-    hourly_mode: str = "local",
-    hourly_source: str = "",
-    hourly_timeout: int = 20,
-    hourly_hours: int = DEFAULT_STATIC_HOURLY_HOURS,
-    cache_file: str = DEFAULT_OPEN_METEO_CACHE_FILE,
-    geocode_cache_hours: int = DEFAULT_GEOCODE_CACHE_HOURS,
-    forecast_cache_hours: int = DEFAULT_FORECAST_CACHE_HOURS,
-    hourly_max_workers: int = DEFAULT_MAX_WORKERS,
-    api_retries: int = API_RETRY_TIMES,
+    hourly_payloads: Mapping[str, HourlyPayload | None] | None = None,
 ) -> List[Path]:
+    """Render resort routes from already-fetched data without backend or network access."""
     site_root = Path(index_html_path).parent
     outputs: List[Path] = []
-    resort_ids = _iter_resort_ids(payload)
+    resort_ids = resort_ids_from_payload(payload)
     daily_summary_by_resort = build_resort_daily_summary_contexts(payload)
-    local_hourly_payloads: Dict[str, HourlyPayload | None] | None = None
-    if include_hourly_data and hourly_mode == "local":
-        local_hourly_payloads = _build_local_hourly_payloads(
-            resort_ids=resort_ids,
-            hours=hourly_hours,
-            cache_file=cache_file,
-            geocode_cache_hours=geocode_cache_hours,
-            forecast_cache_hours=forecast_cache_hours,
-            max_workers=hourly_max_workers,
-            api_retries=api_retries,
-        )
+    available_hourly = hourly_payloads or {}
 
     for resort_id in resort_ids:
-        encoded_id = quote(resort_id)
-        out_dir = site_root / "resort" / encoded_id
-        out = out_dir / "index.html"
+        out = resort_artifact_path(site_root, resort_id, "index.html")
+        out_dir = out.parent
+        hourly_data_path = resort_artifact_path(site_root, resort_id, "hourly.json")
         out_dir.mkdir(parents=True, exist_ok=True)
 
         hourly_context: Dict[str, Any] = {"resortId": resort_id}
         daily_summary = daily_summary_by_resort.get(resort_id)
         if daily_summary:
             hourly_context["dailySummary"] = daily_summary
-        if include_hourly_data:
-            if local_hourly_payloads is not None:
-                hourly_payload = local_hourly_payloads.get(resort_id)
-            else:
-                hourly_payload = _build_hourly_payload(
-                    mode=hourly_mode,
-                    source=hourly_source,
-                    resort_id=resort_id,
-                    hours=hourly_hours,
-                    timeout=hourly_timeout,
-                    cache_file=cache_file,
-                    geocode_cache_hours=geocode_cache_hours,
-                    forecast_cache_hours=forecast_cache_hours,
-                    api_retries=api_retries,
-                )
-            if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
-                hourly_data_path = out_dir / "hourly.json"
-                hourly_data_path.write_text(
-                    json.dumps(hourly_payload, ensure_ascii=False, indent=2),
-                    encoding="utf-8",
-                )
-                hourly_context["hourlyDataUrl"] = "./hourly.json"
+        hourly_payload = available_hourly.get(resort_id)
+        if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
+            hourly_data_path.write_text(
+                json.dumps(hourly_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            hourly_context["hourlyDataUrl"] = "./hourly.json"
+        elif hourly_data_path.is_file():
+            hourly_data_path.unlink()
 
         html = (
             _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../../assets")

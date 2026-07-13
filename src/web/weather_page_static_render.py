@@ -14,10 +14,14 @@ from typing import List
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.backend.pipelines.static_pipeline import fetch_static_payload
+from src.backend.runtime import WeatherPayloadBuildRequest
 from src.shared.cli_options import add_cache_runtime_options, add_resort_options
-from src.web.pipelines import render_hourly_pages, render_html
-from src.web.static_assets import copy_static_assets
+from src.web.static_site_builder import (
+    StaticBuildRequest,
+    StaticFetchRequest,
+    StaticRenderRequest,
+    build_static_site,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,34 +41,27 @@ def main() -> int:
 
     resorts: List[str] = [r.strip() for r in args.resort if r.strip()]
     resorts_file = "" if resorts else args.resorts_file
-
-    payload = fetch_static_payload(
+    output_json = str(Path(args.output_dir) / "data.json")
+    payload_request = WeatherPayloadBuildRequest.from_legacy_options(
         resorts=resorts,
         resorts_file=resorts_file,
+        output_json=output_json,
         cache_file=args.cache_file,
         geocode_cache_hours=args.geocode_cache_hours,
         forecast_cache_hours=args.forecast_cache_hours,
         max_workers=args.max_workers,
         api_retries=args.api_retries,
     )
-
-    output_html = str(Path(args.output_dir) / "index.html")
-    out = render_html(output_html, payload)
-    hourly_pages = render_hourly_pages(
-        output_html,
-        payload,
-        include_hourly_data=True,
-        hourly_mode="local",
-        hourly_source="",
-        cache_file=args.cache_file,
-        geocode_cache_hours=args.geocode_cache_hours,
-        forecast_cache_hours=args.forecast_cache_hours,
-        hourly_max_workers=args.max_workers,
-        api_retries=args.api_retries,
+    result = build_static_site(
+        StaticBuildRequest(
+            fetch=StaticFetchRequest(payload_request),
+            render=StaticRenderRequest(input_json=output_json, output_dir=args.output_dir),
+        )
     )
-    copy_static_assets(args.output_dir)
-    print(f"Done: {out}")
-    print(f"Done: {len(hourly_pages)} resort hourly page(s)")
+    if result.render_result is None:
+        raise RuntimeError("Legacy static renderer did not produce a rendered site")
+    print(f"Done: {Path(args.output_dir) / 'index.html'}")
+    print(f"Done: {len(result.render_result.hourly_page_paths)} resort hourly page(s)")
     return 0
 
 

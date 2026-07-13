@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from src import cli
 
 @pytest.mark.smoke
 def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
+    valid_payload["reports"][0]["resort_id"] = "snowbird-ut"
     fetch_args = argparse.Namespace(
         resort=[],
         resorts_file="resorts.yml",
@@ -20,10 +22,36 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
         api_retries=2,
         output_json=str(tmp_path / "data.json"),
     )
-    monkeypatch.setattr("src.cli.fetch_static_payload", lambda **kwargs: valid_payload)
+    hourly_payload = {
+        "resort_id": "snowbird-ut",
+        "hours": 2,
+        "hourly": {"time": ["2026-03-04T00:00", "2026-03-04T01:00"]},
+    }
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        lambda request: valid_payload,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        lambda **kwargs: {"snowbird-ut": hourly_payload},
+    )
 
     assert cli.run_fetch(fetch_args) == 0
     assert Path(fetch_args.output_json).exists()
+    bundle_hourly = tmp_path / "resort" / "snowbird-ut" / "hourly.json"
+    assert json.loads(bundle_hourly.read_text(encoding="utf-8")) == hourly_payload
+
+    def fail_if_render_fetches(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("render attempted backend or network access")
+
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_weather_payload_for_request",
+        fail_if_render_fetches,
+    )
+    monkeypatch.setattr(
+        "src.web.static_site_builder.build_hourly_payloads_for_resorts",
+        fail_if_render_fetches,
+    )
 
     render_args = argparse.Namespace(
         input_json=fetch_args.output_json,
@@ -37,3 +65,5 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
     assert 'id="page-content-root"' in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html
+    resort_html = Path(render_args.output_dir, "resort", "snowbird-ut", "index.html").read_text(encoding="utf-8")
+    assert '"hourlyDataUrl": "./hourly.json"' in resort_html
