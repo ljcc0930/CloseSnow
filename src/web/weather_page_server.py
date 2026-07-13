@@ -26,9 +26,9 @@ from src.backend.services.hourly_options import parse_hour_count
 from src.backend.services.payload_memory_cache import PayloadMemoryCache, frozen_query_params
 from src.contract import WeatherPayloadV1
 from src.shared.cli_options import add_cache_runtime_options, add_server_bind_options
+from src.web.asset_manifest import asset_for_path, read_asset_bytes
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
-from src.web.weather_page_assets import ASSET_MIME_TYPES, read_asset_bytes
 from src.web.weather_page_render_core import render_payload_html
 
 _HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
@@ -146,13 +146,14 @@ def make_handler(
             normalized_path = _normalize_known_path(parsed.path)
 
             asset_name = _asset_name_from_path(parsed.path)
-            if asset_name in ASSET_MIME_TYPES:
+            asset = asset_for_path(asset_name)
+            if asset is not None:
                 try:
-                    body = read_asset_bytes(asset_name)
+                    body = read_asset_bytes(asset.repository_path)
                 except OSError:
                     self._write(404, b"Not Found", "text/plain; charset=utf-8")
                     return
-                self._write(200, body, ASSET_MIME_TYPES[asset_name])
+                self._write(200, body, asset.mime_type)
                 return
 
             if normalized_path == "/api/health":

@@ -1,28 +1,10 @@
-#!/usr/bin/env python3
-from __future__ import annotations
+"""Compatibility exports for callers using the historical asset module."""
 
-from pathlib import Path
-from typing import Dict
+from src.web.asset_manifest import ASSET_MIME_TYPES, REPO_ROOT, asset_path, read_asset_bytes
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-
-ASSET_MIME_TYPES: Dict[str, str] = {
-    "assets/css/weather_page.css": "text/css; charset=utf-8",
-    "assets/js/compact_daily_summary.js": "application/javascript; charset=utf-8",
-    "assets/js/weather_code_emoji.js": "application/javascript; charset=utf-8",
-    "assets/js/weather_filter_state.js": "application/javascript; charset=utf-8",
-    "assets/js/sticky_single_table_layout.js": "application/javascript; charset=utf-8",
-    "assets/js/weather_page_formatters.js": "application/javascript; charset=utf-8",
-    "assets/js/weather_page.js": "application/javascript; charset=utf-8",
-    "assets/css/resort_hourly.css": "text/css; charset=utf-8",
-    "assets/js/resort_hourly_metrics.js": "application/javascript; charset=utf-8",
-    "assets/js/resort_hourly.js": "application/javascript; charset=utf-8",
-}
-
-
-def asset_path(name: str) -> Path:
-    return REPO_ROOT / name
-
-
-def read_asset_bytes(name: str) -> bytes:
-    return asset_path(name).read_bytes()
+__all__ = [
+    "ASSET_MIME_TYPES",
+    "REPO_ROOT",
+    "asset_path",
+    "read_asset_bytes",
+]
