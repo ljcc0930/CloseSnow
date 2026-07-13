@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import threading
 import urllib.request
 from pathlib import Path
@@ -27,7 +28,10 @@ def _write_valid_pages_site(site_dir: Path) -> None:
     resort_dir = site_dir / "resort" / "snowbird-ut"
     resort_dir.mkdir(parents=True)
     (site_dir / "index.html").write_text("<!doctype html><title>CloseSnow</title>", encoding="utf-8")
-    (site_dir / "data.json").write_text('{"ok":true}', encoding="utf-8")
+    (site_dir / "data.json").write_text(
+        json.dumps({"reports": [{"resort_id": "snowbird-ut"}]}),
+        encoding="utf-8",
+    )
     (site_dir / ".nojekyll").touch()
     (resort_dir / "index.html").write_text("<!doctype html><title>Snowbird</title>", encoding="utf-8")
     (resort_dir / "hourly.json").write_text('{"hours":0,"hourly":{}}', encoding="utf-8")
@@ -69,6 +73,28 @@ def test_static_site_validator_reports_actionable_required_entry_paths(tmp_path,
     assert any(str(site_dir / "resort/*/hourly.json") in issue for issue in rendered)
     assert validate_static_site_main(["--site-dir", str(site_dir), "--require-pages-artifacts"]) == 1
     assert str(site_dir / "index.html") in capsys.readouterr().err
+
+
+def test_static_site_validator_requires_pages_artifacts_for_every_payload_resort(tmp_path):
+    site_dir = tmp_path / "site"
+    _write_valid_pages_site(site_dir)
+    (site_dir / "data.json").write_text(
+        json.dumps(
+            {
+                "reports": [
+                    {"resort_id": "snowbird-ut"},
+                    {"resort_id": "alta-ut"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    issues = validate_static_site(site_dir, require_pages_artifacts=True)
+
+    missing = {issue.path.relative_to(site_dir).as_posix() for issue in issues}
+    assert "resort/alta-ut/index.html" in missing
+    assert "resort/alta-ut/hourly.json" in missing
 
 
 def test_static_server_serves_site_and_resort_routes(tmp_path):

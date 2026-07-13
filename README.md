@@ -69,7 +69,10 @@ python3 -m src.cli render --input-json site/data.json --output-dir site
 
 Notes:
 
-- `render` generates per-resort hourly HTML routes and sibling `hourly.json` files by default
+- `fetch` writes a complete bundle: the daily JSON, per-resort hourly JSON, and bundle metadata
+- `render` is offline: it only reads that bundle, generates routes, and copies canonical web assets
+- When `--output-dir` differs from the bundle directory, `render` copies the daily payload to
+  `<output-dir>/data.json` and hourly payloads to `<output-dir>/resort/<resort_id>/hourly.json`
 - If you serve `site/` over localhost, resort pages under `site/resort/<resort_id>/` will load from local `hourly.json` instead of requiring `/api/resort-hourly`
 
 ### 3) Coupled dynamic server
@@ -108,7 +111,7 @@ python3 -m src.cli serve-web \
 
 ### `fetch`
 
-Fetch payload and write JSON artifact.
+Fetch daily and hourly payloads and write a reusable static bundle.
 
 ```bash
 python3 -m src.cli fetch \
@@ -123,6 +126,10 @@ python3 -m src.cli fetch \
   [--output-json site/data.json]
 ```
 
+The bundle root is the parent directory of `--output-json`. It contains the requested daily JSON,
+`resort/<resort_id>/hourly.json`, and `.closesnow-static-bundle.json`. Use a distinct parent directory
+for each concurrent fetch so the bundle roots do not overlap.
+
 ### `render`
 
 Render HTML from payload JSON artifact.
@@ -136,9 +143,12 @@ python3 -m src.cli render \
 Notes:
 
 - Validates payload contract before rendering
-- Writes `index.html` into `--output-dir`
+- Performs no backend or network fetches
+- Writes `index.html` and a canonical `data.json` into `--output-dir`
 - Generates per-resort hourly HTML routes (`resort/<resort_id>/index.html`)
-- Also writes sibling `resort/<resort_id>/hourly.json` files and points the static hourly page at `./hourly.json` by default
+- Copies bundled `resort/<resort_id>/hourly.json` files and points each static hourly page at `./hourly.json`
+- Copies and validates the assets declared by the canonical web asset manifest
+- Writes bundle metadata for the rendered `data.json`, so the output directory can be reused as an offline bundle
 
 ### `static`
 
@@ -165,9 +175,9 @@ Notes:
 - `--resort` is repeatable; when set, `--include-all-resorts` is ignored
 - Default `--output-json` resolves to `--output-dir/data.json`
 - `index.html`, `resort/...`, and `assets/...` are written under `--output-dir`
-- `--skip-fetch`: reuse existing JSON
-- `--skip-render`: refresh payload only
-- Static render writes per-resort `hourly.json` files and copies `assets/css` + `assets/js`
+- `--skip-fetch`: reuse an existing offline bundle
+- `--skip-render`: refresh the daily and hourly bundle without rendering
+- Runtime/cache/worker flags affect fetch only; render always consumes files from the bundle
 
 ### `serve`
 
@@ -188,7 +198,7 @@ python3 -m src.cli serve-static [--host 127.0.0.1] [--port 8011] [--directory si
 Notes:
 
 - By default this reuses the `static` workflow and writes `data.json` + `index.html` into the target directory before serving
-- It inherits the static-fetch worker default, so resort fetch/render uses `8` workers unless `--max-workers` is provided
+- It inherits the static-fetch worker default, so daily/hourly fetch uses `8` workers unless `--max-workers` is provided
 - It also copies repo `assets/css` and `assets/js` into `<directory>/assets/`
 - Use `--skip-fetch` or `--skip-render` to reuse existing build artifacts with the same semantics as `static`
 - Directory indexes work as expected, so generated resort pages under `site/resort/<resort_id>/` are reachable directly
@@ -317,8 +327,10 @@ If output HTML is `site/index.html`, generated artifacts include:
 - `site/index.html`
 - `site/data.json` (when chosen as fetch/static output JSON)
 - `site/resort/<resort_id>/index.html`
-- `site/resort/<resort_id>/hourly.json` (when hourly embedding is enabled, e.g. `src.cli static`)
+- `site/resort/<resort_id>/hourly.json` (when hourly fetch succeeds)
 - `site/assets/css/*` and `site/assets/js/*` (copied automatically by `render`, `static`, and `serve-static`)
+- `<bundle-root>/.closesnow-static-bundle.json` (written by fetch and refreshed in every rendered output)
+- `<output-dir>/.closesnow-static-site.json` (rendered route and asset ownership metadata)
 
 ## Payload Contract (`weather_payload_v1`)
 

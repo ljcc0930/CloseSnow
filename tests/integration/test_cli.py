@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from src import cli
@@ -14,6 +15,7 @@ from src.backend.constants import (
 )
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.asset_manifest import WEB_ASSET_MANIFEST
+from src.web.static_assets import copy_static_assets
 
 
 def test_build_parser_has_all_commands():
@@ -123,51 +125,71 @@ def _build_fetch_like_args(tmp_path: Path):
     )
 
 
+def _fake_static_result(tmp_path: Path, *, fetched: bool = True, rendered: bool = True):
+    fetch_result = None
+    if fetched:
+        fetch_result = SimpleNamespace(
+            bundle=SimpleNamespace(input_json=tmp_path / "data.json"),
+            hourly_json_paths=(),
+        )
+    render_result = None
+    if rendered:
+        render_result = SimpleNamespace(
+            index_html=tmp_path / "index.html",
+            hourly_page_paths=(),
+            asset_directories=(),
+        )
+    return SimpleNamespace(fetch_result=fetch_result, render_result=render_result)
+
+
 def test_run_fetch(monkeypatch, tmp_path, capsys):
     args = _build_fetch_like_args(tmp_path)
-    called = {}
+    captured = {}
 
-    monkeypatch.setattr("src.cli.fetch_static_payload", lambda **kwargs: {"reports": [], "called": kwargs})
+    def fake_fetch_static_bundle(request):  # noqa: ANN001
+        captured["request"] = request
+        return SimpleNamespace(
+            bundle=SimpleNamespace(input_json=Path(args.output_json)),
+            hourly_json_paths=(tmp_path / "resort" / "snowbird-ut" / "hourly.json",),
+        )
 
-    def fake_write_payload_json(path, payload):  # noqa: ANN001
-        called["path"] = path
-        called["payload"] = payload
-        return Path(path)
-
-    monkeypatch.setattr("src.cli.write_payload_json", fake_write_payload_json)
+    monkeypatch.setattr("src.cli.fetch_static_bundle", fake_fetch_static_bundle)
     rc = cli.run_fetch(args)
     out = capsys.readouterr().out
     assert rc == 0
     assert "Done:" in out
-    assert called["path"] == args.output_json
-    assert called["payload"]["reports"] == []
+    request = captured["request"].payload_request
+    assert request.output_json == args.output_json
+    assert request.runtime.max_workers == 8
 
 
-def test_fetch_payload_forwards_include_all_resorts(monkeypatch, tmp_path):
+def test_payload_build_request_forwards_include_all_resorts(tmp_path):
     args = _build_fetch_like_args(tmp_path)
     args.include_all_resorts = True
-    captured = {}
-
-    def fake_fetch_static_payload(**kwargs):  # noqa: ANN001
-        captured.update(kwargs)
-        return {"reports": []}
-
-    monkeypatch.setattr("src.cli.fetch_static_payload", fake_fetch_static_payload)
-    cli._fetch_payload(args)
-    assert captured["include_all_resorts"] is True
-    assert captured["api_retries"] == 2
+    request = cli._payload_build_request(args, output_json=args.output_json)
+    assert request.include_all_resorts is True
+    assert request.runtime.api_retries == 2
 
 
 def test_run_render(monkeypatch, tmp_path, capsys):
     args = argparse.Namespace(input_json=str(tmp_path / "in.json"), output_dir=str(tmp_path / "out"))
-    monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "from": source, "mode": mode})
-    monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
-    monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    captured = {}
+
+    def fake_render_static_bundle(request):  # noqa: ANN001
+        captured["request"] = request
+        return SimpleNamespace(
+            index_html=Path(args.output_dir) / "index.html",
+            hourly_page_paths=(),
+            asset_directories=(Path(args.output_dir) / "assets" / "css",),
+        )
+
+    monkeypatch.setattr("src.cli.render_static_bundle", fake_render_static_bundle)
     rc = cli.run_render(args)
     out = capsys.readouterr().out
     assert rc == 0
     assert "Done:" in out
+    assert captured["request"].input_json == args.input_json
+    assert captured["request"].output_dir == args.output_dir
 
 
 def test_run_static_default(monkeypatch, tmp_path, capsys):
@@ -177,18 +199,22 @@ def test_run_static_default(monkeypatch, tmp_path, capsys):
     args.skip_fetch = False
     args.skip_render = False
 
-    monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": [{"query": "a", "daily": []}]})
-    monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
-    monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
-    monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    captured = {}
+
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return _fake_static_result(Path(args.output_dir))
+
+    monkeypatch.setattr("src.cli.build_static_site", fake_build_static_site)
     rc = cli.run_static(args)
     out = capsys.readouterr().out
     assert rc == 0
     assert "Done:" in out
+    assert captured["request"].skip_fetch is False
+    assert captured["request"].skip_render is False
 
 
-def test_run_static_forwards_max_workers_to_hourly_render(monkeypatch, tmp_path):
+def test_run_static_forwards_max_workers_to_fetch_only(monkeypatch, tmp_path):
     args = _build_fetch_like_args(tmp_path)
     args.max_workers = 5
     args.output_dir = str(tmp_path / "site")
@@ -197,20 +223,17 @@ def test_run_static_forwards_max_workers_to_hourly_render(monkeypatch, tmp_path)
     args.skip_render = False
     captured = {}
 
-    def fake_render_hourly_pages(*args, **kwargs):  # noqa: ANN001
-        captured.update(kwargs)
-        return []
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return _fake_static_result(Path(args.output_dir))
 
-    monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": [{"query": "a", "daily": []}]})
-    monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
-    monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
-    monkeypatch.setattr("src.cli.render_hourly_pages", fake_render_hourly_pages)
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.build_static_site", fake_build_static_site)
 
     rc = cli.run_static(args)
 
     assert rc == 0
-    assert captured["hourly_max_workers"] == 5
+    assert captured["request"].fetch.payload_request.runtime.max_workers == 5
+    assert not hasattr(captured["request"].render, "runtime")
 
 
 def test_run_static_skip_fetch(monkeypatch, tmp_path):
@@ -222,12 +245,16 @@ def test_run_static_skip_fetch(monkeypatch, tmp_path):
     payload_path = Path(args.output_dir) / "data.json"
     payload_path.parent.mkdir(parents=True)
     payload_path.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": [], "loaded": source, "mode": mode})
-    monkeypatch.setattr("src.cli.render_html", lambda path, payload, **kwargs: Path(path))
-    monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    captured = {}
+
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return _fake_static_result(Path(args.output_dir), fetched=False)
+
+    monkeypatch.setattr("src.cli.build_static_site", fake_build_static_site)
     rc = cli.run_static(args)
     assert rc == 0
+    assert captured["request"].skip_fetch is True
 
 
 def test_run_static_skip_fetch_reports_missing_payload(tmp_path):
@@ -247,11 +274,16 @@ def test_run_static_skip_render(monkeypatch, tmp_path):
     args.output_json = None
     args.skip_fetch = False
     args.skip_render = True
-    monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": []})
-    monkeypatch.setattr("src.cli.write_payload_json", lambda path, payload: Path(path))
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    captured = {}
+
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return _fake_static_result(Path(args.output_dir), rendered=False)
+
+    monkeypatch.setattr("src.cli.build_static_site", fake_build_static_site)
     rc = cli.run_static(args)
     assert rc == 0
+    assert captured["request"].skip_render is True
 
 
 def test_run_static_uses_output_dir_for_json_and_html(monkeypatch, tmp_path):
@@ -262,22 +294,15 @@ def test_run_static_uses_output_dir_for_json_and_html(monkeypatch, tmp_path):
     args.skip_render = False
     captured = {}
 
-    def fake_write_payload_json(path, payload):  # noqa: ANN001
-        captured["json"] = path
-        return Path(path)
+    def fake_build_static_site(request):  # noqa: ANN001
+        captured["request"] = request
+        return _fake_static_result(Path(args.output_dir))
 
-    def fake_render_html(path, payload, **kwargs):  # noqa: ANN001
-        captured["html"] = path
-        return Path(path)
-
-    monkeypatch.setattr("src.cli._fetch_payload", lambda a: {"reports": []})
-    monkeypatch.setattr("src.cli.write_payload_json", fake_write_payload_json)
-    monkeypatch.setattr("src.cli.render_html", fake_render_html)
-    monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.build_static_site", fake_build_static_site)
     cli.run_static(args)
-    assert captured["json"] == str(tmp_path / "site" / "data.json")
-    assert captured["html"] == str(tmp_path / "site" / "index.html")
+    request = captured["request"]
+    assert request.fetch.payload_request.output_json == str(tmp_path / "site" / "data.json")
+    assert request.render.resolved_output_dir == tmp_path / "site"
 
 
 def test_run_static_server_boot_path(monkeypatch, tmp_path, capsys):
@@ -365,7 +390,7 @@ def test_copy_static_assets_copies_only_manifest_assets_from_non_repo_cwd(tmp_pa
     output_dir = tmp_path / "site"
     monkeypatch.chdir(outside_repo)
 
-    copied = cli.copy_static_assets(str(output_dir))
+    copied = copy_static_assets(str(output_dir))
 
     expected_directories = list(
         dict.fromkeys((output_dir / Path(asset.repository_path)).parent for asset in WEB_ASSET_MANIFEST)
@@ -385,17 +410,18 @@ def test_run_render_uses_input_parent_when_output_dir_missing(monkeypatch, tmp_p
     input_json.write_text("{}", encoding="utf-8")
     captured = {}
 
-    def fake_render_html(path, payload, **kwargs):  # noqa: ANN001
-        captured["html"] = path
-        return Path(path)
+    def fake_render_static_bundle(request):  # noqa: ANN001
+        captured["request"] = request
+        return SimpleNamespace(
+            index_html=input_json.parent / "index.html",
+            hourly_page_paths=(),
+            asset_directories=(),
+        )
 
-    monkeypatch.setattr("src.cli.load_payload", lambda mode, source: {"reports": []})
-    monkeypatch.setattr("src.cli.render_html", fake_render_html)
-    monkeypatch.setattr("src.cli.render_hourly_pages", lambda *args, **kwargs: [])
-    monkeypatch.setattr("src.cli.copy_static_assets", lambda directory: [Path(directory) / "assets" / "css"])
+    monkeypatch.setattr("src.cli.render_static_bundle", fake_render_static_bundle)
 
     cli.run_render(argparse.Namespace(input_json=str(input_json), output_dir=None))
-    assert captured["html"] == str(input_json.parent / "index.html")
+    assert captured["request"].resolved_output_dir == input_json.parent.resolve()
 
 
 def test_run_server_boot_path(monkeypatch, capsys):
