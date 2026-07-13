@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 
 import pytest
@@ -14,6 +13,7 @@ from src.backend.constants import (
     DEFAULT_OPEN_METEO_CACHE_FILE,
 )
 from src.shared.config import DEFAULT_RESORTS_FILE
+from src.web.asset_manifest import WEB_ASSET_MANIFEST
 
 
 def test_build_parser_has_all_commands():
@@ -359,25 +359,24 @@ def test_run_static_server_propagates_missing_directory_when_static_skips_render
         cli.run_static_server(args)
 
 
-def test_copy_static_assets_copies_css_and_js(tmp_path):
-    assets_root = tmp_path / "repo"
-    (assets_root / "assets" / "css").mkdir(parents=True)
-    (assets_root / "assets" / "js").mkdir(parents=True)
-    (assets_root / "assets" / "css" / "weather_page.css").write_text("body{}", encoding="utf-8")
-    (assets_root / "assets" / "js" / "weather_page.js").write_text("console.log('x')", encoding="utf-8")
-    output_dir = assets_root / "site"
-    output_dir.mkdir()
+def test_copy_static_assets_copies_only_manifest_assets_from_non_repo_cwd(tmp_path, monkeypatch):
+    outside_repo = tmp_path / "outside-repo"
+    outside_repo.mkdir()
+    output_dir = tmp_path / "site"
+    monkeypatch.chdir(outside_repo)
 
-    cwd = Path.cwd()
-    try:
-        os.chdir(assets_root)
-        copied = cli.copy_static_assets(str(output_dir))
-    finally:
-        os.chdir(cwd)
+    copied = cli.copy_static_assets(str(output_dir))
 
-    assert copied == [output_dir / "assets" / "css", output_dir / "assets" / "js"]
-    assert (output_dir / "assets" / "css" / "weather_page.css").read_text(encoding="utf-8") == "body{}"
-    assert (output_dir / "assets" / "js" / "weather_page.js").read_text(encoding="utf-8") == "console.log('x')"
+    expected_directories = list(
+        dict.fromkeys((output_dir / Path(asset.repository_path)).parent for asset in WEB_ASSET_MANIFEST)
+    )
+    copied_files = {
+        path.relative_to(output_dir).as_posix() for path in (output_dir / "assets").rglob("*") if path.is_file()
+    }
+    assert copied == expected_directories
+    assert copied_files == {asset.repository_path for asset in WEB_ASSET_MANIFEST}
+    for asset in WEB_ASSET_MANIFEST:
+        assert (output_dir / asset.repository_path).read_bytes() == asset.source_path().read_bytes()
 
 
 def test_run_render_uses_input_parent_when_output_dir_missing(monkeypatch, tmp_path):

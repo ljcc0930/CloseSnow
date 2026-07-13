@@ -37,15 +37,7 @@ jobs:
 
       - name: Validate generated Pages artifact
         run: |
-          test -f site/index.html
-          test -f site/data.json
-          test -f site/.nojekyll
-          test -f site/assets/css/weather_page.css
-          test -f site/assets/js/weather_page.js
-          test -f site/assets/css/resort_hourly.css
-          test -f site/assets/js/resort_hourly.js
-          find site/resort -mindepth 2 -maxdepth 2 -path '*/index.html' | grep -q .
-          find site/resort -mindepth 2 -maxdepth 2 -path '*/hourly.json' | grep -q .
+          python -m src.web.static_site_validator --site-dir site --require-pages-artifacts
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
