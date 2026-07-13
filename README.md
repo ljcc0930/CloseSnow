@@ -432,6 +432,25 @@ python -m src.cli static --output-dir site --max-workers 8 --include-all-resorts
 touch site/.nojekyll
 ```
 
+## Netlify Pull Request Previews
+
+The repository includes `netlify.toml` for optional Netlify Deploy Previews. GitHub Pages remains the canonical production deployment; Netlify is an auxiliary review surface for pull requests.
+
+One-time repository administrator setup:
+
+1. In Netlify, import this repository through the Netlify GitHub App.
+2. Select `main` as the production branch and keep the repository-provided build settings.
+3. Confirm Deploy Previews are enabled under **Project configuration > Build & deploy > Continuous deployment**.
+4. Confirm GitHub pull request comments are enabled under **Project configuration > Notifications > Deploy notifications**.
+
+Netlify then runs the complete static build for each pull request and publishes `site/`. The Netlify bot adds or updates a pull request comment with a URL shaped like:
+
+```text
+https://deploy-preview-<pr-number>--<site-name>.netlify.app
+```
+
+No Netlify token, account id, or site id is required in this repository. App authorization and project ownership remain in Netlify and GitHub settings.
+
 ## Compatibility Surfaces
 
 Legacy-compatible backend entrypoint:
