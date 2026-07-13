@@ -18,6 +18,20 @@ _PAGE_SHELL_PLACEHOLDER = """
 """
 
 
+def _payload_generated_utc(initial_payload: Dict[str, Any] | None) -> str | None:
+    raw_value = initial_payload.get("generated_at_utc") if isinstance(initial_payload, dict) else None
+    if not isinstance(raw_value, str) or not raw_value:
+        return None
+    parse_value = f"{raw_value[:-1]}+00:00" if raw_value.endswith("Z") else raw_value
+    try:
+        parsed = datetime.fromisoformat(parse_value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return raw_value
+
+
 def build_html(
     snowfall: List[Dict[str, str]],
     rain: List[Dict[str, str]],
@@ -38,8 +52,10 @@ def build_html(
     """
     del snowfall, rain, weather, sun, temp
 
-    now_utc = datetime.now(timezone.utc)
-    generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    generated_utc_iso = _payload_generated_utc(initial_payload)
+    if generated_utc_iso is None:
+        now_utc = datetime.now(timezone.utc)
+        generated_utc_iso = now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z")
     filter_meta = {
         "available_filters": available_filters or {},
         "applied_filters": applied_filters or {},

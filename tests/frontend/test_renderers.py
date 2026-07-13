@@ -289,6 +289,22 @@ def test_build_html_keeps_legacy_table_args_out_of_page_shell():
     assert 'window.CLOSESNOW_INITIAL_PAYLOAD = {"reports": []};' in html
 
 
+def test_build_html_uses_initial_payload_generated_timestamp():
+    html = build_html(
+        [],
+        [],
+        [],
+        [],
+        [],
+        initial_payload={
+            "generated_at_utc": "2026-03-03T23:00:00Z",
+            "reports": [],
+        },
+    )
+
+    assert 'data-generated-utc="2026-03-03T23:00:00Z"' in html
+
+
 def test_render_payload_html_wires_transform_and_builder(monkeypatch):
     captured = {}
 
