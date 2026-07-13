@@ -4,11 +4,15 @@ import json
 import urllib.error
 
 import pytest
+from src.backend.pipelines import live_pipeline, static_pipeline
+from src.backend.runtime import WeatherPayloadBuildRequest, WeatherRuntimeOptions
+from src.backend.services import weather_service
 from src.contract.validators import ContractValidationError
 from src.shared.config import DEFAULT_RESORTS_FILE
 from src.web.data_sources.api_source import load_api_payload
 from src.web.data_sources.gateway import load_payload
 from src.web.data_sources.hourly_source import load_hourly_payload
+from src.web.data_sources.local_source import load_local_payload
 from src.web.data_sources.request_source import load_request_payload, strip_server_filter_query
 from src.web.data_sources.static_json_source import load_static_payload
 
@@ -174,6 +178,42 @@ def test_load_payload_gateway_local_uses_live_pipeline(monkeypatch):
     load_payload("local", "", resorts=[], cache_file=".cache/live.json")
     assert captured["resorts"] == []
     assert captured["resorts_file"] == DEFAULT_RESORTS_FILE
+
+
+def test_live_static_service_and_local_facades_reach_core_with_equivalent_request(monkeypatch):
+    captured = []
+
+    def fake_compute(request):  # noqa: ANN001
+        captured.append(request)
+        return {"reports": []}
+
+    monkeypatch.setattr(weather_service, "compute_pipeline_payload_for_request", fake_compute)
+    common = {
+        "resorts": ["Snowbird, UT", " ", "Alta, UT"],
+        "cache_file": "custom-cache.json",
+        "geocode_cache_hours": 21,
+        "forecast_cache_hours": 22,
+        "max_workers": 23,
+        "api_retries": 24,
+    }
+
+    weather_service.build_weather_payload(resorts_file="", **common)
+    live_pipeline.run_live_payload(resorts_file="", **common)
+    static_pipeline.fetch_static_payload(resorts_file="", **common)
+    load_local_payload(**common)
+
+    expected = WeatherPayloadBuildRequest(
+        resorts=("Snowbird, UT", "Alta, UT"),
+        resorts_file="",
+        runtime=WeatherRuntimeOptions(
+            cache_file="custom-cache.json",
+            geocode_cache_hours=21,
+            forecast_cache_hours=22,
+            max_workers=23,
+            api_retries=24,
+        ),
+    )
+    assert captured == [expected, expected, expected, expected]
 
 
 def test_load_payload_gateway_rejects_unknown_mode():
