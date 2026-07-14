@@ -43,6 +43,7 @@ WEB_ASSET_MANIFEST: Final[tuple[WebAsset, ...]] = (
     WebAsset("assets/js/weather_filter_state.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/sticky_single_table_layout.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_page_formatters.js", "application/javascript; charset=utf-8"),
+    WebAsset("assets/js/field_guide_homepage.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_page.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/css/resort_hourly.css", "text/css; charset=utf-8"),
     WebAsset("assets/js/resort_hourly_metrics.js", "application/javascript; charset=utf-8"),

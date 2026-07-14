@@ -54,6 +54,36 @@ process.stdout.write(JSON.stringify(result));
     return json.loads(result.stdout)
 
 
+def _run_homepage_expression(expression: str):
+    foundation_path = REPO_ROOT / "assets" / "js" / "field_guide_foundation.js"
+    homepage_path = REPO_ROOT / "assets" / "js" / "field_guide_homepage.js"
+    runner = f"""
+const fs = require("fs");
+const storageState = {{}};
+global.window = {{
+  localStorage: {{
+    getItem: (key) => Object.prototype.hasOwnProperty.call(storageState, key) ? storageState[key] : null,
+    setItem: (key, value) => {{ storageState[key] = String(value); }},
+  }},
+  addEventListener: () => {{}},
+  dispatchEvent: () => {{}},
+  CustomEvent: function (type, init) {{ this.type = type; this.detail = init.detail; }},
+}};
+eval(fs.readFileSync({json.dumps(str(foundation_path))}, "utf8"));
+eval(fs.readFileSync({json.dumps(str(homepage_path))}, "utf8"));
+const result = (() => ({expression}))();
+process.stdout.write(JSON.stringify(result));
+"""
+    result = subprocess.run(
+        [_node_binary(), "-e", runner],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(result.stdout)
+
+
 def test_to_float_and_color_functions():
     assert to_float(" 2.5 ") == 2.5
     assert to_float("") is None
@@ -288,3 +318,117 @@ def test_field_guide_styles_define_shared_semantics_and_compact_header():
     assert ".fg-card" in css
     assert "[data-field-guide-tabs]" in css
     assert "details[data-field-guide-disclosure]" in css
+
+
+def test_homepage_ranking_explains_signal_best_day_and_temperature_context():
+    result = _run_homepage_expression(
+        """(() => {
+  const homepage = window.CloseSnowFieldGuideHomepage;
+  const reports = [
+    {
+      resort_id: "quiet",
+      display_name: "Quiet Hill",
+      week1_total_snowfall_cm: 1,
+      week1_total_rain_mm: 0,
+      daily: [{ date: "2026-03-03", snowfall_cm: 1, rain_mm: 0, temperature_max_c: 2, temperature_min_c: -4 }],
+    },
+    {
+      resort_id: "deep",
+      display_name: "Deep Peak",
+      week1_total_snowfall_cm: 12,
+      week1_total_rain_mm: 1.2,
+      daily: [
+        { date: "2026-03-03", snowfall_cm: 2, rain_mm: 0, temperature_max_c: -1, temperature_min_c: -8 },
+        { date: "2026-03-04", snowfall_cm: 8, rain_mm: 0, temperature_max_c: 1, temperature_min_c: -5 },
+      ],
+    },
+  ];
+  const ranked = homepage.rankCandidates(reports, 2);
+  return {
+    order: ranked.map((entry) => entry.report.resort_id),
+    signal: ranked[0].signal,
+    explanation: homepage.rankingExplanation(ranked[0].report, ranked[0].signal, "metric"),
+  };
+})()"""
+    )
+
+    assert result["order"] == ["deep", "quiet"]
+    assert result["signal"] == "snow"
+    assert "12.0 cm of snow is forecast over seven days" in result["explanation"]
+    assert "Mar 4" in result["explanation"]
+    assert "8.0 cm" in result["explanation"]
+    assert "-8 °C to -1 °C" in result["explanation"]
+
+
+def test_homepage_card_discloses_every_daily_field_uses_global_units_and_escapes_content():
+    result = _run_homepage_expression(
+        """(() => {
+  const homepage = window.CloseSnowFieldGuideHomepage;
+  const report = {
+    resort_id: "safe-resort",
+    display_name: "Peak <script>alert(1)</script>",
+    admin1: "State <unsafe>",
+    pass_types: ["ikon"],
+    week1_total_snowfall_cm: 2.54,
+    week2_total_snowfall_cm: 0,
+    week1_total_rain_mm: 25.4,
+    daily: [
+      {
+        date: "2026-03-03",
+        weather_code: 71,
+        temperature_max_c: 0,
+        temperature_min_c: -10,
+        snowfall_cm: 2.54,
+        rain_mm: 25.4,
+        sunrise_local_hhmm: "07:01",
+        sunset_local_hhmm: "18:22",
+      },
+      {
+        date: "2026-03-04",
+        weather_code: 3,
+        temperature_max_c: 2,
+        temperature_min_c: -4,
+        snowfall_cm: 0,
+        rain_mm: 0,
+        sunrise_iso: "2026-03-04T07:00",
+        sunset_iso: "2026-03-04T18:23",
+      },
+    ],
+  };
+  return homepage.renderResortCard(report, { mode: "imperial", favorite: true });
+})()"""
+    )
+
+    assert "Peak &lt;script&gt;alert(1)&lt;/script&gt;" in result
+    assert "State &lt;unsafe&gt;" in result
+    assert "<script>alert(1)</script>" not in result
+    assert 'aria-pressed="true"' in result
+    assert "Full 2-day forecast" in result
+    assert result.count('class="daily-detail-card"') == 2
+    assert "High / low" in result
+    assert ">Snow<" in result
+    assert ">Rain<" in result
+    assert ">Daylight<" in result
+    assert "32 °F" in result
+    assert "1.0 in" in result
+    assert "1.00 in" in result
+    assert "07:01–18:22" in result
+    assert "07:00–18:23" in result
+    assert "No snow forecast" in result
+
+
+def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
+    result = _run_homepage_expression(
+        """(() => {
+  const homepage = window.CloseSnowFieldGuideHomepage;
+  return {
+    missing: homepage.renderResortCard({ resort_id: "missing", display_name: "Missing Mountain", daily: [] }),
+    empty: homepage.render([], { emptyMessage: "Try clearing your filters." }),
+  };
+})()"""
+    )
+
+    assert "Forecast details are not available for this resort yet." in result["missing"]
+    assert "Daily guidance is not available yet." in result["missing"]
+    assert "No resorts match this view" in result["empty"]
+    assert "Try clearing your filters." in result["empty"]
