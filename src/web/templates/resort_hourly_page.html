@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resort Forecast</title>
   <link rel="stylesheet" href="{{asset_prefix}}/css/resort_hourly.css" />
+  <link rel="stylesheet" href="{{asset_prefix}}/css/field_guide_foundation.css" />
 </head>
 <body>
   <header class="site-header">
@@ -15,7 +16,13 @@
         </span>
         <span class="brand-copy"><strong>CloseSnow</strong><span>Mountain weather, made useful</span></span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+      <div class="site-header-actions">
+        <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+        <button class="field-guide-unit-switch" type="button" data-field-guide-unit-toggle aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8M8 12h8M8 19h8"></path><path d="M5 3v4M5 10v4M5 17v4M19 3v4M19 10v4M19 17v4"></path></svg>
+          <span data-field-guide-unit-label>Metric</span>
+        </button>
+      </div>
     </div>
   </header>
   <main>
@@ -82,7 +89,7 @@
   <script>
     window.CLOSESNOW_HOURLY_CONTEXT = {{hourly_context_json}};
   </script>
-  <script src="{{asset_prefix}}/js/weather_code_emoji.js"></script>
+  <script src="{{asset_prefix}}/js/field_guide_foundation.js"></script>
   <script src="{{asset_prefix}}/js/compact_daily_summary.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly_metrics.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly.js"></script>

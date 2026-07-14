@@ -13,6 +13,7 @@
   </script>
   <title>Ski Resorts Weather Forecast</title>
   <link rel="stylesheet" href="assets/css/weather_page.css" />
+  <link rel="stylesheet" href="assets/css/field_guide_foundation.css" />
 </head>
 <body class="units-pending">
   <header class="site-header">
@@ -29,7 +30,13 @@
           <span>Mountain weather, made useful</span>
         </span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Fresh mountain intelligence</span>
+      <div class="site-header-actions">
+        <span class="site-header-note"><span aria-hidden="true"></span> Fresh mountain intelligence</span>
+        <button class="field-guide-unit-switch" type="button" data-field-guide-unit-toggle aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8M8 12h8M8 19h8"></path><path d="M5 3v4M5 10v4M5 17v4M19 3v4M19 10v4M19 17v4"></path></svg>
+          <span data-field-guide-unit-label>Metric</span>
+        </button>
+      </div>
     </div>
   </header>
   <main>
@@ -147,7 +154,7 @@
     window.CLOSESNOW_PAGE_BOOTSTRAP = {{page_bootstrap_json}};
     window.CLOSESNOW_INITIAL_PAYLOAD = {{initial_payload_json}};
   </script>
-  <script src="assets/js/weather_code_emoji.js"></script>
+  <script src="assets/js/field_guide_foundation.js"></script>
   <script src="assets/js/compact_daily_summary.js"></script>
   <script src="assets/js/weather_filter_state.js"></script>
   <script src="assets/js/sticky_single_table_layout.js"></script>

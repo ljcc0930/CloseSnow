@@ -119,8 +119,16 @@ def test_render_hourly_pages(tmp_path):
     ]
     html = outputs[0].read_text(encoding="utf-8")
     assert "../../assets/css/resort_hourly.css" in html
+    assert "../../assets/css/field_guide_foundation.css" in html
+    assert html.index("../../assets/css/resort_hourly.css") < html.index("../../assets/css/field_guide_foundation.css")
+    assert "../../assets/js/field_guide_foundation.js" in html
+    assert html.index("../../assets/js/field_guide_foundation.js") < html.index(
+        "../../assets/js/compact_daily_summary.js"
+    )
     assert "../../assets/js/resort_hourly_metrics.js" in html
     assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
+    assert "../../assets/js/weather_code_emoji.js" not in html
+    assert "data-field-guide-unit-toggle" in html
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
     assert 'id="resort-snapshot"' in html
     assert 'id="hourly-charts"' in html

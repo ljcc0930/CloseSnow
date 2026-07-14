@@ -4,6 +4,10 @@ const hourlyDataUrl = String(context.hourlyDataUrl || "").trim();
 const dailySummary = context.dailySummary && typeof context.dailySummary === "object" ? context.dailySummary : null;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const hourlyMetricHelpers = window.CloseSnowResortHourlyMetrics || {};
+const fieldGuide = window.CloseSnowFieldGuide || {};
+const fieldGuideCopy = fieldGuide.copy || {};
+const fieldGuideUnits = fieldGuide.units || {};
+const fieldGuideWeather = fieldGuide.weather || {};
 
 const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
@@ -59,6 +63,10 @@ const formatValue = (value) => {
   }
   return String(value);
 };
+
+const currentUnitMode = () => (fieldGuideUnits.readPreference
+  ? fieldGuideUnits.readPreference()
+  : "metric");
 
 const formatCoordinate = (value) => {
   const num = Number(value);
@@ -361,7 +369,10 @@ const renderNearbyAirports = (payload) => {
     if (airport.distanceMiles !== null) {
       const distance = document.createElement("span");
       distance.className = "resort-airport-access-distance";
-      distance.textContent = `${Math.round(airport.distanceMiles)} mi`;
+      const distanceKm = airport.distanceMiles * 1.609344;
+      distance.textContent = fieldGuideUnits.formatDistance
+        ? fieldGuideUnits.formatDistance(distanceKm, currentUnitMode(), { digits: 0 })
+        : `${Math.round(airport.distanceMiles)} mi`;
       head.appendChild(distance);
     }
 
@@ -428,23 +439,42 @@ const renderResortSnapshot = () => {
   const snow = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.snowfall_cm) || 0), 0);
   const rain = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.rain_mm) || 0), 0);
   const weatherCode = today.weather_code;
-  const weatherEmoji = window.CloseSnowWeatherCode?.emojiForWeatherCode
-    ? window.CloseSnowWeatherCode.emojiForWeatherCode(weatherCode)
-    : "❓";
-  const temperature = high === null || low === null ? "--" : `${Math.round(high)}° / ${Math.round(low)}°`;
+  const unitMode = currentUnitMode();
+  const weatherIcon = fieldGuideWeather.iconHtml
+    ? fieldGuideWeather.iconHtml(weatherCode)
+    : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>';
+  const metricIcon = (kind, label) => (fieldGuideWeather.metricIconHtml
+    ? fieldGuideWeather.metricIconHtml(kind, { label })
+    : `<span class="field-guide-weather-icon" role="img" aria-label="${label}">?</span>`);
+  const temperatureUnit = fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("temperature", unitMode) : "°C";
+  const formattedHigh = high === null
+    ? "--"
+    : (fieldGuideUnits.formatTemperature
+      ? fieldGuideUnits.formatTemperature(high, unitMode, { withUnit: false, digits: 0 })
+      : String(Math.round(high)));
+  const formattedLow = low === null
+    ? "--"
+    : (fieldGuideUnits.formatTemperature
+      ? fieldGuideUnits.formatTemperature(low, unitMode, { withUnit: false, digits: 0 })
+      : String(Math.round(low)));
+  const temperature = `${formattedHigh} / ${formattedLow} ${temperatureUnit}`;
+  const snowValue = fieldGuideUnits.formatSnow ? fieldGuideUnits.formatSnow(snow, unitMode) : `${snow.toFixed(1)} cm`;
+  const rainValue = fieldGuideUnits.formatRain ? fieldGuideUnits.formatRain(rain, unitMode) : `${rain.toFixed(1)} mm`;
+  const outlook = fieldGuideCopy.dailyOutlook ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode }) : "";
   snapshotEl.innerHTML = `
     <article class="snapshot-card snapshot-card-weather">
-      <span class="snapshot-icon" aria-hidden="true">${weatherEmoji}</span>
-      <span><small>Today</small><strong>${temperature}</strong><em>High / low °C</em></span>
+      <span class="snapshot-icon">${weatherIcon}</span>
+      <span><small>Today</small><strong>${temperature}</strong><em>High / low</em></span>
     </article>
     <article class="snapshot-card">
-      <span class="snapshot-icon snapshot-icon-snow" aria-hidden="true">❄</span>
-      <span><small>Next 7 days</small><strong>${snow.toFixed(1)} cm</strong><em>Forecast snow</em></span>
+      <span class="snapshot-icon snapshot-icon-snow">${metricIcon("snow", "Snowfall")}</span>
+      <span><small>Next 7 days</small><strong>${snowValue}</strong><em>Forecast snow</em></span>
     </article>
     <article class="snapshot-card">
-      <span class="snapshot-icon snapshot-icon-rain" aria-hidden="true">◌</span>
-      <span><small>Next 7 days</small><strong>${rain.toFixed(1)} mm</strong><em>Forecast rain</em></span>
+      <span class="snapshot-icon snapshot-icon-rain">${metricIcon("rain", "Rainfall")}</span>
+      <span><small>Next 7 days</small><strong>${rainValue}</strong><em>Forecast rain</em></span>
     </article>`;
+  if (outlook) snapshotEl.setAttribute("aria-label", outlook);
   snapshotEl.hidden = false;
 };
 
@@ -733,6 +763,7 @@ const renderTimelineSummary = () => {
   }
   timelineRoot.innerHTML = compactDailySummary.renderSingleResortHtml(merged, {
     emptyText: "No forecast or recent history",
+    unitMode: currentUnitMode(),
   });
   timelineSection.hidden = false;
   window.requestAnimationFrame(centerTimelineOnToday);
@@ -832,6 +863,12 @@ if (hoursSelect) {
   hoursSelect.addEventListener("change", loadHourly);
 }
 window.addEventListener("resize", rerenderChartsForResize);
+window.addEventListener("closesnow:unitschange", () => {
+  renderResortSnapshot();
+  timelineAutoCentered = false;
+  renderTimelineSummary();
+  renderNearbyAirports(lastHourlyPayload);
+});
 
 renderResortSnapshot();
 renderTimelineSummary();

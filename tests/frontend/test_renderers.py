@@ -249,8 +249,16 @@ def test_build_html_contains_meta_sections():
     assert 'class="skeleton skeleton-table"' in html
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
+    assert 'href="assets/css/field_guide_foundation.css"' in html
+    assert html.index('href="assets/css/weather_page.css"') < html.index('href="assets/css/field_guide_foundation.css"')
+    assert 'src="assets/js/field_guide_foundation.js"' in html
+    assert html.index('src="assets/js/field_guide_foundation.js"') < html.index(
+        'src="assets/js/compact_daily_summary.js"'
+    )
     assert 'src="assets/js/weather_page_formatters.js"' in html
     assert html.index('src="assets/js/weather_page_formatters.js"') < html.index('src="assets/js/weather_page.js"')
+    assert 'src="assets/js/weather_code_emoji.js"' not in html
+    assert "data-field-guide-unit-toggle" in html
     assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
     assert 'id="resort-search-input"' in html
     assert 'id="filter-modal"' in html
