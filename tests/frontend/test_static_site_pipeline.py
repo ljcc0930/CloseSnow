@@ -128,9 +128,7 @@ def test_render_hourly_pages(tmp_path):
     assert "../../assets/css/field_guide_foundation.css" in html
     assert html.index("../../assets/css/resort_hourly.css") < html.index("../../assets/css/field_guide_foundation.css")
     assert "../../assets/js/field_guide_foundation.js" in html
-    assert html.index("../../assets/js/field_guide_foundation.js") < html.index(
-        "../../assets/js/compact_daily_summary.js"
-    )
+    assert "../../assets/js/compact_daily_summary.js" not in html
     assert "../../assets/js/resort_hourly_metrics.js" in html
     assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
     assert "../../assets/js/weather_code_emoji.js" not in html
