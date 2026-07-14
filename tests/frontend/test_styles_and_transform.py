@@ -432,3 +432,28 @@ def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
     assert "Daily guidance is not available yet." in result["missing"]
     assert "No resorts match this view" in result["empty"]
     assert "Try clearing your filters." in result["empty"]
+
+
+def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
+    js = (REPO_ROOT / "assets" / "js" / "resort_hourly.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "assets" / "css" / "resort_hourly.css").read_text(encoding="utf-8")
+
+    assert "HOURLY_GROUPS" in js
+    assert 'metrics: Object.freeze(["snowfall", "rain", "precipitation_probability"])' in js
+    assert 'metrics: Object.freeze(["wind_speed_10m", "wind_direction_10m"])' in js
+    assert 'metrics: Object.freeze(["visibility", "snow_depth"])' in js
+    assert "renderHourlyNarrative" in js
+    assert "renderWindDirectionCard" in js
+    assert "fieldGuideWeather.iconHtml" in js
+    assert "data-timeline-today" in js
+    assert 'appendDefinition(daylight, "Sunrise"' in js
+    assert 'appendDefinition(daylight, "Sunset"' in js
+    assert "Resort Forecast:" not in js
+    assert "subtitle.textContent = `Unit:" not in js
+
+    assert ".resort-masthead" in css
+    assert ".field-guide-timeline-track" in css
+    assert '.timeline-day-card[data-phase="today"]' in css
+    assert ".hourly-view-tabs" in css
+    assert ".wind-direction-grid" in css
+    assert ".resort-hero-mountain" not in css

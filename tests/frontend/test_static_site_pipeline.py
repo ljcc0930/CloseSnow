@@ -70,6 +70,10 @@ def test_render_hourly_pages(tmp_path):
                 "resort_id": "snowbird-ut",
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
+                "region": "west",
+                "admin1": "UT",
+                "country": "US",
+                "pass_types": ["ikon"],
                 "nearby_airports": [
                     {
                         "airport_id": "slc-salt-lake-city",
@@ -89,6 +93,8 @@ def test_render_hourly_pages(tmp_path):
                         "temperature_min_c": -5,
                         "snowfall_cm": 2.0,
                         "rain_mm": 0.0,
+                        "sunrise_local_hhmm": "07:24",
+                        "sunset_local_hhmm": "19:31",
                     }
                 ],
                 "past_14d_daily": [
@@ -129,13 +135,26 @@ def test_render_hourly_pages(tmp_path):
     assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
     assert "../../assets/js/weather_code_emoji.js" not in html
     assert "data-field-guide-unit-toggle" in html
-    assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
+    assert '<h1 id="hourly-title">Loading resort…</h1>' in html
+    assert 'class="resort-masthead"' in html
+    assert 'id="resort-context"' in html
+    assert 'id="resort-outlook"' in html
     assert 'id="resort-snapshot"' in html
+    assert 'id="resort-timeline-root"' in html
+    assert 'role="tablist" aria-label="Hourly forecast layers"' in html
+    assert 'data-hourly-group="storm"' in html
+    assert 'data-hourly-group="wind"' in html
+    assert 'data-hourly-group="visibility"' in html
+    assert 'id="hourly-narrative"' in html
     assert 'id="hourly-charts"' in html
     assert 'class="raw-data-panel"' in html
     context = _hourly_context_from_html(html)
     assert context["resortId"] == "snowbird-ut"
     assert context["dailySummary"]["display_name"] == "Snowbird, Utah"
+    assert context["dailySummary"]["region"] == "west"
+    assert context["dailySummary"]["admin1"] == "UT"
+    assert context["dailySummary"]["country"] == "US"
+    assert context["dailySummary"]["pass_types"] == ["ikon"]
     assert context["dailySummary"]["nearbyAirports"][0]["iata_code"] == "SLC"
     assert context["dailySummary"]["past14dDaily"][0]["date"] == "2026-03-01"
     assert context["dailySummary"]["past14dDaily"][-1]["date"] == "2026-03-14"
