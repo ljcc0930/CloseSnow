@@ -15,35 +15,83 @@
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
 <body class="units-pending">
-  <main>
-    <h1>Ski Resorts Weather Forecast</h1>
-    <div class="report-date">
-      <div class="report-powered">
-        Powered by <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo ECMWF IFS 0.25</a>
-      </div>
-      <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="./" aria-label="CloseSnow home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 42 42" role="img">
+            <path d="M4 31.5 14.3 17l5.1 6.7L27.1 11 38 31.5H4Z" />
+            <path d="m14.3 17 3.1 4.1 2-2.4 3.3 4.7 4.4-12.4" />
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <strong>CloseSnow</strong>
+          <span>Mountain weather, made useful</span>
+        </span>
+      </a>
+      <span class="site-header-note"><span aria-hidden="true"></span> Fresh mountain intelligence</span>
     </div>
-    <div class="resort-controls">
-      <div class="resort-search">
-        <label for="resort-search-input">Search Resorts</label>
-        <input id="resort-search-input" type="search" placeholder="Name, state, or pass type" autocomplete="off" />
-        <button id="resort-search-clear" type="button">Clear</button>
+  </header>
+  <main>
+    <section class="forecast-hero" aria-labelledby="page-title">
+      <div class="forecast-hero-copy">
+        <p class="eyebrow">Ski Resorts Weather Forecast</p>
+        <h1 id="page-title">Find your next <span>snow day.</span></h1>
+        <p class="hero-lede">Compare the mountains at a glance, follow the strongest storms, and plan with confidence.</p>
+        <div class="report-date">
+          <div class="report-powered">
+            Forecast model <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo ECMWF IFS 0.25</a>
+          </div>
+          <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
+        </div>
       </div>
-      <div class="resort-search-options">
-        <label class="resort-search-toggle">
-          <input type="checkbox" id="filter-search-all" checked />
-          Search all resorts
-        </label>
-        <label class="resort-search-toggle">
-          <input type="checkbox" id="favorites-only-toggle" />
-          Favorites only
-        </label>
+      <div class="hero-landscape" aria-hidden="true">
+        <span class="hero-sun"></span>
+        <svg viewBox="0 0 560 250" preserveAspectRatio="none">
+          <path class="mountain-back" d="M0 207 78 137l44 36 77-105 63 84 40-51 100 106H0Z" />
+          <path class="mountain-front" d="M138 220 262 92l41 48 46-62 135 142H138Z" />
+          <path class="snow-line" d="m78 137 23 19 21 17 77-105 29 39 34 45 40-51 36 38" />
+          <path class="snow-line snow-line-front" d="m262 92 41 48 46-62 48 51" />
+        </svg>
+        <span class="hero-contour hero-contour-one"></span>
+        <span class="hero-contour hero-contour-two"></span>
       </div>
-      <div class="resort-filter-bar">
-        <button id="filter-open-btn" type="button">Filters</button>
+    </section>
+    <section class="control-panel" aria-labelledby="explore-title">
+      <div class="control-panel-heading">
+        <div>
+          <p class="eyebrow">Your mountain finder</p>
+          <h2 id="explore-title">Explore the forecast</h2>
+        </div>
         <span id="filter-summary" class="filter-summary">Default resorts</span>
       </div>
-    </div>
+      <div class="resort-controls">
+        <div class="resort-search">
+          <label class="sr-only" for="resort-search-input">Search Resorts</label>
+          <span class="search-field">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.2 16.2 4.1 4.1"></path></svg>
+            <input id="resort-search-input" type="search" placeholder="Search name, state, or pass" autocomplete="off" />
+          </span>
+          <button id="resort-search-clear" type="button">Clear</button>
+        </div>
+        <div class="resort-search-options" aria-label="Quick filters">
+          <label class="resort-search-toggle">
+            <input type="checkbox" id="filter-search-all" checked />
+            <span>Search all resorts</span>
+          </label>
+          <label class="resort-search-toggle">
+            <input type="checkbox" id="favorites-only-toggle" />
+            <span>Favorites only</span>
+          </label>
+        </div>
+        <div class="resort-filter-bar">
+          <button id="filter-open-btn" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
+            Filters &amp; sorting
+          </button>
+        </div>
+      </div>
+    </section>
     <div id="filter-modal" class="filter-modal" hidden>
       <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
         <h3 id="filter-title">Resort Filters</h3>
@@ -91,7 +139,8 @@
     </div>
   </main>
   <footer class="page-footer">
-    Author: Codex, vibed by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a>. <a href="https://github.com/ljcc0930/CloseSnow/issues/new?template=feature_request.yml" target="_blank" rel="noopener noreferrer">Feature requests</a> are welcome.
+    <span><strong>CloseSnow</strong> · Built for better mountain days.</span>
+    <span>Made by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a> with Codex · <a href="https://github.com/ljcc0930/CloseSnow/issues/new?template=feature_request.yml" target="_blank" rel="noopener noreferrer">Request a feature</a></span>
   </footer>
   <script>
     window.CLOSESNOW_FILTER_META = {{filter_meta_json}};

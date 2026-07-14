@@ -78,21 +78,21 @@
   const tempColor = (value) => {
     const v = asFiniteNumber(value);
     if (v === null) return "";
-    if (v < -10) return "background:#CFE8FF;";
+    if (v < -10) return "background:#DCEFF8;";
     if (v < 0) {
       const x = (v + 10) / 10;
-      const r = Math.round(207 + ((255 - 207) * x));
-      const g = Math.round(232 + ((255 - 232) * x));
-      return `background:rgb(${r},${g},255);`;
+      const r = Math.round(220 + ((248 - 220) * x));
+      const g = Math.round(239 + ((251 - 239) * x));
+      return `background:rgb(${r},${g},252);`;
     }
     if (v <= 20) {
       if (v <= 4) return "background:#FFFFFF;";
       const x = (v - 4) / 16;
-      const g = Math.round(255 + ((214 - 255) * x));
-      const b = Math.round(255 + ((214 - 255) * x));
+      const g = Math.round(255 + ((248 - 255) * x));
+      const b = Math.round(255 + ((240 - 255) * x));
       return `background:rgb(255,${g},${b});`;
     }
-    return "background:#FFD6D6;";
+    return "background:#FFF2E8;";
   };
 
   const metricCellHtml = (rawValue, kind, style = "", klass = "") => {

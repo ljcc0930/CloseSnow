@@ -122,7 +122,9 @@ def test_render_hourly_pages(tmp_path):
     assert "../../assets/js/resort_hourly_metrics.js" in html
     assert html.index("../../assets/js/resort_hourly_metrics.js") < html.index("../../assets/js/resort_hourly.js")
     assert '<h1 id="hourly-title">Resort Forecast</h1>' in html
+    assert 'id="resort-snapshot"' in html
     assert 'id="hourly-charts"' in html
+    assert 'class="raw-data-panel"' in html
     context = _hourly_context_from_html(html)
     assert context["resortId"] == "snowbird-ut"
     assert context["dailySummary"]["display_name"] == "Snowbird, Utah"
