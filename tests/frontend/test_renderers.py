@@ -243,6 +243,10 @@ def test_build_html_contains_meta_sections():
     )
     assert "<!doctype html>" in html
     assert "Ski Resorts Weather Forecast" in html
+    assert "CloseSnow" in html
+    assert "Find your next <span>snow day.</span>" in html
+    assert "forecast-loading-overview" in html
+    assert 'class="skeleton skeleton-table"' in html
     assert "<h2>Daily Summary</h2>" in html
     assert "<h2>Sunrise / Sunset</h2>" in html
     assert 'src="assets/js/weather_page_formatters.js"' in html

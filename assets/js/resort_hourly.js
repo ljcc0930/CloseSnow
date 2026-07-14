@@ -11,6 +11,7 @@ const titleEl = document.getElementById("hourly-title");
 const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
 const locationLinkEl = document.getElementById("resort-location-link");
+const snapshotEl = document.getElementById("resort-snapshot");
 const timelineSection = document.getElementById("resort-timeline-section");
 const timelineRoot = document.getElementById("resort-timeline-root");
 const airportAccessSectionEl = document.getElementById("resort-airport-access-section");
@@ -413,6 +414,40 @@ const setChartError = (msg) => {
   chartErrorEl.textContent = text;
 };
 
+const renderResortSnapshot = () => {
+  if (!snapshotEl) return;
+  const daily = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
+  const today = daily[0] && typeof daily[0] === "object" ? daily[0] : null;
+  if (!today) {
+    snapshotEl.hidden = true;
+    snapshotEl.innerHTML = "";
+    return;
+  }
+  const high = toFiniteNumber(today.temperature_max_c);
+  const low = toFiniteNumber(today.temperature_min_c);
+  const snow = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.snowfall_cm) || 0), 0);
+  const rain = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.rain_mm) || 0), 0);
+  const weatherCode = today.weather_code;
+  const weatherEmoji = window.CloseSnowWeatherCode?.emojiForWeatherCode
+    ? window.CloseSnowWeatherCode.emojiForWeatherCode(weatherCode)
+    : "❓";
+  const temperature = high === null || low === null ? "--" : `${Math.round(high)}° / ${Math.round(low)}°`;
+  snapshotEl.innerHTML = `
+    <article class="snapshot-card snapshot-card-weather">
+      <span class="snapshot-icon" aria-hidden="true">${weatherEmoji}</span>
+      <span><small>Today</small><strong>${temperature}</strong><em>High / low °C</em></span>
+    </article>
+    <article class="snapshot-card">
+      <span class="snapshot-icon snapshot-icon-snow" aria-hidden="true">❄</span>
+      <span><small>Next 7 days</small><strong>${snow.toFixed(1)} cm</strong><em>Forecast snow</em></span>
+    </article>
+    <article class="snapshot-card">
+      <span class="snapshot-icon snapshot-icon-rain" aria-hidden="true">◌</span>
+      <span><small>Next 7 days</small><strong>${rain.toFixed(1)} mm</strong><em>Forecast rain</em></span>
+    </article>`;
+  snapshotEl.hidden = false;
+};
+
 const toFiniteNumber = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const num = Number(value);
@@ -798,6 +833,7 @@ if (hoursSelect) {
 }
 window.addEventListener("resize", rerenderChartsForResize);
 
+renderResortSnapshot();
 renderTimelineSummary();
 renderNearbyAirports(null);
 loadHourly();
