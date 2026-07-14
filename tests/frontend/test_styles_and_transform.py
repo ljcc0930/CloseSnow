@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from src.web.asset_manifest import WEB_ASSET_MANIFEST
 from src.web.weather_report_transform import (
     reports_to_rain_rows,
     reports_to_snow_rows,
@@ -457,3 +458,15 @@ def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
     assert ".hourly-view-tabs" in css
     assert ".wind-direction-grid" in css
     assert ".resort-hero-mountain" not in css
+
+
+def test_integration_removes_superseded_frontend_assets_and_stacks_mobile_insights():
+    manifest_paths = {asset.repository_path for asset in WEB_ASSET_MANIFEST}
+    assert "assets/js/compact_daily_summary.js" not in manifest_paths
+    assert "assets/js/weather_code_emoji.js" not in manifest_paths
+    assert "assets/js/sticky_single_table_layout.js" not in manifest_paths
+
+    homepage_css = (REPO_ROOT / "assets" / "css" / "weather_page.css").read_text(encoding="utf-8")
+    assert "grid-auto-flow: column" not in homepage_css
+    assert ".insight-grid," in homepage_css
+    assert "grid-template-columns: minmax(0, 1fr)" in homepage_css

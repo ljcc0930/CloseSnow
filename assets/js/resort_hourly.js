@@ -2,7 +2,6 @@ const context = window.CLOSESNOW_HOURLY_CONTEXT || {};
 const resortId = String(context.resortId || "").trim();
 const hourlyDataUrl = String(context.hourlyDataUrl || "").trim();
 const dailySummary = context.dailySummary && typeof context.dailySummary === "object" ? context.dailySummary : null;
-const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const hourlyMetricHelpers = window.CloseSnowResortHourlyMetrics || {};
 const fieldGuide = window.CloseSnowFieldGuide || {};
 const fieldGuideCopy = fieldGuide.copy || {};
@@ -1136,13 +1135,6 @@ const rerenderChartsForResize = () => {
 };
 
 const buildMergedTimelineDays = () => {
-  const labelFor = typeof compactDailySummary.dayLabelFor === "function"
-    ? compactDailySummary.dayLabelFor
-    : (day, index, options = {}) => {
-      const labelMode = options.labelMode === "calendar" ? "calendar" : "forecast";
-      if (labelMode === "forecast" && index === 0) return "Today";
-      return String(day?.date || "");
-    };
   const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];
   const forecast = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
   const merged = [];
@@ -1151,7 +1143,7 @@ const buildMergedTimelineDays = () => {
     merged.push({
       ...day,
       summary_phase: "history",
-      summary_label: labelFor(day, index, { labelMode: "calendar" }),
+      summary_label: friendlyDate(day?.date, `Past day ${index + 1}`),
     });
   });
 
@@ -1159,7 +1151,7 @@ const buildMergedTimelineDays = () => {
     merged.push({
       ...day,
       summary_phase: "forecast",
-      summary_label: labelFor(day, index, { labelMode: "forecast" }),
+      summary_label: index === 0 ? "Today" : friendlyDate(day?.date, `Forecast day ${index + 1}`),
       summary_is_today: index === 0,
     });
   });
