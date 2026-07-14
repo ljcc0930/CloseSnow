@@ -7,42 +7,78 @@
   <link rel="stylesheet" href="{{asset_prefix}}/css/resort_hourly.css" />
 </head>
 <body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="{{back_href}}" aria-label="CloseSnow home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 42 42" role="img"><path d="M4 31.5 14.3 17l5.1 6.7L27.1 11 38 31.5H4Z" /><path d="m14.3 17 3.1 4.1 2-2.4 3.3 4.7 4.4-12.4" /></svg>
+        </span>
+        <span class="brand-copy"><strong>CloseSnow</strong><span>Mountain weather, made useful</span></span>
+      </a>
+      <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+    </div>
+  </header>
   <main>
-    <a class="back-link" href="{{back_href}}">Back to Main Forecast</a>
-    <h1 id="hourly-title">Resort Forecast</h1>
-    <p id="resort-local-time" class="resort-local-time"></p>
-    <p id="resort-website-link" class="resort-website-link"></p>
-    <p id="resort-location-link" class="resort-location-link"></p>
+    <section class="resort-hero" aria-labelledby="hourly-title">
+      <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> Back to all resorts</a>
+      <p class="eyebrow">Mountain forecast</p>
+      <h1 id="hourly-title">Resort Forecast</h1>
+      <div class="resort-identity-meta">
+        <p id="resort-local-time" class="resort-local-time"></p>
+        <p id="resort-website-link" class="resort-website-link"></p>
+        <p id="resort-location-link" class="resort-location-link"></p>
+      </div>
+      <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
+      <div class="resort-hero-mountain" aria-hidden="true">
+        <svg viewBox="0 0 420 180" preserveAspectRatio="none"><path d="M18 178 120 62l42 50 56-86 170 152H18Z" /><path d="m120 62 42 50 56-86 55 49" /></svg>
+      </div>
+    </section>
     <section id="resort-timeline-section" class="resort-timeline-section" hidden>
-      <h2>Past 14 days + forecast</h2>
+      <div class="section-heading">
+        <div><p class="eyebrow">Snow timeline</p><h2>Past 14 days + forecast</h2></div>
+        <span>Swipe to explore</span>
+      </div>
       <div id="resort-timeline-root"></div>
     </section>
     <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
-      <h2>Nearby airports (&lt;250 miles)</h2>
+      <div class="section-heading">
+        <div><p class="eyebrow">Getting there</p><h2>Nearby airports (&lt;250 miles)</h2></div>
+      </div>
       <div id="resort-airport-access-root"></div>
     </section>
-    <p class="hourly-section-title">Hourly forecast</p>
-    <div class="hourly-controls">
-      <label for="hours-select">Hours</label>
-      <select id="hours-select">
-        <option value="24">24</option>
-        <option value="48">48</option>
-        <option value="72" selected>72</option>
-        <option value="120">120</option>
-      </select>
-      <button id="hours-refresh-btn" type="button">Refresh</button>
-    </div>
-    <p id="hourly-meta" class="hourly-meta">Loading...</p>
-    <div id="hourly-error" class="hourly-error" hidden></div>
-    <div id="hourly-chart-error" class="hourly-chart-error" hidden></div>
-    <section id="hourly-charts" class="hourly-charts" aria-live="polite"></section>
-    <div class="table-wrap">
-      <table id="hourly-table" class="hourly-table">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
-    </div>
+    <section class="hourly-workspace" aria-labelledby="hourly-section-title">
+      <div class="hourly-workspace-heading">
+        <div>
+          <p class="eyebrow">Weather, hour by hour</p>
+          <h2 id="hourly-section-title" class="hourly-section-title">Hourly forecast</h2>
+        </div>
+        <div class="hourly-controls">
+          <label for="hours-select">Range</label>
+          <select id="hours-select">
+            <option value="24">24 hours</option>
+            <option value="48">48 hours</option>
+            <option value="72" selected>72 hours</option>
+            <option value="120">120 hours</option>
+          </select>
+          <button id="hours-refresh-btn" type="button">Refresh</button>
+        </div>
+      </div>
+      <p id="hourly-meta" class="hourly-meta">Loading...</p>
+      <div id="hourly-error" class="hourly-error" hidden></div>
+      <div id="hourly-chart-error" class="hourly-chart-error" hidden></div>
+      <section id="hourly-charts" class="hourly-charts" aria-live="polite"></section>
+      <details class="raw-data-panel">
+        <summary>View raw hourly data</summary>
+        <div class="table-wrap">
+          <table id="hourly-table" class="hourly-table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
   </main>
+  <footer class="page-footer"><strong>CloseSnow</strong> · Forecast data for better mountain days.</footer>
   <script>
     window.CLOSESNOW_HOURLY_CONTEXT = {{hourly_context_json}};
   </script>

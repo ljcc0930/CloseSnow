@@ -235,6 +235,65 @@ const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => 
 
 const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
 
+const _overviewLocation = (report) => {
+  const parts = [report?.city, report?.admin1 || report?.country_code]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  return parts.join(", ") || String(report?.region || "Mountain forecast").trim();
+};
+
+const _overviewValue = (kind, value, fallback = "--") => {
+  const numeric = _asFiniteNumber(value);
+  if (numeric === null) return `<span class="overview-value">${fallback}</span>`;
+  const display = kind === "temp" ? String(Math.round(numeric)) : numeric.toFixed(1);
+  return `<span class="overview-value" data-compact-unit-kind="${kind}" data-compact-metric-value="${numeric.toFixed(6)}">${display}</span>`;
+};
+
+const _renderForecastOverview = (reports) => {
+  const snowSorted = [...reports].sort((a, b) => (_weeklySnowfall(b) || 0) - (_weeklySnowfall(a) || 0));
+  const hasSnow = snowSorted.some((report) => (_weeklySnowfall(report) || 0) > 0);
+  const candidates = (hasSnow
+    ? snowSorted
+    : [...reports].sort((a, b) => (Number(b?.week1_total_rain_mm) || 0) - (Number(a?.week1_total_rain_mm) || 0)))
+    .slice(0, 3);
+  const outlookKind = hasSnow ? "snow" : "rain";
+  const outlookLabel = hasSnow ? "7-day snow" : "7-day rain";
+  const outlookUnit = hasSnow ? "cm" : "mm";
+  const cards = candidates.map((report, index) => {
+    const today = _dailyAt(report, 0);
+    const weatherCode = today.weather_code;
+    const weatherTitle = weatherCode === null || weatherCode === undefined || weatherCode === ""
+      ? "Weather unavailable"
+      : `WMO code: ${weatherCode}`;
+    return `
+      <article class="snow-pick-card">
+        <div class="snow-pick-card-topline">
+          <span class="snow-pick-rank">#${index + 1} ${hasSnow ? "snow" : "storm"} pick</span>
+          <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(weatherCode)}</span>
+        </div>
+        <h3>${_resortLinkHtml(report)}</h3>
+        <p>${_escapeHtml(_overviewLocation(report))}</p>
+        <div class="snow-pick-metrics">
+          <span><small>${outlookLabel}</small><strong>${_overviewValue(outlookKind, hasSnow ? _weeklySnowfall(report) : report?.week1_total_rain_mm)}<em data-compact-unit-label="${outlookKind}">${outlookUnit}</em></strong></span>
+          <span><small>Today high</small><strong>${_overviewValue("temp", today.temperature_max_c)}<em data-compact-unit-label="temp">°C</em></strong></span>
+        </div>
+      </article>`;
+  }).join("");
+  const empty = `
+    <div class="overview-empty">
+      <strong>No mountains in view</strong>
+      <span>Adjust your search or filters to bring forecast candidates back.</span>
+    </div>`;
+  return `
+    <section class="forecast-overview" aria-labelledby="forecast-overview-title">
+      <div class="overview-heading">
+        <div><p class="eyebrow">At a glance</p><h2 id="forecast-overview-title">${hasSnow ? "Best bets this week" : "Storm watch this week"}</h2></div>
+        <span>${hasSnow ? "Ranked by forecast snowfall" : "No accumulating snow · ranked by forecast rain"} across ${reports.length} visible resort${reports.length === 1 ? "" : "s"}</span>
+      </div>
+      <div class="snow-pick-grid">${cards || empty}</div>
+    </section>`;
+};
+
 const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {
   const displayDays = _displayDays();
   const labels = reports.length
@@ -251,7 +310,7 @@ const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the
     return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
   }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
-    <section>
+    <section class="forecast-section forecast-section-daily">
       <div class="section-header">
         <h2>Daily Summary</h2>
         <div class="unit-toggle" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
@@ -298,7 +357,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
       return `<tr${attrs}>${_mobilePrecipResortCellHtml(report)}${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
     }).join("") : _emptyStateRow(3 + Math.max(1, displayDays), emptyMessage);
     return `
-      <section>
+      <section class="forecast-section forecast-section-precip">
         <div class="section-header">
           <h2>${title}</h2>
           <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
@@ -335,7 +394,7 @@ const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, op
     return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}${dailyValues}</tr>`;
   }).join("") : _emptyStateRow(4 + Math.max(1, displayDays), emptyMessage);
   return `
-    <section>
+    <section class="forecast-section forecast-section-precip">
       <div class="section-header">
         <h2>${title}</h2>
         <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
@@ -377,7 +436,7 @@ const _renderTemperatureSection = (reports, emptyMessage = "No resorts match the
     return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
   }).join("") : _emptyStateRow(2 + Math.max(1, displayDays * 2), emptyMessage);
   return `
-    <section>
+    <section class="forecast-section forecast-section-temperature">
       <div class="section-header">
         <h2>Temperature</h2>
         <div class="unit-toggle" role="group" aria-label="Temperature unit system" data-target-kind="temp">
@@ -414,8 +473,11 @@ const _renderWeatherSection = (reports, emptyMessage = "No resorts match the cur
   }).join("");
   const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
-    <section>
-      <h2>Weather</h2>
+    <section class="forecast-section forecast-section-weather">
+      <div class="section-header">
+        <h2>Weather</h2>
+        <span class="section-note">Daily conditions</span>
+      </div>
       <div
         class='weather-table-wrap'
         id='weather-table-wrap'
@@ -466,7 +528,7 @@ const _renderSunSection = (reports, emptyMessage = "No resorts match the current
     return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
   }).join("") : _emptyStateRow(totalColumns, emptyMessage);
   return `
-    <section>
+    <section class="forecast-section forecast-section-sun">
       <div class="section-header">
         <h2>Sunrise / Sunset</h2>
         <div class="unit-toggle" role="group" aria-label="Sunrise and sunset time format" data-sun-time-toggle="1" data-mode="${appState.sunTimeToggleMode}">
@@ -492,6 +554,7 @@ const _renderSunSection = (reports, emptyMessage = "No resorts match the current
 };
 
 const _renderSections = (reports, emptyMessage = "No resorts match the current filters.") => [
+  _renderForecastOverview(reports),
   _renderCompactGridSection(reports, emptyMessage),
   _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
     prefix: "snowfall",
@@ -1369,6 +1432,12 @@ const renderCompactSummaryValues = () => {
         ? (metricValue / 25.4).toFixed(2)
         : metricValue.toFixed(1);
     }
+  });
+  document.querySelectorAll("[data-compact-unit-label]").forEach((el) => {
+    const kind = String(el.getAttribute("data-compact-unit-label") || "").trim();
+    if (kind === "snow") el.textContent = mode === "imperial" ? "in" : "cm";
+    if (kind === "temp") el.textContent = mode === "imperial" ? "°F" : "°C";
+    if (kind === "rain") el.textContent = mode === "imperial" ? "in" : "mm";
   });
 };
 
