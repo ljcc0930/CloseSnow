@@ -1,4 +1,8 @@
 (function () {
+  const fieldGuide = window.CloseSnowFieldGuide || {};
+  const fieldGuideUnits = fieldGuide.units || {};
+  const fieldGuideWeather = fieldGuide.weather || {};
+
   const _asFiniteNumber = (value) => {
     if (value === null || value === undefined || value === "") return null;
     const num = Number(value);
@@ -26,10 +30,13 @@
     return `${month}-${day}\n${weekday}`;
   };
 
-  const _weatherEmoji = (rawCode) => {
-    const helper = window.CloseSnowWeatherCode?.emojiForWeatherCode;
-    return helper ? helper(rawCode) : "❓";
-  };
+  const _weatherIcon = (rawCode) => (fieldGuideWeather.iconHtml
+    ? fieldGuideWeather.iconHtml(rawCode)
+    : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>');
+
+  const _metricIcon = (kind, label) => (fieldGuideWeather.metricIconHtml
+    ? fieldGuideWeather.metricIconHtml(kind, { label })
+    : `<span class="field-guide-weather-icon" role="img" aria-label="${_escapeHtml(label)}">?</span>`);
 
   const _snowColor = (value) => {
     const v = _asFiniteNumber(value);
@@ -71,6 +78,9 @@
   const _formatCompactSnowValue = (value, unitMode) => {
     const num = _asFiniteNumber(value);
     if (num === null) return "--";
+    if (fieldGuideUnits.formatSnow) {
+      return fieldGuideUnits.formatSnow(num, unitMode, { withUnit: false, fallback: "--" });
+    }
     if (_normalizeUnitMode(unitMode) === "imperial") return (num / 2.54).toFixed(1);
     return _formatCompactValue(num);
   };
@@ -78,6 +88,9 @@
   const _formatCompactRainValue = (value, unitMode) => {
     const num = _asFiniteNumber(value);
     if (num === null) return "--";
+    if (fieldGuideUnits.formatRain) {
+      return fieldGuideUnits.formatRain(num, unitMode, { withUnit: false, fallback: "--" });
+    }
     if (_normalizeUnitMode(unitMode) === "imperial") return (num / 25.4).toFixed(2);
     return _formatCompactValue(num);
   };
@@ -85,6 +98,9 @@
   const _formatCompactTempValue = (value, unitMode) => {
     const num = _asFiniteNumber(value);
     if (num === null) return "--";
+    if (fieldGuideUnits.formatTemperature) {
+      return fieldGuideUnits.formatTemperature(num, unitMode, { withUnit: false, digits: 0, fallback: "--" });
+    }
     if (_normalizeUnitMode(unitMode) === "imperial") return String(Math.round((num * 9 / 5) + 32));
     return String(Math.round(num));
   };
@@ -116,7 +132,7 @@
   const dayCellHtml = (day, options = {}) => {
     const unitMode = _normalizeUnitMode(options.unitMode);
     const weatherCode = day?.weather_code;
-    const weatherEmoji = _weatherEmoji(weatherCode);
+    const weatherIcon = _weatherIcon(weatherCode);
     const highTemp = _formatCompactTempValue(day?.temperature_max_c, unitMode);
     const lowTemp = _formatCompactTempValue(day?.temperature_min_c, unitMode);
     const snowValue = _formatCompactSnowValue(day?.snowfall_cm, unitMode);
@@ -124,15 +140,15 @@
     return `
       <div class="compact-day-card">
         <div class="compact-row compact-row-primary">
-          <div class="compact-weather" title="${_escapeHtml(weatherCode === null || weatherCode === undefined || weatherCode === "" ? "WMO code: unknown" : `WMO code: ${weatherCode}`)}">${weatherEmoji}</div>
+          <div class="compact-weather">${weatherIcon}</div>
           <div class="compact-temp-stack">
             <div class="compact-temp-high">${_compactValueSpan("temp", day?.temperature_max_c, highTemp)}</div>
             <div class="compact-temp-low">${_compactValueSpan("temp", day?.temperature_min_c, lowTemp)}</div>
           </div>
         </div>
         <div class="compact-row compact-row-secondary">
-          <div class="compact-pair compact-snow"><span class="compact-pair-icon">❄</span>${_compactValueSpan("snow", day?.snowfall_cm, snowValue)}</div>
-          <div class="compact-pair compact-rain"><span class="compact-pair-icon">☔</span>${_compactValueSpan("rain", day?.rain_mm, rainValue)}</div>
+          <div class="compact-pair compact-snow"><span class="compact-pair-icon">${_metricIcon("snow", "Snowfall")}</span>${_compactValueSpan("snow", day?.snowfall_cm, snowValue)}</div>
+          <div class="compact-pair compact-rain"><span class="compact-pair-icon">${_metricIcon("rain", "Rainfall")}</span>${_compactValueSpan("rain", day?.rain_mm, rainValue)}</div>
         </div>
       </div>`;
   };

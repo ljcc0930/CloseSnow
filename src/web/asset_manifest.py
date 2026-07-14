@@ -36,6 +36,8 @@ class WebAsset:
 
 WEB_ASSET_MANIFEST: Final[tuple[WebAsset, ...]] = (
     WebAsset("assets/css/weather_page.css", "text/css; charset=utf-8"),
+    WebAsset("assets/css/field_guide_foundation.css", "text/css; charset=utf-8"),
+    WebAsset("assets/js/field_guide_foundation.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/compact_daily_summary.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_code_emoji.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_filter_state.js", "application/javascript; charset=utf-8"),

@@ -57,6 +57,9 @@ const LEADING_FAVORITE_COL_PX = 28;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const filterStateHelpers = window.CloseSnowFilterState || {};
 const stickySingleTableLayout = window.CloseSnowStickySingleTableLayout || {};
+const fieldGuide = window.CloseSnowFieldGuide || {};
+const fieldGuideUnits = fieldGuide.units || {};
+const fieldGuideWeather = fieldGuide.weather || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
 // Reserve section keys so later workers can move one section at a time to shared single-table layout.
@@ -156,10 +159,9 @@ const _isDynamicApiDataUrl = () => {
   }
 };
 
-const _weatherEmoji = (rawCode) => {
-  const helper = window.CloseSnowWeatherCode?.emojiForWeatherCode;
-  return helper ? helper(rawCode) : "❓";
-};
+const _weatherIcon = (rawCode, className = "") => (fieldGuideWeather.iconHtml
+  ? fieldGuideWeather.iconHtml(rawCode, { className })
+  : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>');
 
 const _filterAttrs = (report) => {
   const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(",").toLowerCase() : "";
@@ -262,14 +264,14 @@ const _renderForecastOverview = (reports) => {
   const cards = candidates.map((report, index) => {
     const today = _dailyAt(report, 0);
     const weatherCode = today.weather_code;
-    const weatherTitle = weatherCode === null || weatherCode === undefined || weatherCode === ""
-      ? "Weather unavailable"
-      : `WMO code: ${weatherCode}`;
+    const weatherTitle = fieldGuideWeather.conditionName
+      ? fieldGuideWeather.conditionName(weatherCode)
+      : "Conditions unavailable";
     return `
       <article class="snow-pick-card">
         <div class="snow-pick-card-topline">
           <span class="snow-pick-rank">#${index + 1} ${hasSnow ? "snow" : "storm"} pick</span>
-          <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(weatherCode)}</span>
+          <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherIcon(weatherCode)}</span>
         </div>
         <h3>${_resortLinkHtml(report)}</h3>
         <p>${_escapeHtml(_overviewLocation(report))}</p>
@@ -468,8 +470,10 @@ const _renderWeatherSection = (reports, emptyMessage = "No resorts match the cur
     : _fallbackDayLabels(displayDays);
   const weatherCells = (report) => Array.from({ length: displayDays }, (_, idx) => {
     const code = _dailyAt(report, idx).weather_code;
-    const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
-    return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
+    const title = fieldGuideWeather.conditionName
+      ? fieldGuideWeather.conditionName(code)
+      : "Conditions unavailable";
+    return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherIcon(code)}</td>`;
   }).join("");
   const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
   return `
@@ -1381,6 +1385,9 @@ const observeLayoutContainers = () => {
 };
 
 const getStoredUnitMode = (kind) => {
+  if (kind !== SUN_TIME_TOGGLE_KIND && fieldGuideUnits.readPreference) {
+    return fieldGuideUnits.readPreference();
+  }
   try {
     const saved = localStorage.getItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`);
     return saved === "imperial" || saved === "metric" ? saved : "metric";
@@ -1415,6 +1422,10 @@ const renderCompactSummaryValues = () => {
     const kind = String(el.getAttribute("data-compact-unit-kind") || "").trim();
     const metricValue = Number(el.getAttribute("data-compact-metric-value"));
     if (!Number.isFinite(metricValue)) return;
+    if (fieldGuideUnits.formatValue && ["temp", "snow", "rain"].includes(kind)) {
+      el.textContent = fieldGuideUnits.formatValue(kind, metricValue, mode, { withUnit: false, digits: kind === "temp" ? 0 : undefined });
+      return;
+    }
     if (kind === "temp") {
       el.textContent = mode === "imperial"
         ? String(Math.round((metricValue * 9 / 5) + 32))
@@ -1435,6 +1446,10 @@ const renderCompactSummaryValues = () => {
   });
   document.querySelectorAll("[data-compact-unit-label]").forEach((el) => {
     const kind = String(el.getAttribute("data-compact-unit-label") || "").trim();
+    if (fieldGuideUnits.unitLabel && ["temp", "snow", "rain"].includes(kind)) {
+      el.textContent = fieldGuideUnits.unitLabel(kind, mode);
+      return;
+    }
     if (kind === "snow") el.textContent = mode === "imperial" ? "in" : "cm";
     if (kind === "temp") el.textContent = mode === "imperial" ? "°F" : "°C";
     if (kind === "rain") el.textContent = mode === "imperial" ? "in" : "mm";
@@ -1471,6 +1486,9 @@ const renderSunTimeValues = () => {
 };
 
 const formatMeasure = (metricValue, kind, mode) => {
+  if (fieldGuideUnits.formatValue) {
+    return fieldGuideUnits.formatValue(kind, metricValue, mode, { withUnit: false });
+  }
   if (mode === "imperial") {
     if (kind === "snow") return (metricValue / 2.54).toFixed(1);
     if (kind === "rain") return (metricValue / 25.4).toFixed(2);
@@ -1510,28 +1528,37 @@ const applyUnitModes = () => {
   syncSunTimeToggle();
 };
 
-const setUnitMode = (kind, mode) => {
-  if (!VALID_UNIT_KINDS.has(kind)) return;
-  appState.unitModes[kind] = mode === "imperial" ? "imperial" : "metric";
-  try {
-    localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`, appState.unitModes[kind]);
-  } catch (error) {
-    // Ignore storage failures.
-  }
+const applySiteUnitMode = (mode) => {
+  const normalizedMode = mode === "imperial" ? "imperial" : "metric";
+  Object.keys(appState.unitModes).forEach((kind) => {
+    appState.unitModes[kind] = normalizedMode;
+  });
+  appState.compactSummaryUnitMode = normalizedMode;
   applyUnitModes();
   applyLayout();
 };
 
-const setCompactSummaryUnitMode = (mode) => {
-  appState.compactSummaryUnitMode = mode === "imperial" ? "imperial" : "metric";
+const persistSiteUnitMode = (mode) => {
+  const normalizedMode = mode === "imperial" ? "imperial" : "metric";
+  if (fieldGuideUnits.setMode) {
+    fieldGuideUnits.setMode(normalizedMode);
+    return;
+  }
   try {
-    localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${COMPACT_SUMMARY_UNIT_KIND}`, appState.compactSummaryUnitMode);
+    VALID_UNIT_KINDS.forEach((kind) => localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${kind}`, normalizedMode));
+    localStorage.setItem(`${UNIT_STORAGE_KEY_PREFIX}${COMPACT_SUMMARY_UNIT_KIND}`, normalizedMode);
   } catch (error) {
     // Ignore storage failures.
   }
-  renderCompactSummaryValues();
-  syncCompactSummaryToggle();
+  applySiteUnitMode(normalizedMode);
 };
+
+const setUnitMode = (kind, mode) => {
+  if (!VALID_UNIT_KINDS.has(kind)) return;
+  persistSiteUnitMode(mode);
+};
+
+const setCompactSummaryUnitMode = (mode) => persistSiteUnitMode(mode);
 
 const setSunTimeToggleMode = (mode) => {
   appState.sunTimeToggleMode = mode === "imperial" ? "imperial" : "metric";
@@ -1765,6 +1792,9 @@ const applyFiltersImmediately = async () => {
 };
 
 const bindControls = () => {
+  window.addEventListener("closesnow:unitschange", (event) => {
+    applySiteUnitMode(event?.detail?.mode);
+  });
   if (resortSearchInput) {
     resortSearchInput.addEventListener("input", () => {
       scheduleApplyFilters();
