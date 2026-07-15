@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resort Forecast</title>
   <link rel="stylesheet" href="{{asset_prefix}}/css/resort_hourly.css" />
+  <link rel="stylesheet" href="{{asset_prefix}}/css/field_guide_foundation.css" />
 </head>
-<body>
+<body class="resort-page">
   <header class="site-header">
     <div class="site-header-inner">
       <a class="brand" href="{{back_href}}" aria-label="CloseSnow home">
@@ -15,45 +16,63 @@
         </span>
         <span class="brand-copy"><strong>CloseSnow</strong><span>Mountain weather, made useful</span></span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+      <div class="site-header-actions">
+        <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+        <button class="field-guide-unit-switch" type="button" data-field-guide-unit-toggle aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8M8 12h8M8 19h8"></path><path d="M5 3v4M5 10v4M5 17v4M19 3v4M19 10v4M19 17v4"></path></svg>
+          <span data-field-guide-unit-label>Metric</span>
+        </button>
+      </div>
     </div>
   </header>
-  <main>
-    <section class="resort-hero" aria-labelledby="hourly-title">
-      <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> Back to all resorts</a>
-      <p class="eyebrow">Mountain forecast</p>
-      <h1 id="hourly-title">Resort Forecast</h1>
-      <div class="resort-identity-meta">
-        <p id="resort-local-time" class="resort-local-time"></p>
-        <p id="resort-website-link" class="resort-website-link"></p>
-        <p id="resort-location-link" class="resort-location-link"></p>
+  <main class="resort-field-guide">
+    <section class="resort-masthead" aria-labelledby="hourly-title">
+      <div class="resort-masthead-topline">
+        <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> All resorts</a>
+        <span class="resort-report-label">Mountain field report</span>
       </div>
-      <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
-      <div class="resort-hero-mountain" aria-hidden="true">
-        <svg viewBox="0 0 420 180" preserveAspectRatio="none"><path d="M18 178 120 62l42 50 56-86 170 152H18Z" /><path d="m120 62 42 50 56-86 55 49" /></svg>
+      <div class="resort-masthead-grid">
+        <div class="resort-intro">
+          <p class="eyebrow">Resort field guide</p>
+          <h1 id="hourly-title">Loading resort…</h1>
+          <p id="resort-context" class="resort-context"></p>
+          <p id="resort-outlook" class="resort-outlook">Building the latest seven-day outlook.</p>
+          <div class="resort-identity-meta" aria-label="Resort details and actions">
+            <p id="resort-local-time" class="resort-local-time"></p>
+            <p id="resort-website-link" class="resort-website-link"></p>
+            <p id="resort-location-link" class="resort-location-link"></p>
+          </div>
+        </div>
+        <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
       </div>
     </section>
-    <section id="resort-timeline-section" class="resort-timeline-section" hidden>
+
+    <section id="resort-timeline-section" class="resort-timeline-section field-guide-section" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">Snow timeline</p><h2>Past 14 days + forecast</h2></div>
-        <span>Swipe to explore</span>
+        <div>
+          <p class="eyebrow">Daily field guide</p>
+          <h2>Recent weather and 14-day outlook</h2>
+          <p>Every card keeps conditions, temperature, snow, rain, and daylight together.</p>
+        </div>
+        <div class="timeline-legend" aria-label="Timeline legend">
+          <span data-phase="history">Past</span>
+          <span data-phase="today">Today</span>
+          <span data-phase="forecast">Forecast</span>
+        </div>
       </div>
+      <div class="timeline-scroll-hint" aria-hidden="true">Scroll dates →</div>
       <div id="resort-timeline-root"></div>
     </section>
-    <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
-      <div class="section-heading">
-        <div><p class="eyebrow">Getting there</p><h2>Nearby airports (&lt;250 miles)</h2></div>
-      </div>
-      <div id="resort-airport-access-root"></div>
-    </section>
-    <section class="hourly-workspace" aria-labelledby="hourly-section-title">
+
+    <section class="hourly-workspace field-guide-section" aria-labelledby="hourly-section-title">
       <div class="hourly-workspace-heading">
         <div>
           <p class="eyebrow">Weather, hour by hour</p>
-          <h2 id="hourly-section-title" class="hourly-section-title">Hourly forecast</h2>
+          <h2 id="hourly-section-title" class="hourly-section-title">Read the next weather window</h2>
+          <p>Choose a layer to focus on what changes mountain travel and visibility.</p>
         </div>
         <div class="hourly-controls">
-          <label for="hours-select">Range</label>
+          <label for="hours-select">Forecast range</label>
           <select id="hours-select">
             <option value="24">24 hours</option>
             <option value="48">48 hours</option>
@@ -63,12 +82,19 @@
           <button id="hours-refresh-btn" type="button">Refresh</button>
         </div>
       </div>
-      <p id="hourly-meta" class="hourly-meta">Loading...</p>
-      <div id="hourly-error" class="hourly-error" hidden></div>
-      <div id="hourly-chart-error" class="hourly-chart-error" hidden></div>
-      <section id="hourly-charts" class="hourly-charts" aria-live="polite"></section>
-      <details class="raw-data-panel">
-        <summary>View raw hourly data</summary>
+      <p id="hourly-meta" class="hourly-meta" aria-live="polite">Loading the hourly field report…</p>
+      <div id="hourly-error" class="hourly-error" role="alert" hidden></div>
+      <div id="hourly-chart-error" class="hourly-chart-error" role="alert" hidden></div>
+      <p id="hourly-narrative" class="hourly-narrative" aria-live="polite"></p>
+      <div class="hourly-view-tabs" role="tablist" aria-label="Hourly forecast layers">
+        <button id="hourly-tab-storm" type="button" role="tab" aria-selected="true" aria-controls="hourly-charts" tabindex="0" data-hourly-group="storm">Storm</button>
+        <button id="hourly-tab-wind" type="button" role="tab" aria-selected="false" aria-controls="hourly-charts" tabindex="-1" data-hourly-group="wind">Wind</button>
+        <button id="hourly-tab-visibility" type="button" role="tab" aria-selected="false" aria-controls="hourly-charts" tabindex="-1" data-hourly-group="visibility">Visibility &amp; depth</button>
+      </div>
+      <section id="hourly-charts" class="hourly-charts" role="tabpanel" aria-labelledby="hourly-tab-storm" tabindex="0" aria-live="polite"></section>
+      <details class="raw-data-panel" data-field-guide-disclosure>
+        <summary>Inspect complete hourly data</summary>
+        <p>Every hourly reading in the selected range is shown below using your chosen unit system.</p>
         <div class="table-wrap">
           <table id="hourly-table" class="hourly-table">
             <thead></thead>
@@ -77,13 +103,23 @@
         </div>
       </details>
     </section>
+
+    <section id="resort-airport-access-section" class="resort-airport-access-section field-guide-section" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Getting there</p>
+          <h2>Nearby airports</h2>
+          <p>Airports within roughly 250 miles, ordered from the mountain outward.</p>
+        </div>
+      </div>
+      <div id="resort-airport-access-root"></div>
+    </section>
   </main>
-  <footer class="page-footer"><strong>CloseSnow</strong> · Forecast data for better mountain days.</footer>
+  <footer class="page-footer"><strong>CloseSnow</strong><span>Forecast data translated for better mountain decisions.</span></footer>
   <script>
     window.CLOSESNOW_HOURLY_CONTEXT = {{hourly_context_json}};
   </script>
-  <script src="{{asset_prefix}}/js/weather_code_emoji.js"></script>
-  <script src="{{asset_prefix}}/js/compact_daily_summary.js"></script>
+  <script src="{{asset_prefix}}/js/field_guide_foundation.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly_metrics.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly.js"></script>
 </body>

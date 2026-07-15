@@ -11,6 +11,10 @@ def test_build_resort_daily_summary_context_includes_recent_history():
                 "query": "Snowbird, UT",
                 "display_name": "Snowbird, Utah",
                 "website": "https://example.com/snowbird",
+                "region": "west",
+                "admin1": "UT",
+                "country": "US",
+                "pass_types": ["ikon", "indy"],
                 "nearby_airports": [
                     {
                         "airport_id": "slc-salt-lake-city",
@@ -47,6 +51,10 @@ def test_build_resort_daily_summary_context_includes_recent_history():
 
     assert context is not None
     assert context["display_name"] == "Snowbird, Utah"
+    assert context["region"] == "west"
+    assert context["admin1"] == "UT"
+    assert context["country"] == "US"
+    assert context["pass_types"] == ["ikon", "indy"]
     assert context["nearbyAirports"][0]["iata_code"] == "SLC"
     assert [row["date"] for row in context["past14dDaily"]] == [
         "2026-03-01",

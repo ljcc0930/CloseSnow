@@ -242,16 +242,32 @@ def test_build_html_contains_meta_sections():
         applied_filters={"pass_type": ["ikon"], "include_default": True, "search_all": True, "include_all": False},
     )
     assert "<!doctype html>" in html
-    assert "Ski Resorts Weather Forecast" in html
+    assert "CloseSnow Mountain Morning Report" in html
     assert "CloseSnow" in html
-    assert "Find your next <span>snow day.</span>" in html
+    assert "Make the call before first chair." in html
+    assert "without reading a spreadsheet" in html
     assert "forecast-loading-overview" in html
-    assert 'class="skeleton skeleton-table"' in html
-    assert "<h2>Daily Summary</h2>" in html
-    assert "<h2>Sunrise / Sunset</h2>" in html
+    assert 'class="skeleton skeleton-resort-card"' in html
+    assert "Loading forecast..." in html
+    assert 'id="report-model"' in html
+    assert 'id="visible-resort-count"' in html
+    assert "Mountain-by-mountain outlook" not in html
+    assert 'href="assets/css/field_guide_foundation.css"' in html
+    assert html.index('href="assets/css/weather_page.css"') < html.index('href="assets/css/field_guide_foundation.css"')
+    assert 'src="assets/js/field_guide_foundation.js"' in html
+    assert 'src="assets/js/field_guide_homepage.js"' in html
+    assert html.index('src="assets/js/field_guide_foundation.js"') < html.index(
+        'src="assets/js/field_guide_homepage.js"'
+    )
     assert 'src="assets/js/weather_page_formatters.js"' in html
-    assert html.index('src="assets/js/weather_page_formatters.js"') < html.index('src="assets/js/weather_page.js"')
-    assert html.index("<h2>Temperature</h2>") < html.index("<h2>Weather</h2>")
+    assert html.index('src="assets/js/weather_page_formatters.js"') < html.index(
+        'src="assets/js/field_guide_homepage.js"'
+    )
+    assert html.index('src="assets/js/field_guide_homepage.js"') < html.index('src="assets/js/weather_page.js"')
+    assert 'src="assets/js/weather_code_emoji.js"' not in html
+    assert 'src="assets/js/compact_daily_summary.js"' not in html
+    assert 'src="assets/js/sticky_single_table_layout.js"' not in html
+    assert "data-field-guide-unit-toggle" in html
     assert 'id="resort-search-input"' in html
     assert 'id="filter-modal"' in html
     assert 'id="filter-sort-select"' in html
@@ -264,6 +280,8 @@ def test_build_html_contains_meta_sections():
     assert 'id="filter-apply-btn"' not in html
     assert 'id="filter-include-all" checked' in html
     assert 'id="filter-search-all" checked' in html
+    assert 'id="filter-done-btn"' in html
+    assert 'aria-haspopup="dialog"' in html
     assert "window.CLOSESNOW_FILTER_META" in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert "window.CLOSESNOW_INITIAL_PAYLOAD = null" in html
@@ -290,6 +308,7 @@ def test_build_html_keeps_legacy_table_args_out_of_page_shell():
     assert "Legacy Sun" not in html
     assert "Legacy Temp" not in html
     assert "Loading forecast..." in html
+    assert "Daily Summary" not in html
     assert 'window.CLOSESNOW_INITIAL_PAYLOAD = {"reports": []};' in html
 
 
