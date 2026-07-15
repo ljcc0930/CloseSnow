@@ -171,15 +171,24 @@ const strongestDailySignal = (daily, unitMode) => {
 const renderResortOutlook = () => {
   if (!outlookEl) return;
   const daily = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
+  outlookEl.textContent = "";
+  const label = document.createElement("span");
+  label.className = "resort-outlook-label";
+  label.textContent = "Bottom line";
+  const copy = document.createElement("strong");
   if (!daily.length) {
-    outlookEl.textContent = "The seven-day outlook is not available yet.";
+    copy.textContent = "The seven-day outlook is not available yet.";
+    outlookEl.appendChild(label);
+    outlookEl.appendChild(copy);
     return;
   }
   const unitMode = currentUnitMode();
   const base = fieldGuideCopy.dailyOutlook
     ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode, days: 7 })
     : "Seven-day forecast available below.";
-  outlookEl.textContent = `${base} ${strongestDailySignal(daily, unitMode)}`.trim();
+  copy.textContent = `${base} ${strongestDailySignal(daily, unitMode)}`.trim();
+  outlookEl.appendChild(label);
+  outlookEl.appendChild(copy);
 };
 
 const buildExternalLink = (href, label, className = "") => {
@@ -557,19 +566,28 @@ const renderResortSnapshot = () => {
   const snowValue = fieldGuideUnits.formatSnow ? fieldGuideUnits.formatSnow(snow, unitMode) : `${snow.toFixed(1)} cm`;
   const rainValue = fieldGuideUnits.formatRain ? fieldGuideUnits.formatRain(rain, unitMode) : `${rain.toFixed(1)} mm`;
   const outlook = fieldGuideCopy.dailyOutlook ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode }) : "";
-  snapshotEl.innerHTML = `
-    <article class="snapshot-card snapshot-card-weather">
+  const priority = snow > 0 ? "snow" : (rain > 0 ? "rain" : "weather");
+  const primaryAttribute = (kind) => (priority === kind ? ' data-priority="primary"' : "");
+  const primaryLabel = (kind, fallback) => (priority === kind ? `Primary signal · ${fallback}` : fallback);
+  const cards = {
+    weather: `<article class="snapshot-card snapshot-card-weather" data-snapshot-kind="weather"${primaryAttribute("weather")}>
       <span class="snapshot-icon">${weatherIcon}</span>
-      <span><small>Today</small><strong>${temperature}</strong><em>${conditionName}</em></span>
-    </article>
-    <article class="snapshot-card">
+      <span><small>${primaryLabel("weather", "Today")}</small><strong>${temperature}</strong><em>${conditionName}</em></span>
+    </article>`,
+    snow: `<article class="snapshot-card" data-snapshot-kind="snow"${primaryAttribute("snow")}>
       <span class="snapshot-icon snapshot-icon-snow">${metricIcon("snow", "Snowfall")}</span>
-      <span><small>Next 7 days</small><strong>${snowValue}</strong><em>Forecast snow</em></span>
-    </article>
-    <article class="snapshot-card">
+      <span><small>${primaryLabel("snow", "Next 7 days")}</small><strong>${snowValue}</strong><em>Forecast snow</em></span>
+    </article>`,
+    rain: `<article class="snapshot-card" data-snapshot-kind="rain"${primaryAttribute("rain")}>
       <span class="snapshot-icon snapshot-icon-rain">${metricIcon("rain", "Rainfall")}</span>
-      <span><small>Next 7 days</small><strong>${rainValue}</strong><em>Forecast rain</em></span>
-    </article>`;
+      <span><small>${primaryLabel("rain", "Next 7 days")}</small><strong>${rainValue}</strong><em>Forecast rain</em></span>
+    </article>`,
+  };
+  const orderedKinds = priority === "weather"
+    ? ["weather", "snow", "rain"]
+    : [priority, "weather", priority === "snow" ? "rain" : "snow"];
+  snapshotEl.dataset.primarySignal = priority;
+  snapshotEl.innerHTML = orderedKinds.map((kind) => cards[kind]).join("");
   if (outlook) snapshotEl.setAttribute("aria-label", outlook);
   snapshotEl.hidden = false;
   renderResortOutlook();
@@ -812,6 +830,23 @@ const metricSummary = (metricKey, rawValues) => {
     return `Latest ${formatMetricValue(metricKey, finite[finite.length - 1])}`;
   }
   return `Peak ${formatMetricValue(metricKey, Math.max(...finite))}`;
+};
+
+const primaryMetricForGroup = (group, hourly) => {
+  const hasReadings = (metricKey) => {
+    const values = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+    return values.some((value) => toFiniteNumber(value) !== null);
+  };
+  const hasPositiveReading = (metricKey) => {
+    const values = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+    return values.some((value) => (toFiniteNumber(value) || 0) > 0);
+  };
+  if (activeHourlyGroup === "storm") {
+    if (hasPositiveReading("snowfall")) return "snowfall";
+    if (hasPositiveReading("rain")) return "rain";
+    if (hasReadings("precipitation_probability")) return "precipitation_probability";
+  }
+  return group.metrics.find((metricKey) => hasReadings(metricKey)) || null;
 };
 
 const renderMetricChartCard = (metricKey, times, rawValues, chartWidth) => {
@@ -1105,14 +1140,15 @@ const renderHourlyCharts = (payload) => {
   const chartWidth = resolveChartWidth();
   const frag = document.createDocumentFragment();
   const group = HOURLY_GROUPS[activeHourlyGroup] || HOURLY_GROUPS.storm;
+  const primaryMetric = primaryMetricForGroup(group, hourly);
   chartsEl.dataset.hourlyGroup = activeHourlyGroup;
   group.metrics.forEach((metricKey) => {
     const rawValues = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
-    if (metricKey === "wind_direction_10m") {
-      frag.appendChild(renderWindDirectionCard(times, rawValues));
-    } else {
-      frag.appendChild(renderMetricChartCard(metricKey, times, rawValues, chartWidth));
-    }
+    const card = metricKey === "wind_direction_10m"
+      ? renderWindDirectionCard(times, rawValues)
+      : renderMetricChartCard(metricKey, times, rawValues, chartWidth);
+    if (metricKey === primaryMetric) card.dataset.priority = "primary";
+    frag.appendChild(card);
   });
   chartsEl.appendChild(frag);
   chartsEl.setAttribute("aria-labelledby", `hourly-tab-${activeHourlyGroup}`);
@@ -1213,6 +1249,9 @@ const renderTimelineSummary = () => {
     const card = document.createElement("article");
     card.className = "timeline-day-card";
     card.dataset.phase = phase;
+    const dailySnow = toFiniteNumber(day.snowfall_cm) || 0;
+    const dailyRain = toFiniteNumber(day.rain_mm) || 0;
+    card.dataset.weatherSignal = dailySnow > 0 ? "snow" : (dailyRain > 0 ? "rain" : "quiet");
     if (isToday) card.dataset.timelineToday = "1";
 
     const topline = document.createElement("div");

@@ -115,7 +115,10 @@
   const rankCandidates = (reports, limit = 3) => {
     const safeReports = (Array.isArray(reports) ? reports : []).filter((report) => report && typeof report === "object");
     const snowLed = safeReports.some((report) => (weekOneSnow(report) || 0) > 0);
-    return [...safeReports]
+    const activeReports = safeReports.filter((report) => (
+      snowLed ? (weekOneSnow(report) || 0) > 0 : (weekOneRain(report) || 0) > 0
+    ));
+    return [...activeReports]
       .sort((a, b) => {
         const primaryA = snowLed ? (weekOneSnow(a) || 0) : (weekOneRain(a) || 0);
         const primaryB = snowLed ? (weekOneSnow(b) || 0) : (weekOneRain(b) || 0);
@@ -168,15 +171,26 @@
   const renderInsightCard = (entry, index, mode) => {
     const { report, signal } = entry;
     const today = dailyAt(report, 0);
+    const signalKind = signal === "snow" ? "snow" : "rain";
+    const signalValue = signalKind === "snow" ? weekOneSnow(report) : weekOneRain(report);
+    const strongest = strongestDay(report, signalKind === "snow" ? "snowfall_cm" : "rain_mm");
+    const peakCopy = strongest && strongest.value > 0
+      ? `Peak ${dateParts(strongest.day.date, strongest.index).compact} · ${formatMeasure(signalKind, strongest.value, mode)}`
+      : "No accumulating precipitation in this window";
     return `
-      <article class="insight-card">
+      <article class="insight-card" data-rank="${index + 1}" data-signal="${signalKind}">
         <div class="insight-card__topline">
-          <span class="insight-rank">${index + 1}</span>
+          <span class="insight-rank"><span class="sr-only">Rank </span>${index + 1}</span>
           ${conditionIcon(today.weather_code, "insight-weather-icon")}
         </div>
-        <p class="insight-kicker">${signal === "snow" ? "Snow signal" : "Storm signal"}</p>
+        <p class="insight-kicker">${signalKind === "snow" ? "Snow signal" : "Storm signal"}</p>
         <h3>${resortLink(report, "insight-resort-link")}</h3>
         <p class="insight-location">${escapeHtml(locationLabel(report))}</p>
+        <div class="insight-signal" aria-label="${signalKind === "snow" ? "Seven-day snowfall" : "Seven-day rainfall"}: ${escapeHtml(formatMeasure(signalKind, signalValue, mode))}">
+          <span>${signalKind === "snow" ? "7-day snow" : "7-day rain"}</span>
+          <strong data-field-guide-number>${escapeHtml(formatMeasure(signalKind, signalValue, mode))}</strong>
+          <small>${escapeHtml(peakCopy)}</small>
+        </div>
         <p class="insight-explanation">${escapeHtml(rankingExplanation(report, signal, mode))}</p>
       </article>`;
   };
@@ -184,10 +198,23 @@
   const renderInsightBoard = (reports, mode) => {
     const entries = rankCandidates(reports, 3);
     if (!entries.length) {
+      const safeReports = (Array.isArray(reports) ? reports : []).filter((report) => report && typeof report === "object");
+      const hasReports = safeReports.length > 0;
+      const hasCompletePrecipitationGuidance = hasReports && safeReports.every((report) => (
+        weekOneSnow(report) !== null && weekOneRain(report) !== null
+      ));
+      const emptyTitle = hasCompletePrecipitationGuidance
+        ? "No active weather to rank"
+        : (hasReports ? "Forecast signal unavailable" : "Nothing to rank yet");
+      const emptyCopy = hasCompletePrecipitationGuidance
+        ? "The current seven-day guidance shows no accumulating snow or rain across this view."
+        : (hasReports
+          ? "Seven-day snow or rain guidance is not complete enough to rank these resorts yet."
+          : "Change the search or filters to bring mountain guidance back into view.");
       return `
         <section class="insight-board insight-board--empty" aria-labelledby="insight-title">
-          <div><p class="section-kicker">Morning picks</p><h2 id="insight-title">Nothing to rank yet</h2></div>
-          <p>Change the search or filters to bring mountain guidance back into view.</p>
+          <div><p class="section-kicker">Morning picks</p><h2 id="insight-title">${emptyTitle}</h2></div>
+          <p>${emptyCopy}</p>
         </section>`;
     }
     const signal = entries[0].signal;
@@ -225,7 +252,7 @@
     const numeric = asFiniteNumber(value);
     const noSnow = kind === "snow" && numeric === 0 && options.zeroCopy;
     const rendered = noSnow ? options.zeroCopy : formatMeasure(kind, value, mode);
-    return `<div class="resort-metric"><dt>${escapeHtml(label)}</dt><dd data-field-guide-number>${escapeHtml(rendered)}</dd></div>`;
+    return `<div class="resort-metric" data-metric-kind="${escapeHtml(kind)}"${options.primary ? ' data-priority="primary"' : ""}><dt>${escapeHtml(label)}</dt><dd data-field-guide-number>${escapeHtml(rendered)}</dd></div>`;
   };
 
   const renderNearTermDay = (day, index, mode) => {
@@ -268,9 +295,12 @@
       </article>`;
   };
 
-  const outlookText = (report, mode) => {
+  const outlookParts = (report, mode) => {
     const days = safeDaily(report).slice(0, 3);
-    if (!days.length) return "Forecast details are not available for this resort yet.";
+    if (!days.length) return {
+      lead: "Forecast details are not available for this resort yet.",
+      detail: "Check back after the next model update.",
+    };
     const today = days[0];
     const condition = conditionName(today.weather_code);
     const snow = sumDays({ daily: days }, "snowfall_cm", 3);
@@ -281,7 +311,10 @@
     const precipText = precipitation.length
       ? `${precipitation.join(" and ")} over the next three days.`
       : "Little to no snow or rain is expected over the next three days.";
-    return `${condition} today. ${precipText} ${temperatureSentence(today, mode)}`;
+    return {
+      lead: `${condition} today.`,
+      detail: `${precipText} ${temperatureSentence(today, mode)}`,
+    };
   };
 
   const renderResortCard = (report, options = {}) => {
@@ -294,29 +327,55 @@
     const weekOne = weekOneSnow(report);
     const weekTwo = weekTwoSnow(report);
     const rain = weekOneRain(report);
+    const signal = (asFiniteNumber(weekOne) || 0) > 0
+      ? "snow"
+      : ((asFiniteNumber(rain) || 0) > 0
+        ? "rain"
+        : (weekOne === null || rain === null ? "unavailable" : "quiet"));
+    const signalLabel = signal === "snow"
+      ? "Snow signal"
+      : (signal === "rain"
+        ? "Rain signal"
+        : (signal === "quiet" ? "Quiet pattern" : "Forecast pending"));
+    const outlook = outlookParts(report, mode);
+    const metricBlocks = signal === "rain"
+      ? [
+        metricBlock("7-day rain", rain, "rain", mode, { primary: true }),
+        metricBlock("Week 1 snow", weekOne, "snow", mode, { zeroCopy: "No snow forecast" }),
+        metricBlock("Week 2 snow", weekTwo, "snow", mode, { zeroCopy: "No snow forecast" }),
+      ]
+      : signal === "unavailable"
+        ? [
+          metricBlock("Week 1 snow", weekOne, "snow", mode, { zeroCopy: "No snow forecast" }),
+          metricBlock("Week 2 snow", weekTwo, "snow", mode, { zeroCopy: "No snow forecast" }),
+          metricBlock("7-day rain", rain, "rain", mode),
+        ]
+      : [
+        metricBlock("Week 1 snow", weekOne, "snow", mode, { primary: true, zeroCopy: "No snow forecast" }),
+        metricBlock("Week 2 snow", weekTwo, "snow", mode, { zeroCopy: "No snow forecast" }),
+        metricBlock("7-day rain", rain, "rain", mode),
+      ];
     const dailyHtml = days.length
       ? days.map((day, index) => renderDailyDetail(day, index, mode)).join("")
       : `<p class="forecast-missing-state">Daily guidance is not available yet. Check back after the next model update.</p>`;
     return `
-      <article class="resort-forecast-card" data-resort-card="${escapeHtml(resortId)}">
+      <article class="resort-forecast-card" data-resort-card="${escapeHtml(resortId)}" data-signal="${signal}">
         <header class="resort-card-heading">
           <div class="resort-card-title">
             <p>${escapeHtml(locationLabel(report))}</p>
             <h3>${resortLink(report, "resort-card-link")}</h3>
-            <div class="resort-tags">${passesHtml(report)}</div>
+            <div class="resort-tags">${passesHtml(report)}<span class="resort-signal-label" data-signal="${signal}">${signalLabel}</span></div>
           </div>
           ${favoriteButton(report, active)}
         </header>
-        <p class="resort-outlook">${escapeHtml(outlookText(report, mode))}</p>
+        <p class="resort-outlook"><strong>${escapeHtml(outlook.lead)}</strong><span>${escapeHtml(outlook.detail)}</span></p>
         <div class="today-brief">
           ${conditionIcon(today.weather_code, "today-brief-icon")}
-          <div><span>Today</span><strong>${escapeHtml(conditionName(today.weather_code))}</strong></div>
+          <div><span>Today at a glance</span><strong>${escapeHtml(conditionName(today.weather_code))}</strong></div>
           <span class="today-temperature" data-field-guide-number>${escapeHtml(formatMeasure("temperature", today.temperature_max_c, mode))} / ${escapeHtml(formatMeasure("temperature", today.temperature_min_c, mode))}</span>
         </div>
         <dl class="resort-metric-grid">
-          ${metricBlock("Week 1 snow", weekOne, "snow", mode, { zeroCopy: "No snow forecast" })}
-          ${metricBlock("Week 2 snow", weekTwo, "snow", mode, { zeroCopy: "No snow forecast" })}
-          ${metricBlock("7-day rain", rain, "rain", mode)}
+          ${metricBlocks.join("")}
         </dl>
         <ol class="near-term-list" aria-label="Three-day preview">
           ${days.slice(0, 3).map((day, index) => renderNearTermDay(day, index, mode)).join("") || `<li class="forecast-missing-state">Near-term guidance is not available.</li>`}

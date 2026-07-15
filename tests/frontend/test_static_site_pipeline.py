@@ -126,7 +126,7 @@ def test_render_hourly_pages(tmp_path):
     html = outputs[0].read_text(encoding="utf-8")
     assert "../../assets/css/resort_hourly.css" in html
     assert "../../assets/css/field_guide_foundation.css" in html
-    assert html.index("../../assets/css/resort_hourly.css") < html.index("../../assets/css/field_guide_foundation.css")
+    assert html.index("../../assets/css/field_guide_foundation.css") < html.index("../../assets/css/resort_hourly.css")
     assert "../../assets/js/field_guide_foundation.js" in html
     assert "../../assets/js/compact_daily_summary.js" not in html
     assert "../../assets/js/resort_hourly_metrics.js" in html
