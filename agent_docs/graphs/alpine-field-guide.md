@@ -19,6 +19,7 @@
 - `alpine-field-guide-03-resort-detail`: Rebuild resort detail as a focused daily and hourly field guide.
 - `alpine-field-guide-04-integration-qa`: Reconcile both surfaces and complete responsive, accessible integration QA.
 - `alpine-field-guide-05-visual-hierarchy`: Strengthen information hierarchy and dimensional contrast across both surfaces.
+- `alpine-field-guide-06-compact-decision-ui`: Reframe both surfaces as a compact, progressive-disclosure decision tool.
 
 ## Dependency Graph
 - `alpine-field-guide-01-foundation` -> `alpine-field-guide-02-homepage`
@@ -26,8 +27,10 @@
 - `alpine-field-guide-02-homepage` -> `alpine-field-guide-04-integration-qa`
 - `alpine-field-guide-03-resort-detail` -> `alpine-field-guide-04-integration-qa`
 - `alpine-field-guide-04-integration-qa` -> `alpine-field-guide-05-visual-hierarchy`
+- `alpine-field-guide-05-visual-hierarchy` -> `alpine-field-guide-06-compact-decision-ui`
 
 ## Notes
 - Homepage and resort-detail implementation can proceed in parallel once the shared foundation is merged.
 - The final integration request owns legacy-style removal and cross-page browser verification so the page workers can stay focused on their respective information architecture.
 - The visual-hierarchy refinement follows integration so it can tune the complete product without changing its information architecture or payload contracts.
+- The compact-decision refinement follows visual hierarchy because it deliberately removes duplicated presentation layers while preserving the complete forecast through the resort-detail and raw-data surfaces.
