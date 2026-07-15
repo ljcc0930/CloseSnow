@@ -326,49 +326,10 @@ def test_field_guide_styles_define_shared_semantics_and_compact_header():
     assert "details[data-field-guide-disclosure]" in css
     assert "@media (forced-colors: active)" in css
     assert ".snapshot-card-weather .snapshot-icon {\n  color: var(--fg-glacier);" in css
+    assert css.count("min-height: 44px") >= 3
 
 
-def test_homepage_ranking_explains_signal_best_day_and_temperature_context():
-    result = _run_homepage_expression(
-        """(() => {
-  const homepage = window.CloseSnowFieldGuideHomepage;
-  const reports = [
-    {
-      resort_id: "quiet",
-      display_name: "Quiet Hill",
-      week1_total_snowfall_cm: 1,
-      week1_total_rain_mm: 0,
-      daily: [{ date: "2026-03-03", snowfall_cm: 1, rain_mm: 0, temperature_max_c: 2, temperature_min_c: -4 }],
-    },
-    {
-      resort_id: "deep",
-      display_name: "Deep Peak",
-      week1_total_snowfall_cm: 12,
-      week1_total_rain_mm: 1.2,
-      daily: [
-        { date: "2026-03-03", snowfall_cm: 2, rain_mm: 0, temperature_max_c: -1, temperature_min_c: -8 },
-        { date: "2026-03-04", snowfall_cm: 8, rain_mm: 0, temperature_max_c: 1, temperature_min_c: -5 },
-      ],
-    },
-  ];
-  const ranked = homepage.rankCandidates(reports, 2);
-  return {
-    order: ranked.map((entry) => entry.report.resort_id),
-    signal: ranked[0].signal,
-    explanation: homepage.rankingExplanation(ranked[0].report, ranked[0].signal, "metric"),
-  };
-})()"""
-    )
-
-    assert result["order"] == ["deep", "quiet"]
-    assert result["signal"] == "snow"
-    assert "12.0 cm of snow is forecast over seven days" in result["explanation"]
-    assert "Mar 4" in result["explanation"]
-    assert "8.0 cm" in result["explanation"]
-    assert "-8 °C to -1 °C" in result["explanation"]
-
-
-def test_homepage_card_discloses_every_daily_field_uses_global_units_and_escapes_content():
+def test_homepage_card_is_compact_uses_global_units_and_escapes_content():
     result = _run_homepage_expression(
         """(() => {
   const homepage = window.CloseSnowFieldGuideHomepage;
@@ -411,21 +372,21 @@ def test_homepage_card_discloses_every_daily_field_uses_global_units_and_escapes
     assert "State &lt;unsafe&gt;" in result
     assert "<script>alert(1)</script>" not in result
     assert 'aria-pressed="true"' in result
-    assert "Full 2-day forecast" in result
-    assert result.count('class="daily-detail-card"') == 2
-    assert "High / low" in result
-    assert ">Snow<" in result
-    assert ">Rain<" in result
-    assert ">Daylight<" in result
-    assert "32 °F" in result
+    assert "Today" in result
+    assert "Snow" in result
+    assert "32 °F / 14 °F" in result
+    assert "7-day snow" in result
     assert "1.0 in" in result
+    assert "7-day rain" in result
     assert "1.00 in" in result
-    assert "07:01–18:22" in result
-    assert "07:00–18:23" in result
-    assert "No snow forecast" in result
+    assert "Peak Today" in result
+    assert 'aria-label="Open the complete forecast for Peak &lt;script&gt;alert(1)&lt;/script&gt;"' in result
+    assert "Full 2-day forecast" not in result
+    assert "daily-detail-card" not in result
+    assert "data-resort-disclosure" not in result
 
 
-def test_homepage_visual_hierarchy_exposes_ranked_and_primary_weather_signals():
+def test_homepage_compact_signals_and_pagination_are_honest():
     result = _run_homepage_expression(
         """(() => {
   const homepage = window.CloseSnowFieldGuideHomepage;
@@ -452,19 +413,39 @@ def test_homepage_visual_hierarchy_exposes_ranked_and_primary_weather_signals():
   return {
     board: homepage.render([snowReport], { mode: "metric" }),
     rainCard: homepage.renderResortCard(rainReport, { mode: "metric" }),
+    paged: homepage.render(Array.from({ length: 13 }, (_, index) => ({
+      resort_id: `resort-${index}`,
+      display_name: `Resort ${index}`,
+      week1_total_snowfall_cm: index + 1,
+      week1_total_rain_mm: 0,
+      daily: [{ date: "2026-03-03", snowfall_cm: index + 1, rain_mm: 0 }],
+    })), { mode: "metric", limit: 12 }),
+    expanded: homepage.render(Array.from({ length: 13 }, (_, index) => ({
+      resort_id: `resort-${index}`,
+      display_name: `Resort ${index}`,
+      week1_total_snowfall_cm: index + 1,
+      week1_total_rain_mm: 0,
+      daily: [{ date: "2026-03-03", snowfall_cm: index + 1, rain_mm: 0 }],
+    })), { mode: "metric", limit: 13 }),
   };
 })()"""
     )
 
-    assert 'data-rank="1" data-signal="snow"' in result["board"]
-    assert 'class="insight-signal"' in result["board"]
+    assert 'data-signal="snow"' in result["board"]
     assert "7-day snow" in result["board"]
     assert "18.0 cm" in result["board"]
-    assert 'data-signal="snow"' in result["board"]
     assert 'data-priority="primary"' in result["board"]
     assert 'data-signal="rain"' in result["rainCard"]
-    assert "Rain signal" in result["rainCard"]
+    assert "7-day rain" in result["rainCard"]
+    assert "42.0 mm" in result["rainCard"]
     assert 'data-metric-kind="rain" data-priority="primary"' in result["rainCard"]
+    assert result["paged"].count('data-resort-card="') == 12
+    assert "data-show-more-results" in result["paged"]
+    assert "Show 1 more resorts; 12 of 13 currently shown" in result["paged"]
+    assert result["expanded"].count('data-resort-card="') == 13
+    assert "data-show-more-results" not in result["expanded"]
+    assert "insight-board" not in result["paged"]
+    assert "daily-detail-card" not in result["paged"]
 
 
 def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
@@ -481,19 +462,18 @@ def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
 })()"""
     )
 
-    assert "Forecast details are not available for this resort yet." in result["missing"]
-    assert "Daily guidance is not available yet." in result["missing"]
-    assert "Forecast pending" in result["missing"]
+    assert "Pending · 7-day forecast" in result["missing"]
+    assert "Not available" in result["missing"]
     assert "Quiet pattern" not in result["missing"]
     assert 'data-priority="primary"' not in result["missing"]
-    assert "Forecast pending" in result["partial"]
+    assert "Pending · 7-day forecast" in result["partial"]
     assert "Quiet pattern" not in result["partial"]
-    assert "Forecast signal unavailable" in result["inactiveBoard"]
-    assert "not complete enough to rank" in result["inactiveBoard"]
-    assert "shows no accumulating snow or rain" not in result["inactiveBoard"]
-    assert "Storm signal" not in result["inactiveBoard"]
-    assert "No active weather to rank" in result["quietBoard"]
-    assert "shows no accumulating snow or rain" in result["quietBoard"]
+    assert "Pending · 7-day forecast" in result["inactiveBoard"]
+    assert "insight-board" not in result["inactiveBoard"]
+    assert "Quiet · 7-day snow" in result["quietBoard"]
+    assert "7-day rain" in result["quietBoard"]
+    assert "0.0 cm" in result["quietBoard"]
+    assert "0.0 mm" in result["quietBoard"]
     assert "No resorts match this view" in result["empty"]
     assert "Try clearing your filters." in result["empty"]
 
@@ -501,22 +481,36 @@ def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
 def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
     js = (REPO_ROOT / "assets" / "js" / "resort_hourly.js").read_text(encoding="utf-8")
     css = (REPO_ROOT / "assets" / "css" / "resort_hourly.css").read_text(encoding="utf-8")
+    template = (REPO_ROOT / "src" / "web" / "templates" / "resort_hourly_page.html").read_text(encoding="utf-8")
 
     assert "HOURLY_GROUPS" in js
     assert 'metrics: Object.freeze(["snowfall", "rain", "precipitation_probability"])' in js
     assert 'metrics: Object.freeze(["wind_speed_10m", "wind_direction_10m"])' in js
     assert 'metrics: Object.freeze(["visibility", "snow_depth"])' in js
     assert "renderHourlyNarrative" in js
+    assert "snow and rain accumulation readings are unavailable." in js
     assert "renderWindDirectionCard" in js
     assert 'label.textContent = "Bottom line"' in js
     assert "snapshotEl.dataset.primarySignal = priority" in js
+    assert "const sevenDayMetricTotal" in js
+    assert ".filter((value) => value !== null)" in js
+    assert 'snow === null ? "Awaiting model data"' in js
+    assert 'rain === null ? "Awaiting model data"' in js
     assert "card.dataset.weatherSignal" in js
     assert "primaryMetricForGroup" in js
+    assert "const orderedMetrics = primaryMetric" in js
+    assert ": [...group.metrics]" in js
+    assert "orderedMetrics.forEach" in js
     assert 'if (hasPositiveReading("snowfall")) return "snowfall"' in js
     assert 'if (hasPositiveReading("rain")) return "rain"' in js
     assert 'if (metricKey === primaryMetric) card.dataset.priority = "primary"' in js
     assert "fieldGuideWeather.iconHtml" in js
     assert "data-timeline-today" in js
+    assert "const firstWeek = forecastDays.slice(0, 7)" in js
+    assert "const laterForecast = forecastDays.slice(7)" in js
+    assert '"Days 8–14"' in js
+    assert "appendTimelineDisclosure(timelineRoot, laterForecastLabel" in js
+    assert 'appendTimelineDisclosure(timelineRoot, "Past 14 days"' in js
     assert 'appendDefinition(daylight, "Sunrise"' in js
     assert 'appendDefinition(daylight, "Sunset"' in js
     assert "Resort Forecast:" not in js
@@ -524,27 +518,46 @@ def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
 
     assert ".resort-masthead" in css
     assert ".field-guide-timeline-track" in css
+    assert ".timeline-disclosure" in css
     assert '.timeline-day-card[data-phase="today"]' in css
     assert '.snapshot-card[data-priority="primary"]' in css
     assert '.chart-card[data-priority="primary"]' in css
-    assert ".hourly-narrative::before" in css
-    assert "opacity: 0.24" in css
     assert ".hourly-view-tabs" in css
+    assert "scroll-snap-type: x mandatory" in css
     assert ".wind-direction-grid" in css
     assert ".resort-hero-mountain" not in css
+    assert ">Precipitation</button>" in template
+    assert ">Wind</button>" in template
+    assert ">Visibility &amp; depth</button>" in template
+    hourly_charts_tag = template.split('id="hourly-charts"', 1)[1].split(">", 1)[0]
+    assert 'role="tabpanel"' in hourly_charts_tag
+    assert "aria-live" not in hourly_charts_tag
+    assert '<details id="resort-airport-access-section"' in template
+    assert '<details class="resort-identity-disclosure"' in template
+    assert '<details class="hourly-meta-disclosure"' in template
+    assert '<details class="raw-data-panel"' in template
 
 
-def test_integration_removes_superseded_frontend_assets_and_stacks_mobile_insights():
+def test_integration_removes_superseded_assets_and_defines_compact_results():
     manifest_paths = {asset.repository_path for asset in WEB_ASSET_MANIFEST}
     assert "assets/js/compact_daily_summary.js" not in manifest_paths
     assert "assets/js/weather_code_emoji.js" not in manifest_paths
     assert "assets/js/sticky_single_table_layout.js" not in manifest_paths
 
     homepage_css = (REPO_ROOT / "assets" / "css" / "weather_page.css").read_text(encoding="utf-8")
-    assert "grid-auto-flow: column" not in homepage_css
-    assert ".insight-grid," in homepage_css
-    assert "grid-template-columns: minmax(0, 1fr)" in homepage_css
-    assert '.insight-card[data-rank="1"]' in homepage_css
-    assert '.insight-card[data-rank="1"] .insight-resort-link:focus-visible' in homepage_css
-    assert "box-shadow: var(--fg-shadow-raised)" in homepage_css
+    assert ".report-overview" in homepage_css
+    assert ".result-column-headings" in homepage_css
+    assert "height: 96px" in homepage_css
+    assert "min-height: 164px" in homepage_css
+    assert ".results-pagination" in homepage_css
     assert "transform: translateY" not in homepage_css
+
+    weather_js = (REPO_ROOT / "assets" / "js" / "weather_page.js").read_text(encoding="utf-8")
+    filter_js = (REPO_ROOT / "assets" / "js" / "weather_filter_state.js").read_text(encoding="utf-8")
+    template = (REPO_ROOT / "src" / "web" / "templates" / "weather_page.html").read_text(encoding="utf-8")
+    assert "const weeklyRainfall" in weather_js
+    assert "const hasPositiveWeeklySnow" in weather_js
+    assert "compareDescending(a, b, weeklyRainfall)" in weather_js
+    assert "Favorite updated. Results reordered." in weather_js
+    assert 'return "7-Day Weather Signal"' in filter_js
+    assert ">7-day weather signal</option>" in template

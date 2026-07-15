@@ -143,9 +143,17 @@ def test_render_hourly_pages(tmp_path):
     assert 'data-hourly-group="storm"' in html
     assert 'data-hourly-group="wind"' in html
     assert 'data-hourly-group="visibility"' in html
+    assert ">Precipitation</button>" in html
+    assert ">Wind</button>" in html
+    assert ">Visibility &amp; depth</button>" in html
     assert 'id="hourly-narrative"' in html
     assert 'id="hourly-charts"' in html
+    hourly_charts_tag = html.split('id="hourly-charts"', 1)[1].split(">", 1)[0]
+    assert 'role="tabpanel"' in hourly_charts_tag
+    assert "aria-live" not in hourly_charts_tag
     assert 'class="raw-data-panel"' in html
+    assert '<details id="resort-airport-access-section"' in html
+    assert '<details class="raw-data-panel" data-field-guide-disclosure>' in html
     context = _hourly_context_from_html(html)
     assert context["resortId"] == "snowbird-ut"
     assert context["dailySummary"]["display_name"] == "Snowbird, Utah"

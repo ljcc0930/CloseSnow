@@ -18,6 +18,7 @@
     : null;
 
   const pageContentRoot = document.getElementById("page-content-root");
+  const resultsAnnouncer = document.getElementById("results-announcer");
   const reportDateEl = document.getElementById("report-date");
   const reportModelEl = document.getElementById("report-model");
   const visibleResortCountEl = document.getElementById("visible-resort-count");
@@ -41,6 +42,8 @@
 
   const FILTER_STORAGE_KEY = "closesnow_filter_state_v1";
   const FAVORITES_STORAGE_KEY = "closesnow_favorite_resorts_v1";
+  const INITIAL_RESULT_LIMIT = 12;
+  const RESULT_PAGE_SIZE = 12;
   const DEFAULT_AVAILABLE_FILTERS = { pass_type: {}, region: {}, subregion: {} };
   const SUBREGION_OPTIONS = [
     { value: "rockies", label: "Rockies" },
@@ -81,6 +84,7 @@
       favoritesOnly: false,
     },
   };
+  let visibleResultLimit = INITIAL_RESULT_LIMIT;
 
   const displayName = (report) => String(report?.display_name || report?.query || "").trim();
   const asFiniteNumber = (value) => {
@@ -100,6 +104,14 @@
   };
 
   const weeklySnowfall = (report) => asFiniteNumber(report?.week1_total_snowfall_cm);
+  const weeklyRainfall = (report) => {
+    const direct = asFiniteNumber(report?.week1_total_rain_mm);
+    if (direct !== null) return direct;
+    const values = (Array.isArray(report?.daily) ? report.daily : []).slice(0, 7)
+      .map((day) => asFiniteNumber(day?.rain_mm))
+      .filter((value) => value !== null);
+    return values.length ? values.reduce((total, value) => total + value, 0) : null;
+  };
   const nextWeekSnowfall = (report) => asFiniteNumber(report?.week2_total_snowfall_cm);
   const twoWeekSnowfall = (report) => {
     const weekOne = weeklySnowfall(report);
@@ -311,6 +323,7 @@
     });
 
     const sortBy = appState.filterState.sortBy;
+    const hasPositiveWeeklySnow = reports.some((report) => (weeklySnowfall(report) || 0) > 0);
     reports.sort((a, b) => {
       if (sortBy === "favorites") {
         const favoriteDelta = Number(appState.favoriteResortIds.has(String(b.resort_id || "")))
@@ -322,8 +335,12 @@
         if (delta) return delta;
       }
       if (sortBy === "week_snow") {
-        const delta = compareDescending(a, b, weeklySnowfall);
-        if (delta) return delta;
+        if (hasPositiveWeeklySnow) {
+          const snowDelta = compareDescending(a, b, weeklySnowfall);
+          if (snowDelta) return snowDelta;
+        }
+        const rainDelta = compareDescending(a, b, weeklyRainfall);
+        if (rainDelta) return rainDelta;
       }
       if (sortBy === "next_week_snow") {
         const delta = compareDescending(a, b, nextWeekSnowfall);
@@ -383,16 +400,6 @@
     unitStatusEls.forEach((element) => { element.textContent = appState.unitMode === "imperial" ? "Imperial" : "Metric"; });
   };
 
-  const captureOpenDisclosures = () => new Set(Array.from(
-    pageContentRoot?.querySelectorAll("details[data-resort-disclosure][open]") || [],
-  ).map((details) => details.getAttribute("data-resort-disclosure")));
-
-  const restoreOpenDisclosures = (ids) => {
-    pageContentRoot?.querySelectorAll("details[data-resort-disclosure]").forEach((details) => {
-      if (ids.has(details.getAttribute("data-resort-disclosure"))) details.open = true;
-    });
-  };
-
   const emptyStateMessage = () => {
     if (appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0) {
       return "You have not saved any favorites yet. Turn off Favorites only, then use the heart button on a resort.";
@@ -403,14 +410,13 @@
 
   const renderPage = (options = {}) => {
     if (!pageContentRoot || !appState.payload || typeof homepage.render !== "function") return;
-    const openDisclosures = captureOpenDisclosures();
     const visibleReports = filteredReports();
     pageContentRoot.innerHTML = homepage.render(visibleReports, {
       mode: appState.unitMode,
       favorites: appState.favoriteResortIds,
       emptyMessage: emptyStateMessage(),
+      limit: visibleResultLimit,
     });
-    restoreOpenDisclosures(openDisclosures);
     pageContentRoot.removeAttribute("data-loading");
     pageContentRoot.setAttribute("aria-busy", "false");
     syncFilterSummary(visibleReports.length, payloadReports().length);
@@ -418,7 +424,22 @@
     document.body.classList.remove("units-pending");
     if (options.focusFavoriteId) {
       const selectorId = window.CSS?.escape ? window.CSS.escape(options.focusFavoriteId) : options.focusFavoriteId.replaceAll("\"", "\\\"");
-      pageContentRoot.querySelector(`.favorite-btn[data-resort-id="${selectorId}"]`)?.focus();
+      const favoriteTarget = pageContentRoot.querySelector(`.favorite-btn[data-resort-id="${selectorId}"]`);
+      if (favoriteTarget) favoriteTarget.focus();
+      else {
+        const fallbackTarget = appState.filterState.favoritesOnly
+          ? favoritesOnlyToggle
+          : pageContentRoot.querySelector(".resort-forecast-card h3");
+        fallbackTarget?.focus();
+        if (resultsAnnouncer) resultsAnnouncer.textContent = "Favorite updated. Results reordered.";
+      }
+    }
+    if (Number.isInteger(options.focusResultIndex)) {
+      pageContentRoot.querySelector(`.resort-forecast-card[data-result-index="${options.focusResultIndex}"] h3`)?.focus();
+    }
+    if (options.announceResults && resultsAnnouncer) {
+      const shownCount = Math.min(visibleResultLimit, visibleReports.length);
+      resultsAnnouncer.textContent = `Showing ${shownCount} of ${visibleReports.length} resorts.`;
     }
   };
 
@@ -426,7 +447,8 @@
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
     renderPage(options);
-    window.requestAnimationFrame(() => window.scrollTo(scrollX, scrollY));
+    const movedFocus = Boolean(options.focusFavoriteId) || Number.isInteger(options.focusResultIndex);
+    if (!movedFocus) window.requestAnimationFrame(() => window.scrollTo(scrollX, scrollY));
   };
 
   const renderSubregionOptions = () => {
@@ -532,6 +554,7 @@
   const applyFiltersImmediately = async () => {
     cancelScheduledFilterApply();
     applyFilterStateFromControls();
+    visibleResultLimit = INITIAL_RESULT_LIMIT;
     if (isDynamicApiDataUrl()) {
       try {
         await reloadDynamicPayloadForFilters();
@@ -607,11 +630,22 @@
       }
     });
     document.addEventListener("click", (event) => {
+      const showMoreButton = event.target.closest("[data-show-more-results]");
+      if (showMoreButton) {
+        event.preventDefault();
+        const firstNewResultIndex = visibleResultLimit;
+        visibleResultLimit += RESULT_PAGE_SIZE;
+        renderPage({ focusResultIndex: firstNewResultIndex, announceResults: true });
+        return;
+      }
       const button = event.target.closest(".favorite-btn[data-resort-id]");
       if (!button) return;
       event.preventDefault();
       const resortId = String(button.getAttribute("data-resort-id") || "");
       toggleFavorite(resortId);
+      if (appState.filterState.favoritesOnly || appState.filterState.sortBy === "favorites") {
+        visibleResultLimit = INITIAL_RESULT_LIMIT;
+      }
       renderPagePreservingPosition({ focusFavoriteId: resortId });
     });
   };

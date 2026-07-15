@@ -1067,3 +1067,706 @@
     scroll-behavior: auto;
   }
 }
+
+/* Compact information architecture: decisions first, depth on demand. */
+.resort-field-guide {
+  padding-top: 1rem;
+}
+
+.resort-masthead {
+  padding: 0.9rem 1rem;
+}
+
+.resort-masthead-topline {
+  padding-bottom: 0.45rem;
+}
+
+.back-link {
+  min-height: 44px;
+}
+
+.resort-masthead-grid {
+  padding-top: 0.75rem;
+  grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.resort-intro {
+  align-self: start;
+}
+
+.resort-intro h1 {
+  max-width: none;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 1;
+}
+
+.resort-context {
+  margin-top: 0.35rem;
+}
+
+.resort-outlook {
+  max-width: none;
+  margin-top: 0.55rem;
+  padding: 0.58rem 0.7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.38;
+}
+
+.resort-outlook strong {
+  font-size: 0.82rem;
+  line-height: 1.38;
+}
+
+.resort-identity-meta {
+  margin-top: 0;
+  padding: 0.45rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.resort-identity-meta p {
+  min-height: 28px;
+  padding: 0.28rem 0.48rem;
+  font-size: 0.7rem;
+}
+
+.resort-identity-meta a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.resort-identity-disclosure,
+.hourly-meta-disclosure {
+  margin-top: 0.55rem;
+  border: 1px solid var(--fg-line, #d8e1dd);
+  border-radius: var(--fg-radius-md, 8px);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.resort-identity-disclosure > summary,
+.hourly-meta-disclosure > summary {
+  min-height: 44px;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--fg-ink-muted, #526671);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.resort-identity-disclosure[open] > summary,
+.hourly-meta-disclosure[open] > summary {
+  border-bottom: 1px solid var(--fg-line, #d8e1dd);
+}
+
+.resort-snapshot {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.snapshot-card,
+.snapshot-card[data-priority="primary"] {
+  min-height: 80px;
+  padding: 0.6rem;
+  grid-column: auto;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 0.5rem;
+  border-color: var(--fg-line, #d8e1dd);
+  color: var(--fg-ink, #17252e);
+  background: var(--fg-surface, #fff);
+  box-shadow: none;
+}
+
+.snapshot-card[data-priority="primary"] {
+  border-color: color-mix(in srgb, var(--fg-glacier, #167a9b) 55%, var(--fg-line, #d8e1dd));
+  box-shadow: inset 3px 0 var(--fg-glacier, #167a9b);
+}
+
+.snapshot-icon,
+.snapshot-card[data-priority="primary"] .snapshot-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--fg-glacier, #167a9b);
+  background: var(--fg-glacier-soft, #dceff5);
+  font-size: 1.15rem;
+}
+
+.snapshot-icon-rain,
+.snapshot-card[data-priority="primary"] .snapshot-icon-rain {
+  color: var(--fg-pine, #16705d);
+  background: var(--fg-pine-soft, #dcefe9);
+}
+
+.snapshot-card small,
+.snapshot-card em,
+.snapshot-card[data-priority="primary"] small,
+.snapshot-card[data-priority="primary"] em {
+  color: var(--fg-ink-subtle, #5f737d);
+  font-size: 0.64rem;
+}
+
+.snapshot-card strong,
+.snapshot-card[data-priority="primary"] strong {
+  color: var(--fg-ink, #17252e);
+  font-size: clamp(1rem, 1.7vw, 1.3rem);
+}
+
+.field-guide-section {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+#resort-timeline-section,
+.hourly-workspace {
+  box-shadow: var(--fg-shadow-card);
+}
+
+.section-heading,
+.hourly-workspace-heading {
+  margin-bottom: 0.65rem;
+}
+
+.section-heading h2,
+.hourly-section-title {
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+}
+
+.section-heading p:not(.eyebrow),
+.hourly-workspace-heading p:not(.eyebrow) {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.field-guide-timeline {
+  width: 100%;
+  padding: 0;
+  overflow: visible;
+}
+
+.field-guide-timeline-track {
+  width: 100%;
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  gap: 0.35rem;
+}
+
+.timeline-day-card {
+  min-height: 0;
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  grid-template-columns: minmax(8rem, 1.05fr) minmax(9rem, 1.35fr) minmax(6.5rem, 0.72fr) minmax(9rem, 1fr) minmax(9rem, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  scroll-snap-align: none;
+  box-shadow: none;
+}
+
+.timeline-day-card[data-phase="today"] {
+  border-width: 1px 1px 1px 4px;
+  box-shadow: none;
+}
+
+.timeline-day-card[data-weather-signal="snow"]:not([data-phase="today"]),
+.timeline-day-card[data-weather-signal="rain"]:not([data-phase="today"]) {
+  box-shadow: none;
+}
+
+.timeline-card-topline {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.timeline-date {
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.timeline-condition {
+  margin: 0;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 0.4rem;
+}
+
+.timeline-condition .field-guide-weather-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.timeline-condition strong {
+  font-size: 0.76rem;
+}
+
+.timeline-temperature {
+  margin: 0;
+  gap: 0;
+}
+
+.timeline-temperature strong {
+  font-size: 1rem;
+}
+
+.timeline-temperature span {
+  font-size: 0.67rem;
+}
+
+.timeline-metrics,
+.timeline-daylight {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.timeline-metrics dt,
+.timeline-daylight dt {
+  font-size: 0.625rem;
+}
+
+.timeline-metrics dd,
+.timeline-daylight dd {
+  margin-top: 0;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.timeline-disclosure {
+  margin-top: 0.5rem;
+  border: 1px solid var(--fg-line, #d8e1dd);
+  border-radius: var(--fg-radius-md, 8px);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.timeline-disclosure > summary {
+  min-height: 44px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  color: var(--fg-ink-muted, #526671);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.timeline-disclosure[open] > summary {
+  border-bottom: 1px solid var(--fg-line, #d8e1dd);
+}
+
+.timeline-disclosure > .field-guide-timeline-track {
+  padding: 0.45rem;
+}
+
+.hourly-workspace-heading {
+  align-items: center;
+}
+
+.hourly-controls {
+  min-width: 300px;
+  padding: 0.25rem;
+}
+
+.hourly-controls select,
+.hourly-controls button {
+  min-height: 44px;
+  padding-block: 0.35rem;
+}
+
+.hourly-meta {
+  min-height: 0;
+  margin: 0;
+  padding: 0.48rem 0.65rem;
+  font-size: 0.68rem;
+}
+
+.hourly-meta a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hourly-narrative {
+  min-height: 0;
+  margin-top: 0.55rem;
+  padding: 0.62rem 0.75rem;
+  border-left-width: 3px;
+  box-shadow: none;
+  font-size: 0.8rem;
+}
+
+.hourly-narrative::before {
+  margin-bottom: 0.12rem;
+  font-size: 0.6rem;
+}
+
+.hourly-view-tabs {
+  margin-top: 0.55rem;
+}
+
+.hourly-view-tabs button {
+  min-height: 44px;
+  padding: 0.45rem 0.7rem;
+}
+
+.hourly-charts,
+.hourly-charts[data-hourly-group="storm"] {
+  margin-top: 0.6rem;
+  gap: 0.55rem;
+}
+
+.hourly-charts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hourly-charts[data-hourly-group="storm"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.chart-card {
+  padding: 0.65rem;
+  box-shadow: none;
+}
+
+.chart-card[data-priority="primary"] {
+  box-shadow: none;
+}
+
+.chart-title {
+  font-size: 0.86rem;
+}
+
+.chart-subtitle {
+  font-size: 0.63rem;
+}
+
+.chart-summary-value {
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+}
+
+.chart-svg-wrap {
+  margin-top: 0.35rem;
+}
+
+.chart-svg {
+  min-width: 280px;
+}
+
+.chart-empty,
+.chart-empty-zero {
+  min-height: 190px;
+}
+
+.raw-data-panel {
+  margin-top: 0.65rem;
+}
+
+.raw-data-panel > summary {
+  min-height: 44px;
+}
+
+#resort-airport-access-section {
+  padding: 0;
+  background: var(--fg-surface-muted, #f1f5f3);
+}
+
+#resort-airport-access-section > summary {
+  min-height: 58px;
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.airport-disclosure-copy {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.airport-disclosure-copy .eyebrow {
+  margin: 0;
+  font-size: 0.62rem;
+}
+
+.airport-disclosure-copy strong {
+  color: var(--fg-ink, #17252e);
+  font-size: 0.95rem;
+}
+
+.airport-disclosure-copy > span:last-child {
+  color: var(--fg-ink-muted, #526671);
+  font-size: 0.7rem;
+}
+
+#resort-airport-access-root {
+  padding: 0 0.9rem 0.9rem;
+}
+
+@media (min-width: 701px) and (max-width: 980px) {
+  .hourly-charts[data-hourly-group="storm"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 701px) and (max-width: 820px) {
+  .timeline-day-card {
+    grid-template-columns: minmax(7rem, 1fr) minmax(7.5rem, 1.1fr) minmax(5.2rem, 0.7fr) minmax(7.25rem, 1fr) minmax(7.25rem, 1fr);
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 820px) {
+  .resort-masthead-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .resort-field-guide {
+    padding: 0.65rem 0.625rem 1.5rem;
+  }
+
+  .resort-masthead,
+  .field-guide-section {
+    padding: 0.65rem;
+  }
+
+  .resort-masthead-topline {
+    padding-bottom: 0.25rem;
+  }
+
+  .resort-masthead-grid {
+    padding-top: 0.4rem;
+    gap: 0.45rem;
+  }
+
+  .resort-intro > .eyebrow {
+    display: none;
+  }
+
+  .resort-intro h1 {
+    font-size: clamp(1.65rem, 8.2vw, 2rem);
+    line-height: 1.05;
+  }
+
+  .resort-context {
+    margin-top: 0.2rem;
+    font-size: 0.62rem;
+    overflow-wrap: anywhere;
+  }
+
+  .resort-outlook {
+    margin-top: 0.38rem;
+    padding: 0.4rem 0.5rem;
+    display: block;
+    font-size: 0.7rem;
+  }
+
+  .resort-outlook-label {
+    display: block;
+    margin-bottom: 0.12rem;
+    font-size: 0.58rem;
+  }
+
+  .resort-outlook strong {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .resort-identity-meta {
+    margin-top: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .resort-identity-meta p {
+    width: auto;
+    min-height: 25px;
+    padding: 0.22rem 0.36rem;
+    font-size: 0.62rem;
+    overflow-wrap: anywhere;
+  }
+
+  #resort-local-time {
+    grid-column: 1 / -1;
+  }
+
+  .resort-identity-disclosure {
+    margin-top: 0.4rem;
+  }
+
+  .resort-snapshot {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .snapshot-card,
+  .snapshot-card[data-priority="primary"] {
+    min-height: 56px;
+    padding: 0.32rem 0.38rem;
+    display: block;
+  }
+
+  .snapshot-icon,
+  .snapshot-card[data-priority="primary"] .snapshot-icon {
+    display: none;
+  }
+
+  .snapshot-card > span:last-child {
+    gap: 0.04rem;
+  }
+
+  .snapshot-card small,
+  .snapshot-card em,
+  .snapshot-card[data-priority="primary"] small,
+  .snapshot-card[data-priority="primary"] em {
+    font-size: 0.625rem;
+    overflow-wrap: anywhere;
+  }
+
+  .snapshot-card strong,
+  .snapshot-card[data-priority="primary"] strong {
+    font-size: clamp(0.78rem, 3.4vw, 0.92rem);
+    overflow-wrap: anywhere;
+  }
+
+  .field-guide-section {
+    margin-top: 0.75rem;
+  }
+
+  .section-heading,
+  .hourly-workspace-heading {
+    margin-bottom: 0.5rem;
+    gap: 0.45rem;
+  }
+
+  .section-heading h2,
+  .hourly-section-title {
+    font-size: 1.08rem;
+  }
+
+  .section-heading p:not(.eyebrow),
+  .hourly-workspace-heading p:not(.eyebrow) {
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .timeline-day-card {
+    padding: 0.5rem;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "topline topline"
+      "condition temperature"
+      "metrics daylight";
+    gap: 0.38rem 0.55rem;
+  }
+
+  .timeline-card-topline {
+    grid-area: topline;
+  }
+
+  .timeline-condition {
+    grid-area: condition;
+  }
+
+  .timeline-temperature {
+    grid-area: temperature;
+    align-items: end;
+    text-align: right;
+  }
+
+  .timeline-metrics {
+    grid-area: metrics;
+  }
+
+  .timeline-daylight {
+    grid-area: daylight;
+  }
+
+  .timeline-condition .field-guide-weather-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .timeline-condition strong {
+    font-size: 0.7rem;
+  }
+
+  .timeline-temperature strong {
+    font-size: 0.9rem;
+  }
+
+  .timeline-metrics dt,
+  .timeline-daylight dt {
+    font-size: 0.625rem;
+  }
+
+  .timeline-metrics dd,
+  .timeline-daylight dd {
+    font-size: 0.66rem;
+  }
+
+  .hourly-controls {
+    min-width: 0;
+    padding: 0.2rem;
+  }
+
+  .hourly-meta {
+    font-size: 0.62rem;
+  }
+
+  .hourly-narrative {
+    margin-top: 0.45rem;
+    padding: 0.52rem 0.6rem;
+    font-size: 0.72rem;
+  }
+
+  .hourly-view-tabs {
+    margin-top: 0.45rem;
+  }
+
+  .hourly-view-tabs button {
+    min-height: 44px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .hourly-charts,
+  .hourly-charts[data-hourly-group="storm"] {
+    padding: 0 0.1rem 0.35rem;
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .chart-card {
+    flex: 0 0 calc(100% - 1.4rem);
+    scroll-snap-align: start;
+  }
+
+  .chart-card-header {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .wind-direction-grid {
+    grid-template-columns: repeat(3, minmax(72px, 1fr));
+  }
+
+  #resort-airport-access-section {
+    padding: 0;
+  }
+}
