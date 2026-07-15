@@ -70,7 +70,12 @@ def test_static_split_pipeline_smoke(monkeypatch, tmp_path, valid_payload):
 
     html = Path(render_args.output_dir, "index.html").read_text(encoding="utf-8")
     assert "<!doctype html>" in html
-    assert "Snowfall" in html
+    assert "CloseSnow Mountain Morning Report" in html
+    assert "Compare mountain conditions" in html
+    assert "Make the call before first chair." not in html
+    assert 'src="assets/js/field_guide_homepage.js"' in html
+    assert "window.CLOSESNOW_INITIAL_PAYLOAD = {" in html
+    assert "Snowbird, Utah" in html
     assert 'id="page-content-root"' in html
     assert "window.CLOSESNOW_PAGE_BOOTSTRAP" in html
     assert '"dataUrl": "./data.json"' in html

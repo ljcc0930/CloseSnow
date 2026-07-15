@@ -30,6 +30,12 @@ def _build_context_from_report(report: Dict[str, Any]) -> Optional[Dict[str, Any
         "website": report.get("website", ""),
         "daily": daily,
     }
+    # Keep compact location and pass context available to the detail page so the
+    # masthead can orient readers without another lookup.
+    for key in ("region", "subregion", "admin1", "country", "pass_types"):
+        value = report.get(key)
+        if value not in (None, "", []):
+            context[key] = value
     nearby_airports = report.get("nearby_airports")
     if isinstance(nearby_airports, list):
         context["nearbyAirports"] = [item for item in nearby_airports if isinstance(item, dict)]
