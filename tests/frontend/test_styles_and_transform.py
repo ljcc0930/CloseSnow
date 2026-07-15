@@ -488,6 +488,7 @@ def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
     assert 'metrics: Object.freeze(["wind_speed_10m", "wind_direction_10m"])' in js
     assert 'metrics: Object.freeze(["visibility", "snow_depth"])' in js
     assert "renderHourlyNarrative" in js
+    assert "snow and rain accumulation readings are unavailable." in js
     assert "renderWindDirectionCard" in js
     assert 'label.textContent = "Bottom line"' in js
     assert "snapshotEl.dataset.primarySignal = priority" in js
@@ -557,5 +558,6 @@ def test_integration_removes_superseded_assets_and_defines_compact_results():
     assert "const weeklyRainfall" in weather_js
     assert "const hasPositiveWeeklySnow" in weather_js
     assert "compareDescending(a, b, weeklyRainfall)" in weather_js
+    assert "Favorite updated. Results reordered." in weather_js
     assert 'return "7-Day Weather Signal"' in filter_js
     assert ">7-day weather signal</option>" in template

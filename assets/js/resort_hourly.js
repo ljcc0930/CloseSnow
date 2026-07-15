@@ -1105,12 +1105,27 @@ const renderHourlyNarrative = (payload) => {
   if (activeHourlyGroup === "storm") {
     const snow = finiteSeries(Array.isArray(hourly.snowfall) ? hourly.snowfall : []);
     const rain = finiteSeries(Array.isArray(hourly.rain) ? hourly.rain : []);
-    const snowTotal = snow.reduce((sum, value) => sum + (value || 0), 0);
-    const rainTotal = rain.reduce((sum, value) => sum + (value || 0), 0);
+    const snowReadings = snow.filter((value) => value !== null);
+    const rainReadings = rain.filter((value) => value !== null);
+    const snowTotal = snowReadings.length ? snowReadings.reduce((sum, value) => sum + value, 0) : null;
+    const rainTotal = rainReadings.length ? rainReadings.reduce((sum, value) => sum + value, 0) : null;
     const probability = extremeIndex(Array.isArray(hourly.precipitation_probability) ? hourly.precipitation_probability : []);
-    const accumulation = snowTotal > 0 || rainTotal > 0
-      ? `the model shows ${formatMetricValue("snowfall", snowTotal)} of snow and ${formatMetricValue("rain", rainTotal)} of rain.`
-      : "no accumulating snow or rain is currently modelled.";
+    let accumulation;
+    if (snowTotal === null && rainTotal === null) {
+      accumulation = "snow and rain accumulation readings are unavailable.";
+    } else if (snowTotal === 0 && rainTotal === 0) {
+      accumulation = "no accumulating snow or rain is currently modelled.";
+    } else {
+      const measured = [];
+      const missing = [];
+      if (snowTotal === null) missing.push("snow accumulation");
+      else measured.push(`${formatMetricValue("snowfall", snowTotal)} of snow`);
+      if (rainTotal === null) missing.push("rain accumulation");
+      else measured.push(`${formatMetricValue("rain", rainTotal)} of rain`);
+      const measuredCopy = measured.length ? `the model shows ${measured.join(" and ")}.` : "";
+      const missingCopy = missing.length ? `${missing.join(" and ")} readings are unavailable.` : "";
+      accumulation = `${measuredCopy} ${missingCopy}`.trim();
+    }
     const chance = probability.value === null
       ? "Precipitation probability is unavailable."
       : `The highest precipitation chance is ${Math.round(probability.value)}% around ${friendlyHour(times[probability.index])}.`;

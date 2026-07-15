@@ -426,7 +426,13 @@
       const selectorId = window.CSS?.escape ? window.CSS.escape(options.focusFavoriteId) : options.focusFavoriteId.replaceAll("\"", "\\\"");
       const favoriteTarget = pageContentRoot.querySelector(`.favorite-btn[data-resort-id="${selectorId}"]`);
       if (favoriteTarget) favoriteTarget.focus();
-      else if (appState.filterState.favoritesOnly) favoritesOnlyToggle?.focus();
+      else {
+        const fallbackTarget = appState.filterState.favoritesOnly
+          ? favoritesOnlyToggle
+          : pageContentRoot.querySelector(".resort-forecast-card h3");
+        fallbackTarget?.focus();
+        if (resultsAnnouncer) resultsAnnouncer.textContent = "Favorite updated. Results reordered.";
+      }
     }
     if (Number.isInteger(options.focusResultIndex)) {
       pageContentRoot.querySelector(`.resort-forecast-card[data-result-index="${options.focusResultIndex}"] h3`)?.focus();
