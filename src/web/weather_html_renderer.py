@@ -9,13 +9,14 @@ from typing import Any, Dict, List
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
 
 _PAGE_SHELL_PLACEHOLDER = """
-    <section class="insight-board forecast-loading-overview" aria-hidden="true">
-      <div class="skeleton skeleton-heading"></div>
-      <div class="insight-grid loading-card-grid"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
-    </section>
     <section class="forecast-results forecast-section-loading" aria-hidden="true">
       <div class="skeleton skeleton-heading"></div>
-      <div class="resort-card-grid"><div class="skeleton skeleton-resort-card"></div><div class="skeleton skeleton-resort-card"></div></div>
+      <div class="resort-card-grid">
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+      </div>
       <p class="section-loading sr-only">Loading forecast...</p>
     </section>
 """

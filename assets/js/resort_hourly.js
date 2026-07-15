@@ -32,7 +32,6 @@ const thead = table ? table.querySelector("thead") : null;
 const tbody = table ? table.querySelector("tbody") : null;
 let metaState = null;
 let localTimeTimerId = null;
-let timelineAutoCentered = false;
 let lastHourlyPayload = null;
 let chartResizeRafId = null;
 let activeHourlyGroup = "storm";
@@ -41,7 +40,7 @@ const metricDefs = Array.isArray(hourlyMetricHelpers.metricDefs) ? hourlyMetricH
 const trimHourlyPayload = hourlyMetricHelpers.trimHourlyPayload;
 const HOURLY_GROUPS = Object.freeze({
   storm: Object.freeze({
-    label: "Storm",
+    label: "Precipitation",
     metrics: Object.freeze(["snowfall", "rain", "precipitation_probability"]),
   }),
   wind: Object.freeze({
@@ -80,6 +79,13 @@ const formatValue = (value) => {
     return value.toFixed(1);
   }
   return String(value);
+};
+
+const sevenDayMetricTotal = (daily, key) => {
+  const values = (Array.isArray(daily) ? daily : []).slice(0, 7)
+    .map((day) => toFiniteNumber(day?.[key]))
+    .filter((value) => value !== null);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
 };
 
 const currentUnitMode = () => (fieldGuideUnits.readPreference
@@ -148,24 +154,29 @@ const strongestDailySignal = (daily, unitMode) => {
   let snowDay = null;
   let rainDay = null;
   days.forEach((day) => {
-    const snow = toFiniteNumber(day?.snowfall_cm) || 0;
-    const rain = toFiniteNumber(day?.rain_mm) || 0;
-    if (!snowDay || snow > snowDay.value) snowDay = { day, value: snow };
-    if (!rainDay || rain > rainDay.value) rainDay = { day, value: rain };
+    const snow = toFiniteNumber(day?.snowfall_cm);
+    const rain = toFiniteNumber(day?.rain_mm);
+    if (snow !== null && (!snowDay || snow > snowDay.value)) snowDay = { day, value: snow };
+    if (rain !== null && (!rainDay || rain > rainDay.value)) rainDay = { day, value: rain };
   });
+  const missingNote = !snowDay && !rainDay
+    ? "Snow and rain estimates are not available yet."
+    : (!snowDay ? "Snow estimates are not available yet." : (!rainDay ? "Rain estimates are not available yet." : ""));
   if (snowDay && snowDay.value > 0) {
     const amount = fieldGuideUnits.formatSnow
       ? fieldGuideUnits.formatSnow(snowDay.value, unitMode)
       : `${snowDay.value.toFixed(1)} cm`;
-    return `The strongest snow signal is ${amount} on ${friendlyDate(snowDay.day?.date, "the leading forecast day")}.`;
+    return `The strongest snow signal is ${amount} on ${friendlyDate(snowDay.day?.date, "the leading forecast day")}. ${missingNote}`.trim();
   }
   if (rainDay && rainDay.value > 0) {
     const amount = fieldGuideUnits.formatRain
       ? fieldGuideUnits.formatRain(rainDay.value, unitMode)
       : `${rainDay.value.toFixed(1)} mm`;
-    return `The wettest signal is ${amount} on ${friendlyDate(rainDay.day?.date, "the leading forecast day")}.`;
+    return `The wettest signal is ${amount} on ${friendlyDate(rainDay.day?.date, "the leading forecast day")}. ${missingNote}`.trim();
   }
-  return "No meaningful snow or rain signal stands out in the next seven days.";
+  if (!snowDay && !rainDay) return missingNote;
+  const availableSignals = [snowDay ? "snow" : "", rainDay ? "rain" : ""].filter(Boolean).join(" or ");
+  return `No meaningful ${availableSignals} signal stands out in the next seven days. ${missingNote}`.trim();
 };
 
 const renderResortOutlook = () => {
@@ -538,8 +549,8 @@ const renderResortSnapshot = () => {
   }
   const high = toFiniteNumber(today.temperature_max_c);
   const low = toFiniteNumber(today.temperature_min_c);
-  const snow = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.snowfall_cm) || 0), 0);
-  const rain = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.rain_mm) || 0), 0);
+  const snow = sevenDayMetricTotal(daily, "snowfall_cm");
+  const rain = sevenDayMetricTotal(daily, "rain_mm");
   const weatherCode = today.weather_code;
   const conditionName = fieldGuideWeather.conditionName
     ? fieldGuideWeather.conditionName(weatherCode)
@@ -562,32 +573,32 @@ const renderResortSnapshot = () => {
     : (fieldGuideUnits.formatTemperature
       ? fieldGuideUnits.formatTemperature(low, unitMode, { withUnit: false, digits: 0 })
       : String(Math.round(low)));
-  const temperature = `${formattedHigh} / ${formattedLow} ${temperatureUnit}`;
-  const snowValue = fieldGuideUnits.formatSnow ? fieldGuideUnits.formatSnow(snow, unitMode) : `${snow.toFixed(1)} cm`;
-  const rainValue = fieldGuideUnits.formatRain ? fieldGuideUnits.formatRain(rain, unitMode) : `${rain.toFixed(1)} mm`;
+  const temperature = high === null && low === null ? "Not available" : `${formattedHigh} / ${formattedLow} ${temperatureUnit}`;
+  const snowValue = snow === null
+    ? "Not available"
+    : (fieldGuideUnits.formatSnow ? fieldGuideUnits.formatSnow(snow, unitMode) : `${snow.toFixed(1)} cm`);
+  const rainValue = rain === null
+    ? "Not available"
+    : (fieldGuideUnits.formatRain ? fieldGuideUnits.formatRain(rain, unitMode) : `${rain.toFixed(1)} mm`);
   const outlook = fieldGuideCopy.dailyOutlook ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode }) : "";
-  const priority = snow > 0 ? "snow" : (rain > 0 ? "rain" : "weather");
+  const priority = snow !== null && snow > 0 ? "snow" : (rain !== null && rain > 0 ? "rain" : "weather");
   const primaryAttribute = (kind) => (priority === kind ? ' data-priority="primary"' : "");
-  const primaryLabel = (kind, fallback) => (priority === kind ? `Primary signal · ${fallback}` : fallback);
   const cards = {
     weather: `<article class="snapshot-card snapshot-card-weather" data-snapshot-kind="weather"${primaryAttribute("weather")}>
       <span class="snapshot-icon">${weatherIcon}</span>
-      <span><small>${primaryLabel("weather", "Today")}</small><strong>${temperature}</strong><em>${conditionName}</em></span>
+      <span><small>Today</small><strong>${temperature}</strong><em>${conditionName}</em></span>
     </article>`,
     snow: `<article class="snapshot-card" data-snapshot-kind="snow"${primaryAttribute("snow")}>
       <span class="snapshot-icon snapshot-icon-snow">${metricIcon("snow", "Snowfall")}</span>
-      <span><small>${primaryLabel("snow", "Next 7 days")}</small><strong>${snowValue}</strong><em>Forecast snow</em></span>
+      <span><small>7-day snow</small><strong>${snowValue}</strong><em>${snow === null ? "Awaiting model data" : "Forecast total"}</em></span>
     </article>`,
     rain: `<article class="snapshot-card" data-snapshot-kind="rain"${primaryAttribute("rain")}>
       <span class="snapshot-icon snapshot-icon-rain">${metricIcon("rain", "Rainfall")}</span>
-      <span><small>${primaryLabel("rain", "Next 7 days")}</small><strong>${rainValue}</strong><em>Forecast rain</em></span>
+      <span><small>7-day rain</small><strong>${rainValue}</strong><em>${rain === null ? "Awaiting model data" : "Forecast total"}</em></span>
     </article>`,
   };
-  const orderedKinds = priority === "weather"
-    ? ["weather", "snow", "rain"]
-    : [priority, "weather", priority === "snow" ? "rain" : "snow"];
   snapshotEl.dataset.primarySignal = priority;
-  snapshotEl.innerHTML = orderedKinds.map((kind) => cards[kind]).join("");
+  snapshotEl.innerHTML = ["weather", "snow", "rain"].map((kind) => cards[kind]).join("");
   if (outlook) snapshotEl.setAttribute("aria-label", outlook);
   snapshotEl.hidden = false;
   renderResortOutlook();
@@ -808,12 +819,14 @@ const resolveChartWidth = () => {
   if (!chartsEl) return 720;
   const containerWidth = chartsEl.getBoundingClientRect().width || chartsEl.clientWidth || 720;
   const isSingleColumn = typeof window.matchMedia === "function"
+    && window.matchMedia("(max-width: 700px)").matches;
+  const isMediumWidth = typeof window.matchMedia === "function"
     && window.matchMedia("(max-width: 980px)").matches;
-  const columns = isSingleColumn ? 1 : (activeHourlyGroup === "storm" ? 3 : 2);
+  const columns = isSingleColumn ? 1 : (activeHourlyGroup === "storm" && !isMediumWidth ? 3 : 2);
   const gap = 12;
   const cardHorizontalPadding = 22;
   const rawCardWidth = (containerWidth - (gap * (columns - 1))) / columns;
-  return Math.max(320, Math.round(rawCardWidth - cardHorizontalPadding));
+  return Math.max(280, Math.round(rawCardWidth - cardHorizontalPadding));
 };
 
 const metricSummary = (metricKey, rawValues) => {
@@ -904,8 +917,8 @@ const renderMetricChartCard = (metricKey, times, rawValues, chartWidth) => {
     return card;
   }
 
-  const width = Math.max(320, Number(chartWidth) || 720);
-  const height = 220;
+  const width = Math.max(280, Number(chartWidth) || 720);
+  const height = 190;
   const padLeft = 44;
   const padRight = 16;
   const padTop = 12;
@@ -1141,8 +1154,11 @@ const renderHourlyCharts = (payload) => {
   const frag = document.createDocumentFragment();
   const group = HOURLY_GROUPS[activeHourlyGroup] || HOURLY_GROUPS.storm;
   const primaryMetric = primaryMetricForGroup(group, hourly);
+  const orderedMetrics = primaryMetric
+    ? [primaryMetric, ...group.metrics.filter((metricKey) => metricKey !== primaryMetric)]
+    : [...group.metrics];
   chartsEl.dataset.hourlyGroup = activeHourlyGroup;
-  group.metrics.forEach((metricKey) => {
+  orderedMetrics.forEach((metricKey) => {
     const rawValues = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
     const card = metricKey === "wind_direction_10m"
       ? renderWindDirectionCard(times, rawValues)
@@ -1195,17 +1211,6 @@ const buildMergedTimelineDays = () => {
   return merged;
 };
 
-const centerTimelineOnToday = () => {
-  if (!timelineRoot || timelineAutoCentered) return;
-  const wrap = timelineRoot.querySelector(".field-guide-timeline");
-  const todayCell = timelineRoot.querySelector("[data-timeline-today='1']");
-  if (!(wrap instanceof HTMLElement) || !(todayCell instanceof HTMLElement)) return;
-  const targetLeft = todayCell.offsetLeft + (todayCell.offsetWidth / 2) - (wrap.clientWidth / 2);
-  const maxScroll = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
-  wrap.scrollLeft = Math.max(0, Math.min(maxScroll, targetLeft));
-  timelineAutoCentered = true;
-};
-
 const daylightValue = (day, key) => {
   const local = String(day?.[`${key}_local_hhmm`] || "").trim();
   if (local) return local;
@@ -1225,6 +1230,98 @@ const appendDefinition = (list, term, value) => {
   list.appendChild(wrapper);
 };
 
+const buildTimelineDayCard = (day, unitMode, temperatureUnit) => {
+  const isToday = Boolean(day.summary_is_today);
+  const phase = isToday ? "today" : (day.summary_phase === "history" ? "history" : "forecast");
+  const phaseLabel = isToday ? "Today" : (phase === "history" ? "Past" : "Forecast");
+  const card = document.createElement("article");
+  card.className = "timeline-day-card";
+  card.dataset.phase = phase;
+  const dailySnow = toFiniteNumber(day.snowfall_cm) || 0;
+  const dailyRain = toFiniteNumber(day.rain_mm) || 0;
+  card.dataset.weatherSignal = dailySnow > 0 ? "snow" : (dailyRain > 0 ? "rain" : "quiet");
+  if (isToday) card.setAttribute("data-timeline-today", "1");
+
+  const topline = document.createElement("div");
+  topline.className = "timeline-card-topline";
+  const phaseEl = document.createElement("span");
+  phaseEl.className = "timeline-phase";
+  phaseEl.textContent = phaseLabel;
+  const date = document.createElement("time");
+  date.className = "timeline-date";
+  date.dateTime = String(day.date || "");
+  date.textContent = friendlyDate(day.date, day.summary_label || phaseLabel);
+  topline.appendChild(phaseEl);
+  topline.appendChild(date);
+
+  const condition = document.createElement("div");
+  condition.className = "timeline-condition";
+  const icon = document.createElement("span");
+  icon.innerHTML = fieldGuideWeather.iconHtml
+    ? fieldGuideWeather.iconHtml(day.weather_code)
+    : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>';
+  const conditionName = document.createElement("strong");
+  conditionName.textContent = fieldGuideWeather.conditionName
+    ? fieldGuideWeather.conditionName(day.weather_code)
+    : "Conditions unavailable";
+  condition.appendChild(icon);
+  condition.appendChild(conditionName);
+
+  const temperature = document.createElement("div");
+  temperature.className = "timeline-temperature";
+  const high = document.createElement("strong");
+  const low = document.createElement("span");
+  const highValue = fieldGuideUnits.formatTemperature
+    ? fieldGuideUnits.formatTemperature(day.temperature_max_c, unitMode, { withUnit: false, digits: 0 })
+    : formatValue(day.temperature_max_c);
+  const lowValue = fieldGuideUnits.formatTemperature
+    ? fieldGuideUnits.formatTemperature(day.temperature_min_c, unitMode, { withUnit: false, digits: 0 })
+    : formatValue(day.temperature_min_c);
+  high.textContent = `${highValue} ${temperatureUnit}`;
+  low.textContent = `Low ${lowValue} ${temperatureUnit}`;
+  temperature.appendChild(high);
+  temperature.appendChild(low);
+
+  const metrics = document.createElement("dl");
+  metrics.className = "timeline-metrics";
+  appendDefinition(metrics, "Snow", fieldGuideUnits.formatSnow
+    ? fieldGuideUnits.formatSnow(day.snowfall_cm, unitMode)
+    : `${formatValue(day.snowfall_cm)} cm`);
+  appendDefinition(metrics, "Rain", fieldGuideUnits.formatRain
+    ? fieldGuideUnits.formatRain(day.rain_mm, unitMode)
+    : `${formatValue(day.rain_mm)} mm`);
+
+  const daylight = document.createElement("dl");
+  daylight.className = "timeline-daylight";
+  appendDefinition(daylight, "Sunrise", daylightValue(day, "sunrise"));
+  appendDefinition(daylight, "Sunset", daylightValue(day, "sunset"));
+
+  card.appendChild(topline);
+  card.appendChild(condition);
+  card.appendChild(temperature);
+  card.appendChild(metrics);
+  card.appendChild(daylight);
+  return card;
+};
+
+const buildTimelineDayList = (days, unitMode, temperatureUnit) => {
+  const list = document.createElement("div");
+  list.className = "field-guide-timeline-track";
+  days.forEach((day) => list.appendChild(buildTimelineDayCard(day, unitMode, temperatureUnit)));
+  return list;
+};
+
+const appendTimelineDisclosure = (parent, label, days, unitMode, temperatureUnit) => {
+  if (!days.length) return;
+  const details = document.createElement("details");
+  details.className = "timeline-disclosure";
+  const summary = document.createElement("summary");
+  summary.textContent = `${label} (${days.length})`;
+  details.appendChild(summary);
+  details.appendChild(buildTimelineDayList(days, unitMode, temperatureUnit));
+  parent.appendChild(details);
+};
+
 const renderTimelineSummary = () => {
   if (!timelineSection || !timelineRoot) return;
   const merged = buildMergedTimelineDays();
@@ -1236,89 +1333,19 @@ const renderTimelineSummary = () => {
   timelineRoot.textContent = "";
   const unitMode = currentUnitMode();
   const temperatureUnit = fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("temperature", unitMode) : "°C";
+  const forecastDays = merged.filter((day) => day.summary_phase === "forecast");
+  const historyDays = merged.filter((day) => day.summary_phase === "history");
+  const firstWeek = forecastDays.slice(0, 7);
+  const laterForecast = forecastDays.slice(7);
+  const laterForecastLabel = forecastDays.length > 14 ? `Days 8–${forecastDays.length}` : "Days 8–14";
   const wrap = document.createElement("div");
   wrap.className = "field-guide-timeline";
-  wrap.tabIndex = 0;
-  wrap.setAttribute("aria-label", "Recent conditions and daily forecast. Scroll horizontally for more dates.");
-  const track = document.createElement("div");
-  track.className = "field-guide-timeline-track";
-  merged.forEach((day) => {
-    const isToday = Boolean(day.summary_is_today);
-    const phase = isToday ? "today" : (day.summary_phase === "history" ? "history" : "forecast");
-    const phaseLabel = isToday ? "Today" : (phase === "history" ? "Past" : "Forecast");
-    const card = document.createElement("article");
-    card.className = "timeline-day-card";
-    card.dataset.phase = phase;
-    const dailySnow = toFiniteNumber(day.snowfall_cm) || 0;
-    const dailyRain = toFiniteNumber(day.rain_mm) || 0;
-    card.dataset.weatherSignal = dailySnow > 0 ? "snow" : (dailyRain > 0 ? "rain" : "quiet");
-    if (isToday) card.dataset.timelineToday = "1";
-
-    const topline = document.createElement("div");
-    topline.className = "timeline-card-topline";
-    const phaseEl = document.createElement("span");
-    phaseEl.className = "timeline-phase";
-    phaseEl.textContent = phaseLabel;
-    const date = document.createElement("time");
-    date.className = "timeline-date";
-    date.dateTime = String(day.date || "");
-    date.textContent = friendlyDate(day.date, day.summary_label || phaseLabel);
-    topline.appendChild(phaseEl);
-    topline.appendChild(date);
-
-    const condition = document.createElement("div");
-    condition.className = "timeline-condition";
-    const icon = document.createElement("span");
-    icon.innerHTML = fieldGuideWeather.iconHtml
-      ? fieldGuideWeather.iconHtml(day.weather_code)
-      : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>';
-    const conditionName = document.createElement("strong");
-    conditionName.textContent = fieldGuideWeather.conditionName
-      ? fieldGuideWeather.conditionName(day.weather_code)
-      : "Conditions unavailable";
-    condition.appendChild(icon);
-    condition.appendChild(conditionName);
-
-    const temperature = document.createElement("div");
-    temperature.className = "timeline-temperature";
-    const high = document.createElement("strong");
-    const low = document.createElement("span");
-    const highValue = fieldGuideUnits.formatTemperature
-      ? fieldGuideUnits.formatTemperature(day.temperature_max_c, unitMode, { withUnit: false, digits: 0 })
-      : formatValue(day.temperature_max_c);
-    const lowValue = fieldGuideUnits.formatTemperature
-      ? fieldGuideUnits.formatTemperature(day.temperature_min_c, unitMode, { withUnit: false, digits: 0 })
-      : formatValue(day.temperature_min_c);
-    high.textContent = `High ${highValue} ${temperatureUnit}`;
-    low.textContent = `Low ${lowValue} ${temperatureUnit}`;
-    temperature.appendChild(high);
-    temperature.appendChild(low);
-
-    const metrics = document.createElement("dl");
-    metrics.className = "timeline-metrics";
-    appendDefinition(metrics, "Snow", fieldGuideUnits.formatSnow
-      ? fieldGuideUnits.formatSnow(day.snowfall_cm, unitMode)
-      : `${formatValue(day.snowfall_cm)} cm`);
-    appendDefinition(metrics, "Rain", fieldGuideUnits.formatRain
-      ? fieldGuideUnits.formatRain(day.rain_mm, unitMode)
-      : `${formatValue(day.rain_mm)} mm`);
-
-    const daylight = document.createElement("dl");
-    daylight.className = "timeline-daylight";
-    appendDefinition(daylight, "Sunrise", daylightValue(day, "sunrise"));
-    appendDefinition(daylight, "Sunset", daylightValue(day, "sunset"));
-
-    card.appendChild(topline);
-    card.appendChild(condition);
-    card.appendChild(temperature);
-    card.appendChild(metrics);
-    card.appendChild(daylight);
-    track.appendChild(card);
-  });
-  wrap.appendChild(track);
+  wrap.setAttribute("aria-label", "Today and the next six forecast days");
+  wrap.appendChild(buildTimelineDayList(firstWeek, unitMode, temperatureUnit));
   timelineRoot.appendChild(wrap);
+  appendTimelineDisclosure(timelineRoot, laterForecastLabel, laterForecast, unitMode, temperatureUnit);
+  appendTimelineDisclosure(timelineRoot, "Past 14 days", historyDays, unitMode, temperatureUnit);
   timelineSection.hidden = false;
-  window.requestAnimationFrame(centerTimelineOnToday);
 };
 
 const renderHourlyTable = (payload) => {
@@ -1470,7 +1497,6 @@ hourlyTabButtons.forEach((button, buttonIndex) => {
 window.addEventListener("resize", rerenderChartsForResize);
 window.addEventListener("closesnow:unitschange", () => {
   renderResortSnapshot();
-  timelineAutoCentered = false;
   renderTimelineSummary();
   renderNearbyAirports(lastHourlyPayload);
   if (lastHourlyPayload) {

@@ -33,13 +33,13 @@
   </header>
 
   <main class="field-guide-home">
-    <section class="morning-masthead" aria-labelledby="page-title">
-      <div class="morning-masthead__copy">
+    <section class="report-overview" aria-labelledby="page-title">
+      <div class="report-overview__copy">
         <p class="section-kicker">Mountain morning report</p>
-        <h1 id="page-title">Make the call before first chair.</h1>
-        <p>See where the useful weather is, why it matters, and what every forecast day looks like—without reading a spreadsheet.</p>
+        <h1 id="page-title">Compare mountain conditions</h1>
+        <p>Today and the next seven days, with complete detail one resort away.</p>
       </div>
-      <dl class="morning-meta" aria-label="Forecast report details">
+      <dl class="report-meta" aria-label="Forecast report details">
         <div>
           <dt>Updated</dt>
           <dd id="report-date" data-generated-utc="{{generated_utc_iso}}">Loading forecast time…</dd>
@@ -47,14 +47,6 @@
         <div>
           <dt>Model</dt>
           <dd id="report-model">ECMWF IFS 0.25</dd>
-        </div>
-        <div>
-          <dt>In view</dt>
-          <dd id="visible-resort-count">Loading resorts…</dd>
-        </div>
-        <div>
-          <dt>Units</dt>
-          <dd data-field-guide-unit-status>Metric</dd>
         </div>
       </dl>
     </section>
@@ -94,6 +86,7 @@
       </div>
     </section>
 
+    <p id="results-announcer" class="sr-only" aria-live="polite"></p>
     <div id="page-content-root" data-loading="1" aria-busy="true">
       {{page_shell_placeholder}}
     </div>
@@ -115,7 +108,7 @@
             <option value="name">Resort name (A–Z)</option>
             <option value="favorites">Favorites first</option>
             <option value="today_snow">Today's snowfall</option>
-            <option value="week_snow" selected>This week's snowfall</option>
+            <option value="week_snow" selected>7-day weather signal</option>
             <option value="next_week_snow">Next week's snowfall</option>
             <option value="two_week_snow">Two-week snowfall</option>
           </select>

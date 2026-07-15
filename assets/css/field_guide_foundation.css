@@ -137,6 +137,7 @@ a {
 
 .brand {
   min-width: 0;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
@@ -224,7 +225,7 @@ a {
 }
 
 .field-guide-unit-switch {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0.375rem 0.625rem;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--fg-radius-md);
@@ -255,7 +256,7 @@ a {
 }
 
 .fg-button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.625rem 0.875rem;
   border: 1px solid var(--fg-line-strong);
   border-radius: var(--fg-radius-md);
@@ -316,7 +317,7 @@ a {
 
 .fg-tab,
 [data-field-guide-tab] {
-  min-height: 36px;
+  min-height: 44px;
   padding: 0.5rem 0.75rem;
   border: 0;
   border-radius: var(--fg-radius-sm);

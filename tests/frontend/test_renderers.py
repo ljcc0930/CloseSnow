@@ -244,13 +244,15 @@ def test_build_html_contains_meta_sections():
     assert "<!doctype html>" in html
     assert "CloseSnow Mountain Morning Report" in html
     assert "CloseSnow" in html
-    assert "Make the call before first chair." in html
-    assert "without reading a spreadsheet" in html
-    assert "forecast-loading-overview" in html
+    assert "Compare mountain conditions" in html
+    assert "Today and the next seven days" in html
+    assert 'class="report-overview"' in html
+    assert 'id="results-announcer"' in html
+    assert "forecast-section-loading" in html
     assert 'class="skeleton skeleton-resort-card"' in html
     assert "Loading forecast..." in html
     assert 'id="report-model"' in html
-    assert 'id="visible-resort-count"' in html
+    assert 'id="filter-summary"' in html
     assert "Mountain-by-mountain outlook" not in html
     assert 'href="assets/css/field_guide_foundation.css"' in html
     assert html.index('href="assets/css/field_guide_foundation.css"') < html.index('href="assets/css/weather_page.css"')

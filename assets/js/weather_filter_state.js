@@ -31,7 +31,7 @@
     if (sortBy === "name") return "Resort Name (A-Z)";
     if (sortBy === "favorites") return "Favorites First";
     if (sortBy === "today_snow") return "Today's Snowfall";
-    if (sortBy === "week_snow") return "This Week's Snowfall";
+    if (sortBy === "week_snow") return "7-Day Weather Signal";
     if (sortBy === "next_week_snow") return "Next Week's Snowfall";
     if (sortBy === "two_week_snow") return "Two-Week Snowfall";
     return "State (A-Z)";
