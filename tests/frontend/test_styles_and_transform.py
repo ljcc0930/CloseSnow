@@ -380,6 +380,11 @@ def test_homepage_card_is_compact_uses_global_units_and_escapes_content():
     assert "7-day rain" in result
     assert "1.00 in" in result
     assert "Peak Today" in result
+    assert 'data-daily-signal-timeline data-metric-kind="snow"' in result
+    assert 'data-timeline-scroll tabindex="0"' in result
+    assert result.count('class="daily-signal-day"') == 2
+    assert "Daily snowfall" in result
+    assert "in / day" in result
     assert 'aria-label="Open the complete forecast for Peak &lt;script&gt;alert(1)&lt;/script&gt;"' in result
     assert "Full 2-day forecast" not in result
     assert "daily-detail-card" not in result
@@ -439,6 +444,8 @@ def test_homepage_compact_signals_and_pagination_are_honest():
     assert "7-day rain" in result["rainCard"]
     assert "42.0 mm" in result["rainCard"]
     assert 'data-metric-kind="rain" data-priority="primary"' in result["rainCard"]
+    assert 'data-daily-signal-timeline data-metric-kind="rain"' in result["rainCard"]
+    assert "Daily rain · no snow in forecast" in result["rainCard"]
     assert result["paged"].count('data-resort-card="') == 12
     assert "data-show-more-results" in result["paged"]
     assert "Show 1 more resorts; 12 of 13 currently shown" in result["paged"]
@@ -446,6 +453,34 @@ def test_homepage_compact_signals_and_pagination_are_honest():
     assert "data-show-more-results" not in result["expanded"]
     assert "insight-board" not in result["paged"]
     assert "daily-detail-card" not in result["paged"]
+
+
+def test_homepage_daily_signal_timeline_caps_days_and_uses_shared_scale():
+    result = _run_homepage_expression(
+        """(() => {
+  const homepage = window.CloseSnowFieldGuideHomepage;
+  const days = Array.from({ length: 15 }, (_, index) => ({
+    date: `2026-03-${String(index + 1).padStart(2, "0")}`,
+    snowfall_cm: index === 4 ? 10 : 0,
+    rain_mm: 0,
+  }));
+  const report = { resort_id: "deep", display_name: "Deep Peak", daily: days };
+  return {
+    scales: homepage.timelineScales([
+      report,
+      { daily: [{ date: "2026-03-01", snowfall_cm: 20, rain_mm: 4 }] },
+    ]),
+    timeline: homepage.renderSignalTimeline(report, { mode: "metric", snowScaleMax: 20 }),
+  };
+})()"""
+    )
+
+    assert result["scales"] == {"snow": 20, "rain": 10}
+    assert result["timeline"].count('class="daily-signal-day"') == 14
+    assert "--daily-signal-height:50%" in result["timeline"]
+    assert "Next 7 days" in result["timeline"]
+    assert "Days 8–14" in result["timeline"]
+    assert "Mar 5: snowfall 10.0 cm" in result["timeline"]
 
 
 def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
@@ -549,6 +584,10 @@ def test_integration_removes_superseded_assets_and_defines_compact_results():
     assert ".result-column-headings" in homepage_css
     assert "height: 96px" in homepage_css
     assert "min-height: 164px" in homepage_css
+    assert ".daily-signal-timeline" in homepage_css
+    assert "scroll-snap-type: x proximity" in homepage_css
+    assert "touch-action: pan-x" in homepage_css
+    assert "min-height: 224px" in homepage_css
     assert ".results-pagination" in homepage_css
     assert "transform: translateY" not in homepage_css
 
@@ -559,5 +598,7 @@ def test_integration_removes_superseded_assets_and_defines_compact_results():
     assert "const hasPositiveWeeklySnow" in weather_js
     assert "compareDescending(a, b, weeklyRainfall)" in weather_js
     assert "Favorite updated. Results reordered." in weather_js
+    assert "const bindTimelineDragging" in weather_js
+    assert 'querySelectorAll("[data-timeline-scroll]")' in weather_js
     assert 'return "7-Day Weather Signal"' in filter_js
     assert ">7-day weather signal</option>" in template

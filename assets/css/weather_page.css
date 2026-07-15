@@ -2348,3 +2348,345 @@ body {
     border: 1px solid CanvasText;
   }
 }
+
+/* V5 daily signal timeline: scan the forecast before opening a resort. */
+.result-column-headings,
+.resort-forecast-card {
+  grid-template-columns: 2.75rem minmax(12rem, 1.45fr) minmax(9rem, 0.85fr) minmax(8rem, 0.7fr) minmax(18rem, 2fr) 6.2rem;
+}
+
+.resort-forecast-card {
+  height: auto;
+  min-height: 176px;
+  grid-template-areas:
+    "favorite identity today primary . detail"
+    ". timeline timeline timeline timeline .";
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: 0.45rem;
+}
+
+.resort-favorite-cell { grid-area: favorite; }
+.resort-identity { grid-area: identity; }
+.resort-today { grid-area: today; }
+.resort-primary-signal { grid-area: primary; }
+.resort-detail-link { grid-area: detail; }
+
+.daily-signal-timeline {
+  grid-area: timeline;
+  min-width: 0;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--fg-line);
+}
+
+.daily-signal-summary {
+  min-width: 0;
+  min-height: 1.4rem;
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.daily-signal-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--fg-header);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.daily-signal-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-signal-timeline[data-metric-kind="snow"] .signal-dot,
+.daily-signal-timeline[data-metric-kind="snow"] .daily-signal-bar {
+  background: var(--fg-glacier);
+}
+
+.daily-signal-timeline[data-metric-kind="rain"] .signal-dot,
+.daily-signal-timeline[data-metric-kind="rain"] .daily-signal-bar {
+  background: var(--fg-pine);
+}
+
+.daily-signal-unit {
+  flex: 0 0 auto;
+  color: var(--fg-ink-subtle);
+  font-size: 0.625rem;
+  font-weight: 690;
+}
+
+.daily-signal-peak {
+  flex: 0 0 auto;
+  padding-left: 0.35rem;
+  border-left: 1px solid var(--fg-line);
+  color: var(--fg-ink-muted);
+  font-size: 0.625rem;
+  font-weight: 720;
+}
+
+.daily-signal-summary dl {
+  min-width: 0;
+  margin: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.daily-signal-summary dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.daily-signal-summary dt {
+  color: var(--fg-ink-subtle);
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.daily-signal-summary dd {
+  margin: 0;
+  color: var(--fg-header);
+  font-size: 0.68rem;
+  font-weight: 820;
+}
+
+.daily-signal-scroll-hint {
+  display: none;
+  color: var(--fg-glacier);
+  font-size: 0.625rem;
+  font-weight: 780;
+  white-space: nowrap;
+}
+
+.daily-signal-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--fg-line-strong) transparent;
+  scrollbar-width: thin;
+  touch-action: pan-x;
+  cursor: grab;
+}
+
+.daily-signal-scroll:focus-visible {
+  border-radius: var(--fg-radius-sm);
+  outline: 3px solid var(--fg-focus);
+  outline-offset: 2px;
+}
+
+.daily-signal-scroll[data-dragging="true"] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.daily-signal-track {
+  width: 100%;
+  min-width: calc(var(--timeline-day-count) * 42px);
+  display: grid;
+  grid-template-columns: repeat(var(--timeline-day-count), minmax(42px, 1fr));
+}
+
+.daily-signal-day {
+  min-width: 0;
+  padding: 0 0.2rem;
+  border-left: 1px solid rgba(191, 205, 199, 0.62);
+  display: grid;
+  grid-template-rows: 0.8rem 2rem 0.8rem 0.75rem;
+  align-items: end;
+  justify-items: center;
+  scroll-snap-align: start;
+}
+
+.daily-signal-day:first-child {
+  border-left: 0;
+}
+
+.daily-signal-day[data-timeline-today="true"] {
+  border-radius: 0.35rem;
+  background: rgba(58, 127, 169, 0.07);
+}
+
+.daily-signal-value {
+  align-self: center;
+  color: var(--fg-ink-muted);
+  font-size: 0.625rem;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.daily-signal-bar-area {
+  width: 72%;
+  height: 100%;
+  border-bottom: 1px solid var(--fg-line-strong);
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+.daily-signal-bar {
+  width: min(1.25rem, 72%);
+  height: var(--daily-signal-height);
+  min-height: 0;
+  border-radius: 0.2rem 0.2rem 0 0;
+  background: var(--fg-line-strong);
+}
+
+.daily-signal-weekday,
+.daily-signal-day time,
+.daily-signal-date {
+  align-self: center;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-signal-weekday {
+  color: var(--fg-ink);
+  font-size: 0.625rem;
+  font-weight: 780;
+}
+
+.daily-signal-day time,
+.daily-signal-date {
+  color: var(--fg-ink-subtle);
+  font-size: 0.58rem;
+  font-weight: 650;
+}
+
+.daily-signal-empty {
+  margin: 0.45rem 0 0;
+  color: var(--fg-ink-muted);
+  font-size: 0.7rem;
+}
+
+.skeleton-resort-card {
+  height: 176px;
+}
+
+@media (max-width: 1180px) {
+  .result-column-headings,
+  .resort-forecast-card {
+    grid-template-columns: 2.75rem minmax(11rem, 1.3fr) minmax(8.5rem, 0.8fr) minmax(7rem, 0.65fr) minmax(13rem, 1.6fr) 5.4rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .resort-forecast-card {
+    min-height: 224px;
+    grid-template-columns: 2.75rem minmax(0, 1fr) 5.5rem;
+    grid-template-areas:
+      "favorite identity detail"
+      "today today primary"
+      "timeline timeline timeline";
+    grid-template-rows: auto auto auto;
+    gap: 0.45rem 0.6rem;
+  }
+
+  .daily-signal-timeline {
+    margin-top: 0.05rem;
+  }
+
+  .daily-signal-summary {
+    flex-wrap: wrap;
+    gap: 0.2rem 0.6rem;
+  }
+
+  .daily-signal-summary dl {
+    margin-left: auto;
+  }
+
+  .daily-signal-scroll-hint {
+    display: inline;
+  }
+
+  .daily-signal-track {
+    width: max-content;
+    min-width: 100%;
+    grid-template-columns: repeat(var(--timeline-day-count), 48px);
+  }
+
+  .daily-signal-day {
+    grid-template-rows: 0.9rem 2.75rem 0.9rem 0.8rem;
+  }
+
+  .skeleton-resort-card {
+    height: 224px;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .resort-forecast-card {
+    height: auto;
+    min-height: 210px;
+    grid-template-columns: 2.75rem minmax(11rem, 1.4fr) minmax(9rem, 1fr) minmax(7.5rem, 0.8fr) 5.5rem;
+    grid-template-areas:
+      "favorite identity today primary detail"
+      "timeline timeline timeline timeline timeline";
+    grid-template-rows: auto auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .daily-signal-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .daily-signal-title {
+    grid-column: 1 / -1;
+  }
+
+  .daily-signal-peak {
+    display: none;
+  }
+
+  .daily-signal-summary dl {
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .daily-signal-summary dl > div {
+    min-width: 0;
+    padding-right: 0.35rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.2rem;
+  }
+
+  .daily-signal-summary dl > div + div {
+    padding-left: 0.45rem;
+    border-left: 1px solid var(--fg-line);
+  }
+
+  .daily-signal-summary .daily-signal-secondary {
+    display: none;
+  }
+
+  .daily-signal-scroll-hint {
+    justify-self: end;
+  }
+
+  .daily-signal-unit {
+    margin-left: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .daily-signal-bar,
+  .daily-signal-day[data-timeline-today="true"] {
+    border: 1px solid CanvasText;
+  }
+}

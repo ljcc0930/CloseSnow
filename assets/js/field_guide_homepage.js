@@ -93,6 +93,117 @@
   const weekOneSnow = (report) => reportTotal(report, "week1_total_snowfall_cm", "snowfall_cm", 0, 7);
   const weekOneRain = (report) => reportTotal(report, "week1_total_rain_mm", "rain_mm", 0, 7);
 
+  const timelineScales = (reports) => {
+    const maxima = { snow: 5, rain: 10 };
+    (Array.isArray(reports) ? reports : []).forEach((report) => {
+      safeDaily(report).slice(0, 14).forEach((day) => {
+        const snow = asFiniteNumber(day.snowfall_cm);
+        const rain = asFiniteNumber(day.rain_mm);
+        if (snow !== null) maxima.snow = Math.max(maxima.snow, snow);
+        if (rain !== null) maxima.rain = Math.max(maxima.rain, rain);
+      });
+    });
+    return maxima;
+  };
+
+  const timelineSignal = (report) => {
+    const days = safeDaily(report).slice(0, 14);
+    const hasSnow = days.some((day) => (asFiniteNumber(day.snowfall_cm) || 0) > 0);
+    const hasRain = days.some((day) => (asFiniteNumber(day.rain_mm) || 0) > 0);
+    const kind = hasSnow || !hasRain ? "snow" : "rain";
+    return {
+      days,
+      kind,
+      key: kind === "snow" ? "snowfall_cm" : "rain_mm",
+      title: kind === "snow" ? "Daily snowfall" : "Daily rain · no snow in forecast",
+    };
+  };
+
+  const timelineTotal = (days, key, start, end) => {
+    const values = days.slice(start, end)
+      .map((day) => asFiniteNumber(day[key]))
+      .filter((value) => value !== null);
+    return values.length ? values.reduce((total, value) => total + value, 0) : null;
+  };
+
+  const timelineValueLabel = (value, mode) => {
+    const numeric = asFiniteNumber(value);
+    if (numeric === null) return "—";
+    if (numeric === 0) return "0";
+    const converted = mode === "imperial" ? numeric / 2.54 : numeric;
+    if (converted >= 10) return String(Math.round(converted));
+    return converted.toFixed(1).replace(/\.0$/, "");
+  };
+
+  const timelineDate = (value, index) => {
+    const raw = String(value || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      return { raw: "", weekday: index === 0 ? "Today" : `D${index + 1}`, day: "" };
+    }
+    const date = new Date(`${raw}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return { raw, weekday: raw, day: "" };
+    return {
+      raw,
+      weekday: index === 0
+        ? "Today"
+        : new Intl.DateTimeFormat(undefined, { weekday: "short", timeZone: "UTC" }).format(date),
+      day: new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", timeZone: "UTC" }).format(date),
+    };
+  };
+
+  const renderSignalTimeline = (report, options = {}) => {
+    const mode = normalizeMode(options.mode);
+    const signal = timelineSignal(report);
+    const scaleKey = signal.kind === "snow" ? "snowScaleMax" : "rainScaleMax";
+    const fallbackScale = signal.days.reduce((maximum, day) => {
+      const value = asFiniteNumber(day[signal.key]);
+      return value === null ? maximum : Math.max(maximum, value);
+    }, signal.kind === "snow" ? 5 : 10);
+    const scale = Math.max(0.01, asFiniteNumber(options[scaleKey]) || fallbackScale);
+    const firstWeekTotal = timelineTotal(signal.days, signal.key, 0, 7);
+    const secondWeekTotal = timelineTotal(signal.days, signal.key, 7, 14);
+    const kindLabel = signal.kind === "snow" ? "snowfall" : "rainfall";
+    const secondaryKind = signal.kind === "snow" ? "rain" : "snow";
+    const secondaryTotal = signal.kind === "snow" ? weekOneRain(report) : weekOneSnow(report);
+    const secondaryLabel = signal.kind === "snow" ? "7-day rain" : "7-day snow";
+    const peak = strongestDay(report, signal.key, 14);
+    const peakText = peak && peak.value > 0
+      ? `Peak ${dateParts(peak.day.date, peak.index).compact.split(" · ")[0]} · ${formatMeasure(signal.kind, peak.value, mode)}`
+      : "";
+    const unitLabel = mode === "imperial" ? "in" : (signal.kind === "snow" ? "cm" : "mm");
+    const dayBars = signal.days.map((day, index) => {
+      const value = asFiniteNumber(day[signal.key]);
+      const date = timelineDate(day.date, index);
+      const height = value !== null && value > 0
+        ? Math.max(7, Math.round(Math.min(1, value / scale) * 100))
+        : 0;
+      const fullValue = formatMeasure(signal.kind, value, mode);
+      const ariaDate = date.day ? `${date.weekday}, ${date.day}` : date.weekday;
+      return `
+        <div class="daily-signal-day" role="listitem" aria-label="${escapeHtml(`${ariaDate}: ${kindLabel} ${fullValue}`)}"${index === 0 ? ' data-timeline-today="true"' : ""}>
+          <span class="daily-signal-value" data-field-guide-number>${escapeHtml(timelineValueLabel(value, mode))}</span>
+          <span class="daily-signal-bar-area" aria-hidden="true"><span class="daily-signal-bar" style="--daily-signal-height:${height}%"></span></span>
+          <span class="daily-signal-weekday">${escapeHtml(date.weekday)}</span>
+          ${date.raw ? `<time datetime="${escapeHtml(date.raw)}">${escapeHtml(date.day)}</time>` : `<span class="daily-signal-date">${escapeHtml(date.day)}</span>`}
+        </div>`;
+    }).join("");
+    const empty = `
+      <p class="daily-signal-empty">Daily ${kindLabel} data is not available yet.</p>`;
+    return `
+      <section class="daily-signal-timeline" data-daily-signal-timeline data-metric-kind="${signal.kind}" aria-label="${escapeHtml(`${displayName(report)} ${signal.title.toLowerCase()}`)}">
+        <div class="daily-signal-summary">
+          <div class="daily-signal-title"><span class="signal-dot" aria-hidden="true"></span><strong>${escapeHtml(signal.title)}</strong><span class="daily-signal-unit">${escapeHtml(unitLabel)} / day</span>${peakText ? `<span class="daily-signal-peak">${escapeHtml(peakText)}</span>` : ""}</div>
+          <dl>
+            <div><dt>Next 7 days</dt><dd data-field-guide-number>${escapeHtml(formatMeasure(signal.kind, firstWeekTotal, mode))}</dd></div>
+            ${signal.days.length > 7 ? `<div><dt>Days 8–14</dt><dd data-field-guide-number>${escapeHtml(formatMeasure(signal.kind, secondWeekTotal, mode))}</dd></div>` : ""}
+            <div class="daily-signal-secondary"><dt>${secondaryLabel}</dt><dd data-field-guide-number>${escapeHtml(formatMeasure(secondaryKind, secondaryTotal, mode))}</dd></div>
+          </dl>
+          <span class="daily-signal-scroll-hint" aria-hidden="true">Swipe dates →</span>
+        </div>
+        ${dayBars ? `<div class="daily-signal-scroll" data-timeline-scroll tabindex="0" aria-label="Daily ${kindLabel} forecast. Scroll horizontally to see later dates."><div class="daily-signal-track" role="list" style="--timeline-day-count:${signal.days.length}">${dayBars}</div></div>` : empty}
+      </section>`;
+  };
+
   const strongestDay = (report, key, count = 7) => {
     let winner = null;
     safeDaily(report).slice(0, count).forEach((day, index) => {
@@ -199,11 +310,8 @@
           <dt><span class="signal-dot" aria-hidden="true"></span>${escapeHtml(summary.primaryLabel)}</dt>
           <dd data-field-guide-number>${escapeHtml(summary.primaryValue)}</dd>
         </dl>
-        <div class="resort-supporting-signal">
-          <div><span>${escapeHtml(summary.peakLabel)}</span><strong data-field-guide-number>${escapeHtml(summary.peakValue)}</strong></div>
-          <div><span>${escapeHtml(summary.secondary.label)}</span><strong data-field-guide-number>${escapeHtml(summary.secondary.value)}</strong></div>
-        </div>
         ${detailLink}
+        ${renderSignalTimeline(report, options)}
       </article>`;
   };
 
@@ -213,10 +321,13 @@
     const requestedLimit = Number(options.limit);
     const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.floor(requestedLimit) : 12;
     const visibleReports = reports.slice(0, limit);
+    const scales = timelineScales(visibleReports);
     const cards = visibleReports.map((report, index) => renderResortCard(report, {
       mode,
       index,
       favorite: favorites.has(String(report?.resort_id || "").trim()),
+      snowScaleMax: scales.snow,
+      rainScaleMax: scales.rain,
     })).join("");
     const shownCount = visibleReports.length;
     const remainingCount = Math.max(0, reports.length - shownCount);
@@ -233,7 +344,7 @@
           <div><p class="section-kicker">Forecast directory</p><h2 id="results-title">Compare resorts</h2></div>
           <p id="results-count" role="status">Showing ${shownCount} of ${reports.length} resort${reports.length === 1 ? "" : "s"}</p>
         </div>
-        <div class="result-column-headings" aria-hidden="true"><span></span><span>Resort</span><span>Today</span><span>7-day signal</span><span>Peak / secondary</span><span></span></div>
+        <div class="result-column-headings" aria-hidden="true"><span></span><span>Resort</span><span>Today</span><span>7-day signal</span><span>Daily timeline</span><span></span></div>
         <div class="resort-card-grid">${cards || empty}</div>
         ${remainingCount ? `<div class="results-pagination"><button id="show-more-resorts" class="fg-button" type="button" data-show-more-results aria-describedby="results-count" aria-label="Show ${nextCount} more resorts; ${shownCount} of ${reports.length} currently shown">Show ${nextCount} more</button></div>` : ""}
       </section>`;
@@ -248,6 +359,8 @@
     escapeHtml,
     render,
     renderResortCard,
+    renderSignalTimeline,
+    timelineScales,
     weekOneRain,
     weekOneSnow,
   });

@@ -408,6 +408,38 @@
     return "No resort matched the current filters. Reset the filters to return to the full morning report.";
   };
 
+  const bindTimelineDragging = () => {
+    pageContentRoot?.querySelectorAll("[data-timeline-scroll]").forEach((scroller) => {
+      let pointerId = null;
+      let startX = 0;
+      let startLeft = 0;
+
+      const finishDrag = () => {
+        if (pointerId === null) return;
+        pointerId = null;
+        delete scroller.dataset.dragging;
+      };
+
+      scroller.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "touch" || event.button !== 0) return;
+        pointerId = event.pointerId;
+        startX = event.clientX;
+        startLeft = scroller.scrollLeft;
+        scroller.dataset.dragging = "true";
+        scroller.setPointerCapture?.(event.pointerId);
+      });
+      scroller.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== pointerId) return;
+        const delta = event.clientX - startX;
+        if (Math.abs(delta) > 3) event.preventDefault();
+        scroller.scrollLeft = startLeft - delta;
+      });
+      scroller.addEventListener("pointerup", finishDrag);
+      scroller.addEventListener("pointercancel", finishDrag);
+      scroller.addEventListener("lostpointercapture", finishDrag);
+    });
+  };
+
   const renderPage = (options = {}) => {
     if (!pageContentRoot || !appState.payload || typeof homepage.render !== "function") return;
     const visibleReports = filteredReports();
@@ -417,6 +449,7 @@
       emptyMessage: emptyStateMessage(),
       limit: visibleResultLimit,
     });
+    bindTimelineDragging();
     pageContentRoot.removeAttribute("data-loading");
     pageContentRoot.setAttribute("aria-busy", "false");
     syncFilterSummary(visibleReports.length, payloadReports().length);
