@@ -253,7 +253,7 @@ def test_build_html_contains_meta_sections():
     assert 'id="visible-resort-count"' in html
     assert "Mountain-by-mountain outlook" not in html
     assert 'href="assets/css/field_guide_foundation.css"' in html
-    assert html.index('href="assets/css/weather_page.css"') < html.index('href="assets/css/field_guide_foundation.css"')
+    assert html.index('href="assets/css/field_guide_foundation.css"') < html.index('href="assets/css/weather_page.css"')
     assert 'src="assets/js/field_guide_foundation.js"' in html
     assert 'src="assets/js/field_guide_homepage.js"' in html
     assert html.index('src="assets/js/field_guide_foundation.js"') < html.index(

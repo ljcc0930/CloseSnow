@@ -313,12 +313,19 @@ def test_field_guide_styles_define_shared_semantics_and_compact_header():
     assert "--fg-pine:" in css
     assert "--fg-signal:" in css
     assert "--fg-paper:" in css
+    assert "--fg-ink-subtle: #5f737d" in css
+    assert "--fg-shadow-card:" in css
+    assert "--fg-shadow-section:" in css
+    assert "--shadow-card: var(--fg-shadow-card)" in css
     assert ".site-header-inner" in css
     assert "height: 56px" in css
     assert "font-variant-numeric: tabular-nums" in css
     assert ".fg-card" in css
+    assert "outline: 3px solid var(--fg-focus)" in css
     assert "[data-field-guide-tabs]" in css
     assert "details[data-field-guide-disclosure]" in css
+    assert "@media (forced-colors: active)" in css
+    assert ".snapshot-card-weather .snapshot-icon {\n  color: var(--fg-glacier);" in css
 
 
 def test_homepage_ranking_explains_signal_best_day_and_temperature_context():
@@ -418,12 +425,57 @@ def test_homepage_card_discloses_every_daily_field_uses_global_units_and_escapes
     assert "No snow forecast" in result
 
 
+def test_homepage_visual_hierarchy_exposes_ranked_and_primary_weather_signals():
+    result = _run_homepage_expression(
+        """(() => {
+  const homepage = window.CloseSnowFieldGuideHomepage;
+  const snowReport = {
+    resort_id: "deep",
+    display_name: "Deep Peak",
+    week1_total_snowfall_cm: 18,
+    week2_total_snowfall_cm: 4,
+    week1_total_rain_mm: 2,
+    daily: [
+      { date: "2026-03-03", weather_code: 71, snowfall_cm: 12, rain_mm: 0, temperature_max_c: -1, temperature_min_c: -8 },
+    ],
+  };
+  const rainReport = {
+    resort_id: "wet",
+    display_name: "Wet Ridge",
+    week1_total_snowfall_cm: 0,
+    week2_total_snowfall_cm: 0,
+    week1_total_rain_mm: 42,
+    daily: [
+      { date: "2026-03-03", weather_code: 61, snowfall_cm: 0, rain_mm: 20, temperature_max_c: 8, temperature_min_c: 2 },
+    ],
+  };
+  return {
+    board: homepage.render([snowReport], { mode: "metric" }),
+    rainCard: homepage.renderResortCard(rainReport, { mode: "metric" }),
+  };
+})()"""
+    )
+
+    assert 'data-rank="1" data-signal="snow"' in result["board"]
+    assert 'class="insight-signal"' in result["board"]
+    assert "7-day snow" in result["board"]
+    assert "18.0 cm" in result["board"]
+    assert 'data-signal="snow"' in result["board"]
+    assert 'data-priority="primary"' in result["board"]
+    assert 'data-signal="rain"' in result["rainCard"]
+    assert "Rain signal" in result["rainCard"]
+    assert 'data-metric-kind="rain" data-priority="primary"' in result["rainCard"]
+
+
 def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
     result = _run_homepage_expression(
         """(() => {
   const homepage = window.CloseSnowFieldGuideHomepage;
   return {
     missing: homepage.renderResortCard({ resort_id: "missing", display_name: "Missing Mountain", daily: [] }),
+    partial: homepage.renderResortCard({ resort_id: "partial", display_name: "Partial Peak", week1_total_snowfall_cm: 0, daily: [] }),
+    inactiveBoard: homepage.render([{ resort_id: "missing", display_name: "Missing Mountain", daily: [] }]),
+    quietBoard: homepage.render([{ resort_id: "quiet", display_name: "Quiet Mountain", week1_total_snowfall_cm: 0, week1_total_rain_mm: 0, daily: [] }]),
     empty: homepage.render([], { emptyMessage: "Try clearing your filters." }),
   };
 })()"""
@@ -431,6 +483,17 @@ def test_homepage_missing_and_no_results_copy_is_honest_and_readable():
 
     assert "Forecast details are not available for this resort yet." in result["missing"]
     assert "Daily guidance is not available yet." in result["missing"]
+    assert "Forecast pending" in result["missing"]
+    assert "Quiet pattern" not in result["missing"]
+    assert 'data-priority="primary"' not in result["missing"]
+    assert "Forecast pending" in result["partial"]
+    assert "Quiet pattern" not in result["partial"]
+    assert "Forecast signal unavailable" in result["inactiveBoard"]
+    assert "not complete enough to rank" in result["inactiveBoard"]
+    assert "shows no accumulating snow or rain" not in result["inactiveBoard"]
+    assert "Storm signal" not in result["inactiveBoard"]
+    assert "No active weather to rank" in result["quietBoard"]
+    assert "shows no accumulating snow or rain" in result["quietBoard"]
     assert "No resorts match this view" in result["empty"]
     assert "Try clearing your filters." in result["empty"]
 
@@ -445,6 +508,13 @@ def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
     assert 'metrics: Object.freeze(["visibility", "snow_depth"])' in js
     assert "renderHourlyNarrative" in js
     assert "renderWindDirectionCard" in js
+    assert 'label.textContent = "Bottom line"' in js
+    assert "snapshotEl.dataset.primarySignal = priority" in js
+    assert "card.dataset.weatherSignal" in js
+    assert "primaryMetricForGroup" in js
+    assert 'if (hasPositiveReading("snowfall")) return "snowfall"' in js
+    assert 'if (hasPositiveReading("rain")) return "rain"' in js
+    assert 'if (metricKey === primaryMetric) card.dataset.priority = "primary"' in js
     assert "fieldGuideWeather.iconHtml" in js
     assert "data-timeline-today" in js
     assert 'appendDefinition(daylight, "Sunrise"' in js
@@ -455,6 +525,10 @@ def test_resort_field_guide_groups_hourly_weather_and_preserves_daily_detail():
     assert ".resort-masthead" in css
     assert ".field-guide-timeline-track" in css
     assert '.timeline-day-card[data-phase="today"]' in css
+    assert '.snapshot-card[data-priority="primary"]' in css
+    assert '.chart-card[data-priority="primary"]' in css
+    assert ".hourly-narrative::before" in css
+    assert "opacity: 0.24" in css
     assert ".hourly-view-tabs" in css
     assert ".wind-direction-grid" in css
     assert ".resort-hero-mountain" not in css
@@ -470,3 +544,7 @@ def test_integration_removes_superseded_frontend_assets_and_stacks_mobile_insigh
     assert "grid-auto-flow: column" not in homepage_css
     assert ".insight-grid," in homepage_css
     assert "grid-template-columns: minmax(0, 1fr)" in homepage_css
+    assert '.insight-card[data-rank="1"]' in homepage_css
+    assert '.insight-card[data-rank="1"] .insight-resort-link:focus-visible' in homepage_css
+    assert "box-shadow: var(--fg-shadow-raised)" in homepage_css
+    assert "transform: translateY" not in homepage_css

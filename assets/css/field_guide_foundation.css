@@ -3,7 +3,7 @@
   color-scheme: light;
   --fg-ink: #17252e;
   --fg-ink-muted: #526671;
-  --fg-ink-subtle: #71838c;
+  --fg-ink-subtle: #5f737d;
   --fg-paper: #fbfcfa;
   --fg-surface: #ffffff;
   --fg-surface-muted: #f1f5f3;
@@ -13,7 +13,7 @@
   --fg-glacier-soft: #dceff5;
   --fg-pine: #16705d;
   --fg-pine-soft: #dcefe9;
-  --fg-signal: #c75518;
+  --fg-signal: #ae440f;
   --fg-signal-soft: #fbe7da;
   --fg-danger: #a43e38;
   --fg-focus: #167a9b;
@@ -22,8 +22,10 @@
   --fg-radius-sm: 4px;
   --fg-radius-md: 8px;
   --fg-radius-lg: 12px;
-  --fg-shadow-overlay: 0 18px 48px rgba(23, 37, 46, 0.2);
-  --fg-shadow-raised: 0 8px 22px rgba(23, 37, 46, 0.1);
+  --fg-shadow-card: 0 1px 2px rgba(18, 43, 54, 0.06), 0 9px 24px rgba(18, 43, 54, 0.065);
+  --fg-shadow-section: 0 2px 5px rgba(18, 43, 54, 0.05), 0 20px 46px rgba(18, 43, 54, 0.075);
+  --fg-shadow-raised: 0 4px 12px rgba(18, 43, 54, 0.1), 0 24px 48px rgba(18, 43, 54, 0.14);
+  --fg-shadow-overlay: 0 20px 52px rgba(18, 43, 54, 0.22);
   --fg-space-1: 0.25rem;
   --fg-space-2: 0.5rem;
   --fg-space-3: 0.75rem;
@@ -51,7 +53,7 @@
   --radius-sm: var(--fg-radius-sm);
   --radius-md: var(--fg-radius-md);
   --radius-lg: var(--fg-radius-lg);
-  --shadow-card: none;
+  --shadow-card: var(--fg-shadow-card);
   --shadow-soft: var(--fg-shadow-overlay);
 }
 
@@ -95,7 +97,7 @@ a {
 }
 
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--fg-focus) 34%, transparent);
+  outline: 3px solid var(--fg-focus);
   outline-offset: 3px;
 }
 
@@ -291,7 +293,7 @@ a {
   border-radius: var(--fg-radius-md);
   color: var(--fg-ink);
   background: var(--fg-surface);
-  box-shadow: none;
+  box-shadow: var(--fg-shadow-card);
 }
 
 .fg-card[data-elevation="raised"] {
@@ -432,7 +434,18 @@ details[data-field-guide-disclosure] > summary {
 }
 
 .snapshot-card-weather .snapshot-icon {
-  color: #dceff5;
+  color: var(--fg-glacier);
+}
+
+@media (forced-colors: active) {
+  :where([data-elevation="raised"], [data-priority="primary"], [data-rank="1"], [data-phase="today"], [aria-selected="true"]) {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline-color: Highlight;
+  }
 }
 
 @media (max-width: 700px) {
