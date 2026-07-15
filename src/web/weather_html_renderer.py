@@ -9,16 +9,16 @@ from typing import Any, Dict, List
 _PAGE_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "weather_page.html").read_text(encoding="utf-8")
 
 _PAGE_SHELL_PLACEHOLDER = """
-    <section class="forecast-overview forecast-loading-overview" aria-hidden="true">
+    <section class="forecast-results forecast-section-loading" aria-hidden="true">
       <div class="skeleton skeleton-heading"></div>
-      <div class="loading-card-grid"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
+      <div class="resort-card-grid">
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+        <div class="skeleton skeleton-resort-card"></div>
+      </div>
+      <p class="section-loading sr-only">Loading forecast...</p>
     </section>
-    <section class="forecast-section forecast-section-loading"><h2>Daily Summary</h2><div class="skeleton skeleton-table"></div><p class="section-loading sr-only">Loading forecast...</p></section>
-    <section class="forecast-section forecast-section-loading"><h2>Snowfall</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Rainfall</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Temperature</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Weather</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Sunrise / Sunset</h2><div class="skeleton skeleton-table"></div></section>
 """
 
 

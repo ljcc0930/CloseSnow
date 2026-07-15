@@ -2,12 +2,17 @@ const context = window.CLOSESNOW_HOURLY_CONTEXT || {};
 const resortId = String(context.resortId || "").trim();
 const hourlyDataUrl = String(context.hourlyDataUrl || "").trim();
 const dailySummary = context.dailySummary && typeof context.dailySummary === "object" ? context.dailySummary : null;
-const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const hourlyMetricHelpers = window.CloseSnowResortHourlyMetrics || {};
+const fieldGuide = window.CloseSnowFieldGuide || {};
+const fieldGuideCopy = fieldGuide.copy || {};
+const fieldGuideUnits = fieldGuide.units || {};
+const fieldGuideWeather = fieldGuide.weather || {};
 
 const hoursSelect = document.getElementById("hours-select");
 const refreshBtn = document.getElementById("hours-refresh-btn");
 const titleEl = document.getElementById("hourly-title");
+const resortContextEl = document.getElementById("resort-context");
+const outlookEl = document.getElementById("resort-outlook");
 const localTimeEl = document.getElementById("resort-local-time");
 const websiteLinkEl = document.getElementById("resort-website-link");
 const locationLinkEl = document.getElementById("resort-location-link");
@@ -19,18 +24,34 @@ const airportAccessRootEl = document.getElementById("resort-airport-access-root"
 const metaEl = document.getElementById("hourly-meta");
 const errorEl = document.getElementById("hourly-error");
 const chartErrorEl = document.getElementById("hourly-chart-error");
+const hourlyNarrativeEl = document.getElementById("hourly-narrative");
 const chartsEl = document.getElementById("hourly-charts");
+const hourlyTabButtons = Array.from(document.querySelectorAll("[data-hourly-group]"));
 const table = document.getElementById("hourly-table");
 const thead = table ? table.querySelector("thead") : null;
 const tbody = table ? table.querySelector("tbody") : null;
 let metaState = null;
 let localTimeTimerId = null;
-let timelineAutoCentered = false;
 let lastHourlyPayload = null;
 let chartResizeRafId = null;
+let activeHourlyGroup = "storm";
 
 const metricDefs = Array.isArray(hourlyMetricHelpers.metricDefs) ? hourlyMetricHelpers.metricDefs : [];
 const trimHourlyPayload = hourlyMetricHelpers.trimHourlyPayload;
+const HOURLY_GROUPS = Object.freeze({
+  storm: Object.freeze({
+    label: "Precipitation",
+    metrics: Object.freeze(["snowfall", "rain", "precipitation_probability"]),
+  }),
+  wind: Object.freeze({
+    label: "Wind",
+    metrics: Object.freeze(["wind_speed_10m", "wind_direction_10m"]),
+  }),
+  visibility: Object.freeze({
+    label: "Visibility and depth",
+    metrics: Object.freeze(["visibility", "snow_depth"]),
+  }),
+});
 
 const routePrefix = (() => {
   const path = window.location.pathname || "";
@@ -60,6 +81,17 @@ const formatValue = (value) => {
   return String(value);
 };
 
+const sevenDayMetricTotal = (daily, key) => {
+  const values = (Array.isArray(daily) ? daily : []).slice(0, 7)
+    .map((day) => toFiniteNumber(day?.[key]))
+    .filter((value) => value !== null);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
+};
+
+const currentUnitMode = () => (fieldGuideUnits.readPreference
+  ? fieldGuideUnits.readPreference()
+  : "metric");
+
 const formatCoordinate = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
@@ -80,6 +112,95 @@ const resolveResortLabel = (payload) => String(
   || resortId
   || "Unknown resort",
 ).trim();
+
+const friendlyDate = (rawDate, fallback = "") => {
+  const text = String(rawDate || "").trim();
+  if (!text) return fallback;
+  const datePart = text.split("T", 1)[0];
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!match) return text;
+  try {
+    return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", weekday: "short", timeZone: "UTC" })
+      .format(new Date(`${datePart}T12:00:00Z`));
+  } catch (_error) {
+    return `${match[2]}-${match[3]}`;
+  }
+};
+
+const contextText = (value) => {
+  if (Array.isArray(value)) return value.flatMap((item) => contextText(item));
+  if (value && typeof value === "object") {
+    return contextText(value.display_name || value.name || value.label || value.code || "");
+  }
+  const text = String(value || "").trim();
+  return text ? [text] : [];
+};
+
+const renderResortIdentity = (payload = null) => {
+  const label = resolveResortLabel(payload);
+  if (titleEl) titleEl.textContent = label;
+  document.title = `${label} forecast | CloseSnow`;
+  if (!resortContextEl) return;
+  const source = { ...(dailySummary || {}), ...(payload || {}) };
+  const place = [source.region || source.subregion, source.admin1, source.country]
+    .flatMap((value) => contextText(value))
+    .filter((value, index, values) => values.indexOf(value) === index);
+  const passes = contextText(source.pass_types).map((value) => `${value} pass`);
+  resortContextEl.textContent = [...place, ...passes].join(" · ");
+};
+
+const strongestDailySignal = (daily, unitMode) => {
+  const days = Array.isArray(daily) ? daily.slice(0, 7) : [];
+  let snowDay = null;
+  let rainDay = null;
+  days.forEach((day) => {
+    const snow = toFiniteNumber(day?.snowfall_cm);
+    const rain = toFiniteNumber(day?.rain_mm);
+    if (snow !== null && (!snowDay || snow > snowDay.value)) snowDay = { day, value: snow };
+    if (rain !== null && (!rainDay || rain > rainDay.value)) rainDay = { day, value: rain };
+  });
+  const missingNote = !snowDay && !rainDay
+    ? "Snow and rain estimates are not available yet."
+    : (!snowDay ? "Snow estimates are not available yet." : (!rainDay ? "Rain estimates are not available yet." : ""));
+  if (snowDay && snowDay.value > 0) {
+    const amount = fieldGuideUnits.formatSnow
+      ? fieldGuideUnits.formatSnow(snowDay.value, unitMode)
+      : `${snowDay.value.toFixed(1)} cm`;
+    return `The strongest snow signal is ${amount} on ${friendlyDate(snowDay.day?.date, "the leading forecast day")}. ${missingNote}`.trim();
+  }
+  if (rainDay && rainDay.value > 0) {
+    const amount = fieldGuideUnits.formatRain
+      ? fieldGuideUnits.formatRain(rainDay.value, unitMode)
+      : `${rainDay.value.toFixed(1)} mm`;
+    return `The wettest signal is ${amount} on ${friendlyDate(rainDay.day?.date, "the leading forecast day")}. ${missingNote}`.trim();
+  }
+  if (!snowDay && !rainDay) return missingNote;
+  const availableSignals = [snowDay ? "snow" : "", rainDay ? "rain" : ""].filter(Boolean).join(" or ");
+  return `No meaningful ${availableSignals} signal stands out in the next seven days. ${missingNote}`.trim();
+};
+
+const renderResortOutlook = () => {
+  if (!outlookEl) return;
+  const daily = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
+  outlookEl.textContent = "";
+  const label = document.createElement("span");
+  label.className = "resort-outlook-label";
+  label.textContent = "Bottom line";
+  const copy = document.createElement("strong");
+  if (!daily.length) {
+    copy.textContent = "The seven-day outlook is not available yet.";
+    outlookEl.appendChild(label);
+    outlookEl.appendChild(copy);
+    return;
+  }
+  const unitMode = currentUnitMode();
+  const base = fieldGuideCopy.dailyOutlook
+    ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode, days: 7 })
+    : "Seven-day forecast available below.";
+  copy.textContent = `${base} ${strongestDailySignal(daily, unitMode)}`.trim();
+  outlookEl.appendChild(label);
+  outlookEl.appendChild(copy);
+};
 
 const buildExternalLink = (href, label, className = "") => {
   const url = String(href || "").trim();
@@ -361,7 +482,10 @@ const renderNearbyAirports = (payload) => {
     if (airport.distanceMiles !== null) {
       const distance = document.createElement("span");
       distance.className = "resort-airport-access-distance";
-      distance.textContent = `${Math.round(airport.distanceMiles)} mi`;
+      const distanceKm = airport.distanceMiles * 1.609344;
+      distance.textContent = fieldGuideUnits.formatDistance
+        ? fieldGuideUnits.formatDistance(distanceKm, currentUnitMode(), { digits: 0 })
+        : `${Math.round(airport.distanceMiles)} mi`;
       head.appendChild(distance);
     }
 
@@ -425,27 +549,59 @@ const renderResortSnapshot = () => {
   }
   const high = toFiniteNumber(today.temperature_max_c);
   const low = toFiniteNumber(today.temperature_min_c);
-  const snow = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.snowfall_cm) || 0), 0);
-  const rain = daily.slice(0, 7).reduce((sum, day) => sum + (toFiniteNumber(day?.rain_mm) || 0), 0);
+  const snow = sevenDayMetricTotal(daily, "snowfall_cm");
+  const rain = sevenDayMetricTotal(daily, "rain_mm");
   const weatherCode = today.weather_code;
-  const weatherEmoji = window.CloseSnowWeatherCode?.emojiForWeatherCode
-    ? window.CloseSnowWeatherCode.emojiForWeatherCode(weatherCode)
-    : "❓";
-  const temperature = high === null || low === null ? "--" : `${Math.round(high)}° / ${Math.round(low)}°`;
-  snapshotEl.innerHTML = `
-    <article class="snapshot-card snapshot-card-weather">
-      <span class="snapshot-icon" aria-hidden="true">${weatherEmoji}</span>
-      <span><small>Today</small><strong>${temperature}</strong><em>High / low °C</em></span>
-    </article>
-    <article class="snapshot-card">
-      <span class="snapshot-icon snapshot-icon-snow" aria-hidden="true">❄</span>
-      <span><small>Next 7 days</small><strong>${snow.toFixed(1)} cm</strong><em>Forecast snow</em></span>
-    </article>
-    <article class="snapshot-card">
-      <span class="snapshot-icon snapshot-icon-rain" aria-hidden="true">◌</span>
-      <span><small>Next 7 days</small><strong>${rain.toFixed(1)} mm</strong><em>Forecast rain</em></span>
-    </article>`;
+  const conditionName = fieldGuideWeather.conditionName
+    ? fieldGuideWeather.conditionName(weatherCode)
+    : "Conditions unavailable";
+  const unitMode = currentUnitMode();
+  const weatherIcon = fieldGuideWeather.iconHtml
+    ? fieldGuideWeather.iconHtml(weatherCode)
+    : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>';
+  const metricIcon = (kind, label) => (fieldGuideWeather.metricIconHtml
+    ? fieldGuideWeather.metricIconHtml(kind, { label })
+    : `<span class="field-guide-weather-icon" role="img" aria-label="${label}">?</span>`);
+  const temperatureUnit = fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("temperature", unitMode) : "°C";
+  const formattedHigh = high === null
+    ? "--"
+    : (fieldGuideUnits.formatTemperature
+      ? fieldGuideUnits.formatTemperature(high, unitMode, { withUnit: false, digits: 0 })
+      : String(Math.round(high)));
+  const formattedLow = low === null
+    ? "--"
+    : (fieldGuideUnits.formatTemperature
+      ? fieldGuideUnits.formatTemperature(low, unitMode, { withUnit: false, digits: 0 })
+      : String(Math.round(low)));
+  const temperature = high === null && low === null ? "Not available" : `${formattedHigh} / ${formattedLow} ${temperatureUnit}`;
+  const snowValue = snow === null
+    ? "Not available"
+    : (fieldGuideUnits.formatSnow ? fieldGuideUnits.formatSnow(snow, unitMode) : `${snow.toFixed(1)} cm`);
+  const rainValue = rain === null
+    ? "Not available"
+    : (fieldGuideUnits.formatRain ? fieldGuideUnits.formatRain(rain, unitMode) : `${rain.toFixed(1)} mm`);
+  const outlook = fieldGuideCopy.dailyOutlook ? fieldGuideCopy.dailyOutlook(daily, { mode: unitMode }) : "";
+  const priority = snow !== null && snow > 0 ? "snow" : (rain !== null && rain > 0 ? "rain" : "weather");
+  const primaryAttribute = (kind) => (priority === kind ? ' data-priority="primary"' : "");
+  const cards = {
+    weather: `<article class="snapshot-card snapshot-card-weather" data-snapshot-kind="weather"${primaryAttribute("weather")}>
+      <span class="snapshot-icon">${weatherIcon}</span>
+      <span><small>Today</small><strong>${temperature}</strong><em>${conditionName}</em></span>
+    </article>`,
+    snow: `<article class="snapshot-card" data-snapshot-kind="snow"${primaryAttribute("snow")}>
+      <span class="snapshot-icon snapshot-icon-snow">${metricIcon("snow", "Snowfall")}</span>
+      <span><small>7-day snow</small><strong>${snowValue}</strong><em>${snow === null ? "Awaiting model data" : "Forecast total"}</em></span>
+    </article>`,
+    rain: `<article class="snapshot-card" data-snapshot-kind="rain"${primaryAttribute("rain")}>
+      <span class="snapshot-icon snapshot-icon-rain">${metricIcon("rain", "Rainfall")}</span>
+      <span><small>7-day rain</small><strong>${rainValue}</strong><em>${rain === null ? "Awaiting model data" : "Forecast total"}</em></span>
+    </article>`,
+  };
+  snapshotEl.dataset.primarySignal = priority;
+  snapshotEl.innerHTML = ["weather", "snow", "rain"].map((kind) => cards[kind]).join("");
+  if (outlook) snapshotEl.setAttribute("aria-label", outlook);
   snapshotEl.hidden = false;
+  renderResortOutlook();
 };
 
 const toFiniteNumber = (value) => {
@@ -465,18 +621,161 @@ const splitTimeLabel = (rawTime) => {
   return { dateLabel: md, timeLabel: hourLabel };
 };
 
+const METRIC_PRESENTATION = Object.freeze({
+  snowfall: Object.freeze({
+    title: "Snowfall",
+    description: "Hourly accumulation across the selected weather window",
+    chart: "bar",
+    color: "#167a9b",
+  }),
+  rain: Object.freeze({
+    title: "Rainfall",
+    description: "Hourly liquid precipitation at the forecast grid",
+    chart: "bar",
+    color: "#16705d",
+  }),
+  precipitation_probability: Object.freeze({
+    title: "Precipitation chance",
+    description: "Likelihood of measurable precipitation each hour",
+    chart: "area",
+    color: "#486b9b",
+  }),
+  wind_speed_10m: Object.freeze({
+    title: "Wind speed",
+    description: "Forecast wind at 10 metres above the surface",
+    chart: "line",
+    color: "#c75518",
+  }),
+  wind_direction_10m: Object.freeze({
+    title: "Wind direction",
+    description: "Where the wind is coming from, sampled across the window",
+    chart: "direction",
+    color: "#16705d",
+  }),
+  visibility: Object.freeze({
+    title: "Visibility",
+    description: "Forecast sight distance; lower values mean poorer visibility",
+    chart: "area",
+    color: "#486b9b",
+  }),
+  snow_depth: Object.freeze({
+    title: "Snow depth",
+    description: "Modelled snowpack depth at the forecast grid",
+    chart: "line",
+    color: "#167a9b",
+  }),
+});
+
+const degreesToCardinal = (rawDegrees) => {
+  const degrees = toFiniteNumber(rawDegrees);
+  if (degrees === null) return "—";
+  const labels = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const normalized = ((degrees % 360) + 360) % 360;
+  return labels[Math.round(normalized / 22.5) % labels.length];
+};
+
+const metricUnit = (metricKey, mode = currentUnitMode()) => {
+  if (metricKey === "snowfall") return fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("snow", mode) : "cm";
+  if (metricKey === "rain") return fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("rain", mode) : "mm";
+  if (metricKey === "precipitation_probability") return "%";
+  if (metricKey === "snow_depth") return mode === "imperial" ? "ft" : "m";
+  if (metricKey === "wind_speed_10m") return mode === "imperial" ? "mph" : "km/h";
+  if (metricKey === "wind_direction_10m") return "°";
+  if (metricKey === "visibility") return mode === "imperial" ? "mi" : "km";
+  return "";
+};
+
+const convertHourlyMetric = (metricKey, rawValue, mode = currentUnitMode()) => {
+  const value = toFiniteNumber(rawValue);
+  if (value === null) return null;
+  if (metricKey === "snowfall") {
+    return fieldGuideUnits.convertValue ? fieldGuideUnits.convertValue("snow", value, mode) : value;
+  }
+  if (metricKey === "rain") {
+    return fieldGuideUnits.convertValue ? fieldGuideUnits.convertValue("rain", value, mode) : value;
+  }
+  if (metricKey === "snow_depth") return mode === "imperial" ? value * 3.28084 : value;
+  if (metricKey === "wind_speed_10m") return mode === "imperial" ? value / 1.609344 : value;
+  if (metricKey === "visibility") return mode === "imperial" ? value / 1609.344 : value / 1000;
+  return value;
+};
+
+const metricDigits = (metricKey, mode = currentUnitMode()) => {
+  if (metricKey === "precipitation_probability" || metricKey === "wind_direction_10m") return 0;
+  if (metricKey === "rain" && mode === "imperial") return 2;
+  if (metricKey === "visibility") return 1;
+  return 1;
+};
+
+const formatMetricValue = (metricKey, rawValue, options = {}) => {
+  const mode = options.mode || currentUnitMode();
+  const converted = convertHourlyMetric(metricKey, rawValue, mode);
+  if (converted === null) return "—";
+  if (metricKey === "wind_direction_10m") {
+    return `${degreesToCardinal(converted)} ${Math.round(converted)}°`;
+  }
+  const digits = Number.isInteger(options.digits) ? options.digits : metricDigits(metricKey, mode);
+  const number = converted.toFixed(digits);
+  if (options.withUnit === false) return number;
+  if (metricKey === "precipitation_probability") return `${number}%`;
+  const unit = metricUnit(metricKey, mode);
+  return unit ? `${number} ${unit}` : number;
+};
+
+const friendlyHour = (rawTime) => {
+  const text = String(rawTime || "").trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(text);
+  if (!match) return text || "the selected window";
+  try {
+    const date = new Date(Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+      Number(match[4]),
+      Number(match[5]),
+    ));
+    return new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      hour: "numeric",
+      minute: match[5] === "00" ? undefined : "2-digit",
+      timeZone: "UTC",
+    }).format(date);
+  } catch (_error) {
+    return text.replace("T", " ");
+  }
+};
+
+const finiteSeries = (values) => values.map((value) => toFiniteNumber(value));
+
+const extremeIndex = (values, type = "max") => {
+  let selectedIndex = -1;
+  let selectedValue = null;
+  values.forEach((value, index) => {
+    const number = toFiniteNumber(value);
+    if (number === null) return;
+    if (selectedValue === null || (type === "min" ? number < selectedValue : number > selectedValue)) {
+      selectedIndex = index;
+      selectedValue = number;
+    }
+  });
+  return { index: selectedIndex, value: selectedValue };
+};
+
 const chartYBounds = (metricKey, values) => {
   if (metricKey === "precipitation_probability") return { min: 0, max: 100 };
-  if (metricKey === "wind_direction_10m") return { min: 0, max: 360 };
-  const finiteValues = values.filter((v) => v !== null);
+  const finiteValues = values.filter((value) => value !== null);
   if (!finiteValues.length) return null;
   let min = Math.min(...finiteValues);
   let max = Math.max(...finiteValues);
-  if (min === max) {
-    const pad = min === 0 ? 1 : Math.abs(min) * 0.1;
-    min -= pad;
-    max += pad;
+  if (["snowfall", "rain", "wind_speed_10m"].includes(metricKey)) {
+    min = 0;
+    max = Math.max(max * 1.1, metricKey === "wind_speed_10m" ? 5 : 1);
+    return { min, max };
   }
+  const span = max - min;
+  const pad = span > 0 ? span * 0.12 : (Math.abs(max) * 0.08 || 1);
+  min = Math.max(0, min - pad);
+  max += pad;
   return { min, max };
 };
 
@@ -496,30 +795,100 @@ const chartLinePath = (values, xForIndex, yForValue) => {
   return path.trim();
 };
 
+const chartAreaPath = (values, xForIndex, yForValue, baselineY) => {
+  const segments = [];
+  let current = [];
+  values.forEach((value, index) => {
+    if (value === null) {
+      if (current.length) segments.push(current);
+      current = [];
+      return;
+    }
+    current.push({ index, value });
+  });
+  if (current.length) segments.push(current);
+  return segments.map((segment) => {
+    const first = segment[0];
+    const last = segment[segment.length - 1];
+    const line = segment.map((point) => `L${xForIndex(point.index).toFixed(2)} ${yForValue(point.value).toFixed(2)}`).join(" ");
+    return `M${xForIndex(first.index).toFixed(2)} ${baselineY.toFixed(2)} ${line} L${xForIndex(last.index).toFixed(2)} ${baselineY.toFixed(2)} Z`;
+  }).join(" ");
+};
+
 const resolveChartWidth = () => {
   if (!chartsEl) return 720;
   const containerWidth = chartsEl.getBoundingClientRect().width || chartsEl.clientWidth || 720;
   const isSingleColumn = typeof window.matchMedia === "function"
+    && window.matchMedia("(max-width: 700px)").matches;
+  const isMediumWidth = typeof window.matchMedia === "function"
     && window.matchMedia("(max-width: 980px)").matches;
+  const columns = isSingleColumn ? 1 : (activeHourlyGroup === "storm" && !isMediumWidth ? 3 : 2);
   const gap = 12;
   const cardHorizontalPadding = 22;
-  const rawCardWidth = isSingleColumn ? containerWidth : ((containerWidth - gap) / 2);
-  return Math.max(320, Math.round(rawCardWidth - cardHorizontalPadding));
+  const rawCardWidth = (containerWidth - (gap * (columns - 1))) / columns;
+  return Math.max(280, Math.round(rawCardWidth - cardHorizontalPadding));
 };
 
-const renderMetricChartCard = (metric, times, values, chartWidth) => {
+const metricSummary = (metricKey, rawValues) => {
+  const finite = rawValues.map((value) => toFiniteNumber(value)).filter((value) => value !== null);
+  if (!finite.length) return "No readings";
+  if (["snowfall", "rain"].includes(metricKey)) {
+    const total = finite.reduce((sum, value) => sum + value, 0);
+    return `Total ${formatMetricValue(metricKey, total)}`;
+  }
+  if (metricKey === "visibility") {
+    return `Low ${formatMetricValue(metricKey, Math.min(...finite))}`;
+  }
+  if (metricKey === "snow_depth") {
+    return `Latest ${formatMetricValue(metricKey, finite[finite.length - 1])}`;
+  }
+  return `Peak ${formatMetricValue(metricKey, Math.max(...finite))}`;
+};
+
+const primaryMetricForGroup = (group, hourly) => {
+  const hasReadings = (metricKey) => {
+    const values = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+    return values.some((value) => toFiniteNumber(value) !== null);
+  };
+  const hasPositiveReading = (metricKey) => {
+    const values = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+    return values.some((value) => (toFiniteNumber(value) || 0) > 0);
+  };
+  if (activeHourlyGroup === "storm") {
+    if (hasPositiveReading("snowfall")) return "snowfall";
+    if (hasPositiveReading("rain")) return "rain";
+    if (hasReadings("precipitation_probability")) return "precipitation_probability";
+  }
+  return group.metrics.find((metricKey) => hasReadings(metricKey)) || null;
+};
+
+const renderMetricChartCard = (metricKey, times, rawValues, chartWidth) => {
+  const metric = METRIC_PRESENTATION[metricKey];
   const card = document.createElement("article");
   card.className = "chart-card";
+  card.dataset.metric = metricKey;
 
-  const title = document.createElement("h2");
+  const header = document.createElement("div");
+  header.className = "chart-card-header";
+  const copy = document.createElement("div");
+  const title = document.createElement("h3");
   title.className = "chart-title";
   title.textContent = metric.title;
-  card.appendChild(title);
+  copy.appendChild(title);
 
   const subtitle = document.createElement("p");
   subtitle.className = "chart-subtitle";
-  subtitle.textContent = `Unit: ${metric.unit}`;
-  card.appendChild(subtitle);
+  subtitle.textContent = `${metric.description} · ${metricUnit(metricKey)}`;
+  copy.appendChild(subtitle);
+
+  const summary = document.createElement("strong");
+  summary.className = "chart-summary-value";
+  summary.textContent = metricSummary(metricKey, rawValues);
+  header.appendChild(copy);
+  header.appendChild(summary);
+  card.appendChild(header);
+
+  const values = rawValues.map((value) => convertHourlyMetric(metricKey, value));
 
   const finiteValues = values.filter((v) => v !== null);
   if (!times.length || !finiteValues.length) {
@@ -529,8 +898,17 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
     card.appendChild(empty);
     return card;
   }
+  if (metric.chart === "bar" && finiteValues.every((value) => value === 0)) {
+    const empty = document.createElement("div");
+    empty.className = "chart-empty chart-empty-zero";
+    empty.textContent = metricKey === "snowfall"
+      ? "No hourly snow accumulation is modelled in this window."
+      : "No hourly rain accumulation is modelled in this window.";
+    card.appendChild(empty);
+    return card;
+  }
 
-  const yBounds = chartYBounds(metric.key, values);
+  const yBounds = chartYBounds(metricKey, values);
   if (!yBounds) {
     const empty = document.createElement("div");
     empty.className = "chart-empty";
@@ -539,8 +917,8 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
     return card;
   }
 
-  const width = Math.max(320, Number(chartWidth) || 720);
-  const height = 220;
+  const width = Math.max(280, Number(chartWidth) || 720);
+  const height = 190;
   const padLeft = 44;
   const padRight = 16;
   const padTop = 12;
@@ -560,7 +938,7 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
   svg.setAttribute("class", "chart-svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `${metric.title} hourly trend line chart`);
+  svg.setAttribute("aria-label", `${metric.title} by hour. ${summary.textContent}.`);
 
   const yTicks = 4;
   for (let i = 0; i <= yTicks; i += 1) {
@@ -581,7 +959,7 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
     tick.setAttribute("x", String(padLeft - 6));
     tick.setAttribute("y", String(y + 3));
     tick.setAttribute("text-anchor", "end");
-    tick.textContent = formatValue(value);
+    tick.textContent = value.toFixed(metricDigits(metricKey));
     svg.appendChild(tick);
   }
 
@@ -624,29 +1002,161 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
   axisY.setAttribute("y2", String(height - padBottom));
   svg.appendChild(axisY);
 
-  const line = document.createElementNS(svgNs, "path");
-  line.setAttribute("class", "chart-line");
-  line.setAttribute("stroke", metric.color);
-  line.setAttribute("d", chartLinePath(values, xForIndex, yForValue));
-  svg.appendChild(line);
-
-  values.forEach((value, idx) => {
-    if (value === null) return;
-    const point = document.createElementNS(svgNs, "circle");
-    point.setAttribute("class", "chart-point");
-    point.setAttribute("cx", xForIndex(idx).toFixed(2));
-    point.setAttribute("cy", yForValue(value).toFixed(2));
-    point.setAttribute("r", "2.6");
-    point.setAttribute("fill", metric.color);
-    const pointTitle = document.createElementNS(svgNs, "title");
-    pointTitle.textContent = `${times[idx]} | ${formatValue(value)} ${metric.unit}`;
-    point.appendChild(pointTitle);
-    svg.appendChild(point);
-  });
+  if (metric.chart === "bar") {
+    const baselineY = yForValue(0);
+    const barWidth = Math.max(1.5, Math.min(18, (innerW / Math.max(1, times.length)) * 0.68));
+    values.forEach((value, index) => {
+      if (value === null) return;
+      const bar = document.createElementNS(svgNs, "rect");
+      const y = yForValue(Math.max(0, value));
+      bar.setAttribute("class", "chart-bar");
+      bar.setAttribute("x", (xForIndex(index) - (barWidth / 2)).toFixed(2));
+      bar.setAttribute("y", y.toFixed(2));
+      bar.setAttribute("width", barWidth.toFixed(2));
+      bar.setAttribute("height", Math.max(0, baselineY - y).toFixed(2));
+      bar.setAttribute("fill", metric.color);
+      svg.appendChild(bar);
+    });
+  } else {
+    if (metric.chart === "area") {
+      const area = document.createElementNS(svgNs, "path");
+      area.setAttribute("class", "chart-area");
+      area.setAttribute("fill", metric.color);
+      area.setAttribute("d", chartAreaPath(values, xForIndex, yForValue, yForValue(yBounds.min)));
+      svg.appendChild(area);
+    }
+    const line = document.createElementNS(svgNs, "path");
+    line.setAttribute("class", "chart-line");
+    line.setAttribute("stroke", metric.color);
+    line.setAttribute("d", chartLinePath(values, xForIndex, yForValue));
+    svg.appendChild(line);
+  }
 
   svgWrap.appendChild(svg);
   card.appendChild(svgWrap);
   return card;
+};
+
+const renderWindDirectionCard = (times, rawValues) => {
+  const metric = METRIC_PRESENTATION.wind_direction_10m;
+  const card = document.createElement("article");
+  card.className = "chart-card wind-direction-card";
+  card.dataset.metric = "wind_direction_10m";
+  const title = document.createElement("h3");
+  title.className = "chart-title";
+  title.textContent = metric.title;
+  const subtitle = document.createElement("p");
+  subtitle.className = "chart-subtitle";
+  subtitle.textContent = metric.description;
+  card.appendChild(title);
+  card.appendChild(subtitle);
+
+  const validIndexes = rawValues
+    .map((value, index) => (toFiniteNumber(value) === null ? -1 : index))
+    .filter((index) => index >= 0);
+  if (!validIndexes.length) {
+    const empty = document.createElement("div");
+    empty.className = "chart-empty";
+    empty.textContent = "No wind direction readings in this window.";
+    card.appendChild(empty);
+    return card;
+  }
+  const step = Math.max(1, Math.ceil(validIndexes.length / 12));
+  const sampled = validIndexes.filter((_, index) => index % step === 0);
+  const lastIndex = validIndexes[validIndexes.length - 1];
+  if (!sampled.includes(lastIndex)) sampled.push(lastIndex);
+
+  const grid = document.createElement("div");
+  grid.className = "wind-direction-grid";
+  sampled.forEach((index) => {
+    const degrees = toFiniteNumber(rawValues[index]);
+    const sample = document.createElement("div");
+    sample.className = "wind-direction-sample";
+    sample.setAttribute("aria-label", `${friendlyHour(times[index])}: wind from ${degreesToCardinal(degrees)}, ${Math.round(degrees)} degrees`);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.transform = `rotate(${degrees}deg)`;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M12 20V4m0 0-5 5m5-5 5 5");
+    svg.appendChild(path);
+    const direction = document.createElement("strong");
+    direction.textContent = `${degreesToCardinal(degrees)} ${Math.round(degrees)}°`;
+    const time = document.createElement("span");
+    time.textContent = friendlyHour(times[index]);
+    sample.appendChild(svg);
+    sample.appendChild(direction);
+    sample.appendChild(time);
+    grid.appendChild(sample);
+  });
+  card.appendChild(grid);
+  return card;
+};
+
+const renderHourlyNarrative = (payload) => {
+  if (!hourlyNarrativeEl) return;
+  const hourly = payload?.hourly || {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const windowLabel = `${times.length || 0}-hour window`;
+  if (!times.length) {
+    hourlyNarrativeEl.textContent = "Hourly readings are not available for this forecast window.";
+    return;
+  }
+  if (activeHourlyGroup === "storm") {
+    const snow = finiteSeries(Array.isArray(hourly.snowfall) ? hourly.snowfall : []);
+    const rain = finiteSeries(Array.isArray(hourly.rain) ? hourly.rain : []);
+    const snowReadings = snow.filter((value) => value !== null);
+    const rainReadings = rain.filter((value) => value !== null);
+    const snowTotal = snowReadings.length ? snowReadings.reduce((sum, value) => sum + value, 0) : null;
+    const rainTotal = rainReadings.length ? rainReadings.reduce((sum, value) => sum + value, 0) : null;
+    const probability = extremeIndex(Array.isArray(hourly.precipitation_probability) ? hourly.precipitation_probability : []);
+    let accumulation;
+    if (snowTotal === null && rainTotal === null) {
+      accumulation = "snow and rain accumulation readings are unavailable.";
+    } else if (snowTotal === 0 && rainTotal === 0) {
+      accumulation = "no accumulating snow or rain is currently modelled.";
+    } else {
+      const measured = [];
+      const missing = [];
+      if (snowTotal === null) missing.push("snow accumulation");
+      else measured.push(`${formatMetricValue("snowfall", snowTotal)} of snow`);
+      if (rainTotal === null) missing.push("rain accumulation");
+      else measured.push(`${formatMetricValue("rain", rainTotal)} of rain`);
+      const measuredCopy = measured.length ? `the model shows ${measured.join(" and ")}.` : "";
+      const missingCopy = missing.length ? `${missing.join(" and ")} readings are unavailable.` : "";
+      accumulation = `${measuredCopy} ${missingCopy}`.trim();
+    }
+    const chance = probability.value === null
+      ? "Precipitation probability is unavailable."
+      : `The highest precipitation chance is ${Math.round(probability.value)}% around ${friendlyHour(times[probability.index])}.`;
+    hourlyNarrativeEl.textContent = `Across this ${windowLabel}, ${accumulation} ${chance}`;
+    return;
+  }
+  if (activeHourlyGroup === "wind") {
+    const wind = Array.isArray(hourly.wind_speed_10m) ? hourly.wind_speed_10m : [];
+    const peak = extremeIndex(wind);
+    if (peak.value === null) {
+      hourlyNarrativeEl.textContent = `Wind readings are unavailable across this ${windowLabel}.`;
+      return;
+    }
+    const directions = Array.isArray(hourly.wind_direction_10m) ? hourly.wind_direction_10m : [];
+    const direction = toFiniteNumber(directions[peak.index]);
+    const directionCopy = direction === null ? "Direction is unavailable at that hour." : `It is coming from ${degreesToCardinal(direction)} (${Math.round(direction)}°) at that hour.`;
+    hourlyNarrativeEl.textContent = `Peak wind reaches ${formatMetricValue("wind_speed_10m", peak.value)} around ${friendlyHour(times[peak.index])}. ${directionCopy}`;
+    return;
+  }
+  const visibility = Array.isArray(hourly.visibility) ? hourly.visibility : [];
+  const minimum = extremeIndex(visibility, "min");
+  const depth = (Array.isArray(hourly.snow_depth) ? hourly.snow_depth : [])
+    .map((value) => toFiniteNumber(value))
+    .filter((value) => value !== null);
+  const visibilityCopy = minimum.value === null
+    ? "Visibility readings are unavailable."
+    : `Visibility is lowest at ${formatMetricValue("visibility", minimum.value)} around ${friendlyHour(times[minimum.index])}.`;
+  const depthCopy = depth.length
+    ? `Modelled snow depth ends near ${formatMetricValue("snow_depth", depth[depth.length - 1])}.`
+    : "Snow-depth readings are unavailable.";
+  hourlyNarrativeEl.textContent = `${visibilityCopy} ${depthCopy}`;
 };
 
 const renderHourlyCharts = (payload) => {
@@ -657,12 +1167,23 @@ const renderHourlyCharts = (payload) => {
   const times = Array.isArray(hourly.time) ? hourly.time : [];
   const chartWidth = resolveChartWidth();
   const frag = document.createDocumentFragment();
-  metricDefs.forEach((metric) => {
-    const rawValues = Array.isArray(hourly[metric.key]) ? hourly[metric.key] : [];
-    const values = times.map((_, idx) => toFiniteNumber(rawValues[idx]));
-    frag.appendChild(renderMetricChartCard(metric, times, values, chartWidth));
+  const group = HOURLY_GROUPS[activeHourlyGroup] || HOURLY_GROUPS.storm;
+  const primaryMetric = primaryMetricForGroup(group, hourly);
+  const orderedMetrics = primaryMetric
+    ? [primaryMetric, ...group.metrics.filter((metricKey) => metricKey !== primaryMetric)]
+    : [...group.metrics];
+  chartsEl.dataset.hourlyGroup = activeHourlyGroup;
+  orderedMetrics.forEach((metricKey) => {
+    const rawValues = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+    const card = metricKey === "wind_direction_10m"
+      ? renderWindDirectionCard(times, rawValues)
+      : renderMetricChartCard(metricKey, times, rawValues, chartWidth);
+    if (metricKey === primaryMetric) card.dataset.priority = "primary";
+    frag.appendChild(card);
   });
   chartsEl.appendChild(frag);
+  chartsEl.setAttribute("aria-labelledby", `hourly-tab-${activeHourlyGroup}`);
+  renderHourlyNarrative(payload);
 };
 
 const rerenderChartsForResize = () => {
@@ -681,13 +1202,6 @@ const rerenderChartsForResize = () => {
 };
 
 const buildMergedTimelineDays = () => {
-  const labelFor = typeof compactDailySummary.dayLabelFor === "function"
-    ? compactDailySummary.dayLabelFor
-    : (day, index, options = {}) => {
-      const labelMode = options.labelMode === "calendar" ? "calendar" : "forecast";
-      if (labelMode === "forecast" && index === 0) return "Today";
-      return String(day?.date || "");
-    };
   const history = Array.isArray(dailySummary?.past14dDaily) ? dailySummary.past14dDaily : [];
   const forecast = Array.isArray(dailySummary?.daily) ? dailySummary.daily : [];
   const merged = [];
@@ -696,7 +1210,7 @@ const buildMergedTimelineDays = () => {
     merged.push({
       ...day,
       summary_phase: "history",
-      summary_label: labelFor(day, index, { labelMode: "calendar" }),
+      summary_label: friendlyDate(day?.date, `Past day ${index + 1}`),
     });
   });
 
@@ -704,7 +1218,7 @@ const buildMergedTimelineDays = () => {
     merged.push({
       ...day,
       summary_phase: "forecast",
-      summary_label: labelFor(day, index, { labelMode: "forecast" }),
+      summary_label: index === 0 ? "Today" : friendlyDate(day?.date, `Forecast day ${index + 1}`),
       summary_is_today: index === 0,
     });
   });
@@ -712,59 +1226,208 @@ const buildMergedTimelineDays = () => {
   return merged;
 };
 
-const centerTimelineOnToday = () => {
-  if (!timelineRoot || timelineAutoCentered) return;
-  const wrap = timelineRoot.querySelector(".resort-daily-summary-wrap");
-  const todayCell = timelineRoot.querySelector("[data-compact-today-anchor='1']");
-  if (!(wrap instanceof HTMLElement) || !(todayCell instanceof HTMLElement)) return;
-  const targetLeft = todayCell.offsetLeft + (todayCell.offsetWidth / 2) - (wrap.clientWidth / 2);
-  const maxScroll = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
-  wrap.scrollLeft = Math.max(0, Math.min(maxScroll, targetLeft));
-  timelineAutoCentered = true;
+const daylightValue = (day, key) => {
+  const local = String(day?.[`${key}_local_hhmm`] || "").trim();
+  if (local) return local;
+  const iso = String(day?.[`${key}_iso`] || "").trim();
+  const match = /T(\d{2}:\d{2})/.exec(iso);
+  return match ? match[1] : "—";
+};
+
+const appendDefinition = (list, term, value) => {
+  const wrapper = document.createElement("div");
+  const dt = document.createElement("dt");
+  dt.textContent = term;
+  const dd = document.createElement("dd");
+  dd.textContent = value;
+  wrapper.appendChild(dt);
+  wrapper.appendChild(dd);
+  list.appendChild(wrapper);
+};
+
+const buildTimelineDayCard = (day, unitMode, temperatureUnit) => {
+  const isToday = Boolean(day.summary_is_today);
+  const phase = isToday ? "today" : (day.summary_phase === "history" ? "history" : "forecast");
+  const phaseLabel = isToday ? "Today" : (phase === "history" ? "Past" : "Forecast");
+  const card = document.createElement("article");
+  card.className = "timeline-day-card";
+  card.dataset.phase = phase;
+  const dailySnow = toFiniteNumber(day.snowfall_cm) || 0;
+  const dailyRain = toFiniteNumber(day.rain_mm) || 0;
+  card.dataset.weatherSignal = dailySnow > 0 ? "snow" : (dailyRain > 0 ? "rain" : "quiet");
+  if (isToday) card.setAttribute("data-timeline-today", "1");
+
+  const topline = document.createElement("div");
+  topline.className = "timeline-card-topline";
+  const phaseEl = document.createElement("span");
+  phaseEl.className = "timeline-phase";
+  phaseEl.textContent = phaseLabel;
+  const date = document.createElement("time");
+  date.className = "timeline-date";
+  date.dateTime = String(day.date || "");
+  date.textContent = friendlyDate(day.date, day.summary_label || phaseLabel);
+  topline.appendChild(phaseEl);
+  topline.appendChild(date);
+
+  const condition = document.createElement("div");
+  condition.className = "timeline-condition";
+  const icon = document.createElement("span");
+  icon.innerHTML = fieldGuideWeather.iconHtml
+    ? fieldGuideWeather.iconHtml(day.weather_code)
+    : '<span class="field-guide-weather-icon" role="img" aria-label="Conditions unavailable">?</span>';
+  const conditionName = document.createElement("strong");
+  conditionName.textContent = fieldGuideWeather.conditionName
+    ? fieldGuideWeather.conditionName(day.weather_code)
+    : "Conditions unavailable";
+  condition.appendChild(icon);
+  condition.appendChild(conditionName);
+
+  const temperature = document.createElement("div");
+  temperature.className = "timeline-temperature";
+  const high = document.createElement("strong");
+  const low = document.createElement("span");
+  const highValue = fieldGuideUnits.formatTemperature
+    ? fieldGuideUnits.formatTemperature(day.temperature_max_c, unitMode, { withUnit: false, digits: 0 })
+    : formatValue(day.temperature_max_c);
+  const lowValue = fieldGuideUnits.formatTemperature
+    ? fieldGuideUnits.formatTemperature(day.temperature_min_c, unitMode, { withUnit: false, digits: 0 })
+    : formatValue(day.temperature_min_c);
+  high.textContent = `${highValue} ${temperatureUnit}`;
+  low.textContent = `Low ${lowValue} ${temperatureUnit}`;
+  temperature.appendChild(high);
+  temperature.appendChild(low);
+
+  const metrics = document.createElement("dl");
+  metrics.className = "timeline-metrics";
+  appendDefinition(metrics, "Snow", fieldGuideUnits.formatSnow
+    ? fieldGuideUnits.formatSnow(day.snowfall_cm, unitMode)
+    : `${formatValue(day.snowfall_cm)} cm`);
+  appendDefinition(metrics, "Rain", fieldGuideUnits.formatRain
+    ? fieldGuideUnits.formatRain(day.rain_mm, unitMode)
+    : `${formatValue(day.rain_mm)} mm`);
+
+  const daylight = document.createElement("dl");
+  daylight.className = "timeline-daylight";
+  appendDefinition(daylight, "Sunrise", daylightValue(day, "sunrise"));
+  appendDefinition(daylight, "Sunset", daylightValue(day, "sunset"));
+
+  card.appendChild(topline);
+  card.appendChild(condition);
+  card.appendChild(temperature);
+  card.appendChild(metrics);
+  card.appendChild(daylight);
+  return card;
+};
+
+const buildTimelineDayList = (days, unitMode, temperatureUnit) => {
+  const list = document.createElement("div");
+  list.className = "field-guide-timeline-track";
+  days.forEach((day) => list.appendChild(buildTimelineDayCard(day, unitMode, temperatureUnit)));
+  return list;
+};
+
+const appendTimelineDisclosure = (parent, label, days, unitMode, temperatureUnit) => {
+  if (!days.length) return;
+  const details = document.createElement("details");
+  details.className = "timeline-disclosure";
+  const summary = document.createElement("summary");
+  summary.textContent = `${label} (${days.length})`;
+  details.appendChild(summary);
+  details.appendChild(buildTimelineDayList(days, unitMode, temperatureUnit));
+  parent.appendChild(details);
 };
 
 const renderTimelineSummary = () => {
-  if (!timelineSection || !timelineRoot || !compactDailySummary.renderSingleResortHtml) return;
+  if (!timelineSection || !timelineRoot) return;
   const merged = buildMergedTimelineDays();
   if (!merged.length) {
     timelineSection.hidden = true;
     timelineRoot.innerHTML = "";
     return;
   }
-  timelineRoot.innerHTML = compactDailySummary.renderSingleResortHtml(merged, {
-    emptyText: "No forecast or recent history",
-  });
+  timelineRoot.textContent = "";
+  const unitMode = currentUnitMode();
+  const temperatureUnit = fieldGuideUnits.unitLabel ? fieldGuideUnits.unitLabel("temperature", unitMode) : "°C";
+  const forecastDays = merged.filter((day) => day.summary_phase === "forecast");
+  const historyDays = merged.filter((day) => day.summary_phase === "history");
+  const firstWeek = forecastDays.slice(0, 7);
+  const laterForecast = forecastDays.slice(7);
+  const laterForecastLabel = forecastDays.length > 14 ? `Days 8–${forecastDays.length}` : "Days 8–14";
+  const wrap = document.createElement("div");
+  wrap.className = "field-guide-timeline";
+  wrap.setAttribute("aria-label", "Today and the next six forecast days");
+  wrap.appendChild(buildTimelineDayList(firstWeek, unitMode, temperatureUnit));
+  timelineRoot.appendChild(wrap);
+  appendTimelineDisclosure(timelineRoot, laterForecastLabel, laterForecast, unitMode, temperatureUnit);
+  appendTimelineDisclosure(timelineRoot, "Past 14 days", historyDays, unitMode, temperatureUnit);
   timelineSection.hidden = false;
-  window.requestAnimationFrame(centerTimelineOnToday);
 };
 
 const renderHourlyTable = (payload) => {
   if (!thead || !tbody) return;
   const hourly = payload?.hourly || {};
   const times = Array.isArray(hourly.time) ? hourly.time : [];
-
-  thead.innerHTML = `<tr>${["time", ...metricDefs.map((m) => m.label)].map((h) => `<th>${h}</th>`).join("")}</tr>`;
-
-  const rows = times.map((time, idx) => {
-    const cells = [`<td>${time}</td>`];
-    metricDefs.forEach((metric) => {
-      const values = Array.isArray(hourly[metric.key]) ? hourly[metric.key] : [];
-      cells.push(`<td>${formatValue(values[idx])}</td>`);
-    });
-    return `<tr>${cells.join("")}</tr>`;
+  const metricKeys = metricDefs.length
+    ? metricDefs.map((metric) => metric.key)
+    : [...new Set(Object.values(HOURLY_GROUPS).flatMap((group) => group.metrics))];
+  thead.textContent = "";
+  tbody.textContent = "";
+  const headRow = document.createElement("tr");
+  const timeHead = document.createElement("th");
+  timeHead.scope = "col";
+  timeHead.textContent = "Local time";
+  headRow.appendChild(timeHead);
+  metricKeys.forEach((metricKey) => {
+    const th = document.createElement("th");
+    th.scope = "col";
+    const title = METRIC_PRESENTATION[metricKey]?.title || metricKey;
+    const unit = metricKey === "wind_direction_10m" ? "cardinal / °" : metricUnit(metricKey);
+    th.textContent = unit ? `${title} (${unit})` : title;
+    headRow.appendChild(th);
   });
-  tbody.innerHTML = rows.join("");
+  thead.appendChild(headRow);
+
+  times.forEach((timeValue, index) => {
+    const row = document.createElement("tr");
+    const timeCell = document.createElement("td");
+    const time = document.createElement("time");
+    time.dateTime = String(timeValue || "");
+    time.textContent = friendlyHour(timeValue);
+    time.title = String(timeValue || "");
+    timeCell.appendChild(time);
+    row.appendChild(timeCell);
+    metricKeys.forEach((metricKey) => {
+      const cell = document.createElement("td");
+      const values = Array.isArray(hourly[metricKey]) ? hourly[metricKey] : [];
+      cell.textContent = formatMetricValue(metricKey, values[index], { withUnit: false });
+      row.appendChild(cell);
+    });
+    tbody.appendChild(row);
+  });
+};
+
+const selectHourlyGroup = (groupKey, options = {}) => {
+  if (!Object.prototype.hasOwnProperty.call(HOURLY_GROUPS, groupKey)) return;
+  activeHourlyGroup = groupKey;
+  hourlyTabButtons.forEach((button) => {
+    const selected = button.dataset.hourlyGroup === groupKey;
+    button.setAttribute("aria-selected", selected ? "true" : "false");
+    button.tabIndex = selected ? 0 : -1;
+    if (selected && options.focus) button.focus();
+  });
+  if (chartsEl) chartsEl.setAttribute("aria-labelledby", `hourly-tab-${groupKey}`);
+  if (lastHourlyPayload) renderHourlyCharts(lastHourlyPayload);
 };
 
 const loadHourly = async () => {
   if (!resortId) {
-    setError("Missing resort id.");
+    setError("We could not identify this resort. Return to All resorts and choose it again.");
     return;
   }
   const hours = hoursSelect ? String(hoursSelect.value || "72") : "72";
   setError("");
   setChartError("");
-  if (metaEl) metaEl.textContent = "Loading...";
+  if (metaEl) metaEl.textContent = "Loading the latest hourly field report…";
 
   try {
     let payload;
@@ -775,7 +1438,9 @@ const loadHourly = async () => {
       if (!resp.ok) {
         throw new Error(rawPayload.error || `HTTP ${resp.status}`);
       }
-      payload = trimHourlyPayload(rawPayload, Number(hours));
+      payload = typeof trimHourlyPayload === "function"
+        ? trimHourlyPayload(rawPayload, Number(hours))
+        : rawPayload;
     } else {
       const endpoint = new URL(withPrefix("/api/resort-hourly"), window.location.origin);
       endpoint.searchParams.set("resort_id", resortId);
@@ -786,10 +1451,7 @@ const loadHourly = async () => {
         throw new Error(payload.error || `HTTP ${resp.status}`);
       }
     }
-    if (titleEl) {
-      const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
-      titleEl.textContent = resortLabel ? `Resort Forecast: ${resortLabel}` : "Resort Forecast";
-    }
+    renderResortIdentity(payload);
     metaState = {
       timezone: String(payload.timezone || "").trim(),
       model: String(payload.model || "").trim(),
@@ -809,7 +1471,8 @@ const loadHourly = async () => {
       setChartError(chartErr instanceof Error ? chartErr.message : String(chartErr));
     }
   } catch (err) {
-    setError(err instanceof Error ? err.message : String(err));
+    const detail = err instanceof Error ? err.message : String(err);
+    setError(`We could not load the hourly forecast. ${detail}`.trim());
     setChartError("");
     metaState = null;
     lastHourlyPayload = null;
@@ -822,6 +1485,7 @@ const loadHourly = async () => {
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";
     if (chartsEl) chartsEl.innerHTML = "";
+    if (hourlyNarrativeEl) hourlyNarrativeEl.textContent = "Daily information is still available above; try refreshing the hourly report in a moment.";
   }
 };
 
@@ -831,9 +1495,35 @@ if (refreshBtn) {
 if (hoursSelect) {
   hoursSelect.addEventListener("change", loadHourly);
 }
+hourlyTabButtons.forEach((button, buttonIndex) => {
+  button.addEventListener("click", () => selectHourlyGroup(button.dataset.hourlyGroup || "storm"));
+  button.addEventListener("keydown", (event) => {
+    let targetIndex = buttonIndex;
+    if (event.key === "ArrowRight") targetIndex = (buttonIndex + 1) % hourlyTabButtons.length;
+    else if (event.key === "ArrowLeft") targetIndex = (buttonIndex - 1 + hourlyTabButtons.length) % hourlyTabButtons.length;
+    else if (event.key === "Home") targetIndex = 0;
+    else if (event.key === "End") targetIndex = hourlyTabButtons.length - 1;
+    else return;
+    event.preventDefault();
+    const target = hourlyTabButtons[targetIndex];
+    selectHourlyGroup(target?.dataset.hourlyGroup || "storm", { focus: true });
+  });
+});
 window.addEventListener("resize", rerenderChartsForResize);
+window.addEventListener("closesnow:unitschange", () => {
+  renderResortSnapshot();
+  renderTimelineSummary();
+  renderNearbyAirports(lastHourlyPayload);
+  if (lastHourlyPayload) {
+    renderHourlyTable(lastHourlyPayload);
+    renderHourlyCharts(lastHourlyPayload);
+  }
+});
 
+renderResortIdentity(null);
+renderResortOutlook();
 renderResortSnapshot();
 renderTimelineSummary();
 renderNearbyAirports(null);
+selectHourlyGroup(activeHourlyGroup);
 loadHourly();
