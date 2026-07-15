@@ -3,15 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-V9NBX3H6M9"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-V9NBX3H6M9');
-  </script>
-  <title>Ski Resorts Weather Forecast</title>
+  <title>CloseSnow Mountain Morning Report</title>
+  <link rel="stylesheet" href="assets/css/field_guide_foundation.css" />
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
 <body class="units-pending">
@@ -29,48 +22,57 @@
           <span>Mountain weather, made useful</span>
         </span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Fresh mountain intelligence</span>
+      <div class="site-header-actions">
+        <span class="site-header-note"><span aria-hidden="true"></span> Forecast ready</span>
+        <button class="field-guide-unit-switch" type="button" data-field-guide-unit-toggle aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8M8 12h8M8 19h8"></path><path d="M5 3v4M5 10v4M5 17v4M19 3v4M19 10v4M19 17v4"></path></svg>
+          <span data-field-guide-unit-label>Metric</span>
+        </button>
+      </div>
     </div>
   </header>
-  <main>
-    <section class="forecast-hero" aria-labelledby="page-title">
-      <div class="forecast-hero-copy">
-        <p class="eyebrow">Ski Resorts Weather Forecast</p>
-        <h1 id="page-title">Find your next <span>snow day.</span></h1>
-        <p class="hero-lede">Compare the mountains at a glance, follow the strongest storms, and plan with confidence.</p>
-        <div class="report-date">
-          <div class="report-powered">
-            Forecast model <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo ECMWF IFS 0.25</a>
-          </div>
-          <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
-        </div>
+
+  <main class="field-guide-home">
+    <section class="morning-masthead" aria-labelledby="page-title">
+      <div class="morning-masthead__copy">
+        <p class="section-kicker">Mountain morning report</p>
+        <h1 id="page-title">Make the call before first chair.</h1>
+        <p>See where the useful weather is, why it matters, and what every forecast day looks like—without reading a spreadsheet.</p>
       </div>
-      <div class="hero-landscape" aria-hidden="true">
-        <span class="hero-sun"></span>
-        <svg viewBox="0 0 560 250" preserveAspectRatio="none">
-          <path class="mountain-back" d="M0 207 78 137l44 36 77-105 63 84 40-51 100 106H0Z" />
-          <path class="mountain-front" d="M138 220 262 92l41 48 46-62 135 142H138Z" />
-          <path class="snow-line" d="m78 137 23 19 21 17 77-105 29 39 34 45 40-51 36 38" />
-          <path class="snow-line snow-line-front" d="m262 92 41 48 46-62 48 51" />
-        </svg>
-        <span class="hero-contour hero-contour-one"></span>
-        <span class="hero-contour hero-contour-two"></span>
-      </div>
-    </section>
-    <section class="control-panel" aria-labelledby="explore-title">
-      <div class="control-panel-heading">
+      <dl class="morning-meta" aria-label="Forecast report details">
         <div>
-          <p class="eyebrow">Your mountain finder</p>
-          <h2 id="explore-title">Explore the forecast</h2>
+          <dt>Updated</dt>
+          <dd id="report-date" data-generated-utc="{{generated_utc_iso}}">Loading forecast time…</dd>
         </div>
-        <span id="filter-summary" class="filter-summary">Default resorts</span>
+        <div>
+          <dt>Model</dt>
+          <dd id="report-model">ECMWF IFS 0.25</dd>
+        </div>
+        <div>
+          <dt>In view</dt>
+          <dd id="visible-resort-count">Loading resorts…</dd>
+        </div>
+        <div>
+          <dt>Units</dt>
+          <dd data-field-guide-unit-status>Metric</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="forecast-toolbar" aria-labelledby="explore-title">
+      <div class="forecast-toolbar__heading">
+        <div>
+          <p class="section-kicker">Find your mountain</p>
+          <h2 id="explore-title">Search, filter, then compare</h2>
+        </div>
+        <span id="filter-summary" class="filter-summary" aria-live="polite">Loading resorts…</span>
       </div>
       <div class="resort-controls">
         <div class="resort-search">
-          <label class="sr-only" for="resort-search-input">Search Resorts</label>
+          <label class="sr-only" for="resort-search-input">Search resorts</label>
           <span class="search-field">
             <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.2 16.2 4.1 4.1"></path></svg>
-            <input id="resort-search-input" type="search" placeholder="Search name, state, or pass" autocomplete="off" />
+            <input id="resort-search-input" type="search" placeholder="Search resort, state, country, or pass" autocomplete="off" />
           </span>
           <button id="resort-search-clear" type="button">Clear</button>
         </div>
@@ -84,74 +86,76 @@
             <span>Favorites only</span>
           </label>
         </div>
-        <div class="resort-filter-bar">
-          <button id="filter-open-btn" type="button">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
-            Filters &amp; sorting
-          </button>
-        </div>
+        <button id="filter-open-btn" type="button" aria-haspopup="dialog" aria-controls="filter-modal">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
+          <span>Filters &amp; sorting</span>
+          <span id="active-filter-count" class="active-filter-count" hidden></span>
+        </button>
       </div>
     </section>
-    <div id="filter-modal" class="filter-modal" hidden>
-      <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
-        <h3 id="filter-title">Resort Filters</h3>
-        <div class="filter-group">
-          <div class="filter-group-title">Sort By</div>
-          <select id="filter-sort-select">
-            <option value="state">State (A-Z)</option>
-            <option value="name">Resort Name (A-Z)</option>
-            <option value="favorites">Favorites First</option>
-            <option value="today_snow">Today's Snowfall</option>
-            <option value="week_snow" selected>This Week's Snowfall</option>
-            <option value="next_week_snow">Next Week's Snowfall</option>
-            <option value="two_week_snow">Two-Week Snowfall</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-include-all-label">
-            <input type="checkbox" id="filter-include-all" checked />
-            Default resorts only
-          </label>
-        </div>
-        <div class="filter-group">
-          <label class="filter-include-all-label">
-            <input type="checkbox" id="filter-favorites-only" />
-            Favorites only
-          </label>
-        </div>
-        <div class="filter-group">
-          <div class="filter-group-title">Pass Type</div>
-          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon <span data-pass-count="ikon"></span></label>
-          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic <span data-pass-count="epic"></span></label>
-        </div>
-        <div class="filter-group">
-          <div class="filter-group-title">Region</div>
-          <div id="filter-region-options" class="filter-option-grid filter-option-list" role="group" aria-label="Region filters"></div>
-        </div>
-        <div class="filter-actions">
-          <button id="filter-reset-btn" type="button">Reset</button>
-          <button id="filter-close-btn" type="button">Close</button>
-        </div>
-      </div>
-    </div>
-    <div id="page-content-root" data-loading="1">
+
+    <div id="page-content-root" data-loading="1" aria-busy="true">
       {{page_shell_placeholder}}
     </div>
   </main>
+
+  <div id="filter-modal" class="filter-modal" hidden>
+    <section class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+      <header class="filter-panel__header">
+        <div><p class="section-kicker">Refine the directory</p><h2 id="filter-title">Filters &amp; sorting</h2></div>
+        <button id="filter-close-btn" class="filter-close-btn" type="button" aria-label="Close filters">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </header>
+      <div class="filter-panel__body">
+        <div class="filter-group">
+          <label class="filter-group-title" for="filter-sort-select">Sort resorts by</label>
+          <select id="filter-sort-select">
+            <option value="state">State (A–Z)</option>
+            <option value="name">Resort name (A–Z)</option>
+            <option value="favorites">Favorites first</option>
+            <option value="today_snow">Today's snowfall</option>
+            <option value="week_snow" selected>This week's snowfall</option>
+            <option value="next_week_snow">Next week's snowfall</option>
+            <option value="two_week_snow">Two-week snowfall</option>
+          </select>
+        </div>
+        <fieldset class="filter-group filter-check-list">
+          <legend class="filter-group-title">Directory scope</legend>
+          <label><input type="checkbox" id="filter-include-all" checked /> Show default resorts only</label>
+          <label><input type="checkbox" id="filter-favorites-only" /> Show favorites only</label>
+        </fieldset>
+        <fieldset class="filter-group filter-check-list">
+          <legend class="filter-group-title">Pass</legend>
+          <label><input type="checkbox" name="filter-pass-type" value="ikon" /> Ikon <span data-pass-count="ikon"></span></label>
+          <label><input type="checkbox" name="filter-pass-type" value="epic" /> Epic <span data-pass-count="epic"></span></label>
+        </fieldset>
+        <fieldset class="filter-group">
+          <legend class="filter-group-title">Region</legend>
+          <div id="filter-region-options" class="filter-option-grid" role="group" aria-label="Region filters"></div>
+        </fieldset>
+      </div>
+      <footer class="filter-actions">
+        <button id="filter-reset-btn" class="fg-button" type="button">Reset all</button>
+        <button id="filter-done-btn" class="fg-button fg-button--primary" type="button">Show resorts</button>
+      </footer>
+    </section>
+  </div>
+
   <footer class="page-footer">
-    <span><strong>CloseSnow</strong> · Built for better mountain days.</span>
-    <span>Made by <a href="https://ljcc0930.github.io/" target="_blank" rel="noopener noreferrer">ljcc</a> with Codex · <a href="https://github.com/ljcc0930/CloseSnow/issues/new?template=feature_request.yml" target="_blank" rel="noopener noreferrer">Request a feature</a></span>
+    <span><strong>CloseSnow</strong> · Built for better mountain decisions.</span>
+    <span>Forecasts are guidance, not safety advice · <a href="https://github.com/ljcc0930/CloseSnow/issues/new?template=feature_request.yml" target="_blank" rel="noopener noreferrer">Request a feature</a></span>
   </footer>
+
   <script>
     window.CLOSESNOW_FILTER_META = {{filter_meta_json}};
     window.CLOSESNOW_PAGE_BOOTSTRAP = {{page_bootstrap_json}};
     window.CLOSESNOW_INITIAL_PAYLOAD = {{initial_payload_json}};
   </script>
-  <script src="assets/js/weather_code_emoji.js"></script>
-  <script src="assets/js/compact_daily_summary.js"></script>
+  <script src="assets/js/field_guide_foundation.js"></script>
   <script src="assets/js/weather_filter_state.js"></script>
-  <script src="assets/js/sticky_single_table_layout.js"></script>
   <script src="assets/js/weather_page_formatters.js"></script>
+  <script src="assets/js/field_guide_homepage.js"></script>
   <script src="assets/js/weather_page.js"></script>
 </body>
 </html>
