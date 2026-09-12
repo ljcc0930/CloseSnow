@@ -159,13 +159,6 @@ const parsePassTypeValues = filterStateHelpers.parsePassTypeValues;
 const parseSubregionValues = filterStateHelpers.parseSubregionValues;
 const normalizeSortBy = filterStateHelpers.normalizeSortBy;
 
-const _sortLabel = filterStateHelpers.sortLabel;
-
-const _subregionLabel = (value) => {
-  const hit = SUBREGION_OPTIONS.find((option) => option.value === _normalizeSearch(value));
-  return hit ? hit.label : String(value || "");
-};
-
 const loadFavoriteResortIds = () => {
   try {
     const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -374,27 +367,9 @@ const _filteredReports = () => reportModel.selectReports(
   _payloadReports(), appState.filterState, appState.favoriteResortIds,
 );
 
-const syncFilterSummary = (visibleReports, totalReports) => {
+const syncFilterSummary = (visibleReports) => {
   if (!filterSummary) return;
-  const scope = totalReports > 0 ? (visibleReports === totalReports ? `${visibleReports}` : `${visibleReports}/${totalReports}`) : "0";
-  const keyword = _normalizeSearch(appState.filterState.search);
-  const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
-  const parts = [];
-  if (!searchAllActive) {
-    if (appState.filterState.favoritesOnly) parts.push("favorites only");
-    if (appState.filterState.passTypes.size > 0) parts.push(`pass: ${Array.from(appState.filterState.passTypes).join(", ")}`);
-    if (appState.filterState.subregions.size > 0) {
-      parts.push(`region: ${Array.from(appState.filterState.subregions).map((value) => _subregionLabel(value)).join(", ")}`);
-    }
-    if (appState.filterState.sortBy !== "state") parts.push(`sort: ${_sortLabel(appState.filterState.sortBy)}`);
-    if (appState.filterState.includeDefault && parts.length > 0) parts.push("scope: default");
-    if (!appState.filterState.searchAll) parts.push("search: filtered");
-  } else {
-    parts.push("search: all resorts");
-  }
-  filterSummary.textContent = parts.length > 0
-    ? `${parts.join(" | ")} | visible: ${scope}`
-    : (appState.filterState.includeDefault ? `Default resorts (${scope})` : `All supported resorts (${scope})`);
+  filterSummary.textContent = `${visibleReports} resort${visibleReports === 1 ? "" : "s"}`;
 };
 
 let dynamicPayloadAbortController = null;
@@ -590,7 +565,6 @@ const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
   pageRenderRevision += 1;
   const visibleReports = _filteredReports();
-  const totalReports = _payloadReports().length;
   const keyword = _normalizeSearch(appState.filterState.search);
   const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
   const emptyMessage = !searchAllActive && appState.filterState.favoritesOnly && appState.favoriteResortIds.size === 0
@@ -606,7 +580,7 @@ const renderPage = () => {
   applyLayout();
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
-  syncFilterSummary(visibleReports.length, totalReports);
+  syncFilterSummary(visibleReports.length);
   renderReportDate();
   applyUnitModes();
   document.body.classList.remove("units-pending");

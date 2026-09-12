@@ -287,11 +287,6 @@ h1, h2, h3 {
   display: none;
 }
 
-.site-header-note {
-  color: var(--ink-500);
-  font-size: 12px;
-}
-
 .site-header-actions {
   display: flex;
   align-items: center;
@@ -333,15 +328,6 @@ h1, h2, h3 {
   display: inline;
 }
 
-.eyebrow {
-  margin-bottom: 7px;
-  color: var(--ink-500);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 main {
   width: 100%;
   max-width: 1440px;
@@ -378,10 +364,6 @@ main {
   .site-header-inner {
     min-height: 58px;
     padding: 0 16px;
-  }
-
-  .site-header-note {
-    display: none;
   }
 
   .page-footer {

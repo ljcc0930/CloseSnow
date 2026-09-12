@@ -18,7 +18,6 @@
         <span class="brand-copy"><strong>CloseSnow</strong></span>
       </a>
       <div class="site-header-actions">
-        <span class="site-header-note">Resort forecast</span>
         <button type="button" class="theme-toggle" data-theme-toggle role="switch" aria-label="Day/night theme" aria-checked="false" title="Switch to night theme">
           <svg class="theme-icon-day" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4" /></svg>
           <svg class="theme-icon-night" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z" /></svg>
@@ -29,10 +28,9 @@
   </header>
   <main>
     <section class="resort-hero" aria-labelledby="hourly-title">
-      <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> Back to all resorts</a>
+      <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> All resorts</a>
       <div class="resort-overview">
         <div class="resort-identity">
-          <p class="eyebrow">Mountain forecast</p>
           <h1 id="hourly-title">Resort Forecast</h1>
           <div class="resort-identity-meta">
             <p id="resort-local-time" class="resort-local-time"></p>
@@ -45,15 +43,14 @@
     </section>
     <section id="resort-timeline-section" class="resort-timeline-section" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">Snow timeline</p><h2>Past 14 days + forecast</h2></div>
-        <span>Scroll for more days · °C / cm / mm</span>
+        <h2>Past 14 days + forecast</h2>
+        <span>°C / cm / mm</span>
       </div>
       <div id="resort-timeline-root"></div>
     </section>
     <section class="hourly-workspace" aria-labelledby="hourly-section-title">
       <div class="hourly-workspace-heading">
         <div>
-          <p class="eyebrow">Weather, hour by hour</p>
           <h2 id="hourly-section-title" class="hourly-section-title">Hourly forecast</h2>
         </div>
         <div class="hourly-controls">
@@ -72,7 +69,7 @@
       <div id="hourly-chart-error" class="hourly-chart-error" hidden></div>
       <section id="hourly-charts" class="hourly-charts" aria-live="polite"></section>
       <details class="raw-data-panel">
-        <summary>View raw hourly data</summary>
+        <summary>Hourly table</summary>
         <div class="table-wrap">
           <table id="hourly-table" class="hourly-table">
             <thead></thead>
@@ -83,13 +80,13 @@
     </section>
     <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">Getting there</p><h2>Nearby airports</h2></div>
+        <h2>Nearby airports</h2>
         <span>Within 250 miles</span>
       </div>
       <div id="resort-airport-access-root"></div>
     </section>
   </main>
-  <footer class="page-footer"><strong>CloseSnow</strong> · Forecast data for better mountain days.</footer>
+  <footer class="page-footer"><strong>CloseSnow</strong><span>Forecast by <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo · ECMWF</a></span></footer>
   <script>
     window.CLOSESNOW_HOURLY_CONTEXT = {{hourly_context_json}};
   </script>
