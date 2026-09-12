@@ -96,7 +96,7 @@
     return `
       <div class="compact-day-card">
         <div class="compact-row compact-row-primary">
-          <div class="compact-weather" title="${_escapeHtml(weatherCode === null || weatherCode === undefined || weatherCode === "" ? "WMO code: unknown" : `WMO code: ${weatherCode}`)}">${weatherEmoji}</div>
+          <div class="compact-weather" title="${_escapeHtml(window.CloseSnowWeatherCode?.descriptionForWeatherCode?.(weatherCode) || "Weather unavailable")}">${weatherEmoji}</div>
           <div class="compact-temp-stack">
             <div class="compact-temp-high">${_compactValueSpan("temp", day?.temperature_max_c, highTemp)}</div>
             <div class="compact-temp-low">${_compactValueSpan("temp", day?.temperature_min_c, lowTemp)}</div>

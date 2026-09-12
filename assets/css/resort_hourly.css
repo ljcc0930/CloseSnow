@@ -65,6 +65,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.resort-location-link {
+  flex-basis: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
 .resort-identity-meta a {
   color: var(--glacier-600);
   text-decoration: none;
@@ -148,11 +153,6 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
-}
-
-.section-heading .eyebrow,
-.hourly-workspace-heading .eyebrow {
-  margin-bottom: 5px;
 }
 
 .section-heading h2,
@@ -390,15 +390,6 @@ th .day-label-weekday {
   text-decoration: none;
 }
 
-.hourly-meta-coordinate-label {
-  color: var(--ink-700);
-  font-weight: 600;
-}
-
-.hourly-meta .hourly-meta-issue-link {
-  color: var(--warning-text);
-}
-
 .hourly-error,
 .hourly-chart-error {
   margin: 0 0 16px;
@@ -427,17 +418,11 @@ th .day-label-weekday {
 }
 
 .chart-title {
-  margin: 0 6px;
+  margin: 0 6px 10px;
   color: var(--ink-950);
   font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
-}
-
-.chart-subtitle {
-  margin: 3px 6px 10px;
-  color: var(--ink-500);
-  font-size: 11px;
 }
 
 .chart-empty {

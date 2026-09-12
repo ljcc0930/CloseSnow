@@ -149,15 +149,13 @@
       const outlookUnit = hasSnow ? "cm" : "mm";
       const cards = candidates.map((report, index) => {
         const today = _dailyAt(report, 0);
-        const weatherCode = today.weather_code;
-        const weatherTitle = weatherCode === null || weatherCode === undefined || weatherCode === ""
-          ? "Weather unavailable"
-          : `WMO code: ${weatherCode}`;
+        const code = today.weather_code;
+        const weatherTitle = weatherCode.descriptionForWeatherCode?.(code) || "Weather unavailable";
         return `
           <article class="snow-pick-card">
             <div class="snow-pick-card-topline">
-              <span class="snow-pick-rank">#${index + 1} · ${hasSnow ? "Snowfall" : "Rainfall"}</span>
-              <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(weatherCode)}</span>
+              <span class="snow-pick-rank">#${index + 1}</span>
+              <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(code)}</span>
             </div>
             <h3>${_resortLinkHtml(report)}</h3>
             <p>${_escapeHtml(_overviewLocation(report))}</p>
@@ -175,8 +173,7 @@
       return `
         <section class="forecast-overview" aria-labelledby="forecast-overview-title">
           <div class="overview-heading">
-            <div><p class="eyebrow">At a glance</p><h2 id="forecast-overview-title">${hasSnow ? "Most snow this week" : "Precipitation this week"}</h2></div>
-            <span>${reports.length} resort${reports.length === 1 ? "" : "s"} in view · 7-day forecast</span>
+            <h2 id="forecast-overview-title">${hasSnow ? "Most snow this week" : "Precipitation this week"}</h2>
           </div>
           <div class="snow-pick-grid">${cards || empty}</div>
         </section>`;
@@ -356,7 +353,7 @@
         : _fallbackDayLabels(displayDays);
       const weatherCells = (report) => Array.from({ length: displayDays }, (_, idx) => {
         const code = _dailyAt(report, idx).weather_code;
-        const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
+        const title = weatherCode.descriptionForWeatherCode?.(code) || "Weather unavailable";
         return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
       }).join("");
       const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
@@ -364,7 +361,6 @@
         <section class="forecast-section forecast-section-weather">
           <div class="section-header">
             <h2>Weather</h2>
-            <span class="section-note">Daily conditions</span>
           </div>
           <div
             class='weather-table-wrap'
