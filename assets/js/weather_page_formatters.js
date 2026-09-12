@@ -53,47 +53,7 @@
     return escapeHtml(text);
   };
 
-  const snowColor = (value) => {
-    const v = asFiniteNumber(value);
-    if (v === null) return "";
-    if (v > 15) return "background:#FFE7CC;";
-    const x = Math.min(Math.max(v, 0), 15) / 15;
-    const r = Math.round(255 + ((207 - 255) * x));
-    const g = Math.round(255 + ((232 - 255) * x));
-    return `background:rgb(${r},${g},255);`;
-  };
-
-  const rainColor = (value) => {
-    const v = asFiniteNumber(value);
-    if (v === null) return "";
-    if (v <= 0) return "background:#FFFFFF;";
-    if (v >= 7.6) return "background:#CFEFD8;";
-    const x = v / 7.6;
-    const r = Math.round(255 + ((207 - 255) * x));
-    const g = Math.round(255 + ((239 - 255) * x));
-    const b = Math.round(255 + ((216 - 255) * x));
-    return `background:rgb(${r},${g},${b});`;
-  };
-
-  const tempColor = (value) => {
-    const v = asFiniteNumber(value);
-    if (v === null) return "";
-    if (v < -10) return "background:#DCEFF8;";
-    if (v < 0) {
-      const x = (v + 10) / 10;
-      const r = Math.round(220 + ((248 - 220) * x));
-      const g = Math.round(239 + ((251 - 239) * x));
-      return `background:rgb(${r},${g},252);`;
-    }
-    if (v <= 20) {
-      if (v <= 4) return "background:#FFFFFF;";
-      const x = (v - 4) / 16;
-      const g = Math.round(255 + ((248 - 255) * x));
-      const b = Math.round(255 + ((240 - 255) * x));
-      return `background:rgb(255,${g},${b});`;
-    }
-    return "background:#FFF2E8;";
-  };
+  const { snowColor, rainColor, tempColor } = window.CloseSnowWeatherColors;
 
   const metricCellHtml = (rawValue, kind, style = "", klass = "") => {
     const value = String(rawValue || "").trim();

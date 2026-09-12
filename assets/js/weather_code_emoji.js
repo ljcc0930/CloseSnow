@@ -13,6 +13,9 @@
   ];
 
   const emojiForWeatherCode = (rawCode) => {
+    if (rawCode === null || rawCode === undefined || (typeof rawCode === "string" && !rawCode.trim())) {
+      return UNKNOWN_WEATHER_EMOJI;
+    }
     const code = Number(rawCode);
     if (!Number.isFinite(code)) return UNKNOWN_WEATHER_EMOJI;
     const match = WEATHER_CODE_EMOJI_GROUPS.find(([codes]) => codes.includes(code));

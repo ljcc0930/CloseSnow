@@ -15,20 +15,23 @@ def test_to_float_and_color_functions():
     assert to_float("bad") is None
 
     assert snow_color(None) == ""
-    assert snow_color(20) == "background:#FFE7CC;"
-    assert "background:rgb(" in snow_color(5)
+    assert snow_color(0) == "background:var(--heat-surface);"
+    assert snow_color(20) == "background:var(--heat-snow-heavy);"
+    assert snow_color(5) == "background:color-mix(in srgb, var(--heat-surface), var(--heat-snow) 33.3333%);"
 
     assert temp_color(None) == ""
-    assert temp_color(-20) == "background:#CFE8FF;"
-    assert "background:rgb(" in temp_color(-5)
-    assert "background:rgb(" in temp_color(5)
-    assert temp_color(20) == "background:#FFD6D6;"
+    assert temp_color(-20) == "background:var(--heat-cold);"
+    assert temp_color(-5) == "background:color-mix(in srgb, var(--heat-cold), var(--heat-freezing) 50%);"
+    assert temp_color(4) == "background:var(--heat-surface);"
+    assert temp_color(5) == "background:color-mix(in srgb, var(--heat-surface), var(--heat-warm) 6.25%);"
+    assert temp_color(20) == "background:var(--heat-warm);"
+    assert temp_color(21) == "background:var(--heat-hot);"
 
     assert rain_color(None) == ""
-    assert rain_color(0) == "background:#FFFFFF;"
-    assert "background:rgb(" in rain_color(1.5)
-    assert rain_color(7.6) == "background:#CFEFD8;"
-    assert rain_color(20) == "background:#CFEFD8;"
+    assert rain_color(0) == "background:var(--heat-surface);"
+    assert rain_color(1.5) == "background:color-mix(in srgb, var(--heat-surface), var(--heat-rain) 19.7368%);"
+    assert rain_color(7.6) == "background:var(--heat-rain);"
+    assert rain_color(20) == "background:var(--heat-rain);"
 
 
 def test_render_measure_cell():

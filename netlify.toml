@@ -14,5 +14,6 @@ ignore = "exit 0"
 ignore = "exit 0"
 
 [context.deploy-preview]
-command = "python3 -m src.cli static --output-dir site --max-workers 8 --include-all-resorts"
+# Mock weather exercises both palettes without changing the production forecast.
+command = "python3 -m src.cli static --output-dir site --max-workers 8 --include-all-resorts && python3 scripts/build_theme_preview.py --output-dir site/theme-preview"
 publish = "site"
