@@ -14,11 +14,7 @@ _PAGE_SHELL_PLACEHOLDER = """
       <div class="loading-card-grid"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
     </section>
     <section class="forecast-section forecast-section-loading"><h2>Daily Summary</h2><div class="skeleton skeleton-table"></div><p class="section-loading sr-only">Loading forecast...</p></section>
-    <section class="forecast-section forecast-section-loading"><h2>Snowfall</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Rainfall</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Temperature</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Weather</h2><div class="skeleton skeleton-table"></div></section>
-    <section class="forecast-section forecast-section-loading"><h2>Sunrise / Sunset</h2><div class="skeleton skeleton-table"></div></section>
+
 """
 
 

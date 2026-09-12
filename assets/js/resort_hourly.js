@@ -270,9 +270,8 @@ const renderWebsiteLink = (payload) => {
   if (!websiteLinkEl) return;
   const url = String(payload?.website || dailySummary?.website || "").trim();
   websiteLinkEl.textContent = "";
-  const link = buildExternalLink(url, "link");
+  const link = buildExternalLink(url, "Official website ↗");
   if (!link) return;
-  websiteLinkEl.appendChild(document.createTextNode("Official website: "));
   websiteLinkEl.appendChild(link);
 };
 
@@ -787,8 +786,9 @@ const loadHourly = async () => {
       }
     }
     if (titleEl) {
-      const resortLabel = String(payload?.display_name || payload?.query || dailySummary?.display_name || dailySummary?.query || "").trim();
-      titleEl.textContent = resortLabel ? `Resort Forecast: ${resortLabel}` : "Resort Forecast";
+      const resortLabel = resolveResortLabel(payload);
+      titleEl.textContent = resortLabel;
+      document.title = `${resortLabel} · CloseSnow`;
     }
     metaState = {
       timezone: String(payload.timezone || "").trim(),

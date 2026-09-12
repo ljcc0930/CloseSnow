@@ -51,24 +51,10 @@ const SUBREGION_OPTIONS = [
   { value: "australia-new-zealand", label: "Australia / New Zealand" },
   { value: "south-america", label: "South America" },
 ];
-const MAX_DISPLAY_DAYS = 14;
-const MIN_DESKTOP_SNOW_3DAY_PX = 554;
-const LEADING_FAVORITE_COL_PX = 28;
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const filterStateHelpers = window.CloseSnowFilterState || {};
-const stickySingleTableLayout = window.CloseSnowStickySingleTableLayout || {};
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
-// Reserve section keys so later workers can move one section at a time to shared single-table layout.
-const STICKY_SINGLE_TABLE_SECTION_KEYS = Object.freeze({
-  dailySummary: "daily-summary",
-  snowfall: "snowfall",
-  rainfall: "rainfall",
-  temperature: "temperature",
-  weather: "weather",
-  sun: "sunrise-sunset",
-});
-
 const appState = {
   payload: null,
   reports: [],
@@ -91,22 +77,13 @@ const appState = {
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
   layoutMode: "desktop",
+  forecastTab: "summary",
 };
 
 const weatherPageFormatters = window.CloseSnowWeatherPageFormatters || {};
 const {
-  asFiniteNumber: _asFiniteNumber,
-  dayLabelHtml: _dayLabelHtml,
-  escapeHtml: _escapeHtml,
-  formatDayLabel: _formatDayLabel,
-  formatMetric: _formatMetric,
-  formatTemp: _formatTemp,
   isTruthyParam: _isTruthyParam,
-  metricCellHtml: _metricCellHtml,
   normalizeSearch: _normalizeSearch,
-  rainColor: _rainColor,
-  snowColor: _snowColor,
-  tempColor: _tempColor,
 } = weatherPageFormatters;
 
 const _errorMessage = (error) => (error instanceof Error ? error.message : String(error));
@@ -117,19 +94,6 @@ const renderPageLoadError = (error) => {
   el.className = "page-load-error";
   el.textContent = _errorMessage(error);
   pageContentRoot.replaceChildren(el);
-};
-
-const measureTextWidth = (text, font) => {
-  const cache = measureTextWidth.cache || (measureTextWidth.cache = new Map());
-  const cacheKey = `${font}\u0000${text || ""}`;
-  if (cache.has(cacheKey)) return cache.get(cacheKey);
-  const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
-  const context = canvas.getContext("2d");
-  context.font = font;
-  const width = context.measureText(text || "").width;
-  cache.set(cacheKey, width);
-  if (cache.size > 4000) cache.clear();
-  return width;
 };
 
 const _resolveBootstrapUrl = (rawUrl) => {
@@ -156,447 +120,28 @@ const _isDynamicApiDataUrl = () => {
   }
 };
 
-const _weatherEmoji = (rawCode) => {
-  const helper = window.CloseSnowWeatherCode?.emojiForWeatherCode;
-  return helper ? helper(rawCode) : "❓";
-};
-
-const _filterAttrs = (report) => {
-  const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(",").toLowerCase() : "";
-  const region = String(report.region || "").trim().toLowerCase();
-  const country = String(report.country_code || report.country || "").trim().toUpperCase();
-  const state = String(report.admin1 || "").trim().toUpperCase();
-  const defaultResort = report.default_resort || report.ljcc_favorite ? "1" : "";
-  return ` data-pass-types='${_escapeHtml(passTypes)}' data-region='${_escapeHtml(region)}' data-country='${_escapeHtml(country)}' data-state='${_escapeHtml(state)}' data-default-resort='${_escapeHtml(defaultResort)}'`;
-};
-
+const reportModel = window.CloseSnowWeatherReportModel;
+const weatherSections = window.CloseSnowWeatherSections;
+const sectionRenderer = weatherSections.createRenderer({
+  state: appState,
+  formatters: weatherPageFormatters,
+  compactDailySummary,
+  weatherCode: window.CloseSnowWeatherCode,
+  reportModel,
+});
+const {
+  getLayoutModeForWidth, updateLayoutMode, applyLayout, observeLayoutContainers,
+} = window.CloseSnowWeatherTableLayout.createController({
+  state: appState,
+  window,
+  document,
+  contentRoot: pageContentRoot,
+  stickySingleTableLayout: window.CloseSnowStickySingleTableLayout,
+});
 const _isFavoriteResortId = (resortId) => appState.favoriteResortIds.has(String(resortId || "").trim());
 
-const _favoriteButtonHtml = (report) => {
-  const resortId = String(report.resort_id || "").trim();
-  if (!resortId) return "";
-  const active = _isFavoriteResortId(resortId);
-  const label = active ? "Remove resort from favorites" : "Add resort to favorites";
-  return `<button type='button' class='favorite-btn' data-resort-id='${_escapeHtml(resortId)}' data-favorite-active='${active ? "1" : "0"}' aria-pressed='${active ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
-};
-
-const _favoriteAllButtonHtml = (reports) => {
-  const visibleIds = Array.from(new Set((reports || []).map((report) => String(report?.resort_id || "").trim()).filter(Boolean)));
-  if (!visibleIds.length) return "";
-  const allFavorited = visibleIds.every((resortId) => _isFavoriteResortId(resortId));
-  const label = allFavorited ? "Remove all visible resorts from favorites" : "Favorite all visible resorts";
-  return `<button type='button' class='favorite-btn favorite-all-btn' data-favorite-all='1' data-favorite-active='${allFavorited ? "1" : "0"}' aria-pressed='${allFavorited ? "true" : "false"}' aria-label='${label}'><svg class='favorite-btn-icon favorite-btn-outline' aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg><svg class='favorite-btn-icon favorite-btn-filled' aria-hidden='true' viewBox='0 0 24 24' fill='currentColor'><path d='M12 21s-6.9-4.35-9.2-8.45C.9 9.18 2.03 5.5 5.58 4.6c2.12-.54 4.4.24 5.82 1.98 1.42-1.74 3.7-2.52 5.82-1.98 3.55.9 4.68 4.58 2.78 7.95C18.9 16.65 12 21 12 21Z'/></svg></button>`;
-};
-
-const _displayName = (report) => String(report?.display_name || report?.query || "").trim();
-
-const _resortLinkHtml = (report) => {
-  const text = _escapeHtml(_displayName(report));
-  const resortId = String(report.resort_id || "").trim();
-  return resortId
-    ? `<a class='resort-link' href='resort/${encodeURIComponent(resortId)}'>${text}</a>`
-    : text;
-};
-
-const _resortCellHtml = (report) => {
-  const linkHtml = _resortLinkHtml(report);
-  return `<td class='favorite-col'>${_favoriteButtonHtml(report)}</td><td class='query-col'><div class='resort-cell'><div class='resort-link-wrap'>${linkHtml}</div></div></td>`;
-};
-
-const _mobilePrecipResortHeadHtml = (favoriteAllButton) => `
-  <th rowspan='2' class='query-col mobile-precip-resort-head'>
-    <div class='mobile-precip-resort-content'>${favoriteAllButton}<span class='mobile-precip-resort-label'>Resort</span></div>
-  </th>`;
-
-const _mobilePrecipResortCellHtml = (report) => `
-  <td class='query-col mobile-precip-resort-cell'>
-    <div class='mobile-precip-resort-content'>${_favoriteButtonHtml(report)}<div class='resort-cell'><div class='resort-link-wrap'>${_resortLinkHtml(report)}</div></div></div>
-  </td>`;
-
-const _displayDays = () => {
-  const raw = appState.payload && Number(appState.payload.forecast_days);
-  if (Number.isFinite(raw) && raw > 0) return Math.max(0, Math.min(MAX_DISPLAY_DAYS, raw - 1));
-  return MAX_DISPLAY_DAYS;
-};
-
-const _dailyAt = (report, index) => {
-  const daily = Array.isArray(report.daily) ? report.daily : [];
-  return daily[index] && typeof daily[index] === "object" ? daily[index] : {};
-};
-
-const _dayLabelFor = (report, index) => {
-  if (index === 0) return "Today";
-  const label = _formatDayLabel(_dailyAt(report, index).date);
-  if (label) return label;
-  return `day ${index + 1}`;
-};
-
-const _fallbackDayLabels = (count) => Array.from({ length: count }, (_, idx) => (idx === 0 ? "Today" : `day ${idx + 1}`));
-
-const _emptyStateRow = (colspan, message) => `<tr><td class="empty-state-cell" colspan="${colspan}">${_escapeHtml(message)}</td></tr>`;
-
-const _overviewLocation = (report) => {
-  const parts = [report?.city, report?.admin1 || report?.country_code]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean);
-  return parts.join(", ") || String(report?.region || "Mountain forecast").trim();
-};
-
-const _overviewValue = (kind, value, fallback = "--") => {
-  const numeric = _asFiniteNumber(value);
-  if (numeric === null) return `<span class="overview-value">${fallback}</span>`;
-  const display = kind === "temp" ? String(Math.round(numeric)) : numeric.toFixed(1);
-  return `<span class="overview-value" data-compact-unit-kind="${kind}" data-compact-metric-value="${numeric.toFixed(6)}">${display}</span>`;
-};
-
-const _renderForecastOverview = (reports) => {
-  const snowSorted = [...reports].sort((a, b) => (_weeklySnowfall(b) || 0) - (_weeklySnowfall(a) || 0));
-  const hasSnow = snowSorted.some((report) => (_weeklySnowfall(report) || 0) > 0);
-  const candidates = (hasSnow
-    ? snowSorted
-    : [...reports].sort((a, b) => (Number(b?.week1_total_rain_mm) || 0) - (Number(a?.week1_total_rain_mm) || 0)))
-    .slice(0, 3);
-  const outlookKind = hasSnow ? "snow" : "rain";
-  const outlookLabel = hasSnow ? "7-day snow" : "7-day rain";
-  const outlookUnit = hasSnow ? "cm" : "mm";
-  const cards = candidates.map((report, index) => {
-    const today = _dailyAt(report, 0);
-    const weatherCode = today.weather_code;
-    const weatherTitle = weatherCode === null || weatherCode === undefined || weatherCode === ""
-      ? "Weather unavailable"
-      : `WMO code: ${weatherCode}`;
-    return `
-      <article class="snow-pick-card">
-        <div class="snow-pick-card-topline">
-          <span class="snow-pick-rank">#${index + 1} ${hasSnow ? "snow" : "storm"} pick</span>
-          <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(weatherCode)}</span>
-        </div>
-        <h3>${_resortLinkHtml(report)}</h3>
-        <p>${_escapeHtml(_overviewLocation(report))}</p>
-        <div class="snow-pick-metrics">
-          <span><small>${outlookLabel}</small><strong>${_overviewValue(outlookKind, hasSnow ? _weeklySnowfall(report) : report?.week1_total_rain_mm)}<em data-compact-unit-label="${outlookKind}">${outlookUnit}</em></strong></span>
-          <span><small>Today high</small><strong>${_overviewValue("temp", today.temperature_max_c)}<em data-compact-unit-label="temp">°C</em></strong></span>
-        </div>
-      </article>`;
-  }).join("");
-  const empty = `
-    <div class="overview-empty">
-      <strong>No mountains in view</strong>
-      <span>Adjust your search or filters to bring forecast candidates back.</span>
-    </div>`;
-  return `
-    <section class="forecast-overview" aria-labelledby="forecast-overview-title">
-      <div class="overview-heading">
-        <div><p class="eyebrow">At a glance</p><h2 id="forecast-overview-title">${hasSnow ? "Best bets this week" : "Storm watch this week"}</h2></div>
-        <span>${hasSnow ? "Ranked by forecast snowfall" : "No accumulating snow · ranked by forecast rain"} across ${reports.length} visible resort${reports.length === 1 ? "" : "s"}</span>
-      </div>
-      <div class="snow-pick-grid">${cards || empty}</div>
-    </section>`;
-};
-
-const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {
-  const displayDays = _displayDays();
-  const labels = reports.length
-    ? Array.from({ length: displayDays }, (_, idx) => compactDailySummary.dayLabelFor(_dailyAt(reports[0], idx), idx))
-    : _fallbackDayLabels(displayDays);
-  const rows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const cells = Array.from({ length: displayDays }, (_, idx) => {
-      const day = _dailyAt(report, idx);
-      const style = compactDailySummary.dayStyle(day);
-      const styleAttr = style ? ` style='${style}'` : "";
-      return `<td class='compact-day-cell'${styleAttr}>${compactDailySummary.dayCellHtml(day, { unitMode: appState.compactSummaryUnitMode })}</td>`;
-    }).join("");
-    return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
-  }).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
-  return `
-    <section class="forecast-section forecast-section-daily">
-      <div class="section-header">
-        <h2>Daily Summary</h2>
-        <div class="unit-toggle" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${appState.compactSummaryUnitMode}">
-          <button type="button" class="unit-btn" data-unit-mode="metric">Metric</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
-        </div>
-      </div>
-      <div
-        class="compact-grid-mobile-wrap"
-        id="compact-grid-mobile-wrap"
-        data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.dailySummary}"
-        data-sticky-leading-cols="2"
-        data-sticky-header-rows="1"
-        data-sticky-max-visible-rows="5"
-      >
-        <table class="compact-grid-mobile-table" id="compact-grid-mobile-table">
-          <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-compact-day'>").join("")}</colgroup>
-          <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </section>`;
-};
-
-const _renderPrecipSection = (title, kind, metricUnit, imperialUnit, reports, options, emptyMessage = "No resorts match the current filters.") => {
-  const displayDays = _displayDays();
-  const dayLabels = reports.length
-    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
-    : _fallbackDayLabels(displayDays);
-  const weeklyHeaders = ["week 1", "week 2"];
-  const favoriteAllButton = _favoriteAllButtonHtml(reports);
-  const stickySectionKey = options.sectionKey || options.prefix;
-  if (appState.layoutMode === "compact") {
-    const mobileRows = reports.length ? reports.map((report) => {
-      const attrs = _filterAttrs(report);
-      const weeklyValues = [
-        options.week1(report),
-        options.week2(report),
-      ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
-      const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
-        const value = options.daily(_dailyAt(report, idx));
-        return _metricCellHtml(_formatMetric(value), kind, options.color(value), "day-col-cell");
-      });
-      return `<tr${attrs}>${_mobilePrecipResortCellHtml(report)}${weeklyValues.join("")}${dailyValues.join("")}</tr>`;
-    }).join("") : _emptyStateRow(3 + Math.max(1, displayDays), emptyMessage);
-    return `
-      <section class="forecast-section forecast-section-precip">
-        <div class="section-header">
-          <h2>${title}</h2>
-          <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
-            <button type="button" class="unit-btn" data-unit-mode="metric">${metricUnit}</button>
-            <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
-          </div>
-        </div>
-        <div
-          class="${options.prefix}-sticky-wrap mobile-only"
-          id="${options.prefix}-sticky-wrap-mobile"
-          data-sticky-single-table-section="${_escapeHtml(stickySectionKey)}"
-          data-sticky-leading-cols="1"
-          data-sticky-header-rows="2"
-          data-sticky-max-visible-rows="10"
-        >
-          <table class="${options.prefix}-sticky-table ${options.prefix}-mobile-sticky-table">
-            <colgroup><col class='col-query'><col class='col-week'><col class='col-week'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-            <thead><tr>${_mobilePrecipResortHeadHtml(favoriteAllButton)}<th colspan='2' class='week-group'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>${weeklyHeaders[0]}</th><th class='week-col-cell'>${weeklyHeaders[1]}</th>${dayLabels.map((label) => `<th class='day-col-cell'>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-            <tbody>${mobileRows}</tbody>
-          </table>
-        </div>
-      </section>`;
-  }
-  const desktopRows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const weeklyValues = [
-      options.week1(report),
-      options.week2(report),
-    ].map((value) => _metricCellHtml(_formatMetric(value), kind, options.color(value), "week-col-cell"));
-    const dailyValues = Array.from({ length: displayDays }, (_, idx) => {
-      const value = options.daily(_dailyAt(report, idx));
-      return _metricCellHtml(_formatMetric(value), kind, options.color(value), "day-col-cell");
-    }).join("");
-    return `<tr${attrs}>${_resortCellHtml(report)}${weeklyValues.join("")}${dailyValues}</tr>`;
-  }).join("") : _emptyStateRow(4 + Math.max(1, displayDays), emptyMessage);
-  return `
-    <section class="forecast-section forecast-section-precip">
-      <div class="section-header">
-        <h2>${title}</h2>
-        <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
-          <button type="button" class="unit-btn" data-unit-mode="metric">${metricUnit}</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
-        </div>
-      </div>
-      <div
-        class="${options.prefix}-sticky-wrap desktop-only"
-        id="${options.prefix}-sticky-wrap"
-        data-sticky-single-table-section="${_escapeHtml(stickySectionKey)}"
-        data-sticky-leading-cols="4"
-        data-sticky-header-rows="2"
-        data-sticky-max-visible-rows="10"
-      >
-        <table class="${options.prefix}-sticky-table">
-          <colgroup><col class='col-favorite'><col class='col-query'><col class='col-week'><col class='col-week'>${Array.from({ length: displayDays }, () => "<col class='col-day'>").join("")}</colgroup>
-          <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${favoriteAllButton}</th><th rowspan='2' class='query-col'>Resort</th><th colspan='2' class='week-group'>Weekly</th><th colspan='${displayDays}'>Daily</th></tr><tr><th class='week-col-cell'>${weeklyHeaders[0]}</th><th class='week-col-cell'>${weeklyHeaders[1]}</th>${dayLabels.map((label) => `<th class='day-col-cell'>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-          <tbody>${desktopRows}</tbody>
-        </table>
-      </div>
-    </section>`;
-};
-
-const _renderTemperatureSection = (reports, emptyMessage = "No resorts match the current filters.") => {
-  const displayDays = _displayDays();
-  const labels = reports.length
-    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
-    : _fallbackDayLabels(displayDays);
-  const rows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const cells = Array.from({ length: displayDays }, (_, idx) => {
-      const day = _dailyAt(report, idx);
-      return [
-        _metricCellHtml(_formatTemp(day.temperature_min_c), "temp", _tempColor(day.temperature_min_c)),
-        _metricCellHtml(_formatTemp(day.temperature_max_c), "temp", _tempColor(day.temperature_max_c)),
-      ].join("");
-    }).join("");
-    return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
-  }).join("") : _emptyStateRow(2 + Math.max(1, displayDays * 2), emptyMessage);
-  return `
-    <section class="forecast-section forecast-section-temperature">
-      <div class="section-header">
-        <h2>Temperature</h2>
-        <div class="unit-toggle" role="group" aria-label="Temperature unit system" data-target-kind="temp">
-          <button type="button" class="unit-btn" data-unit-mode="metric">°C</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">°F</button>
-        </div>
-      </div>
-      <div
-        class="temperature-sticky-wrap"
-        id="temperature-sticky-wrap"
-        data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.temperature}"
-        data-sticky-leading-cols="2"
-        data-sticky-header-rows="2"
-        data-sticky-max-visible-rows="10"
-      >
-        <table class="temperature-single-table" id="temperature-single-table">
-          <colgroup><col class="col-favorite"><col class="col-query">${Array.from({ length: displayDays * 2 }, () => "<col class='col-temp'>").join("")}</colgroup>
-          <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th>${labels.map((label) => `<th colspan='2'>${_dayLabelHtml(label)}</th>`).join("")}</tr><tr>${Array.from({ length: displayDays }, () => "<th>min</th><th>max</th>").join("")}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </section>`;
-};
-
-const _renderWeatherSection = (reports, emptyMessage = "No resorts match the current filters.") => {
-  const displayDays = _displayDays();
-  const labels = reports.length
-    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
-    : _fallbackDayLabels(displayDays);
-  const weatherCells = (report) => Array.from({ length: displayDays }, (_, idx) => {
-    const code = _dailyAt(report, idx).weather_code;
-    const title = code === null || code === undefined || code === "" ? "WMO code: unknown" : `WMO code: ${code}`;
-    return `<td class='weather-emoji-cell' title='${_escapeHtml(title)}'>${_weatherEmoji(code)}</td>`;
-  }).join("");
-  const rows = reports.length ? reports.map((report) => `<tr${_filterAttrs(report)}>${_resortCellHtml(report)}${weatherCells(report)}</tr>`).join("") : _emptyStateRow(2 + Math.max(1, displayDays), emptyMessage);
-  return `
-    <section class="forecast-section forecast-section-weather">
-      <div class="section-header">
-        <h2>Weather</h2>
-        <span class="section-note">Daily conditions</span>
-      </div>
-      <div
-        class='weather-table-wrap'
-        id='weather-table-wrap'
-        data-sticky-single-table-section='${STICKY_SINGLE_TABLE_SECTION_KEYS.weather}'
-        data-sticky-leading-cols='2'
-        data-sticky-header-rows='1'
-        data-sticky-max-visible-rows='10'
-      >
-        <table class='weather-table' id='weather-table'>
-          <colgroup><col class='col-favorite'><col class='col-query'>${Array.from({ length: displayDays }, () => "<col class='col-weather'>").join("")}</colgroup>
-          <thead><tr><th class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th class='query-col'>Resort</th>${labels.map((label) => `<th>${_dayLabelHtml(label)}</th>`).join("")}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </section>`;
-};
-
-const _renderSunSection = (reports, emptyMessage = "No resorts match the current filters.") => {
-  const displayDays = _displayDays();
-  const labels = reports.length
-    ? Array.from({ length: displayDays }, (_, idx) => _dayLabelFor(reports[0], idx))
-    : _fallbackDayLabels(displayDays);
-  const hhmm = (raw, mode = "metric") => {
-    const text = String(raw || "").trim();
-    if (!text) return "";
-    const value = text.includes("T") ? text.split("T", 2)[1].slice(0, 5) : text.slice(0, 5);
-    if (mode !== "imperial") return value;
-    const match = /^(\d{2}):(\d{2})$/.exec(value);
-    if (!match) return value;
-    const hour24 = Number(match[1]);
-    if (!Number.isFinite(hour24)) return value;
-    const minute = match[2];
-    const suffix = hour24 >= 12 ? "PM" : "AM";
-    const hour12 = hour24 % 12 || 12;
-    return `${hour12}:${minute} ${suffix}`;
-  };
-  const totalColumns = 2 + (displayDays * 2);
-  const rows = reports.length ? reports.map((report) => {
-    const attrs = _filterAttrs(report);
-    const cells = Array.from({ length: displayDays }, (_, idx) => {
-      const day = _dailyAt(report, idx);
-      const sunriseRaw = hhmm(day.sunrise_local_hhmm || day.sunrise_iso);
-      const sunsetRaw = hhmm(day.sunset_local_hhmm || day.sunset_iso);
-      const sunrise = hhmm(sunriseRaw, appState.sunTimeToggleMode);
-      const sunset = hhmm(sunsetRaw, appState.sunTimeToggleMode);
-      return `<td data-sun-time-raw="${_escapeHtml(sunriseRaw)}">${_escapeHtml(sunrise)}</td><td data-sun-time-raw="${_escapeHtml(sunsetRaw)}">${_escapeHtml(sunset)}</td>`;
-    }).join("");
-    return `<tr${attrs}>${_resortCellHtml(report)}${cells}</tr>`;
-  }).join("") : _emptyStateRow(totalColumns, emptyMessage);
-  return `
-    <section class="forecast-section forecast-section-sun">
-      <div class="section-header">
-        <h2>Sunrise / Sunset</h2>
-        <div class="unit-toggle" role="group" aria-label="Sunrise and sunset time format" data-sun-time-toggle="1" data-mode="${appState.sunTimeToggleMode}">
-          <button type="button" class="unit-btn" data-unit-mode="metric">24h</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">12h</button>
-        </div>
-      </div>
-      <div
-        class="sun-single-wrap"
-        id="sun-single-wrap"
-        data-sticky-single-table-section="${STICKY_SINGLE_TABLE_SECTION_KEYS.sun}"
-        data-sticky-leading-cols="2"
-        data-sticky-header-rows="2"
-        data-sticky-max-visible-rows="10"
-      >
-        <table class="sun-single-table" id="sun-single-table">
-          <colgroup><col class="col-favorite"><col class="col-query">${Array.from({ length: displayDays * 2 }, () => "<col class='col-sun'>").join("")}</colgroup>
-          <thead><tr><th rowspan='2' class='favorite-col favorite-head'>${_favoriteAllButtonHtml(reports)}</th><th rowspan='2' class='query-col'>Resort</th>${labels.map((label) => `<th colspan='2'>${_dayLabelHtml(label)}</th>`).join("")}</tr><tr>${Array.from({ length: displayDays }, () => "<th>sunrise</th><th>sunset</th>").join("")}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </section>`;
-};
-
-const _renderSections = (reports, emptyMessage = "No resorts match the current filters.") => [
-  _renderForecastOverview(reports),
-  _renderCompactGridSection(reports, emptyMessage),
-  _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
-    prefix: "snowfall",
-    sectionKey: STICKY_SINGLE_TABLE_SECTION_KEYS.snowfall,
-    week1: (report) => report.week1_total_snowfall_cm,
-    week2: (report) => report.week2_total_snowfall_cm,
-    daily: (day) => day.snowfall_cm,
-    color: _snowColor,
-  }, emptyMessage),
-  _renderPrecipSection("Rainfall", "rain", "mm", "in", reports, {
-    prefix: "rain",
-    sectionKey: STICKY_SINGLE_TABLE_SECTION_KEYS.rainfall,
-    week1: (report) => report.week1_total_rain_mm,
-    week2: (report) => report.week2_total_rain_mm,
-    daily: (day) => day.rain_mm,
-    color: _rainColor,
-  }, emptyMessage),
-  _renderTemperatureSection(reports, emptyMessage),
-  _renderWeatherSection(reports, emptyMessage),
-  _renderSunSection(reports, emptyMessage),
-].join("");
-
-const _payloadReports = () => {
-  const reports = appState.payload && Array.isArray(appState.payload.reports) ? appState.payload.reports : [];
-  return reports.filter((report) => report && typeof report === "object");
-};
-
-const _deriveAvailableFiltersFromReports = (reports) => {
-  const out = { pass_type: {}, region: {}, subregion: {} };
-  reports.forEach((report) => {
-    const region = _normalizeSearch(report.region);
-    if (region) out.region[region] = (out.region[region] || 0) + 1;
-    const subregion = _normalizeSearch(report.subregion);
-    if (subregion) out.subregion[subregion] = (out.subregion[subregion] || 0) + 1;
-    const passTypes = Array.isArray(report.pass_types) ? report.pass_types : [];
-    passTypes.forEach((passType) => {
-      const key = _normalizeSearch(passType);
-      if (key) out.pass_type[key] = (out.pass_type[key] || 0) + 1;
-    });
-  });
-  return out;
-};
+const _payloadReports = () => reportModel.payloadReports(appState.payload);
+const _deriveAvailableFiltersFromReports = reportModel.deriveAvailableFilters;
 
 const _availableFilters = () => {
   const meta = filterMetaAvailable;
@@ -614,29 +159,11 @@ const parsePassTypeValues = filterStateHelpers.parsePassTypeValues;
 const parseSubregionValues = filterStateHelpers.parseSubregionValues;
 const normalizeSortBy = filterStateHelpers.normalizeSortBy;
 
-const _dailySnowfall = (report, index = 0) => _asFiniteNumber(_dailyAt(report, index).snowfall_cm);
-const _weeklySnowfall = (report) => _asFiniteNumber(report && report.week1_total_snowfall_cm);
-const _nextWeekSnowfall = (report) => _asFiniteNumber(report && report.week2_total_snowfall_cm);
-const _twoWeekSnowfall = (report) => {
-  const week1 = _weeklySnowfall(report);
-  const week2 = _nextWeekSnowfall(report);
-  if (week1 === null && week2 === null) return null;
-  return (week1 || 0) + (week2 || 0);
-};
-
 const _sortLabel = filterStateHelpers.sortLabel;
 
 const _subregionLabel = (value) => {
   const hit = SUBREGION_OPTIONS.find((option) => option.value === _normalizeSearch(value));
   return hit ? hit.label : String(value || "");
-};
-
-const _compareBySnowDesc = (a, b, valueFn) => {
-  const aValue = valueFn(a);
-  const bValue = valueFn(b);
-  const aSortable = aValue === null ? Number.NEGATIVE_INFINITY : aValue;
-  const bSortable = bValue === null ? Number.NEGATIVE_INFINITY : bValue;
-  return bSortable - aSortable;
 };
 
 const loadFavoriteResortIds = () => {
@@ -843,78 +370,9 @@ const buildServerQueryParams = () => {
   return params;
 };
 
-const _rowSearchText = (report) => {
-  const passTypes = Array.isArray(report.pass_types) ? report.pass_types.join(" ") : "";
-  const state = String(report.admin1 || "").trim();
-  const stateName = String(report.state_name || "").trim();
-  const countryCode = String(report.country_code || report.country || "").trim();
-  const countryName = String(report.country_name || "").trim();
-  const city = String(report.city || "").trim();
-  const address = String(report.address || "").trim();
-  const searchTerms = Array.isArray(report.search_terms) ? report.search_terms.join(" ") : "";
-  return _normalizeSearch(
-    `${_displayName(report)} ${report.query || ""} ${state} ${stateName} ${countryCode} ${countryName} ${city} ${address} ${passTypes} ${searchTerms}`
-  );
-};
-
-const _isDefaultResort = (report) => Boolean(report.default_resort || report.ljcc_favorite);
-const _isFavoriteReport = (report) => _isFavoriteResortId(report && report.resort_id);
-
-const _filteredReports = () => {
-  const keyword = _normalizeSearch(appState.filterState.search);
-  const reports = _payloadReports();
-  const searchAllActive = Boolean(keyword) && appState.filterState.searchAll;
-  const filtered = reports.filter((report) => {
-    if (keyword && !_rowSearchText(report).includes(keyword)) return false;
-    if (searchAllActive) return true;
-    if (appState.filterState.favoritesOnly && !_isFavoriteReport(report)) return false;
-    if (appState.filterState.includeDefault && !_isDefaultResort(report)) return false;
-    if (appState.filterState.passTypes.size > 0) {
-      const reportPassTypes = new Set((Array.isArray(report.pass_types) ? report.pass_types : []).map(_normalizeSearch));
-      let matchesPass = false;
-      for (const passType of appState.filterState.passTypes) {
-        if (reportPassTypes.has(passType)) {
-          matchesPass = true;
-          break;
-        }
-      }
-      if (!matchesPass) return false;
-    }
-    if (appState.filterState.subregions.size > 0) {
-      const reportSubregion = _normalizeSearch(report.subregion || report.region);
-      if (!appState.filterState.subregions.has(reportSubregion)) return false;
-    }
-    return true;
-  });
-  const sortBy = appState.filterState.sortBy;
-  filtered.sort((a, b) => {
-    if (sortBy === "favorites") {
-      const favoriteDelta = Number(_isFavoriteReport(b)) - Number(_isFavoriteReport(a));
-      if (favoriteDelta !== 0) return favoriteDelta;
-    }
-    if (sortBy === "today_snow") {
-      const snowDelta = _compareBySnowDesc(a, b, (report) => _dailySnowfall(report, 0));
-      if (snowDelta !== 0) return snowDelta;
-    }
-    if (sortBy === "week_snow") {
-      const snowDelta = _compareBySnowDesc(a, b, _weeklySnowfall);
-      if (snowDelta !== 0) return snowDelta;
-    }
-    if (sortBy === "next_week_snow") {
-      const snowDelta = _compareBySnowDesc(a, b, _nextWeekSnowfall);
-      if (snowDelta !== 0) return snowDelta;
-    }
-    if (sortBy === "two_week_snow") {
-      const snowDelta = _compareBySnowDesc(a, b, _twoWeekSnowfall);
-      if (snowDelta !== 0) return snowDelta;
-    }
-    if (sortBy === "name") return _displayName(a).localeCompare(_displayName(b));
-    const stateCmp = String(a.admin1 || "").localeCompare(String(b.admin1 || ""));
-    if (stateCmp !== 0) return stateCmp;
-    return String(a.query || "").localeCompare(String(b.query || ""));
-  });
-  return filtered;
-};
+const _filteredReports = () => reportModel.selectReports(
+  _payloadReports(), appState.filterState, appState.favoriteResortIds,
+);
 
 const syncFilterSummary = (visibleReports, totalReports) => {
   if (!filterSummary) return;
@@ -939,446 +397,7 @@ const syncFilterSummary = (visibleReports, totalReports) => {
     : (appState.filterState.includeDefault ? `Default resorts (${scope})` : `All supported resorts (${scope})`);
 };
 
-const getLayoutModeForWidth = (width = window.innerWidth) => (width < MIN_DESKTOP_SNOW_3DAY_PX ? "compact" : "desktop");
-
-const updateLayoutMode = () => {
-  const layoutMode = getLayoutModeForWidth();
-  appState.layoutMode = layoutMode;
-  document.body.classList.toggle("mobile-simple", layoutMode === "compact");
-  return layoutMode;
-};
-
-const isCompactLayout = () => appState.layoutMode === "compact";
-
-const _mobileLeadingQueryCap = (offset = LEADING_FAVORITE_COL_PX) => {
-  const viewportWidth = Math.max(
-    document.documentElement?.clientWidth || 0,
-    window.innerWidth || 0,
-  );
-  return Math.max(0, Math.floor((viewportWidth / 2) - Math.max(0, offset)));
-};
-
-const _mobileHalfScreenCap = () => _mobileLeadingQueryCap(0);
-
-const _stickySingleTableWidthContext = ({
-  wrapSelector,
-  queryVarName,
-  leadingWidth = LEADING_FAVORITE_COL_PX,
-}) => {
-  const wrap = document.querySelector(wrapSelector);
-  if (!wrap) return { availableWidth: 0, reservedWidth: leadingWidth };
-  const queryWidth = parseFloat(window.getComputedStyle(wrap).getPropertyValue(queryVarName)) || 0;
-  const reservedWidth = leadingWidth + queryWidth;
-  return {
-    availableWidth: Math.max(0, wrap.clientWidth - reservedWidth),
-    reservedWidth,
-  };
-};
-
-const _compactMobileDailyWidthContext = () => {
-  return _stickySingleTableWidthContext({
-    wrapSelector: ".compact-grid-mobile-wrap",
-    queryVarName: "--compact-mobile-query-w",
-  });
-};
-
-const _resolveQueryColumnBounds = ({
-  minWidth,
-  maxWidth,
-  capToMobileHalfScreen = false,
-  mobileCapOffset = LEADING_FAVORITE_COL_PX,
-}) => {
-  let resolvedMax = maxWidth;
-  if (capToMobileHalfScreen && isCompactLayout()) {
-    resolvedMax = Math.min(resolvedMax, _mobileLeadingQueryCap(mobileCapOffset));
-  }
-  return {
-    minWidth: Math.min(minWidth, resolvedMax),
-    maxWidth: resolvedMax,
-  };
-};
-
-const _autoSizeDesktopLeftColumns = ({
-  tableSelector,
-  wrapSelector,
-  queryVarName,
-  weekVarName,
-}) => {
-  const table = document.querySelector(tableSelector);
-  const wrap = document.querySelector(wrapSelector);
-  if (!table || !wrap) return;
-  const rows = Array.from(table.querySelectorAll("tbody tr"));
-  const headerCells = Array.from(table.querySelectorAll("thead tr:last-child th"));
-  if (headerCells.length < 2) return;
-  const sampleCell = table.querySelector("tbody td") || headerCells[0];
-  if (!sampleCell) return;
-  const font = window.getComputedStyle(sampleCell).font;
-
-  const queryIndex = headerCells.length >= 2 ? 1 : 0;
-  const queryValues = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
-  const queryHeader = table.querySelector("thead .query-col")?.textContent?.trim() || "query";
-  const queryMax = Math.max(
-    measureTextWidth(queryHeader, font),
-    ...queryValues.map((value) => measureTextWidth(value, font)),
-  );
-
-  const weekHeaders = headerCells.map((cell) => cell.textContent?.trim() || "");
-  const weekValues = rows.flatMap((row) =>
-    Array.from(row.children)
-      .slice(queryIndex + 1)
-      .map((cell) => cell.textContent?.trim() || ""),
-  );
-  const weekMax = Math.max(
-    ...weekHeaders.map((value) => measureTextWidth(value, font)),
-    ...weekValues.map((value) => measureTextWidth(value, font)),
-  );
-
-  wrap.style.setProperty(queryVarName, `${Math.max(150, Math.min(240, Math.ceil(queryMax + 28)))}px`);
-  wrap.style.setProperty(weekVarName, `${Math.max(90, Math.min(130, Math.ceil(weekMax + 24)))}px`);
-};
-
-const _autoSizeQueryOnly = ({
-  tableSelector,
-  wrapSelector,
-  queryVarName,
-  minWidth = 150,
-  maxWidth = 240,
-  padding = 28,
-  capToMobileHalfScreen = false,
-  mobileCapOffset = LEADING_FAVORITE_COL_PX,
-}) => {
-  const table = document.querySelector(tableSelector);
-  const wrap = document.querySelector(wrapSelector);
-  if (!table || !wrap) return;
-  const rows = Array.from(table.querySelectorAll("tbody tr"));
-  const header = table.querySelector("thead .query-col") || table.querySelector("thead th");
-  const sampleCell = table.querySelector("tbody td") || header;
-  if (!sampleCell || !header) return;
-  const font = window.getComputedStyle(sampleCell).font;
-  const queryIndex = header && header.cellIndex >= 0 ? header.cellIndex : 0;
-  const values = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
-  const headerText = header.textContent?.trim() || "query";
-  const queryMax = Math.max(
-    measureTextWidth(headerText, font),
-    ...values.map((value) => measureTextWidth(value, font)),
-  );
-  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen, mobileCapOffset });
-  wrap.style.setProperty(
-    queryVarName,
-    `${Math.max(bounds.minWidth, Math.min(bounds.maxWidth, Math.ceil(queryMax + padding)))}px`,
-  );
-};
-
-const _autoSizeMobileQueryColumn = ({
-  tableSelector,
-  wrapSelector,
-  minWidth,
-  maxWidth,
-  padding,
-  capToMobileHalfScreen = false,
-}) => {
-  const table = document.querySelector(tableSelector);
-  const wrap = document.querySelector(wrapSelector);
-  if (!table || !wrap) return;
-  const rows = Array.from(table.querySelectorAll("tbody tr"));
-  const header = table.querySelector("thead .query-col");
-  const sampleCell = table.querySelector("tbody td") || header;
-  if (!sampleCell || !header) return;
-  const font = window.getComputedStyle(sampleCell).font;
-  const queryIndex = header && header.cellIndex >= 0 ? header.cellIndex : 0;
-  const values = rows.map((row) => row.children[queryIndex]?.textContent?.trim() || "");
-  const headerText = header.textContent?.trim() || "Resort";
-  const bounds = _resolveQueryColumnBounds({ minWidth, maxWidth, capToMobileHalfScreen });
-  const width = Math.max(
-    bounds.minWidth,
-    Math.min(
-      bounds.maxWidth,
-      Math.ceil(Math.max(measureTextWidth(headerText, font), ...values.map((value) => measureTextWidth(value, font))) + padding),
-    ),
-  );
-  wrap.style.setProperty("--query-col-w", `${width}px`);
-  wrap.style.setProperty("--rain-query-w", `${width}px`);
-};
-
-const _autoSizeMobileRightColumns = ({
-  tableSelector,
-  wrapSelector,
-  weekSelector,
-  daySelector,
-  minWeekWidth,
-  minDayWidth,
-  maxWeekWidth = Number.POSITIVE_INFINITY,
-  maxDayWidth = Number.POSITIVE_INFINITY,
-}) => {
-  const table = document.querySelector(tableSelector);
-  const wrap = document.querySelector(wrapSelector);
-  if (!table || !wrap) return;
-  const weekCols = Array.from(table.querySelectorAll(weekSelector));
-  const dayCols = Array.from(table.querySelectorAll(daySelector));
-  const totalCols = weekCols.length + dayCols.length;
-  if (!totalCols) return;
-
-  const effectiveMinWeekWidth = Math.min(minWeekWidth, maxWeekWidth);
-  const effectiveMinDayWidth = Math.min(minDayWidth, maxDayWidth);
-  const minTotal = (effectiveMinWeekWidth * weekCols.length) + (effectiveMinDayWidth * dayCols.length);
-  const wrapWidth = wrap.clientWidth;
-  if (wrapWidth >= minTotal) {
-    const base = Math.floor(wrapWidth / totalCols);
-    const remainder = wrapWidth - (base * totalCols);
-    let totalWidth = 0;
-    [...weekCols, ...dayCols].forEach((col, index) => {
-      const isWeekCol = index < weekCols.length;
-      const minWidth = isWeekCol ? effectiveMinWeekWidth : effectiveMinDayWidth;
-      const maxWidth = isWeekCol ? maxWeekWidth : maxDayWidth;
-      const width = Math.max(minWidth, Math.min(maxWidth, base + (index < remainder ? 1 : 0)));
-      col.style.width = `${width}px`;
-      totalWidth += width;
-    });
-    table.style.width = `${totalWidth}px`;
-    return;
-  }
-
-  weekCols.forEach((col) => {
-    col.style.width = `${effectiveMinWeekWidth}px`;
-  });
-  dayCols.forEach((col) => {
-    col.style.width = `${effectiveMinDayWidth}px`;
-  });
-  table.style.width = `${minTotal}px`;
-};
-
-const _setFixedMobileHeights = (leftSelector, rightSelector, wrapSelector, stickyVar) => {
-  const leftTable = document.querySelector(leftSelector);
-  const rightTable = document.querySelector(rightSelector);
-  const splitWrap = document.querySelector(wrapSelector);
-  if (!leftTable || !rightTable) return;
-
-  const leftHeadRows = Array.from(leftTable.tHead?.rows || []);
-  const rightHeadRows = Array.from(rightTable.tHead?.rows || []);
-  const leftBodyRows = Array.from(leftTable.tBodies[0]?.rows || []);
-  const rightBodyRows = Array.from(rightTable.tBodies[0]?.rows || []);
-
-  const headRowHeights = [30, 30];
-  leftHeadRows.forEach((row, index) => { row.style.height = `${headRowHeights[index] || 30}px`; });
-  rightHeadRows.forEach((row, index) => { row.style.height = `${headRowHeights[index] || 30}px`; });
-  leftBodyRows.forEach((row) => { row.style.height = "30px"; });
-  rightBodyRows.forEach((row) => { row.style.height = "30px"; });
-
-  if (splitWrap) {
-    splitWrap.style.setProperty(stickyVar, `${headRowHeights[0]}px`);
-  }
-};
-
-const _stretchColumnsToWrap = ({
-  wrapSelector,
-  tableSelector,
-  colSelector,
-  minWidth,
-  maxWidth = Number.POSITIVE_INFINITY,
-  availableWidth = null,
-  tableWidthOffset = 0,
-}) => {
-  const wrap = document.querySelector(wrapSelector);
-  const table = document.querySelector(tableSelector);
-  if (!wrap || !table) return;
-  const cols = Array.from(table.querySelectorAll(colSelector));
-  const count = cols.length;
-  if (!count) return;
-
-  const effectiveMinWidth = Math.min(minWidth, maxWidth);
-  const stretchWidth = Math.max(0, availableWidth === null ? wrap.clientWidth : availableWidth);
-  const minTotal = effectiveMinWidth * count;
-  if (stretchWidth >= minTotal) {
-    const base = Math.floor(stretchWidth / count);
-    const remainder = stretchWidth - (base * count);
-    let totalWidth = 0;
-    cols.forEach((col, index) => {
-      const width = Math.max(effectiveMinWidth, Math.min(maxWidth, base + (index < remainder ? 1 : 0)));
-      col.style.width = `${width}px`;
-      totalWidth += width;
-    });
-    table.style.width = `${totalWidth + tableWidthOffset}px`;
-    return;
-  }
-
-  cols.forEach((col) => {
-    col.style.width = `${effectiveMinWidth}px`;
-  });
-  table.style.width = `${minTotal + tableWidthOffset}px`;
-};
-
-const autoSizeSplitTables = () => {
-  _autoSizeQueryOnly({
-    tableSelector: ".compact-grid-mobile-table",
-    wrapSelector: ".compact-grid-mobile-wrap",
-    queryVarName: "--compact-mobile-query-w",
-    minWidth: isCompactLayout() ? 120 : 150,
-    maxWidth: isCompactLayout() ? 180 : 240,
-    padding: isCompactLayout() ? 22 : 28,
-    capToMobileHalfScreen: isCompactLayout(),
-  });
-  _autoSizeQueryOnly({
-    tableSelector: ".temperature-sticky-wrap .temperature-single-table",
-    wrapSelector: ".temperature-sticky-wrap",
-    queryVarName: "--temp-query-w",
-    minWidth: 150,
-    maxWidth: 220,
-    capToMobileHalfScreen: isCompactLayout(),
-  });
-  _autoSizeQueryOnly({
-    tableSelector: ".weather-table-wrap .weather-table",
-    wrapSelector: ".weather-table-wrap",
-    queryVarName: "--weather-query-w",
-    minWidth: 150,
-    maxWidth: 220,
-    capToMobileHalfScreen: isCompactLayout(),
-  });
-  if (isCompactLayout()) {
-    const mobileColumnMax = _mobileHalfScreenCap();
-    const compactMobileDailyContext = _compactMobileDailyWidthContext();
-    const temperatureContext = _stickySingleTableWidthContext({
-      wrapSelector: ".temperature-sticky-wrap",
-      queryVarName: "--temp-query-w",
-    });
-    const weatherContext = _stickySingleTableWidthContext({
-      wrapSelector: ".weather-table-wrap",
-      queryVarName: "--weather-query-w",
-    });
-    const sunContext = _stickySingleTableWidthContext({
-      wrapSelector: ".sun-single-wrap",
-      queryVarName: "--sun-query-w",
-    });
-    _stretchColumnsToWrap({
-      wrapSelector: ".compact-grid-mobile-wrap",
-      tableSelector: ".compact-grid-mobile-table",
-      colSelector: "col.col-compact-day",
-      minWidth: 98,
-      maxWidth: mobileColumnMax,
-      availableWidth: compactMobileDailyContext.availableWidth,
-      tableWidthOffset: compactMobileDailyContext.reservedWidth,
-    });
-    _autoSizeQueryOnly({
-      tableSelector: ".snowfall-sticky-wrap.mobile-only .snowfall-sticky-table",
-      wrapSelector: ".snowfall-sticky-wrap.mobile-only",
-      queryVarName: "--snowfall-query-w",
-      minWidth: 150,
-      maxWidth: 220,
-      padding: 38,
-      capToMobileHalfScreen: true,
-      mobileCapOffset: 0,
-    });
-    _stretchColumnsToWrap({
-      wrapSelector: ".temperature-sticky-wrap",
-      tableSelector: ".temperature-single-table",
-      colSelector: "col.col-temp",
-      minWidth: 50,
-      maxWidth: mobileColumnMax,
-      availableWidth: temperatureContext.availableWidth,
-      tableWidthOffset: temperatureContext.reservedWidth,
-    });
-    _autoSizeQueryOnly({
-      tableSelector: ".rain-sticky-wrap.mobile-only .rain-sticky-table",
-      wrapSelector: ".rain-sticky-wrap.mobile-only",
-      queryVarName: "--rain-query-w",
-      minWidth: 150,
-      maxWidth: 220,
-      padding: 38,
-      capToMobileHalfScreen: true,
-      mobileCapOffset: 0,
-    });
-    _stretchColumnsToWrap({
-      wrapSelector: ".weather-table-wrap",
-      tableSelector: ".weather-table",
-      colSelector: "col.col-weather",
-      minWidth: 68,
-      maxWidth: mobileColumnMax,
-      availableWidth: weatherContext.availableWidth,
-      tableWidthOffset: weatherContext.reservedWidth,
-    });
-    _autoSizeQueryOnly({
-      tableSelector: ".sun-single-wrap .sun-single-table",
-      wrapSelector: ".sun-single-wrap",
-      queryVarName: "--sun-query-w",
-      minWidth: 150,
-      maxWidth: 220,
-      capToMobileHalfScreen: true,
-    });
-    _stretchColumnsToWrap({
-      wrapSelector: ".sun-single-wrap",
-      tableSelector: ".sun-single-table",
-      colSelector: "col.col-sun",
-      minWidth: 58,
-      maxWidth: mobileColumnMax,
-      availableWidth: sunContext.availableWidth,
-      tableWidthOffset: sunContext.reservedWidth,
-    });
-    return;
-  }
-  _autoSizeQueryOnly({
-    tableSelector: ".snowfall-sticky-wrap.desktop-only .snowfall-sticky-table",
-    wrapSelector: ".snowfall-sticky-wrap.desktop-only",
-    queryVarName: "--snowfall-query-w",
-  });
-  _autoSizeQueryOnly({
-    tableSelector: ".rain-sticky-wrap.desktop-only .rain-sticky-table",
-    wrapSelector: ".rain-sticky-wrap.desktop-only",
-    queryVarName: "--rain-query-w",
-  });
-  _autoSizeQueryOnly({
-    tableSelector: ".sun-single-wrap .sun-single-table",
-    wrapSelector: ".sun-single-wrap",
-    queryVarName: "--sun-query-w",
-  });
-  _stretchColumnsToWrap({
-    wrapSelector: ".sun-single-wrap",
-    tableSelector: ".sun-single-table",
-    colSelector: "col.col-sun",
-    minWidth: 58,
-  });
-};
-
-let layoutFrame = 0;
-let layoutObserver = null;
 let dynamicPayloadAbortController = null;
-
-const applyLayout = () => {
-  if (layoutFrame) cancelAnimationFrame(layoutFrame);
-  layoutFrame = requestAnimationFrame(() => {
-    layoutFrame = 0;
-    updateLayoutMode();
-    autoSizeSplitTables();
-    if (typeof stickySingleTableLayout.applyFromDom === "function") {
-      stickySingleTableLayout.applyFromDom({ root: pageContentRoot || document });
-    }
-  });
-};
-
-const observeLayoutContainers = () => {
-  if (!window.ResizeObserver) return;
-  if (layoutObserver) layoutObserver.disconnect();
-  layoutObserver = new ResizeObserver(() => applyLayout());
-  const observed = new Set();
-  [
-    ".snowfall-sticky-wrap.desktop-only",
-    ".snowfall-sticky-wrap.mobile-only",
-    ".rain-sticky-wrap.desktop-only",
-    ".rain-sticky-wrap.mobile-only",
-    ".compact-grid-mobile-wrap",
-    ".temperature-sticky-wrap",
-    ".weather-table-wrap",
-    ".sun-single-wrap",
-  ].forEach((selector) => {
-    const element = document.querySelector(selector);
-    if (!element || observed.has(element)) return;
-    layoutObserver.observe(element);
-    observed.add(element);
-  });
-  document.querySelectorAll("[data-sticky-single-table-section]").forEach((element) => {
-    if (observed.has(element)) return;
-    layoutObserver.observe(element);
-    observed.add(element);
-  });
-};
 
 const getStoredUnitMode = (kind) => {
   try {
@@ -1395,6 +414,7 @@ const syncCompactSummaryToggle = () => {
     toggle.setAttribute("data-mode", mode);
     toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
+      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
     });
   });
 };
@@ -1405,6 +425,7 @@ const syncSunTimeToggle = () => {
     toggle.setAttribute("data-mode", mode);
     toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
+      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
     });
   });
 };
@@ -1495,6 +516,7 @@ const syncToggleButtons = () => {
     toggle.setAttribute("data-mode", mode);
     toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
+      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
     });
   });
 };
@@ -1544,8 +566,6 @@ const setSunTimeToggleMode = (mode) => {
   syncSunTimeToggle();
 };
 
-const oppositeUnitMode = (mode) => (mode === "imperial" ? "metric" : "imperial");
-
 const renderReportDate = () => {
   if (!reportDateEl) return;
   const raw = appState.payload && appState.payload.generated_at_utc
@@ -1553,21 +573,22 @@ const renderReportDate = () => {
     : reportDateEl.getAttribute("data-generated-utc");
   const utcDate = raw ? new Date(raw) : null;
   if (!utcDate || Number.isNaN(utcDate.getTime())) return;
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
-  reportDateEl.textContent = `Generated At: ${utcDate.toLocaleString(undefined, {
+  reportDateEl.title = `Forecast generated ${utcDate.toISOString()}`;
+  reportDateEl.textContent = `Generated ${utcDate.toLocaleString(undefined, {
     year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    month: "short",
+    day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     hour12: false,
     timeZoneName: "short",
-  })} (${tz})`;
+  })}`;
 };
 
+let pageRenderRevision = 0;
 const renderPage = () => {
   if (!pageContentRoot || !appState.payload) return;
+  pageRenderRevision += 1;
   const visibleReports = _filteredReports();
   const totalReports = _payloadReports().length;
   const keyword = _normalizeSearch(appState.filterState.search);
@@ -1577,8 +598,11 @@ const renderPage = () => {
     : (appState.filterState.favoritesOnly
       ? "No favorite resorts match the current filters."
       : "No resorts match the current filters.");
+  const tabStripScrollLeft = pageContentRoot.querySelector(".forecast-tabs")?.scrollLeft || 0;
   updateLayoutMode();
-  pageContentRoot.innerHTML = _renderSections(visibleReports, emptyMessage);
+  pageContentRoot.innerHTML = sectionRenderer.render(visibleReports, emptyMessage);
+  const tabStrip = pageContentRoot.querySelector(".forecast-tabs");
+  if (tabStrip) tabStrip.scrollLeft = tabStripScrollLeft;
   applyLayout();
   observeLayoutContainers();
   pageContentRoot.removeAttribute("data-loading");
@@ -1607,7 +631,7 @@ const _captureWrapScrollPositions = () => {
     if (!element || seen.has(element)) return;
     entries.push({
       selector,
-      sectionKey: "",
+      sectionKey: String(element.getAttribute("data-sticky-single-table-section") || "").trim(),
       scrollTop: element.scrollTop,
       scrollLeft: element.scrollLeft,
     });
@@ -1643,21 +667,65 @@ const _restoreWrapScrollPositions = (positions) => {
   });
 };
 
-const renderPagePreservingScroll = () => {
+const forecastTabScrollPositions = new Map();
+
+const focusForecastControl = (element) => {
+  if (!element) return;
+  element.focus({ preventScroll: true });
+  if (!element.hasAttribute("data-forecast-tab")) return;
+  const tabStrip = element.closest(".forecast-tabs");
+  if (!tabStrip) return;
+  const tabBounds = element.getBoundingClientRect();
+  const stripBounds = tabStrip.getBoundingClientRect();
+  if (tabBounds.left < stripBounds.left) tabStrip.scrollLeft -= stripBounds.left - tabBounds.left;
+  if (tabBounds.right > stripBounds.right) tabStrip.scrollLeft += tabBounds.right - stripBounds.right;
+};
+
+const renderPagePreservingScroll = ({ positions, focusTab } = {}) => {
   const scrollX = window.scrollX;
   const scrollY = window.scrollY;
-  const wrapScrollPositions = _captureWrapScrollPositions();
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur();
-  }
+  const wrapScrollPositions = positions || _captureWrapScrollPositions();
+  const activeElement = document.activeElement;
+  const focusedWithinContent = Boolean(activeElement && pageContentRoot?.contains(activeElement));
+  const favoriteId = activeElement?.getAttribute("data-resort-id");
+  const favoriteAll = activeElement?.hasAttribute("data-favorite-all");
+  const activeId = activeElement?.id;
   renderPage();
+  const revision = pageRenderRevision;
+  let focusTarget = focusTab ? document.getElementById(`forecast-tab-${focusTab}`) : null;
+  if (!focusTarget && focusedWithinContent) {
+    if (activeId) focusTarget = document.getElementById(activeId);
+    if (!focusTarget && favoriteId) {
+      focusTarget = Array.from(pageContentRoot.querySelectorAll(".favorite-btn[data-resort-id]"))
+        .find((button) => button.getAttribute("data-resort-id") === favoriteId);
+    }
+    if (!focusTarget && favoriteAll) focusTarget = pageContentRoot.querySelector(".favorite-all-btn");
+    if (!focusTarget) focusTarget = document.getElementById(`forecast-tab-${appState.forecastTab}`);
+  }
+  focusForecastControl(focusTarget);
   window.requestAnimationFrame(() => {
+    if (revision !== pageRenderRevision) return;
     _restoreWrapScrollPositions(wrapScrollPositions);
     window.scrollTo(scrollX, scrollY);
     window.requestAnimationFrame(() => {
+      if (revision !== pageRenderRevision) return;
       _restoreWrapScrollPositions(wrapScrollPositions);
       window.scrollTo(scrollX, scrollY);
     });
+  });
+};
+
+const activateForecastTab = (key) => {
+  const nextTab = weatherSections.resolveTab(key);
+  if (nextTab === appState.forecastTab) {
+    focusForecastControl(document.getElementById(`forecast-tab-${nextTab}`));
+    return;
+  }
+  forecastTabScrollPositions.set(appState.forecastTab, _captureWrapScrollPositions());
+  appState.forecastTab = nextTab;
+  renderPagePreservingScroll({
+    positions: forecastTabScrollPositions.get(nextTab) || [],
+    focusTab: nextTab,
   });
 };
 
@@ -1685,12 +753,38 @@ const updateFilterLabels = () => {
   renderSubregionOptions();
 };
 
+let modalReturnFocus = null;
+let modalBodyOverflow = "";
+const modalBackgroundState = new Map();
+
 const closeFilterModal = () => {
-  if (filterModal) filterModal.hidden = true;
+  if (!filterModal || filterModal.hidden) return;
+  filterModal.hidden = true;
+  filterOpenBtn?.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = modalBodyOverflow;
+  modalBackgroundState.forEach((wasInert, element) => { element.inert = wasInert; });
+  modalBackgroundState.clear();
+  modalReturnFocus?.focus({ preventScroll: true });
 };
 
 const openFilterModal = () => {
-  if (filterModal) filterModal.hidden = false;
+  if (!filterModal || !filterModal.hidden) return;
+  modalReturnFocus = document.activeElement;
+  modalBodyOverflow = document.body.style.overflow;
+  filterModal.hidden = false;
+  filterOpenBtn?.setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden";
+  // The dialog is nested in main; make siblings at each level inert.
+  let branch = filterModal;
+  while (branch.parentElement && branch !== document.body) {
+    Array.from(branch.parentElement.children).forEach((element) => {
+      if (element === branch || !(element instanceof HTMLElement)) return;
+      modalBackgroundState.set(element, element.inert);
+      element.inert = true;
+    });
+    branch = branch.parentElement;
+  }
+  filterModal.querySelector("input, button, select")?.focus();
 };
 
 const loadPayload = async (url = _resolvedDataUrl(), options = {}) => {
@@ -1761,7 +855,7 @@ const applyFiltersImmediately = async () => {
       return;
     }
   }
-  renderPage();
+  renderPagePreservingScroll();
 };
 
 const bindControls = () => {
@@ -1807,11 +901,36 @@ const bindControls = () => {
     filterModal.addEventListener("click", (event) => {
       if (event.target === filterModal) closeFilterModal();
     });
+    filterModal.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+      const controls = Array.from(filterModal.querySelectorAll("input, button, select, a[href], [tabindex='0']"))
+        .filter((element) => !element.disabled && element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    });
   }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && filterModal && !filterModal.hidden) closeFilterModal();
+    const tab = event.target.closest("[data-forecast-tab]");
+    if (!tab) return;
+    const nextTab = weatherSections.tabForKey(tab.getAttribute("data-forecast-tab"), event.key);
+    if (!nextTab) return;
+    event.preventDefault();
+    activateForecastTab(nextTab);
   });
   document.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-forecast-tab]");
+    if (tab) {
+      activateForecastTab(tab.getAttribute("data-forecast-tab"));
+      return;
+    }
     const favoriteAllButton = event.target.closest(".favorite-all-btn[data-favorite-all='1']");
     if (favoriteAllButton) {
       event.preventDefault();
@@ -1840,19 +959,18 @@ const bindControls = () => {
     if (!button) return;
     const compactToggle = button.closest(".unit-toggle[data-compact-summary-toggle='1']");
     if (compactToggle) {
-      setCompactSummaryUnitMode(oppositeUnitMode(appState.compactSummaryUnitMode));
+      setCompactSummaryUnitMode(button.getAttribute("data-unit-mode"));
       return;
     }
     const sunTimeToggle = button.closest(".unit-toggle[data-sun-time-toggle='1']");
     if (sunTimeToggle) {
-      setSunTimeToggleMode(oppositeUnitMode(appState.sunTimeToggleMode));
+      setSunTimeToggleMode(button.getAttribute("data-unit-mode"));
       return;
     }
     const group = button.closest(".unit-toggle[data-target-kind]");
     if (!group) return;
     const kind = group.getAttribute("data-target-kind");
-    const currentMode = appState.unitModes[kind] || "metric";
-    setUnitMode(kind, oppositeUnitMode(currentMode));
+    setUnitMode(kind, button.getAttribute("data-unit-mode"));
   });
   window.addEventListener("resize", () => {
     if (appState.payload && getLayoutModeForWidth() !== appState.layoutMode) {
