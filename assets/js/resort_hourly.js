@@ -385,34 +385,83 @@ const splitTimeLabel = (rawTime) => {
 };
 
 const chartYBounds = (metricKey, values) => {
-  if (metricKey === "precipitation_probability") return { min: 0, max: 100 };
-  if (metricKey === "wind_direction_10m") return { min: 0, max: 360 };
-  const finiteValues = values.filter((v) => v !== null);
+  if (metricKey === "precipitation_probability") return { min: 0, max: 100, step: 25 };
+  if (metricKey === "wind_direction_10m") return { min: 0, max: 360, step: 90 };
+  const finiteValues = values.filter((value) => value !== null);
   if (!finiteValues.length) return null;
-  let min = Math.min(...finiteValues);
-  let max = Math.max(...finiteValues);
-  if (min === max) {
-    const pad = min === 0 ? 1 : Math.abs(min) * 0.1;
-    min -= pad;
-    max += pad;
-  }
-  return { min, max };
+  // These measurements are nonnegative. Keep zero visible so small changes do
+  // not look like large swings, and never give dry hours a negative rain axis.
+  const min = Math.min(0, ...finiteValues);
+  const max = Math.max(0, ...finiteValues);
+  const roughStep = (max - min || 1) / 3;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const step = [1, 2, 2.5, 5, 10].find((factor) => factor * magnitude >= roughStep) * magnitude;
+  return {
+    min: Math.floor(min / step) * step,
+    max: Math.max(step, Math.ceil(max / step) * step),
+    step,
+  };
 };
 
-const chartLinePath = (values, xForIndex, yForValue) => {
+const chartLinePath = (values, xForIndex, yForValue, maxDelta = Infinity) => {
   let path = "";
-  let open = false;
+  let previous = null;
   values.forEach((value, idx) => {
     if (value === null) {
-      open = false;
+      previous = null;
       return;
     }
-    const x = xForIndex(idx);
-    const y = yForValue(value);
-    path += `${open ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)} `;
-    open = true;
+    const connected = previous !== null && Math.abs(value - previous) <= maxDelta;
+    path += `${connected ? "L" : "M"}${xForIndex(idx).toFixed(2)} ${yForValue(value).toFixed(2)} `;
+    previous = value;
   });
   return path.trim();
+};
+
+const chartNumberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 20 });
+const chartValueLabel = (value) => chartNumberFormatter.format(value);
+
+const chartTickLabel = (value) => {
+  if (Math.abs(value) >= 1000) return `${Number((value / 1000).toFixed(2))}k`;
+  return String(Number(value.toFixed(4)));
+};
+
+const chartTimeLabel = (rawTime) => {
+  const { dateLabel, timeLabel } = splitTimeLabel(rawTime);
+  const datePart = String(rawTime || "").split("T")[0];
+  const date = new Date(`${datePart}T00:00:00Z`);
+  return {
+    dateLabel: Number.isNaN(date.getTime()) ? dateLabel : date.toLocaleDateString("en-US", {
+      month: "short", day: "numeric", timeZone: "UTC",
+    }),
+    timeLabel,
+  };
+};
+
+const chartTimeTickIndices = (times, innerWidth) => {
+  if (!times.length) return [];
+  // Parse the provider's local clock as a floating calendar value. Applying the
+  // viewer's timezone here would move midnight labels away from resort midnight.
+  const clockValues = times.map((time) => {
+    const local = String(time).match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+    return local ? Date.parse(`${local[1]}T${local[2]}:00Z`) : NaN;
+  });
+  const first = clockValues[0];
+  const last = clockValues[clockValues.length - 1];
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return [0];
+  const hour = 60 * 60 * 1000;
+  const maxTicks = Math.max(2, Math.min(5, Math.floor(innerWidth / 100) + 1));
+  const minHours = (last - first) / hour / maxTicks;
+  const intervalHours = [6, 12, 24, 48, 72, 96, 168].find((step) => step >= minHours) || 168;
+  const firstDay = Math.floor(first / (24 * hour)) * 24 * hour;
+  const indices = [];
+  clockValues.forEach((clock, idx) => {
+    if ((clock - firstDay) % (intervalHours * hour) !== 0) return;
+    const previous = indices[indices.length - 1];
+    const gap = ((idx - previous) / Math.max(1, times.length - 1)) * innerWidth;
+    if (previous === undefined || gap >= 70) indices.push(idx);
+  });
+  return indices.length ? indices : [0];
 };
 
 const resolveChartWidth = () => {
@@ -420,22 +469,23 @@ const resolveChartWidth = () => {
   const containerWidth = chartsEl.getBoundingClientRect().width || chartsEl.clientWidth || 720;
   const isSingleColumn = typeof window.matchMedia === "function"
     && window.matchMedia("(max-width: 980px)").matches;
-  const gap = 12;
-  const cardHorizontalPadding = 22;
+  const gap = 16;
+  const cardHorizontalPadding = 34;
   const rawCardWidth = isSingleColumn ? containerWidth : ((containerWidth - gap) / 2);
-  return Math.max(320, Math.round(rawCardWidth - cardHorizontalPadding));
+  return Math.max(220, Math.round(rawCardWidth - cardHorizontalPadding));
 };
 
 const renderMetricChartCard = (metric, times, values, chartWidth) => {
   const card = document.createElement("article");
   card.className = "chart-card";
+  card.style.setProperty("--chart-accent", metric.color);
 
   const title = document.createElement("h2");
   title.className = "chart-title";
-  title.textContent = `${metric.title} (${metric.unit})`;
+  title.textContent = metric.title;
   card.appendChild(title);
 
-  const finiteValues = values.filter((v) => v !== null);
+  const finiteValues = values.filter((value) => value !== null);
   if (!times.length || !finiteValues.length) {
     const empty = document.createElement("div");
     empty.className = "chart-empty";
@@ -444,120 +494,171 @@ const renderMetricChartCard = (metric, times, values, chartWidth) => {
     return card;
   }
 
+  const low = Math.min(...finiteValues);
+  const high = Math.max(...finiteValues);
+  const rangeLabel = low === high ? chartValueLabel(low) : `${chartValueLabel(low)}–${chartValueLabel(high)}`;
+  const displayUnit = metric.key === "wind_direction_10m" ? "°" : metric.unit;
+  const readout = document.createElement("div");
+  readout.className = "chart-readout";
+  const reading = document.createElement("span");
+  reading.className = "chart-reading";
+  reading.textContent = rangeLabel;
+  const unit = document.createElement("span");
+  unit.className = "chart-unit";
+  unit.textContent = displayUnit;
+  const readingTime = document.createElement("span");
+  readingTime.className = "chart-reading-time";
+  readingTime.textContent = "Forecast range";
+  readout.appendChild(reading);
+  readout.appendChild(unit);
+  readout.appendChild(readingTime);
+  card.appendChild(readout);
+
   const yBounds = chartYBounds(metric.key, values);
-  if (!yBounds) {
-    const empty = document.createElement("div");
-    empty.className = "chart-empty";
-    empty.textContent = "No data";
-    card.appendChild(empty);
-    return card;
-  }
-
-  const width = Math.max(320, Number(chartWidth) || 720);
-  const height = 220;
-  const padLeft = 44;
-  const padRight = 16;
-  const padTop = 12;
-  const padBottom = 42;
-  const innerW = Math.max(1, width - padLeft - padRight);
-  const innerH = Math.max(1, height - padTop - padBottom);
-  const ySpan = Math.max(1e-9, yBounds.max - yBounds.min);
+  const width = Math.max(220, Number(chartWidth) || 720);
+  const height = 184;
+  const padLeft = 34;
+  const padRight = 10;
+  const padTop = 10;
+  const padBottom = 40;
+  const innerW = width - padLeft - padRight;
+  const innerH = height - padTop - padBottom;
+  const ySpan = yBounds.max - yBounds.min;
   const xDenom = Math.max(1, times.length - 1);
-
   const xForIndex = (idx) => padLeft + ((idx / xDenom) * innerW);
-  const yForValue = (val) => padTop + (((yBounds.max - val) / ySpan) * innerH);
+  const yForValue = (value) => padTop + (((yBounds.max - value) / ySpan) * innerH);
+  // A north crossing is a discontinuity on a 0–360 degree axis, not a sweep
+  // through south. Preserve both observations without drawing that false ramp.
+  const maxDelta = metric.key === "wind_direction_10m" ? 180 : Infinity;
 
   const svgWrap = document.createElement("div");
   svgWrap.className = "chart-svg-wrap";
+  svgWrap.tabIndex = 0;
+  svgWrap.setAttribute("role", "slider");
+  svgWrap.setAttribute("aria-label", `${metric.title}, hourly forecast`);
+  svgWrap.setAttribute("aria-orientation", "horizontal");
+  svgWrap.setAttribute("aria-valuemin", "0");
+  svgWrap.setAttribute("aria-valuemax", String(times.length - 1));
   const svgNs = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNs, "svg");
-  svg.setAttribute("class", "chart-svg");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `${metric.title} hourly trend line chart`);
+  const makeSvg = (tag, attributes, text = "") => {
+    const element = document.createElementNS(svgNs, tag);
+    Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, String(value)));
+    if (text) element.textContent = text;
+    return element;
+  };
+  const svg = makeSvg("svg", { class: "chart-svg", viewBox: `0 0 ${width} ${height}`, "aria-hidden": "true" });
 
-  const yTicks = 4;
+  const yTicks = Math.round(ySpan / yBounds.step);
   for (let i = 0; i <= yTicks; i += 1) {
-    const ratio = i / yTicks;
-    const y = padTop + (ratio * innerH);
-    const value = yBounds.max - (ratio * ySpan);
-
-    const grid = document.createElementNS(svgNs, "line");
-    grid.setAttribute("class", "chart-grid-line");
-    grid.setAttribute("x1", String(padLeft));
-    grid.setAttribute("x2", String(width - padRight));
-    grid.setAttribute("y1", y.toFixed(2));
-    grid.setAttribute("y2", y.toFixed(2));
-    svg.appendChild(grid);
-
-    const tick = document.createElementNS(svgNs, "text");
-    tick.setAttribute("class", "chart-tick-text");
-    tick.setAttribute("x", String(padLeft - 6));
-    tick.setAttribute("y", String(y + 3));
-    tick.setAttribute("text-anchor", "end");
-    tick.textContent = formatValue(value);
-    svg.appendChild(tick);
+    const value = yBounds.min + (i * yBounds.step);
+    const y = yForValue(value);
+    svg.appendChild(makeSvg("line", {
+      class: i === 0 ? "chart-baseline" : "chart-grid-line",
+      x1: padLeft, x2: width - padRight, y1: y.toFixed(2), y2: y.toFixed(2),
+    }));
+    svg.appendChild(makeSvg("text", {
+      class: "chart-tick-text", x: padLeft - 9, y: y + 3.5, "text-anchor": "end",
+    }, metric.key === "wind_direction_10m" ? ["N", "E", "S", "W", "N"][Math.round(value / 90)] : chartTickLabel(value)));
   }
 
-  const xTicks = Math.min(6, times.length);
-  for (let i = 0; i < xTicks; i += 1) {
-    const idx = Math.round((i / Math.max(1, xTicks - 1)) * (times.length - 1));
-    const x = xForIndex(idx);
-    const { dateLabel, timeLabel } = splitTimeLabel(times[idx]);
-    const tick = document.createElementNS(svgNs, "text");
-    tick.setAttribute("class", "chart-tick-text");
-    tick.setAttribute("x", x.toFixed(2));
-    tick.setAttribute("y", String(height - 22));
-    tick.setAttribute("text-anchor", "middle");
-    const dateTspan = document.createElementNS(svgNs, "tspan");
-    dateTspan.setAttribute("x", x.toFixed(2));
-    dateTspan.setAttribute("dy", "0");
-    dateTspan.textContent = dateLabel;
-    tick.appendChild(dateTspan);
-    const timeTspan = document.createElementNS(svgNs, "tspan");
-    timeTspan.setAttribute("x", x.toFixed(2));
-    timeTspan.setAttribute("dy", "11");
-    timeTspan.textContent = timeLabel;
-    tick.appendChild(timeTspan);
+  const xTicks = chartTimeTickIndices(times, innerW);
+  xTicks.forEach((idx) => {
+    const x = xForIndex(idx).toFixed(2);
+    const { dateLabel, timeLabel } = chartTimeLabel(times[idx]);
+    const tick = makeSvg("text", {
+      class: "chart-tick-text chart-time-tick", x, y: height - 20,
+      "text-anchor": Number(x) < padLeft + 25 ? "start" : (Number(x) > width - padRight - 25 ? "end" : "middle"),
+    });
+    tick.appendChild(makeSvg("tspan", { x, dy: 0 }, timeLabel));
+    tick.appendChild(makeSvg("tspan", { class: "chart-date-tick", x, dy: 14 }, dateLabel));
     svg.appendChild(tick);
-  }
-
-  const axisX = document.createElementNS(svgNs, "line");
-  axisX.setAttribute("class", "chart-axis-line");
-  axisX.setAttribute("x1", String(padLeft));
-  axisX.setAttribute("x2", String(width - padRight));
-  axisX.setAttribute("y1", String(height - padBottom));
-  axisX.setAttribute("y2", String(height - padBottom));
-  svg.appendChild(axisX);
-
-  const axisY = document.createElementNS(svgNs, "line");
-  axisY.setAttribute("class", "chart-axis-line");
-  axisY.setAttribute("x1", String(padLeft));
-  axisY.setAttribute("x2", String(padLeft));
-  axisY.setAttribute("y1", String(padTop));
-  axisY.setAttribute("y2", String(height - padBottom));
-  svg.appendChild(axisY);
-
-  const line = document.createElementNS(svgNs, "path");
-  line.setAttribute("class", "chart-line");
-  line.setAttribute("stroke", metric.color);
-  line.setAttribute("d", chartLinePath(values, xForIndex, yForValue));
-  svg.appendChild(line);
-
-  values.forEach((value, idx) => {
-    if (value === null) return;
-    const point = document.createElementNS(svgNs, "circle");
-    point.setAttribute("class", "chart-point");
-    point.setAttribute("cx", xForIndex(idx).toFixed(2));
-    point.setAttribute("cy", yForValue(value).toFixed(2));
-    point.setAttribute("r", "2.6");
-    point.setAttribute("fill", metric.color);
-    const pointTitle = document.createElementNS(svgNs, "title");
-    pointTitle.textContent = `${times[idx]} | ${formatValue(value)} ${metric.unit}`;
-    point.appendChild(pointTitle);
-    svg.appendChild(point);
   });
 
+  svg.appendChild(makeSvg("path", {
+    class: "chart-line", d: chartLinePath(values, xForIndex, yForValue, maxDelta),
+  }));
+
+  // A single observed hour between gaps needs a mark; connected hours need only
+  // the line. Never turn a missing hour into zero or bridge across the gap.
+  values.forEach((value, idx) => {
+    if (value === null) return;
+    const connectedBefore = idx > 0 && values[idx - 1] !== null
+      && Math.abs(value - values[idx - 1]) <= maxDelta;
+    const connectedAfter = idx < values.length - 1 && values[idx + 1] !== null
+      && Math.abs(value - values[idx + 1]) <= maxDelta;
+    if (!connectedBefore && !connectedAfter) {
+      svg.appendChild(makeSvg("circle", {
+        class: "chart-isolated-point", cx: xForIndex(idx).toFixed(2), cy: yForValue(value).toFixed(2), r: 3,
+      }));
+    }
+  });
+
+  const selection = makeSvg("g", { class: "chart-selection", visibility: "hidden" });
+  const cursor = makeSvg("line", { class: "chart-cursor", y1: padTop, y2: height - padBottom });
+  const point = makeSvg("circle", { class: "chart-selected-point", r: 4 });
+  selection.appendChild(cursor);
+  selection.appendChild(point);
+  svg.appendChild(selection);
+
+  let selectedIndex = values.findIndex((value) => value !== null);
+  const describeHour = (idx) => {
+    const { dateLabel, timeLabel } = chartTimeLabel(times[idx]);
+    const valueLabel = values[idx] === null ? "No data" : `${chartValueLabel(values[idx])} ${displayUnit}`;
+    return `${dateLabel}, ${timeLabel}: ${valueLabel}`;
+  };
+  const selectHour = (idx) => {
+    selectedIndex = Math.max(0, Math.min(times.length - 1, idx));
+    const value = values[selectedIndex];
+    const { dateLabel, timeLabel } = chartTimeLabel(times[selectedIndex]);
+    reading.textContent = value === null ? "No data" : chartValueLabel(value);
+    unit.hidden = value === null;
+    readingTime.textContent = `${dateLabel} · ${timeLabel}`;
+    svgWrap.setAttribute("aria-valuenow", String(selectedIndex));
+    svgWrap.setAttribute("aria-valuetext", describeHour(selectedIndex));
+    const x = xForIndex(selectedIndex).toFixed(2);
+    cursor.setAttribute("x1", x);
+    cursor.setAttribute("x2", x);
+    point.setAttribute("cx", x);
+    point.setAttribute("visibility", value === null ? "hidden" : "visible");
+    if (value !== null) point.setAttribute("cy", yForValue(value).toFixed(2));
+    selection.setAttribute("visibility", "visible");
+  };
+  const clearSelection = () => {
+    selection.setAttribute("visibility", "hidden");
+    point.setAttribute("visibility", "hidden");
+    reading.textContent = rangeLabel;
+    unit.hidden = false;
+    readingTime.textContent = "Forecast range";
+  };
+  const selectPointerHour = (event) => {
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !Number.isFinite(event.clientX)) return;
+    const x = ((event.clientX - rect.left) / rect.width) * width;
+    selectHour(Math.round(((x - padLeft) / innerW) * xDenom));
+  };
+  svgWrap.setAttribute("aria-valuenow", String(selectedIndex));
+  svgWrap.setAttribute("aria-valuetext", describeHour(selectedIndex));
+  svgWrap.addEventListener("pointermove", selectPointerHour);
+  svgWrap.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    svgWrap.focus({ preventScroll: true });
+    selectPointerHour(event);
+  });
+  svgWrap.addEventListener("pointerleave", () => {
+    if (document.activeElement !== svgWrap) clearSelection();
+  });
+  svgWrap.addEventListener("focus", () => selectHour(selectedIndex));
+  svgWrap.addEventListener("blur", clearSelection);
+  svgWrap.addEventListener("keydown", (event) => {
+    const nextIndex = {
+      ArrowLeft: selectedIndex - 1, ArrowDown: selectedIndex - 1,
+      ArrowRight: selectedIndex + 1, ArrowUp: selectedIndex + 1,
+      Home: 0, End: times.length - 1,
+    }[event.key];
+    if (nextIndex === undefined) return;
+    event.preventDefault();
+    selectHour(nextIndex);
+  });
   svgWrap.appendChild(svg);
   card.appendChild(svgWrap);
   return card;
