@@ -475,7 +475,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .forecast-panel.is-entering > .forecast-section {
+  .forecast-panel.is-entering > :is(.forecast-section, .forecast-overview) {
     animation: forecast-panel-enter 160ms ease-out;
   }
 }
