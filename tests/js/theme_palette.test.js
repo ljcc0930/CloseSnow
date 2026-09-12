@@ -92,3 +92,16 @@ for (const [theme, palette] of Object.entries(palettes)) {
     }
   });
 }
+
+for (const [theme, palette] of Object.entries(palettes)) {
+  test(`${theme} sliding controls keep labels readable and selection distinct`, () => {
+    const selected = resolveColor(palette, "--glacier-500");
+    const track = resolveColor(palette, "--surface-soft");
+    assert.ok(contrast(resolveColor(palette, "--on-accent"), selected) >= 4.5,
+      "Selected labels must meet text contrast against the sliding thumb");
+    assert.ok(contrast(resolveColor(palette, "--ink-700"), track) >= 4.5,
+      "Unselected labels must remain readable");
+    assert.ok(contrast(selected, track) >= 3,
+      "The sliding selection must remain distinct from its track");
+  });
+}
