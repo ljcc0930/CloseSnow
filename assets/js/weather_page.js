@@ -727,6 +727,9 @@ const activateForecastTab = (key) => {
     positions: forecastTabScrollPositions.get(nextTab) || [],
     focusTab: nextTab,
   });
+  // Only an explicit tab change enters; initial loads, filters, units, and
+  // favorites stay immediate. Replaced panels cannot queue stale animations.
+  document.getElementById(`forecast-panel-${nextTab}`)?.classList.add("is-entering");
 };
 
 const renderSubregionOptions = () => {

@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const createThemeController = require("../../assets/js/theme.js");
 
-function page({ saved = null, dark = false, blocked = false, loading = false } = {}) {
+function page({ saved = null, dark = false, blocked = false, loading = false, reducedMotion = false } = {}) {
   const windowEvents = {};
   const documentEvents = {};
   const buttonEvents = {};
@@ -18,9 +18,17 @@ function page({ saved = null, dark = false, blocked = false, loading = false } =
     setItem: (key, value) => { storage.set(key, value); },
   };
   let mediaListener;
+  let motionListener;
+  let now = 0;
+  let nextTimer = 0;
+  const timers = new Map();
   const media = {
     matches: dark,
     addEventListener: (_, listener) => { mediaListener = listener; },
+  };
+  const motion = {
+    matches: reducedMotion,
+    addEventListener: (_, listener) => { motionListener = listener; },
   };
   const document = {
     documentElement: { dataset: {} },
@@ -34,17 +42,35 @@ function page({ saved = null, dark = false, blocked = false, loading = false } =
       if (blocked) throw new Error("Storage is blocked");
       return localStorage;
     },
-    matchMedia: () => media,
+    matchMedia: (query) => query.includes("reduced-motion") ? motion : media,
+    setTimeout(callback, delay) {
+      const id = ++nextTimer;
+      timers.set(id, { callback, deadline: now + delay });
+      return id;
+    },
+    clearTimeout: (id) => { timers.delete(id); },
     addEventListener: (name, listener) => { windowEvents[name] = listener; },
   };
   createThemeController(window);
   return {
     theme: () => document.documentElement.dataset.theme,
+    transitioning: () => document.documentElement.dataset.themeTransitioning === "true",
+    pendingTimers: () => timers.size,
     attributes, storage, window,
     click: () => buttonEvents.click(),
     ready() { controlsReady = true; documentEvents.DOMContentLoaded(); },
     system(dark) { media.matches = dark; mediaListener(); },
+    reduceMotion(enabled) { motion.matches = enabled; motionListener(); },
     sync(key, newValue, storageArea = localStorage) { windowEvents.storage({ key, newValue, storageArea }); },
+    advance(milliseconds) {
+      now += milliseconds;
+      for (const [id, timer] of [...timers]) {
+        if (timer.deadline <= now) {
+          timers.delete(id);
+          timer.callback();
+        }
+      }
+    },
   };
 }
 
@@ -109,4 +135,60 @@ test("browsers without matchMedia still have a working day/night switch", () => 
   assert.equal(view.theme(), "light");
   view.click();
   assert.equal(view.theme(), "dark");
+});
+
+test("initial head application, control binding, and unchanged themes never animate", () => {
+  const view = page({ saved: "dark", loading: true });
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), false);
+  view.system(true);
+  view.ready();
+  assert.equal(view.transitioning(), false);
+  assert.equal(view.pendingTimers(), 0);
+});
+
+test("rapid choices apply immediately and replace rather than queue transition cleanup", () => {
+  const view = page();
+  view.click();
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), true);
+  view.advance(100);
+  view.click();
+  assert.equal(view.theme(), "light");
+  assert.equal(view.pendingTimers(), 1);
+  view.advance(150);
+  assert.equal(view.transitioning(), true, "The earlier transition cannot cut off the newest choice");
+  view.advance(100);
+  assert.equal(view.transitioning(), false);
+  assert.equal(view.theme(), "light");
+  assert.equal(view.pendingTimers(), 0);
+});
+
+test("system and cross-tab changes animate only after initial binding", () => {
+  const view = page({ loading: true });
+  view.system(true);
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), false);
+  view.ready();
+  view.system(false);
+  assert.equal(view.transitioning(), true);
+  view.advance(250);
+  view.sync("closesnow_theme_v1", "dark");
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), true);
+});
+
+test("reduced motion disables transitions and immediately cancels an active one", () => {
+  const view = page({ reducedMotion: true });
+  view.click();
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), false);
+  assert.equal(view.pendingTimers(), 0);
+  view.reduceMotion(false);
+  view.click();
+  assert.equal(view.transitioning(), true);
+  view.reduceMotion(true);
+  assert.equal(view.transitioning(), false);
+  assert.equal(view.pendingTimers(), 0);
+  assert.equal(view.theme(), "light");
 });

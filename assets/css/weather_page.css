@@ -474,6 +474,22 @@
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .forecast-panel.is-entering > .forecast-section {
+    animation: forecast-panel-enter 160ms ease-out;
+  }
+}
+
+@keyframes forecast-panel-enter {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .forecast-section {
   min-width: 0;
 }
