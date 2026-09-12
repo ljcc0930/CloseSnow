@@ -373,6 +373,31 @@ main {
 
 }
 
+/* Theme changes blend complete page snapshots, so borders, native controls,
+   shadows, and chart colors never run on separate transition clocks. */
+:root[data-theme-transitioning]::view-transition {
+  pointer-events: none;
+}
+
+:root[data-theme-transitioning]::view-transition-group(root) {
+  animation-duration: 180ms;
+}
+
+:root[data-theme-transitioning]::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root[data-theme-transitioning]::view-transition-new(root) {
+  animation: theme-reveal 180ms ease-out both;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
