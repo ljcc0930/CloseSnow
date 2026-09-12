@@ -8,7 +8,7 @@ const reportModel = require("../../assets/js/weather_report_model.js");
 
 const browser = { window: {} };
 vm.createContext(browser);
-for (const file of ["weather_page_formatters.js", "compact_daily_summary.js", "weather_code_emoji.js"]) {
+for (const file of ["weather_colors.js", "weather_page_formatters.js", "compact_daily_summary.js", "weather_code_emoji.js"]) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../../assets/js", file), "utf8"), browser);
 }
 const create = (overrides = {}) => {

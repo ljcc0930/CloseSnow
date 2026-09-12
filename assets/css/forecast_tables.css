@@ -10,7 +10,7 @@ table {
 th, td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--snow-200);
-  border-right: 1px solid #eef2f5;
+  border-right: 1px solid var(--border-subtle);
   font-size: 12px;
   line-height: 16px;
   text-align: right;
@@ -34,7 +34,7 @@ tbody tr:last-child td {
 }
 
 tbody tr:hover td {
-  box-shadow: inset 0 1px #b6d5ed, inset 0 -1px #b6d5ed;
+  box-shadow: inset 0 1px var(--row-hover), inset 0 -1px var(--row-hover);
 }
 
 th .day-label-date, th .day-label-weekday {
@@ -99,7 +99,7 @@ th .day-label-weekday {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #8ea1af;
+  color: var(--favorite-muted);
 }
 
 .favorite-col .favorite-btn, .favorite-head .favorite-btn {
@@ -121,7 +121,7 @@ th .day-label-weekday {
 
 .favorite-btn-filled {
   opacity: 0;
-  color: #d75270;
+  color: var(--favorite);
 }
 
 .favorite-btn[data-favorite-active="1"] .favorite-btn-outline {
@@ -133,8 +133,8 @@ th .day-label-weekday {
 }
 
 .favorite-btn:hover {
-  color: #d75270;
-  background: #fff0f3;
+  color: var(--favorite);
+  background: var(--favorite-surface);
 }
 
 .favorite-btn:focus-visible {
@@ -148,7 +148,7 @@ th .day-label-weekday {
   border-radius: var(--radius-sm);
   background: var(--surface);
   scrollbar-width: thin;
-  scrollbar-color: #b4c6d3 var(--snow-100);
+  scrollbar-color: var(--scrollbar) var(--snow-100);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -256,7 +256,7 @@ col.col-favorite {
 
 .compact-temp-low {
   font-size: 11px;
-  color: var(--ink-500);
+  color: var(--heat-ink-muted);
 }
 
 .compact-pair {
@@ -264,6 +264,7 @@ col.col-favorite {
   align-items: center;
   gap: 3px;
   min-width: 0;
+  color: var(--heat-ink-muted);
   font-size: 10px;
   line-height: 1;
   white-space: nowrap;
@@ -285,7 +286,7 @@ col.col-favorite {
 }
 
 .compact-rain .compact-pair-icon {
-  color: #548576;
+  color: var(--rain-icon);
 }
 
 .snowfall-sticky-wrap {

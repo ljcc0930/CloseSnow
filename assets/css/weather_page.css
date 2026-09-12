@@ -106,7 +106,7 @@
 }
 
 .resort-search input::placeholder {
-  color: #84939e;
+  color: var(--placeholder);
 }
 
 .resort-search button {
@@ -148,9 +148,9 @@
 }
 
 .resort-search-toggle:has(input:checked):last-child {
-  background: #edf6fe;
+  background: var(--accent-soft);
   color: var(--glacier-600);
-  border-color: #bfdcf4;
+  border-color: var(--accent-border);
 }
 
 .toolbar-sort {
@@ -194,7 +194,7 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgb(23 43 58 / 35%);
+  background: var(--modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,7 +209,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: 0 16px 60px rgb(23 43 58 / 18%);
+  box-shadow: var(--shadow-modal);
 }
 
 .filter-panel h3 {
@@ -268,7 +268,7 @@
 
 #filter-close-btn {
   background: var(--glacier-500);
-  color: white;
+  color: var(--on-accent);
   border-color: var(--glacier-500);
 }
 
@@ -316,7 +316,7 @@
 }
 
 .snow-pick-card:first-child {
-  border-color: #bbd9f0;
+  border-color: var(--accent-border);
 }
 
 .snow-pick-card-topline {
@@ -452,7 +452,7 @@
 }
 
 .forecast-tab:hover {
-  border-color: #b5cde0;
+  border-color: var(--accent-border);
   background: transparent;
   color: var(--ink-950);
 }
@@ -524,8 +524,8 @@
 
 .unit-btn.is-active {
   color: var(--glacier-600);
-  background: white;
-  box-shadow: 0 1px 4px rgb(23 43 58 / 10%);
+  background: var(--surface);
+  box-shadow: var(--shadow-control);
 }
 
 .unit-btn:focus-visible {
@@ -533,15 +533,15 @@
 }
 
 .page-load-error {
-  border: 1px solid #efc9c4;
-  background: #fff6f4;
-  color: #943d31;
+  border: 1px solid var(--error-border);
+  background: var(--error-surface);
+  color: var(--error-text);
   padding: 24px;
   border-radius: var(--radius-md);
 }
 
 .skeleton {
-  background: #e8edf2;
+  background: var(--snow-200);
   border-radius: var(--radius-sm);
   animation: skeleton-pulse 1.5s ease-in-out infinite alternate;
 }
@@ -563,7 +563,7 @@
 
 .forecast-section-loading {
   padding: 20px;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }

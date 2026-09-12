@@ -1,24 +1,24 @@
 (function () {
   const metricDefs = [
-    { key: "snowfall", label: "snowfall (cm)", title: "Snowfall", unit: "cm", color: "#2563eb" },
-    { key: "rain", label: "rain (mm)", title: "Rain", unit: "mm", color: "#0891b2" },
+    { key: "snowfall", label: "snowfall (cm)", title: "Snowfall", unit: "cm", color: "var(--chart-snow)" },
+    { key: "rain", label: "rain (mm)", title: "Rain", unit: "mm", color: "var(--chart-rain)" },
     {
       key: "precipitation_probability",
       label: "precip prob (%)",
       title: "Precipitation Probability",
       unit: "%",
-      color: "#7c3aed",
+      color: "var(--chart-probability)",
     },
-    { key: "snow_depth", label: "snow depth (m)", title: "Snow Depth", unit: "m", color: "#0f766e" },
-    { key: "wind_speed_10m", label: "wind speed (km/h)", title: "Wind Speed 10m", unit: "km/h", color: "#b45309" },
+    { key: "snow_depth", label: "snow depth (m)", title: "Snow Depth", unit: "m", color: "var(--chart-depth)" },
+    { key: "wind_speed_10m", label: "wind speed (km/h)", title: "Wind Speed 10m", unit: "km/h", color: "var(--chart-wind)" },
     {
       key: "wind_direction_10m",
       label: "wind dir (deg)",
       title: "Wind Direction 10m",
       unit: "deg",
-      color: "#be185d",
+      color: "var(--chart-direction)",
     },
-    { key: "visibility", label: "visibility (m)", title: "Visibility", unit: "m", color: "#334155" },
+    { key: "visibility", label: "visibility (m)", title: "Visibility", unit: "m", color: "var(--chart-visibility)" },
   ];
 
   const trimHourlyPayload = (payload, hours) => {

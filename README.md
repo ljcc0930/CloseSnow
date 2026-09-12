@@ -464,6 +464,19 @@ https://deploy-preview-<pr-number>--<site-name>.netlify.app
 
 No Netlify token, account id, or site id is required in this repository. App authorization and project ownership remain in Netlify and GitHub settings.
 
+### Day/Night visual QA
+
+PR deploy previews include a `/theme-preview/` route containing clearly labeled synthetic weather. It exercises zero, light and heavy snow, rain, mixed precipitation, cold/freezing/warm temperatures, and missing observations across all six table tabs, compact summaries, and hourly charts. Mock pages disable analytics and search indexing; production builds do not add this fixture.
+
+Generate the same fixture locally without fetching weather or changing production data:
+
+```bash
+python3 scripts/build_theme_preview.py --output-dir /tmp/closesnow-theme-mock
+python3 -m http.server 8012 --directory /tmp/closesnow-theme-mock
+```
+
+Review both themes and unit systems at `http://localhost:8012/`, then inspect `/resort/mock-heavy-snow/`, `/resort/mock-partial/`, and `/resort/mock-missing/` for chart and empty states. Re-run the builder after asset changes. Its fixed January 2026 data is repeatable, and the output directory must be empty or previously created by this script.
+
 ## Compatibility Surfaces
 
 ### Frontend structure
