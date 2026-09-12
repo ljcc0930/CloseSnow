@@ -77,7 +77,8 @@ const appState = {
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
   layoutMode: "desktop",
-  forecastTab: "summary",
+  forecastTab: "overview",
+  timelineLimit: 6,
 };
 
 const weatherPageFormatters = window.CloseSnowWeatherPageFormatters || {};
@@ -128,7 +129,9 @@ const sectionRenderer = weatherSections.createRenderer({
   compactDailySummary,
   weatherCode: window.CloseSnowWeatherCode,
   reportModel,
+  snowTimeline: window.CloseSnowSnowTimeline,
 });
+const timelineScroller = window.CloseSnowTimelineScroller.createController({ window });
 const {
   getLayoutModeForWidth, updateLayoutMode, applyLayout, observeLayoutContainers,
 } = window.CloseSnowWeatherTableLayout.createController({
@@ -411,6 +414,10 @@ const renderCompactSummaryValues = () => {
     const kind = String(el.getAttribute("data-compact-unit-kind") || "").trim();
     const metricValue = Number(el.getAttribute("data-compact-metric-value"));
     if (!Number.isFinite(metricValue)) return;
+    if (el.hasAttribute("data-timeline-value")) {
+      el.textContent = window.CloseSnowSnowTimeline.formatValue(kind, metricValue, mode);
+      return;
+    }
     if (kind === "temp") {
       el.textContent = mode === "imperial"
         ? String(Math.round((metricValue * 9 / 5) + 32))
@@ -574,7 +581,9 @@ const renderPage = () => {
       : "No resorts match the current filters.");
   const tabStripScrollLeft = pageContentRoot.querySelector(".forecast-tabs")?.scrollLeft || 0;
   updateLayoutMode();
+  timelineScroller.capture(pageContentRoot);
   pageContentRoot.innerHTML = sectionRenderer.render(visibleReports, emptyMessage);
+  timelineScroller.bind(pageContentRoot);
   const tabStrip = pageContentRoot.querySelector(".forecast-tabs");
   if (tabStrip) tabStrip.scrollLeft = tabStripScrollLeft;
   applyLayout();
@@ -821,6 +830,7 @@ const scheduleApplyFilters = (delayMs = 120) => {
 
 const applyFiltersImmediately = async () => {
   cancelScheduledFilterApply();
+  appState.timelineLimit = 6;
   applyFilterStateFromControls();
   syncUrlFromFilterState();
   if (_isDynamicApiDataUrl()) {
@@ -903,6 +913,15 @@ const bindControls = () => {
     activateForecastTab(nextTab);
   });
   document.addEventListener("click", (event) => {
+    const showMore = event.target.closest("[data-show-more-timelines]");
+    if (showMore) {
+      const firstNewIndex = appState.timelineLimit;
+      appState.timelineLimit += 6;
+      renderPagePreservingScroll();
+      const firstNewCard = pageContentRoot.querySelectorAll("[data-timeline-card]")[firstNewIndex];
+      firstNewCard?.querySelector(".resort-link")?.focus({ preventScroll: true });
+      return;
+    }
     const tab = event.target.closest("[data-forecast-tab]");
     if (tab) {
       activateForecastTab(tab.getAttribute("data-forecast-tab"));
