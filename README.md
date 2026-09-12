@@ -510,14 +510,11 @@ Default artifacts:
 
 Legacy Python table renderers under `src/web/weather_table_renderer.py`, `src/web/split_metric_renderer.py`, and `src/web/desktop`/`src/web/mobile` are retained as compatibility and regression-test surface. The current main page shell bootstraps payload data and renders forecast tables in browser JavaScript.
 
-## Architecture Docs
+## Development Docs
 
-- `docs/CODEBASE_VALIDATION_PLAYBOOK.md`
-- `docs/FEATURE_DESIGN_MAIN_PAGE_FAVORITES_LOCAL_UPDATE.md`
-- `docs/FEATURE_DESIGN_RESORT_COORDINATE_VERIFICATION_LINKS.md`
-- `docs/FEATURE_DESIGN_RESORT_PAGE_DAILY_SUMMARY_REUSE.md`
-- `docs/FEATURE_DESIGN_SERVE_STATIC.md`
-- `docs/REFACTOR_PROGRESS_LEDGER.md`
+- [Codebase validation playbook](docs/CODEBASE_VALIDATION_PLAYBOOK.md)
+
+Historical agent plans and execution ledgers remain available in Git history.
 
 ## License
 
