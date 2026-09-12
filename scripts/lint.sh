@@ -16,3 +16,6 @@ fi
 "$PYTHON_BIN" -m ruff format --check "${TARGETS[@]}"
 "$PYTHON_BIN" -m ruff check "${TARGETS[@]}"
 "$PYTHON_BIN" scripts/lint_assets.py
+
+# Pure browser modules use Node's built-in runner; no package install required.
+node --test tests/js/*.test.js

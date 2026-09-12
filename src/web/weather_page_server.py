@@ -29,23 +29,16 @@ from src.shared.cli_options import add_cache_runtime_options, add_server_bind_op
 from src.web.asset_manifest import asset_for_path, read_asset_bytes
 from src.web.data_sources import load_hourly_payload, load_request_payload, strip_server_filter_query
 from src.web.resort_hourly_context import build_resort_daily_summary_context
+from src.web.resort_hourly_renderer import render_hourly_page_html
 from src.web.weather_page_render_core import render_payload_html
-
-_HOURLY_TEMPLATE = (Path(__file__).resolve().parent / "templates" / "resort_hourly_page.html").read_text(
-    encoding="utf-8"
-)
 
 
 def _render_hourly_page_html(resort_id: str, daily_summary: Dict[str, Any] | None = None) -> str:
-    hourly_context: Dict[str, Any] = {"resortId": resort_id}
-    if daily_summary:
-        hourly_context["dailySummary"] = daily_summary
-    hourly_context_json = json.dumps(hourly_context, ensure_ascii=False)
-    return (
-        _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../assets")
-        .replace("{{back_href}}", "../")
-        .replace("{{resort_id}}", resort_id)
-        .replace("{{hourly_context_json}}", hourly_context_json)
+    return render_hourly_page_html(
+        resort_id,
+        daily_summary,
+        asset_prefix="../assets",
+        back_href="../",
     )
 
 

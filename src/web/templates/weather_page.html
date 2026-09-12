@@ -11,10 +11,14 @@
     gtag('js', new Date());
     gtag('config', 'G-V9NBX3H6M9');
   </script>
-  <title>Ski Resorts Weather Forecast</title>
+  <title>CloseSnow · Mountain forecast</title>
+  <meta name="description" content="Compare ski resort snowfall, temperature, and hourly weather. Find the forecast for your next mountain day." />
+  <link rel="stylesheet" href="assets/css/design_system.css" />
+  <link rel="stylesheet" href="assets/css/forecast_tables.css" />
   <link rel="stylesheet" href="assets/css/weather_page.css" />
 </head>
 <body class="units-pending">
+  <a class="skip-link" href="#explore-title">Skip to forecast</a>
   <header class="site-header">
     <div class="site-header-inner">
       <a class="brand" href="./" aria-label="CloseSnow home">
@@ -26,51 +30,37 @@
         </span>
         <span class="brand-copy">
           <strong>CloseSnow</strong>
-          <span>Mountain weather, made useful</span>
+
         </span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Fresh mountain intelligence</span>
+      <span class="site-header-note">Snow &amp; mountain weather</span>
     </div>
   </header>
   <main>
-    <section class="forecast-hero" aria-labelledby="page-title">
-      <div class="forecast-hero-copy">
-        <p class="eyebrow">Ski Resorts Weather Forecast</p>
-        <h1 id="page-title">Find your next <span>snow day.</span></h1>
-        <p class="hero-lede">Compare the mountains at a glance, follow the strongest storms, and plan with confidence.</p>
-        <div class="report-date">
-          <div class="report-powered">
-            Forecast model <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo ECMWF IFS 0.25</a>
-          </div>
-          <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Generated At: loading...</div>
-        </div>
+    <section class="forecast-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Plan your next mountain day</p>
+        <h1 id="page-title">Mountain forecast<span class="title-period">.</span></h1>
+        <p class="page-description">Follow the snow. Compare resorts. Find your window.</p>
       </div>
-      <div class="hero-landscape" aria-hidden="true">
-        <span class="hero-sun"></span>
-        <svg viewBox="0 0 560 250" preserveAspectRatio="none">
-          <path class="mountain-back" d="M0 207 78 137l44 36 77-105 63 84 40-51 100 106H0Z" />
-          <path class="mountain-front" d="M138 220 262 92l41 48 46-62 135 142H138Z" />
-          <path class="snow-line" d="m78 137 23 19 21 17 77-105 29 39 34 45 40-51 36 38" />
-          <path class="snow-line snow-line-front" d="m262 92 41 48 46-62 48 51" />
-        </svg>
-        <span class="hero-contour hero-contour-one"></span>
-        <span class="hero-contour hero-contour-two"></span>
+      <div class="report-date">
+        <div class="report-powered">Forecast by <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo · ECMWF</a></div>
+        <div id="report-date" class="report-generated" data-generated-utc="{{generated_utc_iso}}">Loading forecast time…</div>
       </div>
     </section>
     <section class="control-panel" aria-labelledby="explore-title">
       <div class="control-panel-heading">
         <div>
-          <p class="eyebrow">Your mountain finder</p>
-          <h2 id="explore-title">Explore the forecast</h2>
+          <h2 id="explore-title" tabindex="-1">Explore resorts</h2>
         </div>
-        <span id="filter-summary" class="filter-summary">Default resorts</span>
+        <span id="filter-summary" class="filter-summary" role="status">Default resorts</span>
       </div>
       <div class="resort-controls">
         <div class="resort-search">
           <label class="sr-only" for="resort-search-input">Search Resorts</label>
           <span class="search-field">
             <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.2 16.2 4.1 4.1"></path></svg>
-            <input id="resort-search-input" type="search" placeholder="Search name, state, or pass" autocomplete="off" />
+            <input id="resort-search-input" type="search" placeholder="Search resort, region, or pass…" autocomplete="off" />
           </span>
           <button id="resort-search-clear" type="button">Clear</button>
         </div>
@@ -84,19 +74,8 @@
             <span>Favorites only</span>
           </label>
         </div>
-        <div class="resort-filter-bar">
-          <button id="filter-open-btn" type="button">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
-            Filters &amp; sorting
-          </button>
-        </div>
-      </div>
-    </section>
-    <div id="filter-modal" class="filter-modal" hidden>
-      <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
-        <h3 id="filter-title">Resort Filters</h3>
-        <div class="filter-group">
-          <div class="filter-group-title">Sort By</div>
+        <div class="toolbar-sort">
+          <label for="filter-sort-select">Sort by</label>
           <select id="filter-sort-select">
             <option value="state">State (A-Z)</option>
             <option value="name">Resort Name (A-Z)</option>
@@ -107,6 +86,18 @@
             <option value="two_week_snow">Two-Week Snowfall</option>
           </select>
         </div>
+        <div class="resort-filter-bar">
+          <button id="filter-open-btn" type="button" aria-haspopup="dialog" aria-controls="filter-modal" aria-expanded="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
+            Filters
+          </button>
+        </div>
+      </div>
+    </section>
+    <div id="filter-modal" class="filter-modal" hidden>
+      <div class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+        <h3 id="filter-title">Refine your forecast</h3>
+        <p class="filter-description">Choose the mountains you want to compare.</p>
         <div class="filter-group">
           <label class="filter-include-all-label">
             <input type="checkbox" id="filter-include-all" checked />
@@ -152,6 +143,9 @@
   <script src="assets/js/weather_filter_state.js"></script>
   <script src="assets/js/sticky_single_table_layout.js"></script>
   <script src="assets/js/weather_page_formatters.js"></script>
+  <script src="assets/js/weather_report_model.js"></script>
+  <script src="assets/js/weather_sections.js"></script>
+  <script src="assets/js/weather_table_layout.js"></script>
   <script src="assets/js/weather_page.js"></script>
 </body>
 </html>

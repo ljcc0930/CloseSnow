@@ -1,0 +1,484 @@
+/* Forecast grid geometry. Shared by every homepage metric view. */
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  font-variant-numeric: tabular-nums;
+}
+
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--snow-200);
+  border-right: 1px solid #eef2f5;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: right;
+  white-space: nowrap;
+  background-clip: padding-box;
+}
+
+th {
+  color: var(--ink-700);
+  background: var(--snow-100);
+  text-align: center;
+  font-weight: 600;
+}
+
+td {
+  color: var(--ink-800);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr:hover td {
+  box-shadow: inset 0 1px #b6d5ed, inset 0 -1px #b6d5ed;
+}
+
+th .day-label-date, th .day-label-weekday {
+  display: block;
+  line-height: 1.45;
+}
+
+th .day-label-weekday {
+  font-size: 10px;
+  color: var(--ink-500);
+  font-weight: 400;
+}
+
+.query-col {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  background: var(--surface);
+}
+
+.query-col .resort-link {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink-950);
+  text-decoration: none;
+}
+
+.query-col .resort-link:hover {
+  color: var(--glacier-600);
+  text-decoration: underline;
+}
+
+.resort-cell, .resort-link-wrap {
+  min-width: 0;
+}
+
+.resort-link-wrap > span, .resort-link-wrap > a {
+  display: block;
+}
+
+.favorite-col, .favorite-head {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.favorite-col {
+  background: var(--surface);
+}
+
+.favorite-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8ea1af;
+}
+
+.favorite-col .favorite-btn, .favorite-head .favorite-btn {
+  display: flex;
+  margin: auto;
+}
+
+.favorite-btn-icon {
+  position: absolute;
+  inset: 0;
+  width: 14px;
+  height: 14px;
+  margin: auto;
+}
+
+.favorite-btn-outline {
+  opacity: 1;
+}
+
+.favorite-btn-filled {
+  opacity: 0;
+  color: #d75270;
+}
+
+.favorite-btn[data-favorite-active="1"] .favorite-btn-outline {
+  opacity: 0;
+}
+
+.favorite-btn[data-favorite-active="1"] .favorite-btn-filled {
+  opacity: 1;
+}
+
+.favorite-btn:hover {
+  color: #d75270;
+  background: #fff0f3;
+}
+
+.favorite-btn:focus-visible {
+  outline-offset: -2px;
+}
+
+.compact-grid-mobile-wrap, .snowfall-sticky-wrap, .rain-sticky-wrap, .temperature-sticky-wrap, .weather-table-wrap, .sun-single-wrap, .table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  scrollbar-width: thin;
+  scrollbar-color: #b4c6d3 var(--snow-100);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sticky-single-table, .compact-grid-mobile-table, .temperature-single-table, .weather-table, .sun-single-table {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+}
+
+.sticky-single-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--snow-100);
+}
+
+.sticky-single-table[data-sticky-header-rows="2"] thead tr:nth-child(2) th {
+  top: var(--sticky-header-row-2-top, 40px);
+}
+
+.sticky-single-table .sticky-leading-cell {
+  position: sticky;
+  left: var(--sticky-leading-left, 0px);
+  z-index: 6;
+  background: var(--surface);
+  background-clip: padding-box;
+}
+
+.sticky-single-table thead .sticky-leading-cell {
+  z-index: 8;
+  background: var(--snow-100);
+}
+
+.compact-grid-mobile-wrap {
+  --compact-mobile-query-w: 220px;
+}
+
+.compact-grid-mobile-table col.col-query {
+  width: var(--compact-mobile-query-w);
+}
+
+.compact-grid-mobile-table .query-col {
+  max-width: var(--compact-mobile-query-w);
+}
+
+.compact-grid-mobile-table col.col-compact-day {
+  width: 106px;
+}
+
+col.col-favorite {
+  width: 28px;
+}
+
+.compact-day-cell {
+  height: 68px;
+  min-height: 68px;
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.compact-day-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  height: 100%;
+}
+
+.compact-row {
+  display: grid;
+  align-items: center;
+}
+
+.compact-row-primary {
+  grid-template-columns: 24px 1fr;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.compact-row-secondary {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.compact-weather {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.compact-temp-stack {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.compact-temp-high {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-950);
+}
+
+.compact-temp-low {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.compact-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.compact-pair-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-rain {
+  justify-self: end;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+
+.compact-snow .compact-pair-icon {
+  color: var(--glacier-500);
+}
+
+.compact-rain .compact-pair-icon {
+  color: #548576;
+}
+
+.snowfall-sticky-wrap {
+  --snowfall-query-w: 220px;
+  --snowfall-week-w: 110px;
+}
+
+.rain-sticky-wrap {
+  --rain-query-w: 220px;
+  --rain-week-w: 110px;
+}
+
+.snowfall-sticky-table col.col-query {
+  width: var(--snowfall-query-w);
+}
+
+.rain-sticky-table col.col-query {
+  width: var(--rain-query-w);
+}
+
+.snowfall-sticky-table .query-col {
+  max-width: var(--snowfall-query-w);
+}
+
+.rain-sticky-table .query-col {
+  max-width: var(--rain-query-w);
+}
+
+.snowfall-sticky-table col.col-week {
+  width: var(--snowfall-week-w);
+}
+
+.rain-sticky-table col.col-week {
+  width: var(--rain-week-w);
+}
+
+.snowfall-sticky-table col.col-day, .rain-sticky-table col.col-day {
+  width: 72px;
+}
+
+.snowfall-sticky-table .week-col-cell, .rain-sticky-table .week-col-cell {
+  text-align: center;
+  font-weight: 650;
+}
+
+.mobile-precip-resort-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mobile-precip-resort-content .resort-cell {
+  flex: 1;
+}
+
+.mobile-precip-resort-head .favorite-btn, .mobile-precip-resort-cell .favorite-btn {
+  flex: 0 0 24px;
+  margin: 0;
+}
+
+.mobile-precip-resort-label {
+  min-width: 0;
+}
+
+.temperature-sticky-wrap {
+  --temp-query-w: 220px;
+}
+
+.temperature-single-table col.col-query {
+  width: var(--temp-query-w);
+}
+
+.temperature-single-table .query-col {
+  max-width: var(--temp-query-w);
+}
+
+.temperature-single-table col.col-temp {
+  width: 54px;
+}
+
+.weather-table-wrap {
+  --weather-query-w: 220px;
+}
+
+.weather-table col.col-query {
+  width: var(--weather-query-w);
+}
+
+.weather-table .query-col {
+  max-width: var(--weather-query-w);
+}
+
+.weather-table col.col-weather {
+  width: 72px;
+}
+
+.weather-emoji-cell {
+  text-align: center;
+  font-size: 20px;
+}
+
+.sun-single-wrap {
+  --sun-query-w: 220px;
+}
+
+.sun-single-table col.col-query {
+  width: var(--sun-query-w);
+}
+
+.sun-single-table .query-col {
+  max-width: var(--sun-query-w);
+}
+
+.sun-single-table col.col-sun {
+  width: 64px;
+}
+
+.sun-single-table td[data-sun-time-raw] {
+  text-align: center;
+}
+
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+body.mobile-simple .desktop-only {
+  display: none;
+}
+
+body.mobile-simple .mobile-only {
+  display: block;
+}
+
+body.mobile-simple {
+  --mobile-leading-col-max: max(0px, calc(50vw - 28px));
+  --mobile-single-leading-col-max: 50vw;
+}
+
+body.mobile-simple .compact-grid-mobile-table col.col-query {
+  width: min(var(--compact-mobile-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .compact-grid-mobile-table .query-col {
+  max-width: min(var(--compact-mobile-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .snowfall-sticky-table col.col-query {
+  width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+}
+
+body.mobile-simple .snowfall-sticky-table .query-col {
+  max-width: min(var(--snowfall-query-w), var(--mobile-single-leading-col-max));
+}
+
+body.mobile-simple .rain-sticky-table col.col-query {
+  width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+}
+
+body.mobile-simple .rain-sticky-table .query-col {
+  max-width: min(var(--rain-query-w), var(--mobile-single-leading-col-max));
+}
+
+body.mobile-simple .temperature-single-table col.col-query {
+  width: min(var(--temp-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .temperature-single-table .query-col {
+  max-width: min(var(--temp-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .weather-table col.col-query {
+  width: min(var(--weather-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .weather-table .query-col {
+  max-width: min(var(--weather-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .sun-single-table col.col-query {
+  width: min(var(--sun-query-w), var(--mobile-leading-col-max));
+}
+
+body.mobile-simple .sun-single-table .query-col {
+  max-width: min(var(--sun-query-w), var(--mobile-leading-col-max));
+}
+
+.empty-state-cell {
+  padding: 36px 20px;
+  text-align: left;
+  color: var(--ink-500);
+}

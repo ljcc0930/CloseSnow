@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resort Forecast</title>
+  <link rel="stylesheet" href="{{asset_prefix}}/css/design_system.css" />
   <link rel="stylesheet" href="{{asset_prefix}}/css/resort_hourly.css" />
 </head>
 <body>
@@ -13,38 +14,33 @@
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 42 42" role="img"><path d="M4 31.5 14.3 17l5.1 6.7L27.1 11 38 31.5H4Z" /><path d="m14.3 17 3.1 4.1 2-2.4 3.3 4.7 4.4-12.4" /></svg>
         </span>
-        <span class="brand-copy"><strong>CloseSnow</strong><span>Mountain weather, made useful</span></span>
+        <span class="brand-copy"><strong>CloseSnow</strong></span>
       </a>
-      <span class="site-header-note"><span aria-hidden="true"></span> Resort intelligence</span>
+      <span class="site-header-note">Resort forecast</span>
     </div>
   </header>
   <main>
     <section class="resort-hero" aria-labelledby="hourly-title">
       <a class="back-link" href="{{back_href}}"><span aria-hidden="true">←</span> Back to all resorts</a>
-      <p class="eyebrow">Mountain forecast</p>
-      <h1 id="hourly-title">Resort Forecast</h1>
-      <div class="resort-identity-meta">
-        <p id="resort-local-time" class="resort-local-time"></p>
-        <p id="resort-website-link" class="resort-website-link"></p>
-        <p id="resort-location-link" class="resort-location-link"></p>
-      </div>
-      <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
-      <div class="resort-hero-mountain" aria-hidden="true">
-        <svg viewBox="0 0 420 180" preserveAspectRatio="none"><path d="M18 178 120 62l42 50 56-86 170 152H18Z" /><path d="m120 62 42 50 56-86 55 49" /></svg>
+      <div class="resort-overview">
+        <div class="resort-identity">
+          <p class="eyebrow">Mountain forecast</p>
+          <h1 id="hourly-title">Resort Forecast</h1>
+          <div class="resort-identity-meta">
+            <p id="resort-local-time" class="resort-local-time"></p>
+            <p id="resort-website-link" class="resort-website-link"></p>
+            <p id="resort-location-link" class="resort-location-link"></p>
+          </div>
+        </div>
+        <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
       </div>
     </section>
     <section id="resort-timeline-section" class="resort-timeline-section" hidden>
       <div class="section-heading">
         <div><p class="eyebrow">Snow timeline</p><h2>Past 14 days + forecast</h2></div>
-        <span>Swipe to explore</span>
+        <span>Scroll for more days · °C / cm / mm</span>
       </div>
       <div id="resort-timeline-root"></div>
-    </section>
-    <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
-      <div class="section-heading">
-        <div><p class="eyebrow">Getting there</p><h2>Nearby airports (&lt;250 miles)</h2></div>
-      </div>
-      <div id="resort-airport-access-root"></div>
     </section>
     <section class="hourly-workspace" aria-labelledby="hourly-section-title">
       <div class="hourly-workspace-heading">
@@ -76,6 +72,13 @@
           </table>
         </div>
       </details>
+    </section>
+    <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">Getting there</p><h2>Nearby airports</h2></div>
+        <span>Within 250 miles</span>
+      </div>
+      <div id="resort-airport-access-root"></div>
     </section>
   </main>
   <footer class="page-footer"><strong>CloseSnow</strong> · Forecast data for better mountain days.</footer>

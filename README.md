@@ -403,6 +403,7 @@ Run lint checks:
 ```
 
 This runs Python formatting/lint checks plus JavaScript, HTML, CSS, and shell syntax checks.
+It also runs the browser-module regression tests with Node.js 18+ (`node --test tests/js/*.test.js`).
 
 Run all tests:
 
@@ -464,6 +465,22 @@ https://deploy-preview-<pr-number>--<site-name>.netlify.app
 No Netlify token, account id, or site id is required in this repository. App authorization and project ownership remain in Netlify and GitHub settings.
 
 ## Compatibility Surfaces
+
+### Frontend structure
+
+Both pages use `assets/css/design_system.css` for shared colors, typography, controls, and navigation.
+The homepage keeps grid geometry in `forecast_tables.css` and page layout in `weather_page.css`.
+`resort_hourly.css` contains only resort-detail components.
+
+The homepage browser modules separate responsibilities:
+
+- `weather_report_model.js`: pure resort selection, sorting, and forecast accessors
+- `weather_sections.js`: forecast overview and the active metric tab, with explicit renderer dependencies
+- `weather_table_layout.js`: responsive column sizing and sticky-grid layout
+- `weather_page.js`: loading, filters, favorites, unit state, and accessible UI interactions
+
+Static and dynamic resort routes share `src/web/resort_hourly_renderer.py` for HTML and safe bootstrap serialization.
+The existing payload contract, CLI, local preferences, and route structure remain compatible.
 
 Legacy-compatible backend entrypoint:
 

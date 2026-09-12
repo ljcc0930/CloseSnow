@@ -8,11 +8,9 @@ from typing import Any, Dict, List, Mapping
 from src.contract import WeatherPayloadV1
 from src.contract.hourly_payload import HourlyPayload
 from src.web.resort_hourly_context import build_resort_daily_summary_contexts
+from src.web.resort_hourly_renderer import render_hourly_page_html
 from src.web.weather_page_render_core import render_payload_html
 
-_HOURLY_TEMPLATE = (Path(__file__).resolve().parents[1] / "templates" / "resort_hourly_page.html").read_text(
-    encoding="utf-8"
-)
 _RESORT_ARTIFACT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 _RESORT_ARTIFACT_FILENAMES = frozenset({"index.html", "hourly.json"})
 
@@ -91,25 +89,24 @@ def render_hourly_pages(
         hourly_data_path = resort_artifact_path(site_root, resort_id, "hourly.json")
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        hourly_context: Dict[str, Any] = {"resortId": resort_id}
         daily_summary = daily_summary_by_resort.get(resort_id)
-        if daily_summary:
-            hourly_context["dailySummary"] = daily_summary
+        hourly_data_url = None
         hourly_payload = available_hourly.get(resort_id)
         if isinstance(hourly_payload, dict) and "error" not in hourly_payload:
             hourly_data_path.write_text(
                 json.dumps(hourly_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
-            hourly_context["hourlyDataUrl"] = "./hourly.json"
+            hourly_data_url = "./hourly.json"
         elif hourly_data_path.is_file():
             hourly_data_path.unlink()
 
-        html = (
-            _HOURLY_TEMPLATE.replace("{{asset_prefix}}", "../../assets")
-            .replace("{{back_href}}", "../../")
-            .replace("{{resort_id}}", resort_id)
-            .replace("{{hourly_context_json}}", json.dumps(hourly_context, ensure_ascii=False))
+        html = render_hourly_page_html(
+            resort_id,
+            daily_summary,
+            asset_prefix="../../assets",
+            back_href="../../",
+            hourly_data_url=hourly_data_url,
         )
         out.write_text(html, encoding="utf-8")
         outputs.append(out)
