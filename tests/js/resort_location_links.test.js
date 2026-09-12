@@ -32,11 +32,11 @@ const renderLocation = async (coordinates) => {
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../../assets/js/resort_hourly.js"), "utf8"), context);
   await new Promise(setImmediate);
-  return location;
+  return { location, meta };
 };
 
-test("compact location links preserve exact map coordinates and prefilled correction report", async () => {
-  const location = await renderLocation({ input_latitude: 40.123456, input_longitude: -110.987654 });
+test("resort coordinates appear once with exact map and correction links while hourly context stays relevant", async () => {
+  const { location, meta } = await renderLocation({ input_latitude: 40.123456, input_longitude: -110.987654 });
   const links = location.children.filter((child) => child.href);
   assert.equal(links.length, 2);
   const map = new URL(links[0].href);
@@ -48,14 +48,17 @@ test("compact location links preserve exact map coordinates and prefilled correc
   assert.equal(report.searchParams.get("resort_name"), "Test Resort");
   assert.equal(report.searchParams.get("resort_page"), "https://ljcc0930.github.io/CloseSnow/resort/test-resort/");
   assert.match(links[1].attributes["aria-label"], /Test Resort/);
-  assert.doesNotMatch(location.textContent, /40\.123456|110\.987654/);
+  assert.match(location.textContent, /Coordinates: 40\.123456, -110\.987654/);
+  assert.equal(location.textContent.match(/40\.123456/g).length, 1);
+  assert.doesNotMatch(meta.textContent, /40\.123456|110\.987654/);
+  assert.match(meta.textContent, /America\/Denver/);
 });
 
 test("missing coordinates do not create map or correction links for a fabricated zero point", async () => {
   for (const coordinates of [{}, { input_latitude: null, input_longitude: null }, { input_latitude: "", input_longitude: "" }]) {
-    const location = await renderLocation(coordinates);
+    const { location } = await renderLocation(coordinates);
     assert.equal(location.children.length, 0);
   }
-  const location = await renderLocation({ input_latitude: 0, input_longitude: 0 });
+  const { location } = await renderLocation({ input_latitude: 0, input_longitude: 0 });
   assert.equal(location.children.filter((child) => child.href).length, 2);
 });

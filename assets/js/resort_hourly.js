@@ -133,7 +133,7 @@ const buildCoordinateIssueLink = (payload, mapsUrl) => {
   if (!latitude || !longitude || !mapsUrl) return null;
   const link = buildExternalLink(
     buildCoordinateIssueUrl(payload, `${latitude}, ${longitude}`, mapsUrl),
-    "Report location",
+    "Report map error",
     "resort-location-issue-link",
   );
   if (link) link.setAttribute("aria-label", `Report incorrect coordinates for ${resolveResortLabel(payload)}`);
@@ -166,7 +166,7 @@ const renderMeta = () => {
     metaEl.textContent = "";
     return;
   }
-  metaEl.textContent = metaState.timezone ? "Times shown in resort local time." : "";
+  metaEl.textContent = metaState.timezone ? `Times shown in resort local time (${metaState.timezone}).` : "";
 };
 
 const renderLocalTime = () => {
@@ -196,6 +196,9 @@ const renderResortLocationLink = (payload) => {
     return;
   }
   locationLinkEl.textContent = "";
+  const latitude = formatCoordinateExact(payload.input_latitude);
+  const longitude = formatCoordinateExact(payload.input_longitude);
+  locationLinkEl.appendChild(document.createTextNode(`Coordinates: ${latitude}, ${longitude} · `));
   const mapsLink = buildExternalLink(mapsUrl, "Map", "resort-location-map-link");
   if (!mapsLink) return;
   mapsLink.setAttribute("aria-label", `Open ${resolveResortLabel(payload)} location in Google Maps`);

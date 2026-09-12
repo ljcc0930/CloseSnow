@@ -65,6 +65,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.resort-location-link {
+  flex-basis: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
 .resort-identity-meta a {
   color: var(--glacier-600);
   text-decoration: none;
