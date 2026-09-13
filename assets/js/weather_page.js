@@ -53,6 +53,7 @@ const SUBREGION_OPTIONS = [
 ];
 const compactDailySummary = window.CloseSnowCompactDailySummary || {};
 const filterStateHelpers = window.CloseSnowFilterState || {};
+const unitSwitch = window.CloseSnowUnitSwitch;
 const COMPACT_SUMMARY_UNIT_KIND = "compact_summary";
 const SUN_TIME_TOGGLE_KIND = "sun_time";
 const appState = {
@@ -385,23 +386,13 @@ const getStoredUnitMode = (kind) => {
 
 const syncCompactSummaryToggle = () => {
   document.querySelectorAll(".unit-toggle[data-compact-summary-toggle='1']").forEach((toggle) => {
-    const mode = appState.compactSummaryUnitMode || "metric";
-    toggle.setAttribute("data-mode", mode);
-    toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
-      button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
-      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
-    });
+    unitSwitch.sync(toggle, appState.compactSummaryUnitMode);
   });
 };
 
 const syncSunTimeToggle = () => {
   document.querySelectorAll(".unit-toggle[data-sun-time-toggle='1']").forEach((toggle) => {
-    const mode = appState.sunTimeToggleMode || "metric";
-    toggle.setAttribute("data-mode", mode);
-    toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
-      button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
-      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
-    });
+    unitSwitch.sync(toggle, appState.sunTimeToggleMode);
   });
 };
 
@@ -487,12 +478,7 @@ const renderUnitValues = (kind, mode) => {
 const syncToggleButtons = () => {
   document.querySelectorAll(".unit-toggle[data-target-kind]").forEach((toggle) => {
     const kind = toggle.getAttribute("data-target-kind");
-    const mode = appState.unitModes[kind] || "metric";
-    toggle.setAttribute("data-mode", mode);
-    toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
-      button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
-      button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
-    });
+    unitSwitch.sync(toggle, appState.unitModes[kind]);
   });
 };
 
@@ -932,22 +918,17 @@ const bindControls = () => {
       }
       return;
     }
-    const button = event.target.closest(".unit-btn[data-unit-mode]");
-    if (!button) return;
-    const compactToggle = button.closest(".unit-toggle[data-compact-summary-toggle='1']");
-    if (compactToggle) {
-      setCompactSummaryUnitMode(button.getAttribute("data-unit-mode"));
+    const request = unitSwitch.requestFor(event.target);
+    if (!request) return;
+    if (request.scope === "summary") {
+      setCompactSummaryUnitMode(request.mode);
       return;
     }
-    const sunTimeToggle = button.closest(".unit-toggle[data-sun-time-toggle='1']");
-    if (sunTimeToggle) {
-      setSunTimeToggleMode(button.getAttribute("data-unit-mode"));
+    if (request.scope === "sun") {
+      setSunTimeToggleMode(request.mode);
       return;
     }
-    const group = button.closest(".unit-toggle[data-target-kind]");
-    if (!group) return;
-    const kind = group.getAttribute("data-target-kind");
-    setUnitMode(kind, button.getAttribute("data-unit-mode"));
+    setUnitMode(request.kind, request.mode);
   });
   window.addEventListener("resize", () => {
     if (appState.payload && getLayoutModeForWidth() !== appState.layoutMode) {

@@ -297,9 +297,10 @@ h1, h2, h3 {
   position: relative;
   display: inline-flex;
   flex: 0 0 auto;
-  width: 148px;
+  width: 64px;
   height: 36px;
   padding: 3px;
+  border-radius: 18px;
   background: var(--surface-soft);
   font-size: 12px;
   line-height: 1;
@@ -313,7 +314,7 @@ h1, h2, h3 {
   position: absolute;
   inset: 3px auto 3px 3px;
   width: calc((100% - 6px) / 2);
-  border-radius: 5px;
+  border-radius: 50%;
   background: var(--glacier-500);
   box-shadow: var(--shadow-control);
   transition: transform 180ms ease-out;
@@ -326,13 +327,12 @@ h1, h2, h3 {
   grid-template-columns: 1fr 1fr;
   width: 100%;
   view-transition-name: theme-switch-labels;
+  pointer-events: none;
 }
 
 .theme-toggle-option {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  display: grid;
+  place-items: center;
   color: var(--ink-700);
 }
 
@@ -373,10 +373,16 @@ h1, h2, h3 {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   flex: 0 0 auto;
+  min-height: 32px;
   padding: 3px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
   border-radius: 7px;
+  cursor: pointer;
+}
+
+.unit-toggle:hover {
+  background: var(--surface-soft);
 }
 
 .unit-toggle::before {
@@ -395,22 +401,28 @@ h1, h2, h3 {
   transform: translateX(100%);
 }
 
+.unit-toggle-option,
 .unit-btn {
   position: relative;
-  min-width: 46px;
+  min-width: 42px;
   border: 0;
   border-radius: 4px;
-  padding: 5px 9px;
+  padding: 4px 8px;
   background: transparent;
   color: var(--ink-700);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 16px;
+}
+
+.unit-toggle-option {
+  pointer-events: none;
 }
 
 .unit-btn:hover {
   background: transparent;
 }
 
+.unit-toggle-option.is-active,
 .unit-btn.is-active {
   color: var(--on-accent);
 }
@@ -484,7 +496,7 @@ main {
   mix-blend-mode: normal;
 }
 
-/* Separate transparent labels stay above the moving thumb in the snapshot layer. */
+/* Both icons remain visible above the moving thumb in the snapshot layer. */
 :root[data-theme-transitioning]::view-transition-group(theme-switch-thumb),
 :root[data-theme-transitioning]::view-transition-group(theme-switch-labels) {
   animation-duration: 180ms;

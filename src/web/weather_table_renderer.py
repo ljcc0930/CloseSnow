@@ -91,10 +91,11 @@ def _render_metric_section(data: List[Dict[str, str]], cfg: MetricViewConfig) ->
     <section>
       <div class="section-header">
         <h2>{cfg.title}</h2>
-        <div class="unit-toggle" role="group" aria-label="{cfg.title} unit system" data-target-kind="{cfg.kind}">
-          <button type="button" class="unit-btn is-active" data-unit-mode="metric">{cfg.metric_unit}</button>
-          <button type="button" class="unit-btn" data-unit-mode="imperial">{cfg.imperial_unit}</button>
-        </div>
+        <button type="button" class="unit-toggle" role="switch" aria-label="{cfg.title} imperial units"
+          aria-checked="false" data-mode="metric" data-target-kind="{cfg.kind}" title="Switch to {cfg.imperial_unit}">
+          <span class="unit-toggle-option is-active" data-unit-mode="metric" aria-hidden="true">{cfg.metric_unit}</span>
+          <span class="unit-toggle-option" data-unit-mode="imperial" aria-hidden="true">{cfg.imperial_unit}</span>
+        </button>
       </div>
       {layout}
     </section>

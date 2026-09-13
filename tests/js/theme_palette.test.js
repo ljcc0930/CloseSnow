@@ -105,3 +105,15 @@ for (const [theme, palette] of Object.entries(palettes)) {
       "The sliding selection must remain distinct from its track");
   });
 }
+
+test("both page shells expose one named theme switch with icons and no visible Day/Night text", () => {
+  for (const filename of ["weather_page.html", "resort_hourly_page.html"]) {
+    const html = fs.readFileSync(path.join(__dirname, "../../src/web/templates", filename), "utf8");
+    const switches = [...html.matchAll(/<button[^>]*data-theme-toggle[^>]*>([\s\S]*?)<\/button>/g)];
+    assert.equal(switches.length, 1, filename);
+    assert.match(switches[0][0], /role="switch"[^>]*aria-label="Night theme"/);
+    assert.equal(switches[0][1].replace(/<[^>]*>/g, "").trim(), "");
+    assert.match(switches[0][1], /class="theme-icon-day"/);
+    assert.match(switches[0][1], /class="theme-icon-night"/);
+  }
+});
