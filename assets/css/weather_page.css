@@ -485,7 +485,7 @@
   letter-spacing: -0.15px;
 }
 
-.forecast-identity h3 a { color: var(--ink-950); text-decoration: none; }
+.forecast-identity h3 a { display: block; color: var(--ink-950); text-decoration: none; }
 .forecast-identity h3 a:hover { color: var(--glacier-600); }
 .forecast-identity .favorite-btn { width: 23px; height: 23px; margin-top: -3px; }
 .forecast-identity .favorite-btn svg { width: 13px; height: 13px; }
