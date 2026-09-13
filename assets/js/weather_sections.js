@@ -6,6 +6,7 @@
 }(typeof window !== "undefined" ? window : null, function () {
   "use strict";
   const FORECAST_TABS = Object.freeze([
+    { key: "overview", label: "Overview" },
     { key: "summary", label: "Summary" },
     { key: "snowfall", label: "Snowfall" },
     { key: "rainfall", label: "Rainfall" },
@@ -13,7 +14,7 @@
     { key: "weather", label: "Weather" },
     { key: "daylight", label: "Daylight" },
   ]);
-  const resolveTab = (key) => FORECAST_TABS.some((tab) => tab.key === key) ? key : "summary";
+  const resolveTab = (key) => FORECAST_TABS.some((tab) => tab.key === key) ? key : "overview";
   const tabForKey = (activeTab, key) => {
     const index = FORECAST_TABS.findIndex((tab) => tab.key === resolveTab(activeTab));
     if (key === "Home") return FORECAST_TABS[0].key;
@@ -22,8 +23,9 @@
     if (key === "ArrowLeft") return FORECAST_TABS[(index + FORECAST_TABS.length - 1) % FORECAST_TABS.length].key;
     return null;
   };
-  const createRenderer = ({ state, formatters, compactDailySummary, weatherCode = {}, reportModel }) => {
+  const createRenderer = ({ state, formatters, compactDailySummary, weatherCode = {}, reportModel, snowTimeline, weatherIcons = {} }) => {
     const MAX_DISPLAY_DAYS = 14;
+    const timeline = snowTimeline;
     const STICKY_SINGLE_TABLE_SECTION_KEYS = Object.freeze({
       dailySummary: "daily-summary",
       snowfall: "snowfall",
@@ -127,56 +129,73 @@
       const parts = [report?.city, report?.admin1 || report?.country_code]
         .map((value) => String(value || "").trim())
         .filter(Boolean);
-      return parts.join(", ") || String(report?.region || "Mountain forecast").trim();
+      return parts.join(", ") || String(report?.region || "").trim();
     };
 
-    const _overviewValue = (kind, value, fallback = "--") => {
-      const numeric = _asFiniteNumber(value);
-      if (numeric === null) return `<span class="overview-value">${fallback}</span>`;
-      const display = kind === "temp" ? String(Math.round(numeric)) : numeric.toFixed(1);
-      return `<span class="overview-value" data-compact-unit-kind="${kind}" data-compact-metric-value="${numeric.toFixed(6)}">${display}</span>`;
+    const _timelineValue = (kind, value) => {
+      const number = _asFiniteNumber(value);
+      if (number === null) return '<span class="timeline-value">—</span>';
+      return `<span class="timeline-value" data-timeline-value="1" data-compact-unit-kind="${kind}" data-compact-metric-value="${number.toFixed(6)}">${_escapeHtml(timeline.formatValue(kind, number, state.compactSummaryUnitMode))}</span>`;
     };
-
-    const _renderForecastOverview = (reports) => {
-      const snowSorted = [...reports].sort((a, b) => (_weeklySnowfall(b) || 0) - (_weeklySnowfall(a) || 0));
-      const hasSnow = snowSorted.some((report) => (_weeklySnowfall(report) || 0) > 0);
-      const candidates = (hasSnow
-        ? snowSorted
-        : [...reports].sort((a, b) => (Number(b?.week1_total_rain_mm) || 0) - (Number(a?.week1_total_rain_mm) || 0)))
-        .slice(0, 3);
-      const outlookKind = hasSnow ? "snow" : "rain";
-      const outlookLabel = hasSnow ? "7-day snow" : "7-day rain";
-      const outlookUnit = hasSnow ? "cm" : "mm";
-      const cards = candidates.map((report, index) => {
-        const today = _dailyAt(report, 0);
-        const code = today.weather_code;
-        const weatherTitle = weatherCode.descriptionForWeatherCode?.(code) || "Weather unavailable";
-        return `
-          <article class="snow-pick-card">
-            <div class="snow-pick-card-topline">
-              <span class="snow-pick-rank">#${index + 1}</span>
-              <span class="snow-pick-weather" title="${_escapeHtml(weatherTitle)}">${_weatherEmoji(code)}</span>
-            </div>
-            <h3>${_resortLinkHtml(report)}</h3>
-            <p>${_escapeHtml(_overviewLocation(report))}</p>
-            <div class="snow-pick-metrics">
-              <span><small>${outlookLabel}</small><strong>${_overviewValue(outlookKind, hasSnow ? _weeklySnowfall(report) : report?.week1_total_rain_mm)}<em data-compact-unit-label="${outlookKind}">${outlookUnit}</em></strong></span>
-              <span><small>Today high</small><strong>${_overviewValue("temp", today.temperature_max_c)}<em data-compact-unit-label="temp">°C</em></strong></span>
-            </div>
-          </article>`;
+    const _timelineUnit = (kind) => `<span data-compact-unit-label="${kind}">${state.compactSummaryUnitMode === "imperial" ? "in" : kind === "snow" ? "cm" : "mm"}</span>`;
+    const _renderForecastRow = (report, calendar, scale, kind) => {
+      const rawDays = timeline.daysFor(report, _displayDays());
+      const dated = new Map(rawDays.filter((day) => day.date).map((day) => [day.date, day]));
+      const days = calendar.map((date, index) => date ? dated.get(date) || {} : rawDays[index] || {});
+      const key = kind === "snow" ? "snowfall_cm" : "rain_mm";
+      const values = days.map((day) => {
+        const value = _asFiniteNumber(day[key]);
+        return value !== null && value >= 0 ? value : null;
+      });
+      const known = values.filter((value) => value !== null);
+      const sum = known.length ? known.reduce((total, value) => total + value, 0) : null;
+      const partial = known.length > 0 && known.length < calendar.length;
+      const geometry = timeline.ribbonGeometry(values, { width: calendar.length * 100, height: 54, maxValue: scale });
+      const resortId = String(report.resort_id || "").trim();
+      const buttons = days.map((day, index) => {
+        const date = calendar[index] || day.date || "";
+        const condition = weatherCode.descriptionForWeatherCode?.(day.weather_code) || "Conditions unavailable";
+        const value = values[index];
+        const label = timeline.dayLabel({ ...day, date }, kind, state.compactSummaryUnitMode, index);
+        const numericAttr = (raw) => _asFiniteNumber(raw) ?? "";
+        const valueAttrs = `data-day-date="${_escapeHtml(date)}" data-day-value="${value ?? ""}" data-day-high="${numericAttr(day.temperature_max_c)}" data-day-low="${numericAttr(day.temperature_min_c)}" data-day-resort="${_escapeHtml(_displayName(report))}" data-day-condition="${_escapeHtml(condition)}"`;
+        return `<button type="button" id="forecast-day-${encodeURIComponent(resortId)}-${index}" class="forecast-day${value === null ? " is-missing" : ""}" data-forecast-day="${index}" ${valueAttrs} data-day-label="${_escapeHtml(label)}" aria-label="${_escapeHtml(_displayName(report) + ", " + label + ", " + condition)}" tabindex="${index === 0 ? 0 : -1}"><span class="forecast-day-icon" aria-hidden="true">${weatherIcons.iconForWeatherCode?.(day.weather_code) || ""}</span>${value === null ? '<span class="forecast-missing" aria-hidden="true">—</span>' : ""}</button>`;
       }).join("");
-      const empty = `
-        <div class="overview-empty">
-          <strong>No resorts found</strong>
-          <span>Try another search or adjust your filters.</span>
-        </div>`;
-      return `
-        <section class="forecast-overview" aria-labelledby="forecast-overview-title">
-          <div class="overview-heading">
-            <h2 id="forecast-overview-title">${hasSnow ? "Most snow this week" : "Precipitation this week"}</h2>
-          </div>
-          <div class="snow-pick-grid">${cards || empty}</div>
-        </section>`;
+      const shape = geometry.segments.map((segment) => `<path class="forecast-ribbon-area" d="${segment.areaPath}"/><path class="forecast-ribbon-line${segment.points.every((point) => point.value === 0) ? " is-dry" : ""}" d="${segment.linePath}"/>`).join("");
+      const dots = geometry.isolatedPoints.map((point) => `<circle class="forecast-ribbon-point" cx="${point.x}" cy="${point.y}" r="3"/>`).join("");
+      const summary = timeline.precipitationSummary({ ...report, daily: days }, calendar.length);
+      return `<article class="forecast-row" data-forecast-row data-timeline-card data-metric-kind="${kind}" data-timeline-resort-id="${_escapeHtml(resortId)}" data-timeline-scale="${scale}">
+        <div class="forecast-identity" data-forecast-identity><div class="forecast-identity-top"><h3>${_resortLinkHtml(report)}</h3>${_favoriteButtonHtml(report)}</div><p class="forecast-location">${_escapeHtml(_overviewLocation(report))}</p><div class="forecast-total">${_timelineValue(kind, sum)} <small>${_timelineUnit(kind)}${partial ? ' <span class="forecast-partial">partial</span>' : ""}</small></div></div>
+        <div class="forecast-trend"><div class="forecast-daily-canvas"><svg class="forecast-ribbon" viewBox="0 0 ${geometry.width} ${geometry.height}" preserveAspectRatio="none" aria-hidden="true">${shape}${dots}</svg><div class="forecast-days">${buttons}</div></div><p class="forecast-readout" data-day-readout aria-live="polite">${_escapeHtml(summary)}</p></div>
+      </article>`;
+    };
+
+    const _renderForecastOverview = (reports, emptyMessage) => {
+      const count = _displayDays();
+
+      const kind = state.overviewMetric === "rain" ? "rain" : "snow";
+      const limit = Math.max(6, Number(state.timelineLimit) || 6);
+      const candidates = reports.slice(0, limit);
+      const remaining = reports.length - candidates.length;
+      const dates = [...new Set(reports.flatMap((report) => timeline.daysFor(report, count).map((day) => day.date).filter((date) => timeline.dateParts(date, 0).raw)))].sort().slice(0, count);
+      const calendar = Array.from({ length: count }, (_, index) => dates[0] ? new Date(Date.parse(`${dates[0]}T12:00:00Z`) + index * 86400000).toISOString().slice(0, 10) : "");
+      const alignedReports = reports.map((report) => {
+        const source = timeline.daysFor(report, count);
+        const byDate = new Map(source.filter((day) => day.date).map((day) => [day.date, day]));
+        return { ...report, daily: calendar.map((date, index) => date ? byDate.get(date) || {} : source[index] || {}) };
+      });
+      const scales = timeline.sharedScales(alignedReports, count);
+      const headers = calendar.map((raw, index) => {
+        const date = timeline.dateParts(raw, index);
+        const weekend = raw && [0, 6].includes(new Date(`${raw}T12:00:00Z`).getUTCDay());
+        return `<div class="forecast-calendar-day${date.isToday ? " is-today" : ""}${weekend ? " is-weekend" : ""}" data-calendar-day="${index}"><span>${_escapeHtml(date.weekday)}</span><time${raw ? ` datetime="${raw}"` : ""}>${raw ? Number(raw.slice(-2)) : "—"}</time></div>`;
+      }).join("");
+      const range = dates.length ? `${timeline.dateParts(dates[0], 0).date} – ${timeline.dateParts(calendar[calendar.length - 1], calendar.length - 1).date}` : `${count}-day forecast`;
+      return `<section class="forecast-overview" data-timeline-card aria-labelledby="forecast-overview-title" data-metric-kind="${kind}" style="--forecast-days:${count}">
+        <div class="forecast-board-toolbar"><div><h2 id="forecast-overview-title">${_escapeHtml(range)}</h2><p>${count}-day ${kind === "snow" ? "snowfall" : "rainfall"}</p></div><div class="forecast-board-controls"><div class="forecast-metric-toggle" role="group" aria-label="Forecast metric"><button type="button" data-overview-metric="snow" aria-pressed="${kind === "snow"}">Snow</button><button type="button" data-overview-metric="rain" aria-pressed="${kind === "rain"}">Rain</button></div><button type="button" id="overview-unit-switch" class="unit-toggle" role="switch" aria-label="Overview imperial units" aria-checked="${state.compactSummaryUnitMode === "imperial"}" data-overview-unit-toggle data-compact-summary-toggle="1" data-mode="${state.compactSummaryUnitMode}"><span class="unit-toggle-option" data-unit-mode="metric" aria-hidden="true">${kind === "snow" ? "cm" : "mm"}</span><span class="unit-toggle-option" data-unit-mode="imperial" aria-hidden="true">in</span></button></div></div>
+        ${candidates.length ? `<div class="forecast-board" data-timeline-scroll data-timeline-resort-id="forecast-board"><div class="forecast-board-inner"><div class="forecast-calendar"><div class="forecast-calendar-key"><span>Resort <small>· ${count}-day total</small></span><span class="forecast-scale">0 — ${_timelineValue(kind, scales[kind])} ${_timelineUnit(kind)} / day</span></div><div class="forecast-calendar-dates">${headers}</div></div>${candidates.map((report) => _renderForecastRow(report, calendar, scales[kind], kind)).join("")}</div></div><div class="forecast-board-footer"><span>Dates at resort local time</span><div class="timeline-navigation"><span data-timeline-hint hidden>More dates</span><button type="button" data-timeline-direction="previous" aria-label="Earlier forecast dates" disabled>←</button><button type="button" data-timeline-direction="next" aria-label="Later forecast dates" disabled>→</button></div></div>` : `<div class="overview-empty"><strong>No resorts found</strong><span>${_escapeHtml(emptyMessage)}</span></div>`}
+        ${remaining ? `<div class="timeline-show-more"><button type="button" data-show-more-timelines>Show ${Math.min(6, remaining)} more resorts</button><span>${candidates.length} of ${reports.length}</span></div>` : ""}
+      </section>`;
     };
 
     const _renderCompactGridSection = (reports, emptyMessage = "No resorts match the current filters.") => {
@@ -440,6 +459,7 @@
     const render = (reports, emptyMessage = "No resorts match the current filters.") => {
       const activeTab = resolveTab(state.forecastTab);
       const renderers = {
+        overview: () => _renderForecastOverview(reports, emptyMessage),
         summary: () => _renderCompactGridSection(reports, emptyMessage),
         snowfall: () => _renderPrecipSection("Snowfall", "snow", "cm", "in", reports, {
           prefix: "snowfall", sectionKey: STICKY_SINGLE_TABLE_SECTION_KEYS.snowfall,
@@ -463,7 +483,7 @@
       }).join("");
       // Inactive tables are not created, keeping large resort collections responsive.
       const panels = FORECAST_TABS.map(({ key }) => `<div class="forecast-panel" id="forecast-panel-${key}" role="tabpanel" aria-labelledby="forecast-tab-${key}"${key === activeTab ? ' tabindex="0"' : ' hidden'}>${key === activeTab ? renderers[key]() : ""}</div>`).join("");
-      return `${_renderForecastOverview(reports)}<div class="forecast-workspace"><div class="forecast-tabs" role="tablist" aria-label="Forecast view">${tabs}</div>${panels}</div>`;
+      return `<div class="forecast-workspace"><div class="forecast-tabs" role="tablist" aria-label="Forecast view">${tabs}</div>${panels}</div>`;
     };
     return { render };
   };

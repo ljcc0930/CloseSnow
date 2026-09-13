@@ -77,7 +77,9 @@ const appState = {
   compactSummaryUnitMode: "metric",
   sunTimeToggleMode: "metric",
   layoutMode: "desktop",
-  forecastTab: "summary",
+  forecastTab: "overview",
+  timelineLimit: 6,
+  overviewMetric: "snow",
 };
 
 const weatherPageFormatters = window.CloseSnowWeatherPageFormatters || {};
@@ -128,7 +130,10 @@ const sectionRenderer = weatherSections.createRenderer({
   compactDailySummary,
   weatherCode: window.CloseSnowWeatherCode,
   reportModel,
+  snowTimeline: window.CloseSnowSnowTimeline,
+  weatherIcons: window.CloseSnowWeatherIcons,
 });
+const timelineScroller = window.CloseSnowTimelineScroller.createController({ window });
 const {
   getLayoutModeForWidth, updateLayoutMode, applyLayout, observeLayoutContainers,
 } = window.CloseSnowWeatherTableLayout.createController({
@@ -387,6 +392,7 @@ const syncCompactSummaryToggle = () => {
   document.querySelectorAll(".unit-toggle[data-compact-summary-toggle='1']").forEach((toggle) => {
     const mode = appState.compactSummaryUnitMode || "metric";
     toggle.setAttribute("data-mode", mode);
+    if (toggle.getAttribute("role") === "switch") toggle.setAttribute("aria-checked", String(mode === "imperial"));
     toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
       button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
@@ -411,6 +417,10 @@ const renderCompactSummaryValues = () => {
     const kind = String(el.getAttribute("data-compact-unit-kind") || "").trim();
     const metricValue = Number(el.getAttribute("data-compact-metric-value"));
     if (!Number.isFinite(metricValue)) return;
+    if (el.hasAttribute("data-timeline-value")) {
+      el.textContent = window.CloseSnowSnowTimeline.formatValue(kind, metricValue, mode);
+      return;
+    }
     if (kind === "temp") {
       el.textContent = mode === "imperial"
         ? String(Math.round((metricValue * 9 / 5) + 32))
@@ -528,6 +538,16 @@ const setCompactSummaryUnitMode = (mode) => {
   }
   renderCompactSummaryValues();
   syncCompactSummaryToggle();
+  pageContentRoot?.querySelectorAll("[data-forecast-day]").forEach((button) => {
+    const data = button.dataset;
+    const kind = button.closest("[data-metric-kind]").dataset.metricKind;
+    const day = { date: data.dayDate, temperature_max_c: data.dayHigh, temperature_min_c: data.dayLow,
+      [kind === "rain" ? "rain_mm" : "snowfall_cm"]: data.dayValue };
+    const label = window.CloseSnowSnowTimeline.dayLabel(day, kind, appState.compactSummaryUnitMode, Number(data.forecastDay));
+    data.dayLabel = label;
+    button.setAttribute("aria-label", `${data.dayResort}, ${label}, ${data.dayCondition}`);
+  });
+  pageContentRoot?.querySelector("[data-timeline-scroll]")?.dispatchEvent(new Event("forecast-units-change"));
 };
 
 const setSunTimeToggleMode = (mode) => {
@@ -574,7 +594,9 @@ const renderPage = () => {
       : "No resorts match the current filters.");
   const tabStripScrollLeft = pageContentRoot.querySelector(".forecast-tabs")?.scrollLeft || 0;
   updateLayoutMode();
+  timelineScroller.capture(pageContentRoot);
   pageContentRoot.innerHTML = sectionRenderer.render(visibleReports, emptyMessage);
+  timelineScroller.bind(pageContentRoot);
   const tabStrip = pageContentRoot.querySelector(".forecast-tabs");
   if (tabStrip) tabStrip.scrollLeft = tabStripScrollLeft;
   applyLayout();
@@ -821,6 +843,7 @@ const scheduleApplyFilters = (delayMs = 120) => {
 
 const applyFiltersImmediately = async () => {
   cancelScheduledFilterApply();
+  appState.timelineLimit = 6;
   applyFilterStateFromControls();
   syncUrlFromFilterState();
   if (_isDynamicApiDataUrl()) {
@@ -903,6 +926,27 @@ const bindControls = () => {
     activateForecastTab(nextTab);
   });
   document.addEventListener("click", (event) => {
+    const overviewUnits = event.target.closest("[data-overview-unit-toggle]");
+    if (overviewUnits) {
+      setCompactSummaryUnitMode(appState.compactSummaryUnitMode === "imperial" ? "metric" : "imperial");
+      return;
+    }
+    const metric = event.target.closest("[data-overview-metric]");
+    if (metric) {
+      appState.overviewMetric = metric.dataset.overviewMetric === "rain" ? "rain" : "snow";
+      renderPagePreservingScroll();
+      pageContentRoot.querySelector(`[data-overview-metric="${appState.overviewMetric}"]`)?.focus({ preventScroll: true });
+      return;
+    }
+    const showMore = event.target.closest("[data-show-more-timelines]");
+    if (showMore) {
+      const firstNewIndex = appState.timelineLimit;
+      appState.timelineLimit += 6;
+      renderPagePreservingScroll();
+      const firstNewCard = pageContentRoot.querySelectorAll("[data-forecast-row]")[firstNewIndex];
+      firstNewCard?.querySelector(".resort-link")?.focus({ preventScroll: true });
+      return;
+    }
     const tab = event.target.closest("[data-forecast-tab]");
     if (tab) {
       activateForecastTab(tab.getAttribute("data-forecast-tab"));
