@@ -41,17 +41,10 @@
         <div id="resort-snapshot" class="resort-snapshot" aria-label="Resort forecast overview"></div>
       </div>
     </section>
-    <section id="resort-timeline-section" class="resort-timeline-section" hidden>
-      <div class="section-heading">
-        <h2>Past 14 days + forecast</h2>
-        <span>Scroll for more days · °C / cm / mm</span>
-      </div>
-      <div id="resort-timeline-root"></div>
-    </section>
     <section class="hourly-workspace" aria-labelledby="hourly-section-title">
       <div class="hourly-workspace-heading">
         <div>
-          <h2 id="hourly-section-title" class="hourly-section-title">Hourly forecast</h2>
+          <h2 id="hourly-section-title" class="hourly-section-title">Hourly outlook</h2>
         </div>
         <div class="hourly-controls">
           <label for="hours-select">Range</label>
@@ -61,13 +54,13 @@
             <option value="72" selected>72 hours</option>
             <option value="120">120 hours</option>
           </select>
-          <button id="hours-refresh-btn" type="button">Refresh</button>
+          <button id="hours-refresh-btn" type="button" aria-label="Refresh hourly forecast" title="Refresh hourly forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.5-1.5L20 8M4 16l2.4 2.5A7 7 0 0 0 17.9 17"/></svg><span class="hourly-refresh-label">Refresh</span></button>
         </div>
       </div>
       <p id="hourly-meta" class="hourly-meta">Loading...</p>
       <div id="hourly-error" class="hourly-error" hidden></div>
       <div id="hourly-chart-error" class="hourly-chart-error" hidden></div>
-      <section id="hourly-charts" class="hourly-charts" aria-live="polite"></section>
+      <section id="hourly-charts" class="hourly-charts" aria-label="Explore the hourly forecast"></section>
       <details class="raw-data-panel">
         <summary>View hourly data</summary>
         <div class="table-wrap">
@@ -77,6 +70,13 @@
           </table>
         </div>
       </details>
+    </section>
+    <section id="resort-timeline-section" class="resort-timeline-section" hidden>
+      <div class="section-heading">
+        <h2>Past 14 days + forecast</h2>
+        <span>Scroll for more days · °C / cm / mm</span>
+      </div>
+      <div id="resort-timeline-root"></div>
     </section>
     <section id="resort-airport-access-section" class="resort-airport-access-section" hidden>
       <div class="section-heading">
@@ -94,6 +94,7 @@
   <script src="{{asset_prefix}}/js/weather_colors.js"></script>
   <script src="{{asset_prefix}}/js/compact_daily_summary.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly_metrics.js"></script>
+  <script src="{{asset_prefix}}/js/hourly_explorer.js"></script>
   <script src="{{asset_prefix}}/js/resort_hourly.js"></script>
 </body>
 </html>
