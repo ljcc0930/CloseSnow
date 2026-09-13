@@ -318,7 +318,6 @@ h1, h2, h3 {
   background: var(--glacier-500);
   box-shadow: var(--shadow-control);
   transition: transform 180ms ease-out;
-  view-transition-name: theme-switch-thumb;
 }
 
 .theme-toggle-options {
@@ -326,7 +325,6 @@ h1, h2, h3 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  view-transition-name: theme-switch-labels;
   pointer-events: none;
 }
 
@@ -360,12 +358,6 @@ h1, h2, h3 {
 
 :root[data-theme="dark"] .theme-toggle-night {
   color: var(--on-accent);
-}
-
-/* Snapshot geometry animates the thumb when supported. Keep its DOM transition
-   for browsers without View Transitions; running both would capture it mid-slide. */
-:root[data-theme-transitioning] .theme-toggle-thumb {
-  transition: none;
 }
 
 .unit-toggle {
@@ -476,56 +468,42 @@ main {
 
 }
 
-/* Theme changes blend complete page snapshots, so borders, native controls,
-   shadows, and chart colors never run on separate transition clocks. */
+/* Only the outgoing page is captured. The incoming page remains live, so
+   controls keep their actual hit targets, hover cursor, and keyboard focus. */
+:root {
+  view-transition-name: none;
+}
+
+:root[data-theme-snapshot="old"] {
+  view-transition-name: theme-page;
+}
+
+/* Extract the whole switch from the old page image, then omit that image.
+   Its real DOM paints through this opening while the page fades around it. */
+:root[data-theme-snapshot="old"] .theme-toggle {
+  view-transition-name: theme-switch;
+}
+
 :root[data-theme-transitioning]::view-transition {
   pointer-events: none;
 }
 
-:root[data-theme-transitioning]::view-transition-group(root) {
-  animation-duration: 180ms;
-}
-
-:root[data-theme-transitioning]::view-transition-old(root) {
+:root[data-theme-transitioning]::view-transition-group(theme-page) {
   animation: none;
+}
+
+:root[data-theme-transitioning]::view-transition-old(theme-page) {
+  animation: theme-conceal 180ms ease-out both;
   mix-blend-mode: normal;
 }
 
-:root[data-theme-transitioning]::view-transition-new(root) {
-  animation: theme-reveal 180ms ease-out both;
-  mix-blend-mode: normal;
+:root[data-theme-transitioning]::view-transition-group(theme-switch) {
+  display: none;
 }
 
-/* Both icons remain visible above the moving thumb in the snapshot layer. */
-:root[data-theme-transitioning]::view-transition-group(theme-switch-thumb),
-:root[data-theme-transitioning]::view-transition-group(theme-switch-labels) {
-  animation-duration: 180ms;
-  animation-timing-function: ease-out;
-}
-
-:root[data-theme-transitioning]::view-transition-group(theme-switch-thumb) {
-  z-index: 1;
-}
-
-:root[data-theme-transitioning]::view-transition-group(theme-switch-labels) {
-  z-index: 2;
-}
-
-:root[data-theme-transitioning]::view-transition-old(theme-switch-thumb),
-:root[data-theme-transitioning]::view-transition-old(theme-switch-labels) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-:root[data-theme-transitioning]::view-transition-new(theme-switch-thumb),
-:root[data-theme-transitioning]::view-transition-new(theme-switch-labels) {
-  animation: theme-reveal 180ms ease-out both;
-  mix-blend-mode: normal;
-}
-
-@keyframes theme-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes theme-conceal {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @media (max-width: 380px) {
