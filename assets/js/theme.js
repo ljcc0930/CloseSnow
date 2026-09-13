@@ -40,6 +40,7 @@
       activeTransition = null;
       document.documentElement.dataset.theme = targetTheme;
       delete document.documentElement.dataset.themeTransitioning;
+      delete document.documentElement.dataset.themeSnapshot;
     }
 
     function applyTheme(animate = false) {
@@ -51,30 +52,38 @@
       if (activeTransition) activeTransition.skipTransition();
       activeTransition = null;
       delete document.documentElement.dataset.themeTransitioning;
+      delete document.documentElement.dataset.themeSnapshot;
       const paint = () => {
         // Skipping a view transition still runs its update callback. A newer
         // choice must win even when an older snapshot has not finished yet.
-        if (request === revision) document.documentElement.dataset.theme = theme;
+        if (request !== revision) return;
+        document.documentElement.dataset.theme = theme;
+        // Capture only the outgoing palette. Capturing the incoming root would
+        // remove every live control from hit-testing for the entire animation.
+        delete document.documentElement.dataset.themeSnapshot;
       };
       if (!animate || !controlsBound || reducedMotion?.matches || !document.startViewTransition) {
         paint();
         return;
       }
       try {
-        // Crossfade two complete palettes instead of interpolating individual
-        // borders, inherited text colors, chart marks, and native controls.
+        // Fade the old page over the live new palette. The switch is excluded
+        // from that snapshot so its real thumb, hover, and focus remain intact.
         document.documentElement.dataset.themeTransitioning = "true";
+        document.documentElement.dataset.themeSnapshot = "old";
         const transition = document.startViewTransition(paint);
         activeTransition = transition;
         const cleanup = () => {
           if (activeTransition !== transition) return;
           activeTransition = null;
           delete document.documentElement.dataset.themeTransitioning;
+          delete document.documentElement.dataset.themeSnapshot;
         };
         transition.ready.catch(() => {}); // Cancellation is expected on rapid toggles.
         transition.finished.then(cleanup, cleanup);
       } catch (_) {
         delete document.documentElement.dataset.themeTransitioning;
+        delete document.documentElement.dataset.themeSnapshot;
         paint();
       }
     }

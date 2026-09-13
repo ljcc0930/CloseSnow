@@ -51,13 +51,18 @@ const withPrefix = (path) => {
   return `${routePrefix}${cleanPath}`;
 };
 
+// Shared by the resort overview and the raw hourly table, not chart-specific.
+const toFiniteNumber = (value) => {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && !value.trim()) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
 const formatValue = (value) => {
-  if (value === null || value === undefined || value === "") return "";
-  if (typeof value === "number") {
-    if (Number.isInteger(value)) return String(value);
-    return value.toFixed(1);
-  }
-  return String(value);
+  const number = toFiniteNumber(value);
+  if (number === null) return "—";
+  return window.CloseSnowHourlyExplorer?.formatNumber(number) || String(number);
 };
 
 const formatCoordinateExact = (value) => {
@@ -371,230 +376,20 @@ const renderResortSnapshot = () => {
   snapshotEl.hidden = false;
 };
 
-const toFiniteNumber = (value) => {
-  if (value === null || value === undefined || value === "") return null;
-  const num = Number(value);
-  if (!Number.isFinite(num)) return null;
-  return num;
-};
-
-const splitTimeLabel = (rawTime) => {
-  const text = String(rawTime || "");
-  if (!text) return { dateLabel: "", timeLabel: "" };
-  const [datePart, hourPart = ""] = text.split("T");
-  const hourLabel = hourPart.slice(0, 5);
-  if (!datePart) return { dateLabel: "", timeLabel: hourLabel || text };
-  const md = datePart.length >= 10 ? datePart.slice(5) : datePart;
-  return { dateLabel: md, timeLabel: hourLabel };
-};
-
-const chartYBounds = (metricKey, values) => {
-  if (metricKey === "precipitation_probability") return { min: 0, max: 100 };
-  if (metricKey === "wind_direction_10m") return { min: 0, max: 360 };
-  const finiteValues = values.filter((v) => v !== null);
-  if (!finiteValues.length) return null;
-  let min = Math.min(...finiteValues);
-  let max = Math.max(...finiteValues);
-  if (min === max) {
-    const pad = min === 0 ? 1 : Math.abs(min) * 0.1;
-    min -= pad;
-    max += pad;
-  }
-  return { min, max };
-};
-
-const chartLinePath = (values, xForIndex, yForValue) => {
-  let path = "";
-  let open = false;
-  values.forEach((value, idx) => {
-    if (value === null) {
-      open = false;
-      return;
-    }
-    const x = xForIndex(idx);
-    const y = yForValue(value);
-    path += `${open ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)} `;
-    open = true;
-  });
-  return path.trim();
-};
-
-const resolveChartWidth = () => {
-  if (!chartsEl) return 720;
-  const containerWidth = chartsEl.getBoundingClientRect().width || chartsEl.clientWidth || 720;
-  const isSingleColumn = typeof window.matchMedia === "function"
-    && window.matchMedia("(max-width: 980px)").matches;
-  const gap = 12;
-  const cardHorizontalPadding = 22;
-  const rawCardWidth = isSingleColumn ? containerWidth : ((containerWidth - gap) / 2);
-  return Math.max(320, Math.round(rawCardWidth - cardHorizontalPadding));
-};
-
-const renderMetricChartCard = (metric, times, values, chartWidth) => {
-  const card = document.createElement("article");
-  card.className = "chart-card";
-
-  const title = document.createElement("h2");
-  title.className = "chart-title";
-  title.textContent = `${metric.title} (${metric.unit})`;
-  card.appendChild(title);
-
-  const finiteValues = values.filter((v) => v !== null);
-  if (!times.length || !finiteValues.length) {
-    const empty = document.createElement("div");
-    empty.className = "chart-empty";
-    empty.textContent = "No data";
-    card.appendChild(empty);
-    return card;
-  }
-
-  const yBounds = chartYBounds(metric.key, values);
-  if (!yBounds) {
-    const empty = document.createElement("div");
-    empty.className = "chart-empty";
-    empty.textContent = "No data";
-    card.appendChild(empty);
-    return card;
-  }
-
-  const width = Math.max(320, Number(chartWidth) || 720);
-  const height = 220;
-  const padLeft = 44;
-  const padRight = 16;
-  const padTop = 12;
-  const padBottom = 42;
-  const innerW = Math.max(1, width - padLeft - padRight);
-  const innerH = Math.max(1, height - padTop - padBottom);
-  const ySpan = Math.max(1e-9, yBounds.max - yBounds.min);
-  const xDenom = Math.max(1, times.length - 1);
-
-  const xForIndex = (idx) => padLeft + ((idx / xDenom) * innerW);
-  const yForValue = (val) => padTop + (((yBounds.max - val) / ySpan) * innerH);
-
-  const svgWrap = document.createElement("div");
-  svgWrap.className = "chart-svg-wrap";
-  const svgNs = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNs, "svg");
-  svg.setAttribute("class", "chart-svg");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `${metric.title} hourly trend line chart`);
-
-  const yTicks = 4;
-  for (let i = 0; i <= yTicks; i += 1) {
-    const ratio = i / yTicks;
-    const y = padTop + (ratio * innerH);
-    const value = yBounds.max - (ratio * ySpan);
-
-    const grid = document.createElementNS(svgNs, "line");
-    grid.setAttribute("class", "chart-grid-line");
-    grid.setAttribute("x1", String(padLeft));
-    grid.setAttribute("x2", String(width - padRight));
-    grid.setAttribute("y1", y.toFixed(2));
-    grid.setAttribute("y2", y.toFixed(2));
-    svg.appendChild(grid);
-
-    const tick = document.createElementNS(svgNs, "text");
-    tick.setAttribute("class", "chart-tick-text");
-    tick.setAttribute("x", String(padLeft - 6));
-    tick.setAttribute("y", String(y + 3));
-    tick.setAttribute("text-anchor", "end");
-    tick.textContent = formatValue(value);
-    svg.appendChild(tick);
-  }
-
-  const xTicks = Math.min(6, times.length);
-  for (let i = 0; i < xTicks; i += 1) {
-    const idx = Math.round((i / Math.max(1, xTicks - 1)) * (times.length - 1));
-    const x = xForIndex(idx);
-    const { dateLabel, timeLabel } = splitTimeLabel(times[idx]);
-    const tick = document.createElementNS(svgNs, "text");
-    tick.setAttribute("class", "chart-tick-text");
-    tick.setAttribute("x", x.toFixed(2));
-    tick.setAttribute("y", String(height - 22));
-    tick.setAttribute("text-anchor", "middle");
-    const dateTspan = document.createElementNS(svgNs, "tspan");
-    dateTspan.setAttribute("x", x.toFixed(2));
-    dateTspan.setAttribute("dy", "0");
-    dateTspan.textContent = dateLabel;
-    tick.appendChild(dateTspan);
-    const timeTspan = document.createElementNS(svgNs, "tspan");
-    timeTspan.setAttribute("x", x.toFixed(2));
-    timeTspan.setAttribute("dy", "11");
-    timeTspan.textContent = timeLabel;
-    tick.appendChild(timeTspan);
-    svg.appendChild(tick);
-  }
-
-  const axisX = document.createElementNS(svgNs, "line");
-  axisX.setAttribute("class", "chart-axis-line");
-  axisX.setAttribute("x1", String(padLeft));
-  axisX.setAttribute("x2", String(width - padRight));
-  axisX.setAttribute("y1", String(height - padBottom));
-  axisX.setAttribute("y2", String(height - padBottom));
-  svg.appendChild(axisX);
-
-  const axisY = document.createElementNS(svgNs, "line");
-  axisY.setAttribute("class", "chart-axis-line");
-  axisY.setAttribute("x1", String(padLeft));
-  axisY.setAttribute("x2", String(padLeft));
-  axisY.setAttribute("y1", String(padTop));
-  axisY.setAttribute("y2", String(height - padBottom));
-  svg.appendChild(axisY);
-
-  const line = document.createElementNS(svgNs, "path");
-  line.setAttribute("class", "chart-line");
-  line.setAttribute("stroke", metric.color);
-  line.setAttribute("d", chartLinePath(values, xForIndex, yForValue));
-  svg.appendChild(line);
-
-  values.forEach((value, idx) => {
-    if (value === null) return;
-    const point = document.createElementNS(svgNs, "circle");
-    point.setAttribute("class", "chart-point");
-    point.setAttribute("cx", xForIndex(idx).toFixed(2));
-    point.setAttribute("cy", yForValue(value).toFixed(2));
-    point.setAttribute("r", "2.6");
-    point.setAttribute("fill", metric.color);
-    const pointTitle = document.createElementNS(svgNs, "title");
-    pointTitle.textContent = `${times[idx]} | ${formatValue(value)} ${metric.unit}`;
-    point.appendChild(pointTitle);
-    svg.appendChild(point);
-  });
-
-  svgWrap.appendChild(svg);
-  card.appendChild(svgWrap);
-  return card;
-};
-
+let hourlyExplorer = null;
 const renderHourlyCharts = (payload) => {
   if (!chartsEl) return;
   lastHourlyPayload = payload;
-  chartsEl.innerHTML = "";
-  const hourly = payload?.hourly || {};
-  const times = Array.isArray(hourly.time) ? hourly.time : [];
-  const chartWidth = resolveChartWidth();
-  const frag = document.createDocumentFragment();
-  metricDefs.forEach((metric) => {
-    const rawValues = Array.isArray(hourly[metric.key]) ? hourly[metric.key] : [];
-    const values = times.map((_, idx) => toFiniteNumber(rawValues[idx]));
-    frag.appendChild(renderMetricChartCard(metric, times, values, chartWidth));
-  });
-  chartsEl.appendChild(frag);
+  if (!hourlyExplorer) hourlyExplorer = window.CloseSnowHourlyExplorer.create(chartsEl, metricDefs);
+  hourlyExplorer.update(payload);
 };
 
 const rerenderChartsForResize = () => {
-  if (!lastHourlyPayload) return;
-  if (chartResizeRafId !== null) {
-    window.cancelAnimationFrame(chartResizeRafId);
-  }
+  if (!lastHourlyPayload || !hourlyExplorer) return;
+  if (chartResizeRafId !== null) window.cancelAnimationFrame(chartResizeRafId);
   chartResizeRafId = window.requestAnimationFrame(() => {
     chartResizeRafId = null;
-    try {
-      renderHourlyCharts(lastHourlyPayload);
-    } catch (chartErr) {
-      setChartError(chartErr instanceof Error ? chartErr.message : String(chartErr));
-    }
+    hourlyExplorer.resize();
   });
 };
 
@@ -737,7 +532,7 @@ const loadHourly = async () => {
     renderMeta();
     if (thead) thead.innerHTML = "";
     if (tbody) tbody.innerHTML = "";
-    if (chartsEl) chartsEl.innerHTML = "";
+    if (hourlyExplorer) hourlyExplorer.update({ hourly: {} });
   }
 };
 
