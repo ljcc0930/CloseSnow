@@ -1,0 +1,54 @@
+.airport-travel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.airport-travel-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink-700);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.airport-travel-link-flights {
+  color: var(--glacier-600);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.airport-travel-link:hover {
+  color: var(--glacier-600);
+  border-color: var(--border-hover);
+  background: var(--snow-50);
+  text-decoration: none;
+}
+
+.airport-travel-link svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 700px) {
+  .airport-travel-link {
+    min-height: 44px;
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+}
