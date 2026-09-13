@@ -238,6 +238,8 @@ const normalizeNearbyAirport = (item) => {
     displayName,
     locationLabel,
     distanceMiles,
+    latitude: item.latitude,
+    longitude: item.longitude,
   };
 };
 
@@ -300,6 +302,8 @@ const renderNearbyAirports = (payload) => {
     card.appendChild(head);
     card.appendChild(name);
     card.appendChild(location);
+    const actions = window.CloseSnowAirportTravelLinks?.createActions(document, airport);
+    if (actions) card.appendChild(actions);
     list.appendChild(card);
   });
   airportAccessRootEl.appendChild(list);
