@@ -23,7 +23,7 @@
     if (key === "ArrowLeft") return FORECAST_TABS[(index + FORECAST_TABS.length - 1) % FORECAST_TABS.length].key;
     return null;
   };
-  const createRenderer = ({ state, formatters, compactDailySummary, weatherCode = {}, reportModel, snowTimeline }) => {
+  const createRenderer = ({ state, formatters, compactDailySummary, weatherCode = {}, reportModel, snowTimeline, weatherIcons = {} }) => {
     const MAX_DISPLAY_DAYS = 14;
     const timeline = snowTimeline;
     const STICKY_SINGLE_TABLE_SECTION_KEYS = Object.freeze({
@@ -138,64 +138,62 @@
       return `<span class="timeline-value" data-timeline-value="1" data-compact-unit-kind="${kind}" data-compact-metric-value="${number.toFixed(6)}">${_escapeHtml(timeline.formatValue(kind, number, state.compactSummaryUnitMode))}</span>`;
     };
     const _timelineUnit = (kind) => `<span data-compact-unit-label="${kind}">${state.compactSummaryUnitMode === "imperial" ? "in" : kind === "snow" ? "cm" : "mm"}</span>`;
-    const _timelineTemp = (value) => {
-      const number = _asFiniteNumber(value);
-      if (number === null) return "—";
-      const display = state.compactSummaryUnitMode === "imperial" ? number * 9 / 5 + 32 : number;
-      return `<span data-compact-unit-kind="temp" data-compact-metric-value="${number.toFixed(6)}">${Math.round(display)}</span>`;
-    };
-
-    const _renderTimelineCard = (report, scales, index) => {
-      const series = timeline.seriesFor(report, _displayDays());
-      const { kind, days, values, weeks } = series;
+    const _renderForecastRow = (report, calendar, scale, kind) => {
+      const rawDays = timeline.daysFor(report, _displayDays());
+      const dated = new Map(rawDays.filter((day) => day.date).map((day) => [day.date, day]));
+      const days = calendar.map((date, index) => date ? dated.get(date) || {} : rawDays[index] || {});
+      const key = kind === "snow" ? "snowfall_cm" : "rain_mm";
+      const values = days.map((day) => {
+        const value = _asFiniteNumber(day[key]);
+        return value !== null && value >= 0 ? value : null;
+      });
+      const known = values.filter((value) => value !== null);
+      const sum = known.length ? known.reduce((total, value) => total + value, 0) : null;
+      const partial = known.length > 0 && known.length < calendar.length;
+      const geometry = timeline.ribbonGeometry(values, { width: calendar.length * 100, height: 54, maxValue: scale });
       const resortId = String(report.resort_id || "").trim();
-      const cardId = `resort-timeline-${encodeURIComponent(resortId || String(index))}`;
-      const today = timeline.todayFor(report);
-      const firstDay = days[0] || {};
-      const firstDate = timeline.dateParts(firstDay.date, 0, today);
-      const todayLabel = firstDate.isToday ? "Today" : firstDate.date || "Day 1";
-      const tempUnit = state.compactSummaryUnitMode === "imperial" ? "°F" : "°C";
-      const conditionLabel = weatherCode.descriptionForWeatherCode?.(firstDay.weather_code) || "Weather conditions";
-      const scale = scales[kind];
-      const hasValues = values.some((value) => value !== null);
-      const dayBars = days.map((day, dayIndex) => {
-        const value = values[dayIndex];
-        const date = timeline.dateParts(day.date, dayIndex, today);
-        const height = value !== null ? Math.min(100, Math.max(0, value / scale * 100)) : 0;
-        return `<div class="timeline-day${date.isToday ? " is-today" : ""}${value === null ? " is-missing" : ""}" role="listitem">
-          <span class="timeline-day-value">${_timelineValue(kind, value)}<span class="sr-only"> ${_timelineUnit(kind)} ${kind}</span></span>
-          <span class="timeline-bar-area" aria-hidden="true"><span class="timeline-bar${value > 0 ? " has-value" : ""}" style="height:${height.toFixed(4)}%"></span></span>
-          <span class="timeline-weekday">${_escapeHtml(date.weekday)}</span>
-          ${date.raw ? `<time datetime="${_escapeHtml(date.raw)}">${_escapeHtml(date.date)}</time>` : '<span class="timeline-date">—</span>'}
-        </div>`;
+      const buttons = days.map((day, index) => {
+        const date = calendar[index] || day.date || "";
+        const condition = weatherCode.descriptionForWeatherCode?.(day.weather_code) || "Conditions unavailable";
+        const value = values[index];
+        const label = timeline.dayLabel({ ...day, date }, kind, state.compactSummaryUnitMode, index);
+        const numericAttr = (raw) => _asFiniteNumber(raw) ?? "";
+        const valueAttrs = `data-day-date="${_escapeHtml(date)}" data-day-value="${value ?? ""}" data-day-high="${numericAttr(day.temperature_max_c)}" data-day-low="${numericAttr(day.temperature_min_c)}" data-day-resort="${_escapeHtml(_displayName(report))}" data-day-condition="${_escapeHtml(condition)}"`;
+        return `<button type="button" id="forecast-day-${encodeURIComponent(resortId)}-${index}" class="forecast-day${value === null ? " is-missing" : ""}" data-forecast-day="${index}" ${valueAttrs} data-day-label="${_escapeHtml(label)}" aria-label="${_escapeHtml(_displayName(report) + ", " + label + ", " + condition)}" tabindex="${index === 0 ? 0 : -1}"><span class="forecast-day-icon" aria-hidden="true">${weatherIcons.iconForWeatherCode?.(day.weather_code) || ""}</span>${value === null ? '<span class="forecast-missing" aria-hidden="true">—</span>' : ""}</button>`;
       }).join("");
-      const fallback = kind === "rain" ? `<span class="timeline-status">${series.snowComplete ? "No snow forecast" : "Snow data incomplete"}</span>` : "";
-      const totals = weeks.map((week, weekIndex) => `<div><dt>${weekIndex === 0 ? "Next 7 days" : "Days 8–14"}</dt><dd>${_timelineValue(kind, week.value)} <small>${_timelineUnit(kind)}</small>${week.partial ? '<span class="timeline-partial">partial</span>' : ""}</dd></div>`).join("");
-      return `<article class="resort-timeline-card" data-timeline-card data-metric-kind="${kind}" data-timeline-resort-id="${_escapeHtml(resortId)}" data-timeline-scale="${scale}">
-        <div class="timeline-card-heading">
-          <div class="timeline-identity"><h3>${_resortLinkHtml(report)}</h3>${_overviewLocation(report) ? `<p>${_escapeHtml(_overviewLocation(report))}</p>` : ""}</div>
-          <div class="timeline-today"><span class="timeline-condition" role="img" aria-label="${_escapeHtml(conditionLabel)}" title="${_escapeHtml(conditionLabel)}">${_weatherEmoji(firstDay.weather_code)}</span><div><span>${_escapeHtml(todayLabel)} high / low</span><strong>${_timelineTemp(firstDay.temperature_max_c)} / ${_timelineTemp(firstDay.temperature_min_c)} <small data-compact-unit-label="temp">${tempUnit}</small></strong></div></div>
-          <dl class="timeline-totals">${totals}</dl>
-          ${_favoriteButtonHtml(report)}
-        </div>
-        <div class="timeline-chart-heading">
-          <div><strong>Daily ${kind}</strong><span class="timeline-unit">${_timelineUnit(kind)} / day</span>${fallback}</div>
-          <div class="timeline-navigation"><span data-timeline-hint hidden>Swipe dates</span><button type="button" data-timeline-direction="previous" aria-label="Earlier dates for ${_escapeHtml(_displayName(report))}" aria-controls="${cardId}" disabled>←</button><button type="button" data-timeline-direction="next" aria-label="Later dates for ${_escapeHtml(_displayName(report))}" aria-controls="${cardId}" disabled>→</button></div>
-        </div>
-        ${days.length ? `<div id="${cardId}" class="timeline-scroll" data-timeline-scroll data-timeline-resort-id="${_escapeHtml(resortId)}" tabindex="0" aria-label="Daily ${kind} for ${_escapeHtml(_displayName(report))}. Use arrow keys to explore dates."><div class="timeline-track" role="list" style="--timeline-days:${days.length}">${dayBars}</div></div>` : '<p class="timeline-empty">Daily forecast unavailable.</p>'}
-        ${!hasValues && days.length ? '<p class="timeline-data-note">Forecast unavailable · — marks missing data</p>' : values.includes(null) ? '<p class="timeline-data-note">— marks missing data; partial totals include available days only.</p>' : ""}
+      const shape = geometry.segments.map((segment) => `<path class="forecast-ribbon-area" d="${segment.areaPath}"/><path class="forecast-ribbon-line${segment.points.every((point) => point.value === 0) ? " is-dry" : ""}" d="${segment.linePath}"/>`).join("");
+      const dots = geometry.isolatedPoints.map((point) => `<circle class="forecast-ribbon-point" cx="${point.x}" cy="${point.y}" r="3"/>`).join("");
+      const summary = timeline.precipitationSummary({ ...report, daily: days }, calendar.length);
+      return `<article class="forecast-row" data-forecast-row data-timeline-card data-metric-kind="${kind}" data-timeline-resort-id="${_escapeHtml(resortId)}" data-timeline-scale="${scale}">
+        <div class="forecast-identity" data-forecast-identity><div class="forecast-identity-top"><h3>${_resortLinkHtml(report)}</h3>${_favoriteButtonHtml(report)}</div><p class="forecast-location">${_escapeHtml(_overviewLocation(report))}</p><div class="forecast-total">${_timelineValue(kind, sum)} <small>${_timelineUnit(kind)}${partial ? ' <span class="forecast-partial">partial</span>' : ""}</small></div></div>
+        <div class="forecast-trend"><div class="forecast-daily-canvas"><svg class="forecast-ribbon" viewBox="0 0 ${geometry.width} ${geometry.height}" preserveAspectRatio="none" aria-hidden="true">${shape}${dots}</svg><div class="forecast-days">${buttons}</div></div><p class="forecast-readout" data-day-readout aria-live="polite">${_escapeHtml(summary)}</p></div>
       </article>`;
     };
 
     const _renderForecastOverview = (reports, emptyMessage) => {
-      const scales = timeline.sharedScales(reports, _displayDays());
+      const count = _displayDays();
+
+      const kind = state.overviewMetric === "rain" ? "rain" : "snow";
       const limit = Math.max(6, Number(state.timelineLimit) || 6);
       const candidates = reports.slice(0, limit);
       const remaining = reports.length - candidates.length;
-      const cards = candidates.map((report, index) => _renderTimelineCard(report, scales, index)).join("");
-      return `<section class="forecast-overview" aria-labelledby="forecast-overview-title">
-        <div class="overview-heading"><div><h2 id="forecast-overview-title">Resort forecasts</h2><p class="timeline-scale-note">Shared bar scale for each metric</p></div><div class="unit-toggle" role="group" aria-label="Overview unit system" data-compact-summary-toggle="1" data-mode="${state.compactSummaryUnitMode}"><button type="button" class="unit-btn" data-unit-mode="metric">Metric</button><button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button></div></div>
-        <div class="resort-timeline-list">${cards || `<div class="overview-empty"><strong>No resorts found</strong><span>${_escapeHtml(emptyMessage)}</span></div>`}</div>
+      const dates = [...new Set(reports.flatMap((report) => timeline.daysFor(report, count).map((day) => day.date).filter((date) => timeline.dateParts(date, 0).raw)))].sort().slice(0, count);
+      const calendar = Array.from({ length: count }, (_, index) => dates[0] ? new Date(Date.parse(`${dates[0]}T12:00:00Z`) + index * 86400000).toISOString().slice(0, 10) : "");
+      const alignedReports = reports.map((report) => {
+        const source = timeline.daysFor(report, count);
+        const byDate = new Map(source.filter((day) => day.date).map((day) => [day.date, day]));
+        return { ...report, daily: calendar.map((date, index) => date ? byDate.get(date) || {} : source[index] || {}) };
+      });
+      const scales = timeline.sharedScales(alignedReports, count);
+      const headers = calendar.map((raw, index) => {
+        const date = timeline.dateParts(raw, index);
+        const weekend = raw && [0, 6].includes(new Date(`${raw}T12:00:00Z`).getUTCDay());
+        return `<div class="forecast-calendar-day${date.isToday ? " is-today" : ""}${weekend ? " is-weekend" : ""}" data-calendar-day="${index}"><span>${_escapeHtml(date.weekday)}</span><time${raw ? ` datetime="${raw}"` : ""}>${raw ? Number(raw.slice(-2)) : "—"}</time></div>`;
+      }).join("");
+      const range = dates.length ? `${timeline.dateParts(dates[0], 0).date} – ${timeline.dateParts(calendar[calendar.length - 1], calendar.length - 1).date}` : `${count}-day forecast`;
+      return `<section class="forecast-overview" data-timeline-card aria-labelledby="forecast-overview-title" data-metric-kind="${kind}" style="--forecast-days:${count}">
+        <div class="forecast-board-toolbar"><div><h2 id="forecast-overview-title">${_escapeHtml(range)}</h2><p>${count}-day ${kind === "snow" ? "snowfall" : "rainfall"}</p></div><div class="forecast-board-controls"><div class="forecast-metric-toggle" role="group" aria-label="Forecast metric"><button type="button" data-overview-metric="snow" aria-pressed="${kind === "snow"}">Snow</button><button type="button" data-overview-metric="rain" aria-pressed="${kind === "rain"}">Rain</button></div><div class="unit-toggle" role="group" aria-label="Overview unit system" data-compact-summary-toggle="1" data-mode="${state.compactSummaryUnitMode}"><button type="button" class="unit-btn" id="overview-unit-metric" data-unit-mode="metric">${kind === "snow" ? "cm" : "mm"}</button><button type="button" class="unit-btn" id="overview-unit-imperial" data-unit-mode="imperial">in</button></div></div></div>
+        ${candidates.length ? `<div class="forecast-board" data-timeline-scroll data-timeline-resort-id="forecast-board"><div class="forecast-board-inner"><div class="forecast-calendar"><div class="forecast-calendar-key"><span>Resort <small>· ${count}-day total</small></span><span class="forecast-scale">0 — ${_timelineValue(kind, scales[kind])} ${_timelineUnit(kind)} / day</span></div><div class="forecast-calendar-dates">${headers}</div></div>${candidates.map((report) => _renderForecastRow(report, calendar, scales[kind], kind)).join("")}</div></div><div class="forecast-board-footer"><span>Dates at resort local time</span><div class="timeline-navigation"><span data-timeline-hint hidden>More dates</span><button type="button" data-timeline-direction="previous" aria-label="Earlier forecast dates" disabled>←</button><button type="button" data-timeline-direction="next" aria-label="Later forecast dates" disabled>→</button></div></div>` : `<div class="overview-empty"><strong>No resorts found</strong><span>${_escapeHtml(emptyMessage)}</span></div>`}
         ${remaining ? `<div class="timeline-show-more"><button type="button" data-show-more-timelines>Show ${Math.min(6, remaining)} more resorts</button><span>${candidates.length} of ${reports.length}</span></div>` : ""}
       </section>`;
     };

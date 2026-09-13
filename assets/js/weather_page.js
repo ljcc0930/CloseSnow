@@ -79,6 +79,7 @@ const appState = {
   layoutMode: "desktop",
   forecastTab: "overview",
   timelineLimit: 6,
+  overviewMetric: "snow",
 };
 
 const weatherPageFormatters = window.CloseSnowWeatherPageFormatters || {};
@@ -130,6 +131,7 @@ const sectionRenderer = weatherSections.createRenderer({
   weatherCode: window.CloseSnowWeatherCode,
   reportModel,
   snowTimeline: window.CloseSnowSnowTimeline,
+  weatherIcons: window.CloseSnowWeatherIcons,
 });
 const timelineScroller = window.CloseSnowTimelineScroller.createController({ window });
 const {
@@ -535,6 +537,16 @@ const setCompactSummaryUnitMode = (mode) => {
   }
   renderCompactSummaryValues();
   syncCompactSummaryToggle();
+  pageContentRoot?.querySelectorAll("[data-forecast-day]").forEach((button) => {
+    const data = button.dataset;
+    const kind = button.closest("[data-metric-kind]").dataset.metricKind;
+    const day = { date: data.dayDate, temperature_max_c: data.dayHigh, temperature_min_c: data.dayLow,
+      [kind === "rain" ? "rain_mm" : "snowfall_cm"]: data.dayValue };
+    const label = window.CloseSnowSnowTimeline.dayLabel(day, kind, appState.compactSummaryUnitMode, Number(data.forecastDay));
+    data.dayLabel = label;
+    button.setAttribute("aria-label", `${data.dayResort}, ${label}, ${data.dayCondition}`);
+  });
+  pageContentRoot?.querySelector("[data-timeline-scroll]")?.dispatchEvent(new Event("forecast-units-change"));
 };
 
 const setSunTimeToggleMode = (mode) => {
@@ -913,12 +925,19 @@ const bindControls = () => {
     activateForecastTab(nextTab);
   });
   document.addEventListener("click", (event) => {
+    const metric = event.target.closest("[data-overview-metric]");
+    if (metric) {
+      appState.overviewMetric = metric.dataset.overviewMetric === "rain" ? "rain" : "snow";
+      renderPagePreservingScroll();
+      pageContentRoot.querySelector(`[data-overview-metric="${appState.overviewMetric}"]`)?.focus({ preventScroll: true });
+      return;
+    }
     const showMore = event.target.closest("[data-show-more-timelines]");
     if (showMore) {
       const firstNewIndex = appState.timelineLimit;
       appState.timelineLimit += 6;
       renderPagePreservingScroll();
-      const firstNewCard = pageContentRoot.querySelectorAll("[data-timeline-card]")[firstNewIndex];
+      const firstNewCard = pageContentRoot.querySelectorAll("[data-forecast-row]")[firstNewIndex];
       firstNewCard?.querySelector(".resort-link")?.focus({ preventScroll: true });
       return;
     }
