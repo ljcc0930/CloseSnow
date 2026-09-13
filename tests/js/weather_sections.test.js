@@ -156,3 +156,12 @@ test("negative precipitation remains missing consistently in shape, labels and t
   assert.match(html, /No snow data/);
   assert.match(html, /partial/);
 });
+
+
+test("overview unit control is one accessible switch with no separately clickable halves", () => {
+  const { renderer } = create({ forecastTab: "overview", compactSummaryUnitMode: "imperial" });
+  const html = renderer.render(reports);
+  assert.match(html, /id="overview-unit-switch"[^>]+role="switch"[^>]+aria-checked="true"/);
+  assert.doesNotMatch(html, /<button[^>]+data-unit-mode=/);
+  assert.match(html, /data-overview-unit-toggle/);
+});

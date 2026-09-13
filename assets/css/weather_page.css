@@ -351,6 +351,38 @@
   box-shadow: var(--shadow-control);
 }
 
+/* The overview has its own compact switch, also compatible with the shared unit control. */
+.unit-toggle[data-overview-unit-toggle] {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 34px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  border-radius: 7px;
+}
+
+.unit-toggle[data-overview-unit-toggle]::before {
+  content: "";
+  position: absolute;
+  inset: 3px auto 3px 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: 4px;
+  background: var(--glacier-500);
+  box-shadow: var(--shadow-control);
+  transition: transform 180ms ease-out;
+  pointer-events: none;
+}
+
+.unit-toggle[data-overview-unit-toggle][data-mode="imperial"]::before { transform: translateX(100%); }
+.unit-toggle[data-overview-unit-toggle] .unit-toggle-option { position: relative; min-width: 38px; padding: 3px 9px; font-size: 11px; color: var(--ink-700); }
+.unit-toggle[data-overview-unit-toggle][data-mode="metric"] [data-unit-mode="metric"],
+.unit-toggle[data-overview-unit-toggle][data-mode="imperial"] [data-unit-mode="imperial"] { color: var(--on-accent); }
+@media (prefers-reduced-motion: reduce) {
+  .unit-toggle[data-overview-unit-toggle]::before { transition: none; }
+}
+
 .forecast-board {
   position: relative;
   max-width: 100%;

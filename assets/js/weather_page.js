@@ -392,6 +392,7 @@ const syncCompactSummaryToggle = () => {
   document.querySelectorAll(".unit-toggle[data-compact-summary-toggle='1']").forEach((toggle) => {
     const mode = appState.compactSummaryUnitMode || "metric";
     toggle.setAttribute("data-mode", mode);
+    if (toggle.getAttribute("role") === "switch") toggle.setAttribute("aria-checked", String(mode === "imperial"));
     toggle.querySelectorAll(".unit-btn[data-unit-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.getAttribute("data-unit-mode") === mode);
       button.setAttribute("aria-pressed", String(button.getAttribute("data-unit-mode") === mode));
@@ -925,6 +926,11 @@ const bindControls = () => {
     activateForecastTab(nextTab);
   });
   document.addEventListener("click", (event) => {
+    const overviewUnits = event.target.closest("[data-overview-unit-toggle]");
+    if (overviewUnits) {
+      setCompactSummaryUnitMode(appState.compactSummaryUnitMode === "imperial" ? "metric" : "imperial");
+      return;
+    }
     const metric = event.target.closest("[data-overview-metric]");
     if (metric) {
       appState.overviewMetric = metric.dataset.overviewMetric === "rain" ? "rain" : "snow";
