@@ -92,3 +92,28 @@ for (const [theme, palette] of Object.entries(palettes)) {
     }
   });
 }
+
+for (const [theme, palette] of Object.entries(palettes)) {
+  test(`${theme} sliding controls keep labels readable and selection distinct`, () => {
+    const selected = resolveColor(palette, "--glacier-500");
+    const track = resolveColor(palette, "--surface-soft");
+    assert.ok(contrast(resolveColor(palette, "--on-accent"), selected) >= 4.5,
+      "Selected labels must meet text contrast against the sliding thumb");
+    assert.ok(contrast(resolveColor(palette, "--ink-700"), track) >= 4.5,
+      "Unselected labels must remain readable");
+    assert.ok(contrast(selected, track) >= 3,
+      "The sliding selection must remain distinct from its track");
+  });
+}
+
+test("both page shells expose one named theme switch with icons and no visible Day/Night text", () => {
+  for (const filename of ["weather_page.html", "resort_hourly_page.html"]) {
+    const html = fs.readFileSync(path.join(__dirname, "../../src/web/templates", filename), "utf8");
+    const switches = [...html.matchAll(/<button[^>]*data-theme-toggle[^>]*>([\s\S]*?)<\/button>/g)];
+    assert.equal(switches.length, 1, filename);
+    assert.match(switches[0][0], /role="switch"[^>]*aria-label="Night theme"/);
+    assert.equal(switches[0][1].replace(/<[^>]*>/g, "").trim(), "");
+    assert.match(switches[0][1], /class="theme-icon-day"/);
+    assert.match(switches[0][1], /class="theme-icon-night"/);
+  }
+});

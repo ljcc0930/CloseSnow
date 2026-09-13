@@ -46,6 +46,14 @@
       tempColor: _tempColor,
     } = formatters;
 
+    const _unitSwitchHtml = ({ label, metricLabel, imperialLabel, mode = "metric", attributes }) => {
+      const imperial = mode === "imperial";
+      return `<button type="button" class="unit-toggle" role="switch" aria-label="${_escapeHtml(label)}" aria-checked="${imperial}" data-mode="${imperial ? "imperial" : "metric"}" title="Switch to ${_escapeHtml(imperial ? metricLabel : imperialLabel)}" ${attributes}>
+        <span class="unit-toggle-option${imperial ? "" : " is-active"}" data-unit-mode="metric" aria-hidden="true">${_escapeHtml(metricLabel)}</span>
+        <span class="unit-toggle-option${imperial ? " is-active" : ""}" data-unit-mode="imperial" aria-hidden="true">${_escapeHtml(imperialLabel)}</span>
+      </button>`;
+    };
+
     const _weatherEmoji = (rawCode) => {
       const helper = weatherCode.emojiForWeatherCode;
       return helper ? helper(rawCode) : "❓";
@@ -198,10 +206,7 @@
         <section class="forecast-section forecast-section-daily">
           <div class="section-header">
             <h2>Daily Summary</h2>
-            <div class="unit-toggle" role="group" aria-label="Daily Summary unit system" data-compact-summary-toggle="1" data-mode="${state.compactSummaryUnitMode}">
-              <button type="button" class="unit-btn" data-unit-mode="metric">Metric</button>
-              <button type="button" class="unit-btn" data-unit-mode="imperial">Imperial</button>
-            </div>
+            ${_unitSwitchHtml({ label: "Daily Summary imperial units", metricLabel: "Metric", imperialLabel: "Imperial", mode: state.compactSummaryUnitMode, attributes: 'data-compact-summary-toggle="1"' })}
           </div>
           <div
             class="compact-grid-mobile-wrap"
@@ -245,10 +250,7 @@
           <section class="forecast-section forecast-section-precip">
             <div class="section-header">
               <h2>${title}</h2>
-              <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
-                <button type="button" class="unit-btn" data-unit-mode="metric">${metricUnit}</button>
-                <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
-              </div>
+              ${_unitSwitchHtml({ label: `${title} imperial units`, metricLabel: metricUnit, imperialLabel: imperialUnit, mode: state.unitModes?.[kind], attributes: `data-target-kind="${kind}"` })}
             </div>
             <div
               class="${options.prefix}-sticky-wrap mobile-only"
@@ -282,10 +284,7 @@
         <section class="forecast-section forecast-section-precip">
           <div class="section-header">
             <h2>${title}</h2>
-            <div class="unit-toggle" role="group" aria-label="${title} unit system" data-target-kind="${kind}">
-              <button type="button" class="unit-btn" data-unit-mode="metric">${metricUnit}</button>
-              <button type="button" class="unit-btn" data-unit-mode="imperial">${imperialUnit}</button>
-            </div>
+            ${_unitSwitchHtml({ label: `${title} imperial units`, metricLabel: metricUnit, imperialLabel: imperialUnit, mode: state.unitModes?.[kind], attributes: `data-target-kind="${kind}"` })}
           </div>
           <div
             class="${options.prefix}-sticky-wrap desktop-only"
@@ -324,10 +323,7 @@
         <section class="forecast-section forecast-section-temperature">
           <div class="section-header">
             <h2>Temperature</h2>
-            <div class="unit-toggle" role="group" aria-label="Temperature unit system" data-target-kind="temp">
-              <button type="button" class="unit-btn" data-unit-mode="metric">°C</button>
-              <button type="button" class="unit-btn" data-unit-mode="imperial">°F</button>
-            </div>
+            ${_unitSwitchHtml({ label: "Temperature in Fahrenheit", metricLabel: "°C", imperialLabel: "°F", mode: state.unitModes?.temp, attributes: 'data-target-kind="temp"' })}
           </div>
           <div
             class="temperature-sticky-wrap"
@@ -415,10 +411,7 @@
         <section class="forecast-section forecast-section-sun">
           <div class="section-header">
             <h2>Sunrise / Sunset</h2>
-            <div class="unit-toggle" role="group" aria-label="Sunrise and sunset time format" data-sun-time-toggle="1" data-mode="${state.sunTimeToggleMode}">
-              <button type="button" class="unit-btn" data-unit-mode="metric">24h</button>
-              <button type="button" class="unit-btn" data-unit-mode="imperial">12h</button>
-            </div>
+            ${_unitSwitchHtml({ label: "Sunrise and sunset 12-hour time", metricLabel: "24h", imperialLabel: "12h", mode: state.sunTimeToggleMode, attributes: 'data-sun-time-toggle="1"' })}
           </div>
           <div
             class="sun-single-wrap"
