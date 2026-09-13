@@ -39,6 +39,7 @@ WEB_ASSET_MANIFEST: Final[tuple[WebAsset, ...]] = (
     WebAsset("assets/css/forecast_tables.css", "text/css; charset=utf-8"),
     WebAsset("assets/css/weather_page.css", "text/css; charset=utf-8"),
     WebAsset("assets/js/theme.js", "application/javascript; charset=utf-8"),
+    WebAsset("assets/js/unit_switch.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_colors.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/compact_daily_summary.js", "application/javascript; charset=utf-8"),
     WebAsset("assets/js/weather_code_emoji.js", "application/javascript; charset=utf-8"),

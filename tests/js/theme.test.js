@@ -97,6 +97,7 @@ function page({
   return {
     theme: () => document.documentElement.dataset.theme,
     transitioning: () => document.documentElement.dataset.themeTransitioning === "true",
+    capturesPage: () => document.documentElement.dataset.themeSnapshot === "old",
     attributes, storage, transitions, window,
     click() {
       const event = { target: button, button: 0, clientX: 120, clientY: 20 };
@@ -182,6 +183,30 @@ test("initial head application, control binding, and unchanged themes never anim
   view.ready();
   assert.equal(view.transitioning(), false);
   assert.equal(view.transitions.length, 0);
+  assert.equal(view.capturesPage(), false);
+});
+
+test("only the outgoing page is captured so live controls are released before the fade begins", async () => {
+  const view = page({ viewTransitions: "supported" });
+  view.click();
+  assert.equal(view.capturesPage(), true);
+  await view.transitions[0].begin();
+  assert.equal(view.theme(), "dark");
+  assert.equal(view.transitioning(), true, "The outgoing snapshot is still fading");
+  assert.equal(view.capturesPage(), false, "The incoming DOM cannot be captured or lose its hit targets");
+  await view.transitions[0].complete();
+  assert.equal(view.capturesPage(), false);
+});
+
+test("an abandoned callback cannot release the next outgoing snapshot", async () => {
+  const view = page({ viewTransitions: "supported" });
+  view.click();
+  view.click();
+  await view.transitions[0].complete();
+  assert.equal(view.capturesPage(), true, "The second capture has not run its update yet");
+  await view.transitions[1].begin();
+  assert.equal(view.capturesPage(), false);
+  await view.transitions[1].complete();
 });
 
 test("rapid clicks toggle the desired state before snapshot callbacks have run", async () => {
@@ -296,6 +321,7 @@ test("reduced motion disables transitions and finishes a pending snapshot immedi
   assert.equal(view.transitioning(), true);
   view.reduceMotion(true);
   assert.equal(view.transitioning(), false);
+  assert.equal(view.capturesPage(), false);
   assert.equal(view.theme(), "light");
   assert.equal(pending.skipped, true);
   view.click();
@@ -312,6 +338,7 @@ for (const viewTransitions of ["unavailable", "throw"]) {
     assert.equal(view.theme(), "dark");
     assert.equal(view.attributes["aria-checked"], "true");
     assert.equal(view.transitioning(), false);
+    assert.equal(view.capturesPage(), false);
     view.click();
     assert.equal(view.theme(), "light");
     assert.equal(view.transitioning(), false);

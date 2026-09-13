@@ -73,3 +73,25 @@ test("mobile precipitation keeps one leading resort column and exact forecast me
   assert.match(html, /data-metric-value='2\.500000'/);
   assert.match(html, /data-favorite-all='1'/);
 });
+
+test("all unit selectors expose one native keyboard button with a named binary state", () => {
+  for (const forecastTab of ["summary", "snowfall", "rainfall", "temperature", "daylight"]) {
+    for (const mode of ["metric", "imperial"]) {
+      const { renderer } = create({
+        forecastTab, compactSummaryUnitMode: mode, sunTimeToggleMode: mode,
+        unitModes: { snow: mode, rain: mode, temp: mode },
+      });
+      const html = renderer.render(reports);
+      const switches = [...html.matchAll(/<button type="button" class="unit-toggle"([^>]*)>([\s\S]*?)<\/button>/g)];
+      assert.ok(switches.length > 0, forecastTab);
+      for (const [, attributes, content] of switches) {
+        assert.match(attributes, /role="switch"/);
+        assert.match(attributes, /aria-label="[^"]+"/);
+        assert.match(attributes, new RegExp(`aria-checked="${mode === "imperial"}"`));
+        assert.doesNotMatch(content, /<button\b/);
+        assert.equal((content.match(/aria-hidden="true"/g) || []).length, 2);
+      }
+      assert.doesNotMatch(html, /class="unit-btn/);
+    }
+  }
+});
