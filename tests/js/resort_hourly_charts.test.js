@@ -29,6 +29,7 @@ class Element {
   addEventListener(name, listener) { this.events[name] = listener; }
   dispatch(name, event = {}) { this.events[name]?.(event); }
   focus() { this.ownerDocument.activeElement = this; this.dispatch("focus"); }
+  blur() { this.ownerDocument.activeElement = null; this.dispatch("blur"); }
   scrollIntoView() { this.scrolledIntoView = true; }
   setPointerCapture(pointerId) { this.captured = pointerId; }
   hasPointerCapture(pointerId) { return this.captured === pointerId; }
@@ -50,6 +51,11 @@ const mount = (payload, width = 900) => {
 };
 const payloadFor = (values, key = "snowfall") => ({ hourly: { time: timesFor(values.length), [key]: values } });
 const clickMetric = (root, key) => descendants(root).find((node) => node.id === `hourly-metric-${key}`).dispatch("click");
+const pressKey = (node, key, modifiers = {}) => {
+  let prevented = false;
+  node.dispatch("keydown", { key, ...modifiers, preventDefault: () => { prevented = true; } });
+  return prevented;
+};
 
 test("normalization preserves missing source hours and rejects coercions to a fabricated zero", () => {
   const raw = [null, undefined, "", " ", false, [], {}, NaN, Infinity, "invalid", 0, "0", 0.04];
@@ -128,22 +134,44 @@ test("the main chart uses amount bars, exact continuous lines, isolated points a
   assert.equal(explorer.bearingLabel(360), "360° N");
 });
 
-test("native time-slider inspection exposes exact tiny values, missing hours and formatted large values", () => {
+test("the chart is the sole hour control and exposes exact tiny, missing and large values to keyboard users", () => {
   const payload = payloadFor([0.04, null, 0.12]);
   payload.hourly.visibility = [11500, 16267, 15000];
   const { root } = mount(payload);
-  const seek = byClass(root, "explorer-seek")[0];
-  seek.focus();
+  const chart = byClass(root, "explorer-chart")[0];
+  assert.equal(descendants(root).filter((node) => node.attributes.role === "slider").length, 1);
+  assert.equal(descendants(root).filter((node) => node.tagName === "input").length, 0, "No second visible or hidden time selector");
+  assert.equal(chart.tabIndex, 0);
+  assert.equal(chart.attributes["aria-orientation"], "horizontal");
+  assert.equal(chart.attributes["aria-label"], "Snowfall, forecast hour");
+  chart.focus();
   assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "0.04 cm");
-  seek.value = "1";
-  seek.dispatch("input");
+  assert.equal(pressKey(chart, "ArrowRight"), true);
   assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "No data");
-  assert.match(seek.attributes["aria-valuetext"], /01:00: No data/);
+  assert.match(chart.attributes["aria-valuetext"], /01:00: No data/);
   assert.equal(byClass(root, "explorer-selected-point")[0].attributes.visibility, "hidden");
   clickMetric(root, "visibility");
   assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "16,267 m");
-  assert.equal(seek.value, "1", "Changing metric keeps the inspected forecast hour");
-  assert.equal(seek.type, "range", "Keyboard arrows, Home and End use native range-input behavior");
+  assert.equal(chart.attributes["aria-valuenow"], "1", "Changing metric keeps the inspected forecast hour");
+  assert.equal(chart.attributes["aria-label"], "Visibility, forecast hour");
+});
+
+test("chart Arrow, Home and End keys select bounded hours while other shortcuts keep their browser behavior", () => {
+  const { root } = mount(payloadFor([0.04, 0.08, 0.12]));
+  const chart = byClass(root, "explorer-chart")[0];
+  chart.focus();
+  for (const [key, hour] of [["End", "2"], ["ArrowRight", "2"], ["ArrowLeft", "1"], ["ArrowUp", "2"], ["ArrowDown", "1"], ["Home", "0"], ["ArrowLeft", "0"]]) {
+    assert.equal(pressKey(chart, key), true);
+    assert.equal(chart.attributes["aria-valuenow"], hour);
+    assert.match(chart.attributes["aria-valuetext"], new RegExp(`0${hour}:00`));
+  }
+  for (const key of ["Tab", "Enter", "Escape"]) assert.equal(pressKey(chart, key), false);
+  for (const modifier of ["ctrlKey", "metaKey", "altKey"]) assert.equal(pressKey(chart, "End", { [modifier]: true }), false);
+  assert.equal(chart.attributes["aria-valuenow"], "0");
+  assert.equal(byClass(root, "explorer-cursor")[0].attributes.visibility, "visible");
+  chart.blur();
+  assert.equal(byClass(root, "explorer-cursor")[0].attributes.visibility, "hidden");
+  assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "0.04 cm");
 });
 
 test("pointer inspection accounts for scaled SVGs and touch capture ends cleanly", () => {
@@ -158,6 +186,8 @@ test("pointer inspection accounts for scaled SVGs and touch capture ends cleanly
   chart.dispatch("pointercancel", { pointerId: 12 });
   assert.equal(chart.captured, null);
   chart.dispatch("pointerleave");
+  assert.equal(byClass(root, "explorer-cursor")[0].attributes.visibility, "visible", "Focused chart retains the selected hour after touch ends");
+  chart.blur();
   assert.equal(byClass(root, "explorer-tooltip")[0].hidden, true);
   assert.equal(byClass(root, "explorer-selected-point")[0].attributes.visibility, "hidden");
 });
@@ -173,17 +203,17 @@ test("metric keyboard navigation, range updates and resize retain one stable wor
   assert.equal(prevented, true);
   assert.equal(document.activeElement.id, "hourly-metric-rain");
   assert.equal(document.activeElement.attributes["aria-selected"], "true");
-  const seek = byClass(root, "explorer-seek")[0];
-  seek.value = "2";
-  seek.dispatch("input");
+  const chart = byClass(root, "explorer-chart")[0];
+  pressKey(chart, "End");
   app.update({ hourly: { time: timesFor(2), snowfall: [0, 0], rain: [5, 6] } });
   assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "6 mm");
-  assert.equal(seek.value, "1");
+  assert.equal(chart.attributes["aria-valuenow"], "1");
+  assert.equal(chart.attributes["aria-valuemax"], "1");
   assert.equal(byClass(root, "explorer-metrics")[0], nav);
-  seek.focus();
+  chart.focus();
   document.width = 300;
   app.resize();
-  assert.equal(document.activeElement, seek);
+  assert.equal(document.activeElement, chart);
   assert.equal(byClass(root, "explorer-svg")[0].attributes.viewBox, "0 0 300 300");
   assert.equal(byClass(root, "explorer-inspect-value")[0].textContent, "6 mm");
 });
@@ -195,6 +225,33 @@ test("an all-missing metric hides the plot and hourly selector without claiming 
   assert.equal(byClass(root, "explorer-empty")[0].hidden, false);
   assert.equal(byClass(root, "explorer-inspection")[0].hidden, true);
   assert.equal(byClass(root, "explorer-bar").length, 0);
+  const chart = byClass(root, "explorer-chart")[0];
+  assert.equal(chart.tabIndex, -1);
+  assert.equal(chart.attributes["aria-disabled"], "true");
+  assert.equal(pressKey(chart, "End"), false);
+  assert.equal(chart.attributes["aria-valuetext"], "No hourly data for this period");
+});
+
+test("single observations remain focusable and empty updates remove stale accessible readings", () => {
+  const { root, app } = mount(payloadFor([0.04]));
+  const chart = byClass(root, "explorer-chart")[0];
+  assert.equal(chart.tabIndex, 0);
+  chart.focus();
+  for (const key of ["End", "Home", "ArrowRight", "ArrowLeft"]) {
+    assert.equal(pressKey(chart, key), true);
+    assert.equal(chart.attributes["aria-valuenow"], "0");
+    assert.equal(chart.attributes["aria-valuemax"], "0");
+  }
+  app.update(payloadFor([]));
+  assert.equal(chart.tabIndex, -1);
+  assert.equal(chart.attributes["aria-disabled"], "true");
+  assert.equal(chart.attributes["aria-valuetext"], "No hourly data for this period");
+  chart.blur();
+  assert.equal(chart.attributes["aria-valuetext"], "No hourly data for this period");
+  app.update(payloadFor([0.08]));
+  assert.equal(chart.tabIndex, 0);
+  assert.equal(chart.attributes["aria-disabled"], "false");
+  assert.match(chart.attributes["aria-valuetext"], /0.08 cm/);
 });
 
 test("the raw-data table agrees with precise chart readings instead of rounding small snowfall to zero", () => {
@@ -280,7 +337,7 @@ for (const delivery of ["static", "dynamic"]) {
     nodes["hours-select"].dispatch("change");
     await new Promise(setImmediate);
     assert.equal(requests.length, 2);
-    assert.equal(byClass(nodes["hourly-charts"], "explorer-seek")[0].attributes.max, "23");
+    assert.equal(byClass(nodes["hourly-charts"], "explorer-chart")[0].attributes["aria-valuemax"], "23");
     assert.equal((tableBody.html.match(/<tr>/g) || []).length, 24);
     nodes["hours-refresh-btn"].dispatch("click");
     await new Promise(setImmediate);

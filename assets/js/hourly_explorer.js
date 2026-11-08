@@ -170,6 +170,7 @@
     let plotTop = 0;
     let plotBottom = 0;
     let inspect = false;
+    let inspectable = false;
     let destroyed = false;
     const tabNodes = new Map();
 
@@ -194,6 +195,7 @@
     stats.append(statLabel, statValue, statDate);
     heading.append(primary, stats);
     const chart = make("div", "explorer-chart");
+    setAttributes(chart, { role: "slider", "aria-orientation": "horizontal", "aria-valuemin": 0 });
     const svg = svgNode("svg", { class: "explorer-svg", "aria-hidden": "true" });
     const tooltip = make("div", "explorer-tooltip");
     tooltip.hidden = true;
@@ -210,21 +212,14 @@
     const inspectTime = make("span", "explorer-inspect-time");
     const inspectValue = make("strong", "explorer-inspect-value");
     inspectReading.append(inspectTime, inspectValue);
-    const seek = make("input", "explorer-seek");
-    seek.type = "range";
-    setAttributes(seek, { min: "0", max: "0", step: "1", "aria-label": "Forecast hour" });
-    const seekEnds = make("div", "explorer-seek-ends");
-    const seekStart = make("span", "");
-    const seekEnd = make("span", "");
-    seekEnds.append(seekStart, seekEnd);
-    inspection.append(inspectReading, seek, seekEnds);
+    inspection.append(inspectReading);
     const coverage = make("p", "explorer-coverage");
     panel.append(heading, chart, inspection, coverage);
     rootElement.replaceChildren(nav, panel);
 
     const currentSummary = () => summarize(activeMetric, series.values);
     const updateReading = () => {
-      if (!series.times.length) return;
+      if (!inspectable || !series.times.length) return;
       const time = timeLabel(series.times[selectedIndex]);
       const value = series.values[selectedIndex];
       inspectTime.textContent = time.full;
@@ -232,8 +227,7 @@
       tooltipTime.textContent = time.full;
       tooltipValue.textContent = valueLabel(activeMetric, value);
       tooltipLabel.textContent = value === null ? "Observation unavailable" : definitions[activeMetric.key].mode === "bars" ? `${definitions[activeMetric.key].label} this hour` : definitions[activeMetric.key].label;
-      seek.value = String(selectedIndex);
-      seek.setAttribute("aria-valuetext", `${time.full}: ${valueLabel(activeMetric, value)}`);
+      setAttributes(chart, { "aria-valuenow": selectedIndex, "aria-valuetext": `${time.full}: ${valueLabel(activeMetric, value)}` });
       if (!cursor) return;
       const x = xFor(selectedIndex);
       setAttributes(cursor, { x1: x, x2: x, visibility: inspect ? "visible" : "hidden" });
@@ -243,7 +237,7 @@
       tooltip.style.left = `${Math.max(8, Math.min(chartWidth - 182, x - 86))}px`;
     };
     const selectHour = (index, shouldInspect = true) => {
-      if (!series.times.length) return;
+      if (!inspectable) return;
       selectedIndex = Math.max(0, Math.min(series.times.length - 1, Math.round(index)));
       inspect = shouldInspect;
       updateReading();
@@ -264,10 +258,18 @@
       svg.replaceChildren();
       setAttributes(svg, { viewBox: `0 0 ${chartWidth} ${height}`, height });
       const summary = currentSummary();
+      inspectable = summary.count > 0;
+      chart.tabIndex = inspectable ? 0 : -1;
+      chart.setAttribute("aria-disabled", String(!inspectable));
       empty.hidden = summary.count > 0;
       svg.style.display = summary.count === 0 ? "none" : "";
       inspection.hidden = !series.times.length || summary.count === 0;
-      if (!summary.count) { tooltip.hidden = true; cursor = null; return; }
+      if (!inspectable) {
+        setAttributes(chart, { "aria-valuenow": 0, "aria-valuetext": "No hourly data for this period" });
+        tooltip.hidden = true;
+        cursor = null;
+        return;
+      }
       const bands = dayBands(series.times);
       bands.forEach((band, index) => {
         const left = plotLeft + band.start * slotWidth;
@@ -354,10 +356,7 @@
       statDate.textContent = summary.count ? `${timeLabel(series.times[summary.at]).day}, ${timeLabel(series.times[summary.at]).date}` : "";
       coverage.textContent = partial ? `${summary.count} of ${period} hourly observations available. Gaps indicate missing data.` : "";
       coverage.hidden = !partial;
-      setAttributes(seek, { max: Math.max(0, period - 1), "aria-label": `${config.label}, forecast hour` });
-      seek.disabled = period <= 1;
-      seekStart.textContent = period ? `${timeLabel(series.times[0]).date} · ${timeLabel(series.times[0]).hour}` : "";
-      seekEnd.textContent = period ? `${timeLabel(series.times.at(-1)).date} · ${timeLabel(series.times.at(-1)).hour}` : "";
+      setAttributes(chart, { "aria-valuemax": Math.max(0, period - 1), "aria-label": `${config.label}, forecast hour` });
       draw();
     };
     const chooseMetric = (key, focus = false) => {
@@ -408,7 +407,8 @@
     };
     chart.addEventListener("pointermove", pointerHour);
     chart.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || !inspectable) return;
+      chart.focus({ preventScroll: true });
       pointerHour(event);
       if (Number.isFinite(event.pointerId)) chart.setPointerCapture?.(event.pointerId);
     });
@@ -417,10 +417,16 @@
     };
     chart.addEventListener("pointerup", stopPointer);
     chart.addEventListener("pointercancel", stopPointer);
-    chart.addEventListener("pointerleave", () => { if (document.activeElement !== seek) { inspect = false; updateReading(); } });
-    seek.addEventListener("input", () => selectHour(Number(seek.value)));
-    seek.addEventListener("focus", () => { inspect = true; updateReading(); });
-    seek.addEventListener("blur", () => { inspect = false; updateReading(); });
+    chart.addEventListener("pointerleave", () => { if (document.activeElement !== chart) { inspect = false; updateReading(); } });
+    chart.addEventListener("keydown", (event) => {
+      if (!inspectable || event.altKey || event.ctrlKey || event.metaKey) return;
+      const nextIndex = { ArrowRight: selectedIndex + 1, ArrowUp: selectedIndex + 1, ArrowLeft: selectedIndex - 1, ArrowDown: selectedIndex - 1, Home: 0, End: series.times.length - 1 }[event.key];
+      if (nextIndex === undefined) return;
+      event.preventDefault();
+      selectHour(nextIndex);
+    });
+    chart.addEventListener("focus", () => { if (inspectable) { inspect = true; updateReading(); } });
+    chart.addEventListener("blur", () => { inspect = false; updateReading(); });
     const resize = () => { if (!destroyed) draw(); };
     let observer = null;
     if (window?.ResizeObserver) { observer = new window.ResizeObserver(resize); observer.observe(chart); }
